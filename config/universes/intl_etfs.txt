@@ -1,0 +1,11 @@
+# International Equity ETF Proxies
+EWJ
+EWG
+EWU
+EWC
+EWA
+EWZ
+EWY
+EWT
+FXI
+EEM

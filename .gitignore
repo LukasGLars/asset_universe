@@ -1,0 +1,18 @@
+# data — never commit raw market data
+data/
+
+# daily sync logs
+logs/
+
+# secrets
+.env
+fred_api.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/

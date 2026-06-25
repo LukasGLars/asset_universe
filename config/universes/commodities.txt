@@ -1,0 +1,11 @@
+# Commodity Futures (front-month continuous contracts)
+GC=F
+SI=F
+CL=F
+HG=F
+NG=F
+ZC=F
+ZW=F
+ZS=F
+PPFB.DE
+PHAG.L

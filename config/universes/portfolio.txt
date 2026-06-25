@@ -1,0 +1,9 @@
+# Reactor Core v3 — current holdings
+# Format: TICKER  (weights managed in thesis_v3.md)
+GC=F
+SI=F
+LLY
+WMT
+VRT
+AVGO
+CCJ

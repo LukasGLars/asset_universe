@@ -1,0 +1,85 @@
+[fi]
+start_date       = "2025-07-21"
+start_value_sek  = 925983
+target_sek       = 12934706
+years            = 12
+
+# ── Reactor Core positions ─────────────────────────────────────────────────────
+# currency: USD = convert via USDSEK, EUR = convert via EURSEK, SEK = no conversion
+# category: parquet subdirectory where the ticker lives
+
+[[positions]]
+name     = "Gold"
+ticker   = "PPFB.DE"
+shares   = 250
+currency = "EUR"
+category = "commodities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Silver"
+ticker   = "PHAG.L"
+shares   = 66
+currency = "USD"
+category = "commodities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Eli Lilly"
+ticker   = "LLY"
+shares   = 14
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Walmart"
+ticker   = "WMT"
+shares   = 126
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Cameco"
+ticker   = "CCJ"
+shares   = 93
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Vertiv"
+ticker   = "VRT"
+shares   = 31
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
+[[positions]]
+name     = "Broadcom"
+ticker   = "AVGO"
+shares   = 21
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
+# ── Manual positions (no ticker — update value_sek after each trade) ───────────
+
+[[positions]]
+name      = "Spiltan Räntefond"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "home_base"
+value_sek = 279453
+
+[[positions]]
+name      = "War Chest"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "war_chest"
+value_sek = 34205

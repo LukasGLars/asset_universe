@@ -1,0 +1,11 @@
+# Fixed Income ETF Proxies
+# Core (from 2002-07-30)
+TLT
+IEF
+SHY
+LQD
+# Broader (from 2003-2007)
+AGG
+TIP
+HYG
+BND
