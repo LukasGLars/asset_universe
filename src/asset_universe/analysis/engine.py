@@ -172,8 +172,9 @@ def current_regime(data_dir: Path | None = None) -> dict[str, Any]:
     regime_cols  = [c for c in labeled_df.columns if c.endswith("_regime")]
     raw_features = ["ry", "nominal_10y", "breakeven",
                     "nominal_10y_5d_delta", "nominal_10y_20d_delta", "breakeven_20d_delta",
-                    "baa10y", "t10y3m", "t10y3m_inverted", "usd",
-                    "hy_oas", "hy_5d_delta", "hy_10d_delta", "hy_20d_delta",
+                    "baa10y", "t10y3m", "t10y3m_inverted", "t10y2y", "t10y2y_inverted",
+                    "se_10y", "se_10y_20d_delta",
+                    "usd", "hy_oas", "hy_5d_delta", "hy_10d_delta", "hy_20d_delta",
                     "hy_ig_divergence", "ry_rising"]
 
     state: dict[str, Any] = {

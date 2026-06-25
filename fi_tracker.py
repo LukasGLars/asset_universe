@@ -109,7 +109,9 @@ try:
         ("Breakeven",     "breakeven",         f"{raw.get('breakeven', float('nan')):.2f}%",        "breakeven_regime"),
         ("HY OAS",        "hy_oas",            f"{raw.get('hy_oas', float('nan')):.0f} bps",        "hy_oas_regime"),
         ("IG Credit",     "baa10y",            f"{raw.get('baa10y', float('nan')):.2f}%",           "baa10y_regime"),
-        ("Yield Curve",   "t10y3m",            f"{raw.get('t10y3m', float('nan'))*100:+.0f} bps",   "t10y3m_regime"),
+        ("Curve 10Y-3M",  "t10y3m",            f"{raw.get('t10y3m', float('nan'))*100:+.0f} bps",   "t10y3m_regime"),
+        ("Curve 10Y-2Y",  "t10y2y",            f"{raw.get('t10y2y', float('nan'))*100:+.0f} bps",   "t10y2y_regime"),
+        ("SE 10Y",        "se_10y",            f"{raw.get('se_10y', float('nan')):.2f}%",            "se_10y_regime"),
         ("USD",           "usd",               f"{raw.get('usd', float('nan')):.1f}",               "usd_regime"),
     ]
 

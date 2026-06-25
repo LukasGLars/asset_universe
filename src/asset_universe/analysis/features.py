@@ -30,7 +30,8 @@ PRICE_TICKERS: dict[str, tuple[str, str]] = {
     "PHAG":  ("commodities", "PHAG_L"),
 }
 
-MACRO_IDS = ["DFII10", "BAA10Y", "T10Y3M", "DGS10", "T10YIE", "DTWEXBGS", "BAMLH0A0HYM2"]
+MACRO_IDS = ["DFII10", "BAA10Y", "T10Y3M", "T10Y2Y", "DGS10", "T10YIE",
+             "DTWEXBGS", "BAMLH0A0HYM2", "IRLTLT01SEM156N"]
 
 
 def _price(data_dir: Path, category: str, ticker: str) -> pd.Series:
@@ -79,6 +80,14 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
     # True inversion: 10Y yield below 3M yield (T10Y3M < 0).
     # Threshold is 0 by economic definition, not a percentile.
     cols["t10y3m_inverted"] = (curve < 0).astype(float)
+
+    t10y2y = _macro(data_dir, "T10Y2Y")
+    cols["t10y2y"]          = t10y2y
+    cols["t10y2y_inverted"] = (t10y2y < 0).astype(float)
+
+    se_10y = _macro(data_dir, "IRLTLT01SEM156N")
+    cols["se_10y"]          = se_10y
+    cols["se_10y_20d_delta"] = se_10y.diff(20)
 
     nominal = _macro(data_dir, "DGS10")
     cols["nominal_10y"]          = nominal
@@ -137,11 +146,18 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
 
     macro_cols = ["ry", "ry_10d_ma", "ry_90d_ma", "ry_rising",
                   "baa10y", "baa10y_20d_delta", "t10y3m", "t10y3m_inverted",
+                  "t10y2y", "t10y2y_inverted",
                   "nominal_10y", "nominal_10y_20d_delta", "nominal_10y_5d_delta",
                   "breakeven", "breakeven_20d_delta",
                   "usd", "hy_oas", "hy_5d_delta", "hy_10d_delta",
                   "hy_20d_delta", "hy_ig_divergence"]
     existing_macro = [c for c in macro_cols if c in df.columns]
     df[existing_macro] = df[existing_macro].ffill(limit=5)
+
+    # Monthly series: forward-fill up to 45 trading days (~2 months) to cover
+    # IRLTLT01SEM156N publication lag of ~1 month plus current partial month.
+    monthly_cols = ["se_10y", "se_10y_20d_delta"]
+    existing_monthly = [c for c in monthly_cols if c in df.columns]
+    df[existing_monthly] = df[existing_monthly].ffill(limit=45)
 
     return df
