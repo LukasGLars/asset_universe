@@ -3,7 +3,8 @@ T10Y3M,10yr-3mo Yield Spread,rates
 T10Y2Y,10yr-2yr Yield Spread,rates
 DFII10,10yr Real Yield (TIPS),rates
 DTWEXBGS,USD Trade-Weighted Index,fx
-BAMLH0A0HYM2,HY Credit OAS Spread,credit
+BAMLH0A0HYM2,HY Credit OAS Spread (3yr API limit),credit
+BAA10Y,Moody Baa-10Y Treasury Spread (IG),credit
 PCEPILFE,Core PCE Inflation,macro
 UNRATE,Unemployment Rate,macro
 ICSA,Initial Jobless Claims,macro
