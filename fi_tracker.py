@@ -26,18 +26,18 @@ trig = portfolio.trigger_states(DATA_DIR)
 tpv = fi["tpv_sek"]
 
 print("=" * 62)
-print("REACTOR CORE  —  PORTFOLIO SNAPSHOT")
+print("REACTOR CORE -- PORTFOLIO SNAPSHOT")
 print("=" * 62)
 print(f"{'Position':<22} {'Shares':>7} {'Price':>10} {'Value SEK':>12} {'Wt':>6}")
 print("-" * 62)
 
 for _, row in snap.iterrows():
-    shares_str = f"{int(row['shares'])}" if row["shares"] else "—"
+    shares_str = f"{int(row['shares'])}" if row["shares"] else "-"
     if pd.notna(row["price_sek"]):
         price_str = f"{row['price_sek']:,.0f} kr"
     else:
         price_str = "manual"
-    value_str = f"{row['value_sek']:,.0f} kr" if pd.notna(row["value_sek"]) else "—"
+    value_str = f"{row['value_sek']:,.0f} kr" if pd.notna(row["value_sek"]) else "-"
     wt_str    = f"{row['weight']:.1%}"
     print(f"  {row['name']:<20} {shares_str:>7} {price_str:>10} {value_str:>12} {wt_str:>6}")
 
