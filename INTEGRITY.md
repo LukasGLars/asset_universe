@@ -92,6 +92,14 @@ A finding that looks precise but rests on N=6 and a hand-drawn threshold is not 
 
 ---
 
+## Data source decisions
+
+**Credit spread proxy — BAA10Y not BAMLH0A0HYM2**
+The primary credit conditioning variable is `BAA10Y` (Moody's Baa minus 10Y Treasury, 26 years of history). The HY OAS series `BAMLH0A0HYM2` (ICE BofA) is restricted by FRED/ICE license to the most recent 3 years via API — insufficient for regime conditioning. `BAA10Y` is used for all historical conditioning. `BAMLH0A0HYM2` is retained for real-time HY monitoring and HY-IG divergence alerting only — it is not used as a conditioning variable.
+
+**HY-IG divergence signal**
+`hy_ig_divergence` = 20d change in HY OAS minus 20d change in BAA10Y (both in bps). When this exceeds 1.5 standard deviations of its own historical distribution, `regime_confidence` is set to UNCERTAIN — signalling that the BAA10Y-based regime label may be stale and a regime transition is possible.
+
 ## Scope
 
 This policy applies to:
