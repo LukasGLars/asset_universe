@@ -42,11 +42,39 @@ FI@50 PACE TRACKER
   Bull           +30%      20,201,624 kr       ~2035
 
 ==============================================================
-MACRO SIGNALS
+MACRO REGIME
 ==============================================================
 
-  HY-IG spread  : 271 bps
-  Real yield    : +2.29%  (10d +2.20%  |  90d +1.98%)  ^
-  Yield curve   : T10Y3M +1 bps
+  Feature                 Value   Regime  
+  ------------------------------------------
+  Nominal 10Y             4.50%   HIGH
+  Real Yield             +2.29%   HIGH  ^
+  Breakeven               2.18%   MID
+  HY OAS                271 bps   TIGHT
+  IG Credit               1.51%   TIGHT
+  Curve 10Y-3M          +56 bps   LOW
+  Curve 10Y-2Y          +30 bps   LOW
+  SE 10Y                  2.75%   MID
+  USD                     120.4   STRONG
+
+  HY 20d delta  : +0 bps  (flat)
+  Confidence    : HIGH
+  Data through  : 2026-06-24
+
+==============================================================
+PORTFOLIO SIGNALS
+==============================================================
+
+  Base: ry=HIGH  nominal_10y=HIGH  baa10y=TIGHT  usd=STRONG
+
+  Position          Wt    21d   63d   63d med  252d med  W252     N  Note
+  ----------------------------------------------------------------------
+  Gold           17.1%    LOW   LOW    +14.2%    +36.1%  100%    43  
+  Silver          3.1%    LOW   LOW     +6.9%    +42.6%  100%   519  ~base fallback
+  Eli Lilly      13.8%   HIGH  HIGH     +2.9%    +18.7%   72%   125  
+  Walmart        13.2%    MID   LOW     +7.2%    +42.5%  100%   520  ~base fallback
+  Cameco          8.7%    MID   MID     +7.6%     +4.5%   70%    30  
+  Vertiv          8.6%    LOW   MID    +14.4%    +41.9%  100%    62  
+  Broadcom        7.1%    LOW  HIGH    +13.6%    +79.2%  100%    55  
 
 ==============================================================
