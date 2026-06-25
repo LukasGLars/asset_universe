@@ -21,7 +21,6 @@ DATA_DIR = config.raw_data_dir()
 
 snap = portfolio.snapshot(DATA_DIR)
 fi   = portfolio.fi_pace(DATA_DIR)
-trig = portfolio.trigger_states(DATA_DIR)
 
 tpv = fi["tpv_sek"]
 
@@ -91,15 +90,48 @@ for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
     fi_str  = f"~{fi_year:.0f}" if fi_year < 2100 else ">2100"
     print(f"  {label:<14} {rate:>+.0%}  {proj:>14,.0f} kr  {fi_str:>10}")
 
-# ── Macro trigger states ───────────────────────────────────────────────────────
+# ── Macro regime table ─────────────────────────────────────────────────────────
+
+from asset_universe.analysis.engine import current_regime
 
 print(f"\n{'='*62}")
-print("MACRO SIGNALS")
+print("MACRO REGIME")
 print(f"{'='*62}")
 
-ry_arrow = "v" if trig["ry_signal"] == "COMPRESSING" else "^"
-print(f"\n  HY-IG spread  : {trig['hy_spread_bps']:.0f} bps")
-print(f"  Real yield    : {trig['ry_current']:+.2f}%  (10d {trig['ry_10d_ma']:+.2f}%  |  90d {trig['ry_90d_ma']:+.2f}%)  {ry_arrow}")
-print(f"  Yield curve   : T10Y3M {trig['curve_t10y3m']:+.0f} bps")
+try:
+    reg = current_regime(DATA_DIR)
+    raw = reg["raw"]
+    regimes = reg["regimes"]
+
+    ROWS = [
+        ("Nominal 10Y",   "nominal_10y",       f"{raw.get('nominal_10y', float('nan')):.2f}%",     "nominal_10y_regime"),
+        ("Real Yield",    "ry",                f"{raw.get('ry', float('nan')):+.2f}%",              "ry_regime"),
+        ("Breakeven",     "breakeven",         f"{raw.get('breakeven', float('nan')):.2f}%",        "breakeven_regime"),
+        ("HY OAS",        "hy_oas",            f"{raw.get('hy_oas', float('nan')):.0f} bps",        "hy_oas_regime"),
+        ("IG Credit",     "baa10y",            f"{raw.get('baa10y', float('nan')):.2f}%",           "baa10y_regime"),
+        ("Yield Curve",   "t10y3m",            f"{raw.get('t10y3m', float('nan'))*100:+.0f} bps",   "t10y3m_regime"),
+        ("USD",           "usd",               f"{raw.get('usd', float('nan')):.1f}",               "usd_regime"),
+    ]
+
+    ry_dir = "  ^" if raw.get("ry_rising") == 1.0 else "  v"
+
+    print(f"\n  {'Feature':<18} {'Value':>10}   {'Regime':<8}")
+    print(f"  {'-'*42}")
+    for label, key, val_str, regime_key in ROWS:
+        regime = regimes.get(regime_key, "--")
+        suffix = ry_dir if key == "ry" else ""
+        print(f"  {label:<18} {val_str:>10}   {regime}{suffix}")
+
+    # HY velocity
+    hy_20d = raw.get("hy_20d_delta")
+    if hy_20d is not None:
+        direction = "widening" if hy_20d > 5 else ("tightening" if hy_20d < -5 else "flat")
+        print(f"\n  HY 20d delta  : {hy_20d:+.0f} bps  ({direction})")
+
+    print(f"  Confidence    : {reg['confidence']}")
+    print(f"  Data through  : {reg['date']}")
+
+except Exception as e:
+    print(f"  [regime unavailable: {e}]")
 
 print(f"\n{'='*62}")
