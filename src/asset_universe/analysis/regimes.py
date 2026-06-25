@@ -16,10 +16,12 @@ from .. import config
 
 # Features used for regime conditioning and their human-readable labels
 REGIME_FEATURES: dict[str, dict[str, str]] = {
-    "ry":     {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
-    "baa10y": {"LOW": "TIGHT",  "MID": "MID", "HIGH": "WIDE"},
-    "t10y3m": {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
-    "usd":    {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
+    "ry":          {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "nominal_10y": {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "breakeven":   {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "baa10y":      {"LOW": "TIGHT",  "MID": "MID", "HIGH": "WIDE"},
+    "t10y3m":      {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "usd":         {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
 }
 
 # Terms that carry a specific numeric definition and cannot be used as p33/p67 bin labels.

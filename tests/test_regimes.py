@@ -64,6 +64,8 @@ def _synthetic_features(seed: int = 42, n: int = 300) -> pd.DataFrame:
     return pd.DataFrame(
         {
             "ry":              rng.normal(1.0, 0.8, n),
+            "nominal_10y":     rng.normal(4.0, 0.8, n),
+            "breakeven":       rng.normal(2.3, 0.4, n),
             "baa10y":          rng.normal(2.3, 0.5, n),
             "t10y3m":          rng.normal(0.5, 1.2, n),   # mix of positive and negative
             "usd":             rng.normal(105, 10,  n),

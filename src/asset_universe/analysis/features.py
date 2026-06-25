@@ -30,7 +30,7 @@ PRICE_TICKERS: dict[str, tuple[str, str]] = {
     "PHAG":  ("commodities", "PHAG_L"),
 }
 
-MACRO_IDS = ["DFII10", "BAA10Y", "T10Y3M", "DTWEXBGS", "BAMLH0A0HYM2"]
+MACRO_IDS = ["DFII10", "BAA10Y", "T10Y3M", "DGS10", "T10YIE", "DTWEXBGS", "BAMLH0A0HYM2"]
 
 
 def _price(data_dir: Path, category: str, ticker: str) -> pd.Series:
@@ -80,6 +80,15 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
     # Threshold is 0 by economic definition, not a percentile.
     cols["t10y3m_inverted"] = (curve < 0).astype(float)
 
+    nominal = _macro(data_dir, "DGS10")
+    cols["nominal_10y"]          = nominal
+    cols["nominal_10y_20d_delta"] = nominal.diff(20)
+    cols["nominal_10y_5d_delta"]  = nominal.diff(5)
+
+    breakeven = _macro(data_dir, "T10YIE")
+    cols["breakeven"]          = breakeven
+    cols["breakeven_20d_delta"] = breakeven.diff(20)
+
     usd = _macro(data_dir, "DTWEXBGS")
     cols["usd"] = usd
 
@@ -127,8 +136,10 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
     df = pd.DataFrame(cols).sort_index()
 
     macro_cols = ["ry", "ry_10d_ma", "ry_90d_ma", "ry_rising",
-                  "baa10y", "baa10y_20d_delta", "t10y3m", "t10y3m_inverted", "usd",
-                  "hy_oas", "hy_5d_delta", "hy_10d_delta",
+                  "baa10y", "baa10y_20d_delta", "t10y3m", "t10y3m_inverted",
+                  "nominal_10y", "nominal_10y_20d_delta", "nominal_10y_5d_delta",
+                  "breakeven", "breakeven_20d_delta",
+                  "usd", "hy_oas", "hy_5d_delta", "hy_10d_delta",
                   "hy_20d_delta", "hy_ig_divergence"]
     existing_macro = [c for c in macro_cols if c in df.columns]
     df[existing_macro] = df[existing_macro].ffill(limit=5)
