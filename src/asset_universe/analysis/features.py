@@ -76,6 +76,9 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
 
     curve = _macro(data_dir, "T10Y3M")
     cols["t10y3m"] = curve
+    # True inversion: 10Y yield below 3M yield (T10Y3M < 0).
+    # Threshold is 0 by economic definition, not a percentile.
+    cols["t10y3m_inverted"] = (curve < 0).astype(float)
 
     usd = _macro(data_dir, "DTWEXBGS")
     cols["usd"] = usd
@@ -124,7 +127,7 @@ def build(data_dir: Path | None = None) -> pd.DataFrame:
     df = pd.DataFrame(cols).sort_index()
 
     macro_cols = ["ry", "ry_10d_ma", "ry_90d_ma", "ry_rising",
-                  "baa10y", "baa10y_20d_delta", "t10y3m", "usd",
+                  "baa10y", "baa10y_20d_delta", "t10y3m", "t10y3m_inverted", "usd",
                   "hy_oas", "hy_5d_delta", "hy_10d_delta",
                   "hy_20d_delta", "hy_ig_divergence"]
     existing_macro = [c for c in macro_cols if c in df.columns]

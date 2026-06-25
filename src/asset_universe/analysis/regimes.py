@@ -16,10 +16,10 @@ from .. import config
 
 # Features used for regime conditioning and their human-readable labels
 REGIME_FEATURES: dict[str, dict[str, str]] = {
-    "ry":     {"LOW": "LOW",      "MID": "MID",    "HIGH": "HIGH"},
-    "baa10y": {"LOW": "TIGHT",    "MID": "MID",    "HIGH": "WIDE"},
-    "t10y3m": {"LOW": "INVERTED", "MID": "FLAT",   "HIGH": "STEEP"},
-    "usd":    {"LOW": "WEAK",     "MID": "MID",    "HIGH": "STRONG"},
+    "ry":     {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "baa10y": {"LOW": "TIGHT",  "MID": "MID", "HIGH": "WIDE"},
+    "t10y3m": {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
+    "usd":    {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
 }
 
 # Confidence flag: HY-IG divergence beyond this many std devs -> UNCERTAIN

@@ -170,7 +170,7 @@ def current_regime(data_dir: Path | None = None) -> dict[str, Any]:
     today = labeled_df.iloc[-1]
 
     regime_cols  = [c for c in labeled_df.columns if c.endswith("_regime")]
-    raw_features = ["ry", "baa10y", "t10y3m", "usd",
+    raw_features = ["ry", "baa10y", "t10y3m", "t10y3m_inverted", "usd",
                     "hy_oas", "hy_5d_delta", "hy_10d_delta", "hy_20d_delta",
                     "hy_ig_divergence", "ry_rising"]
 
