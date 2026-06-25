@@ -92,6 +92,22 @@ A finding that looks precise but rests on N=6 and a hand-drawn threshold is not 
 
 ---
 
+## 8. Label standards for percentile-derived bins
+
+p33/p67 tertile labels must use directionally neutral terms: **LOW / MID / HIGH** (or directional synonyms that carry no specific numeric definition, e.g. TIGHT/WIDE for spreads, WEAK/STRONG for USD).
+
+**Prohibited as tertile labels:** INVERTED, RECESSION, CRISIS, EXPANSION, DEPRESSION, STRESS, RISK-OFF, RISK-ON, CONTRACTION, BEAR, BULL — and any other term that implies a specific numeric boundary.
+
+These terms are prohibited because a percentile split assigns the label to a statistical position, not an economic state. When the boundary of the economic state (e.g. T10Y3M < 0 = inverted) does not align with the p33 percentile, the label is factually wrong.
+
+**Correct pattern for economically-defined states:** add a separate boolean feature with an explicit threshold derived from the economic definition, not from the data distribution. Example: `t10y3m_inverted = (T10Y3M < 0).astype(float)`.
+
+**Enforcement:** `PROHIBITED_LABEL_TERMS` in `regimes.py` is checked by `tests/test_regimes.py::test_no_prohibited_labels_in_regime_features` on every CI run.
+
+**Before assigning any new label:** call `describe_bins(df, thresholds)` and examine the actual bin contents. Name the bin after what you see, not what you expected.
+
+---
+
 ## Data source decisions
 
 **Credit spread proxy — BAA10Y not BAMLH0A0HYM2**

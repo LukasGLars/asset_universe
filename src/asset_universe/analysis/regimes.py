@@ -22,6 +22,15 @@ REGIME_FEATURES: dict[str, dict[str, str]] = {
     "usd":    {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
 }
 
+# Terms that carry a specific numeric definition and cannot be used as p33/p67 bin labels.
+# Economic states with a numeric boundary (e.g. INVERTED = T10Y3M < 0) must be separate
+# boolean features — not tertile labels — so they track the actual boundary, not a percentile.
+# See INTEGRITY.md Rule 8.
+PROHIBITED_LABEL_TERMS: frozenset[str] = frozenset({
+    "INVERTED", "RECESSION", "CRISIS", "EXPANSION", "DEPRESSION",
+    "STRESS", "RISK-OFF", "RISK-ON", "CONTRACTION", "BEAR", "BULL",
+})
+
 # Confidence flag: HY-IG divergence beyond this many std devs -> UNCERTAIN
 HY_DIVERGENCE_STD_THRESHOLD = 1.5
 
@@ -108,4 +117,43 @@ def describe_thresholds(thresholds: dict[str, tuple[float, float]]) -> str:
         mid = label_map.get("MID", "MID")
         hi = label_map.get("HIGH", "HIGH")
         lines.append(f"  {feat:10}  {lo} (<{p33:.2f}) | {mid} ({p33:.2f}-{p67:.2f}) | {hi} (>{p67:.2f})")
+    return "\n".join(lines)
+
+
+def describe_bins(df: pd.DataFrame, thresholds: dict[str, tuple[float, float]]) -> str:
+    """
+    Show what is actually inside each bin — mean, range, N — before any label
+    is attached. Call this when adding a new feature or label to REGIME_FEATURES
+    so names are assigned after inspecting the data, not before.
+
+    Example output for t10y3m LOW bin:
+      t10y3m  LOW  n=847  mean=-0.28  range=[-1.62, 0.66]  negative=68%
+    """
+    lines = ["Bin content summary (examine before assigning labels):"]
+    for feat, (p33, p67) in thresholds.items():
+        if feat not in df.columns:
+            continue
+        s = df[feat].dropna()
+        label_map = REGIME_FEATURES.get(feat, {})
+        bins = {
+            "LOW":  s[s <= p33],
+            "MID":  s[(s > p33) & (s <= p67)],
+            "HIGH": s[s > p67],
+        }
+        for position, bin_s in bins.items():
+            if bin_s.empty:
+                continue
+            lbl = label_map.get(position, position)
+            n = len(bin_s)
+            mean = bin_s.mean()
+            lo_val, hi_val = bin_s.min(), bin_s.max()
+            row = (
+                f"  {feat:10}  {lbl:8}  n={n}  "
+                f"mean={mean:+.2f}  range=[{lo_val:.2f}, {hi_val:.2f}]"
+            )
+            # For any bin that could straddle zero: show % negative and % positive
+            if lo_val < 0 < hi_val:
+                pct_neg = (bin_s < 0).mean() * 100
+                row += f"  negative={pct_neg:.0f}%"
+            lines.append(row)
     return "\n".join(lines)
