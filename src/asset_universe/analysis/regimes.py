@@ -25,6 +25,27 @@ REGIME_FEATURES: dict[str, dict[str, str]] = {
     "t10y2y":      {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
     "se_10y":      {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
     "usd":         {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
+    # ── Price action momentum (p33/p67 tertile splits) ──────────────────────
+    # Enables conditioning on recent price behaviour alongside macro regime.
+    # LOW = bottom third of historical returns = asset has been selling off.
+    "GC_F_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "GC_F_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "SI_F_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "SI_F_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "LLY_mom_21d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "LLY_mom_63d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "WMT_mom_21d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "WMT_mom_63d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "CCJ_mom_21d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "CCJ_mom_63d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "VRT_mom_21d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "VRT_mom_63d":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "AVGO_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "AVGO_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PPFB_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PPFB_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PHAG_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PHAG_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
 }
 
 # Terms that carry a specific numeric definition and cannot be used as p33/p67 bin labels.

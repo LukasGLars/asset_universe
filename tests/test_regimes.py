@@ -73,6 +73,10 @@ def _synthetic_features(seed: int = 42, n: int = 300) -> pd.DataFrame:
             "se_10y":          rng.normal(1.5, 0.8, n),
             "usd":             rng.normal(105, 10,  n),
             "hy_ig_divergence": rng.normal(0, 10,  n),
+            # Price momentum
+            **{f"{t}_mom_{w}d": rng.normal(0.05, 0.15, n)
+               for t in ["GC_F","SI_F","LLY","WMT","CCJ","VRT","AVGO","PPFB","PHAG"]
+               for w in [21, 63]},
         },
         index=idx,
     )
