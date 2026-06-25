@@ -20,6 +20,7 @@ REGIME_FEATURES: dict[str, dict[str, str]] = {
     "nominal_10y": {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
     "breakeven":   {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
     "baa10y":      {"LOW": "TIGHT",  "MID": "MID", "HIGH": "WIDE"},
+    "hy_oas":      {"LOW": "TIGHT",  "MID": "MID", "HIGH": "WIDE"},
     "t10y3m":      {"LOW": "LOW",    "MID": "MID", "HIGH": "HIGH"},
     "usd":         {"LOW": "WEAK",   "MID": "MID", "HIGH": "STRONG"},
 }
