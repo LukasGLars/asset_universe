@@ -81,7 +81,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "home_base"
-value_sek = 279453
+value_sek = 279489
 
 [[positions]]
 name      = "War Chest"
@@ -90,4 +90,4 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "war_chest"
-value_sek = 34205
+value_sek = 1959
