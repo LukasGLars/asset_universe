@@ -7,6 +7,7 @@ See INTEGRITY.md for evidence standards.
 """
 from __future__ import annotations
 
+from datetime import date as _date, datetime as _datetime
 from pathlib import Path
 from typing import Any
 
@@ -156,6 +157,217 @@ def query(
             ),
         },
     }
+
+
+def _next_earnings(ticker: str) -> "_date | None":
+    """Fetch next earnings date for ticker via yfinance. Returns None on failure."""
+    today = _date.today()
+    try:
+        import yfinance as yf
+        t = yf.Ticker(ticker)
+        try:
+            df = t.earnings_dates
+            if df is not None and not df.empty:
+                future = [idx.date() for idx in df.index
+                          if hasattr(idx, "date") and idx.date() >= today]
+                if future:
+                    return min(future)
+        except Exception:
+            pass
+        cal = t.calendar
+        if cal:
+            val = cal.get("Earnings Date")
+            if isinstance(val, list):
+                val = val[0] if val else None
+            if val is not None:
+                d = (val.date() if hasattr(val, "date")
+                     else _datetime.strptime(str(val)[:10], "%Y-%m-%d").date())
+                if d >= today:
+                    return d
+    except Exception:
+        pass
+    return None
+
+
+def _benchmark_prices(data_dir: Path, benchmark: str) -> pd.Series:
+    """Load benchmark close prices. Tries parquet store first, then yfinance."""
+    for cat in ("equities", "intl_etfs"):
+        path = reader.ticker_path(data_dir, cat, benchmark)
+        if path.exists():
+            df = pd.read_parquet(path)
+            df["date"] = pd.to_datetime(df["date"])
+            return df.set_index("date").sort_index()["close"]
+    try:
+        import yfinance as yf
+        hist = yf.download(benchmark, period="1y", auto_adjust=True, progress=False)
+        if not hist.empty:
+            s = hist["Close"].squeeze()
+            s.index = pd.to_datetime(s.index)
+            return s.sort_index().rename(benchmark)
+    except Exception:
+        pass
+    return pd.Series(dtype=float, name=benchmark)
+
+
+def screen_tactical(
+    conditions: dict[str, str],
+    tickers: list[str],
+    forward_days: list[int] | None = None,
+    category: str = "equities",
+    benchmark: str = "SPY",
+    hold_days: int = 30,
+    min_n: int = 30,
+    data_dir: Path | None = None,
+) -> pd.DataFrame:
+    """
+    Four-gate screen for tactical (21-30 day) entries.
+
+    Gate 1 — Macro regime: AND all conditions, derived live from current_regime().
+    Gate 2 — Entry quality: MA50 extension p33/p67 on matched dates; HIGH excluded.
+    Gate 3 — Relative strength: rs_20d > 0, ticker must outperform benchmark.
+    Gate 4 — Catalyst calendar: no earnings within hold_days of today.
+
+    Forward returns conditioned on gates 1 + 2 simultaneously.
+    Temporal diversity (THIN/MODERATE/ROBUST) is mandatory in every output row.
+
+    Returns DataFrame sorted by rs_20d descending (strongest RS first).
+    """
+    if forward_days is None:
+        forward_days = [21, 63, 252]
+    if data_dir is None:
+        data_dir = config.raw_data_dir()
+
+    labeled_df, _ = regime_module.build(data_dir)
+
+    mask = pd.Series(True, index=labeled_df.index)
+    for key, val in conditions.items():
+        if key not in labeled_df.columns:
+            raise ValueError(
+                f"Condition key '{key}' not in feature set. "
+                f"Available: {[c for c in labeled_df.columns if c.endswith('_regime')]}"
+            )
+        mask &= labeled_df[key] == val
+    base_dates = labeled_df.index[mask]
+
+    # Gate 3 baseline: benchmark 20d and 63d returns
+    bm = _benchmark_prices(data_dir, benchmark)
+    bm_ret_20d = float(bm.iloc[-1] / bm.iloc[-22] - 1) if len(bm) >= 22 else None
+    bm_ret_63d = float(bm.iloc[-1] / bm.iloc[-64] - 1) if len(bm) >= 64 else None
+
+    today = _date.today()
+    rows = []
+
+    for tkr in tickers:
+        path = reader.ticker_path(data_dir, category, tkr)
+        if not path.exists():
+            continue
+        raw_df = pd.read_parquet(path)
+        raw_df["date"] = pd.to_datetime(raw_df["date"])
+        prices = raw_df.set_index("date").sort_index()["close"]
+        if len(prices) < 200:
+            continue
+
+        # Gate 2: MA50 extension
+        ma50     = prices.rolling(50, min_periods=25).mean()
+        ma50_ext = prices / ma50 - 1
+
+        current_ext = float(ma50_ext.iloc[-1])
+        if pd.isna(current_ext):
+            continue
+
+        ext_on_matched = ma50_ext.reindex(base_dates).dropna()
+        if len(ext_on_matched) < min_n:
+            continue
+
+        p33 = float(ext_on_matched.quantile(0.3333))
+        p67 = float(ext_on_matched.quantile(0.6667))
+
+        if current_ext > p67:
+            continue  # HIGH extension — excluded
+        bucket = "MID" if current_ext > p33 else "LOW"
+
+        # Gate 3: relative strength — must outperform benchmark over 20d
+        tkr_ret_20d = float(prices.iloc[-1] / prices.iloc[-22] - 1) if len(prices) >= 22 else None
+        tkr_ret_63d = float(prices.iloc[-1] / prices.iloc[-64] - 1) if len(prices) >= 64 else None
+        rs_20d = (tkr_ret_20d - bm_ret_20d
+                  if tkr_ret_20d is not None and bm_ret_20d is not None else None)
+        rs_63d = (tkr_ret_63d - bm_ret_63d
+                  if tkr_ret_63d is not None and bm_ret_63d is not None else None)
+
+        if rs_20d is None or rs_20d <= 0:
+            continue  # underperforming benchmark over 20d
+
+        # Gate 4: earnings calendar
+        earn_date = _next_earnings(tkr)
+        earn_days = (earn_date - today).days if earn_date else None
+        if earn_days is not None and earn_days <= hold_days:
+            continue  # earnings inside hold window
+        earn_flag = f"earn {earn_days}d" if earn_days is not None else "earn:?"
+
+        # Entry-quality-conditioned dates: gates 1 + 2 combined
+        clean_dates = base_dates[
+            ma50_ext.reindex(base_dates).fillna(float("inf")) <= p67
+        ]
+
+        # Temporal diversity
+        if len(clean_dates) >= 2:
+            span_yr   = (clean_dates[-1] - clean_dates[0]).days / 365.25
+            cutoff_3y = clean_dates[-1] - pd.DateOffset(years=3)
+            pct_3y    = float((clean_dates >= cutoff_3y).mean())
+        else:
+            span_yr, pct_3y = 0.0, 1.0
+
+        if span_yr >= 10 and pct_3y < 0.50:
+            diversity = "ROBUST"
+        elif span_yr < 5 or pct_3y > 0.80:
+            diversity = "THIN"
+        else:
+            diversity = "MODERATE"
+
+        row: dict[str, Any] = {
+            "ticker":      tkr,
+            "ma50_ext":    round(current_ext, 4),
+            "ma50_bucket": bucket,
+            "p67_ext":     round(p67, 4),
+            "rs_20d":      round(rs_20d, 4),
+            "rs_63d":      round(rs_63d, 4) if rs_63d is not None else float("nan"),
+            "earn_flag":   earn_flag,
+            "yrs_span":    round(span_yr, 1),
+            "pct_3yr":     round(pct_3y, 2),
+            "diversity":   diversity,
+        }
+
+        for fwd in forward_days:
+            rets = [
+                r for dt in clean_dates
+                if (r := _forward_return(prices, dt, fwd)) is not None
+            ]
+            if len(rets) >= min_n:
+                s = pd.Series(rets)
+                row[f"n_{fwd}d"]   = len(rets)
+                row[f"med_{fwd}d"] = round(float(s.median()), 4)
+                row[f"win_{fwd}d"] = round(float((s > 0).mean()), 4)
+            else:
+                row[f"n_{fwd}d"]   = len(rets)
+                row[f"med_{fwd}d"] = float("nan")
+                row[f"win_{fwd}d"] = float("nan")
+
+        rows.append(row)
+
+    if not rows:
+        return pd.DataFrame()
+
+    out = pd.DataFrame(rows).dropna(subset=[f"med_{forward_days[-1]}d"])
+
+    # Percentile ranks within surviving universe (context, not a gate)
+    if len(out) > 1:
+        out["rs_20d_pct"] = out["rs_20d"].rank(pct=True).round(2)
+        out["rs_63d_pct"] = out["rs_63d"].rank(pct=True).round(2)
+    else:
+        out["rs_20d_pct"] = 1.0
+        out["rs_63d_pct"] = 1.0
+
+    return out.sort_values("rs_20d", ascending=False).reset_index(drop=True)
 
 
 def current_regime(data_dir: Path | None = None) -> dict[str, Any]:

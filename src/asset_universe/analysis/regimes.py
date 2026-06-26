@@ -46,6 +46,18 @@ REGIME_FEATURES: dict[str, dict[str, str]] = {
     "PPFB_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
     "PHAG_mom_21d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
     "PHAG_mom_63d":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    # ── MA50 extension (price / MA50 - 1, p33/p67 tertile splits) ───────────
+    # LOW  = price near or below MA50 — clean entry, not extended.
+    # HIGH = price well above MA50 — mean reversion risk for short-term holds.
+    "GC_F_ma50_dist":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "SI_F_ma50_dist":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "LLY_ma50_dist":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "WMT_ma50_dist":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "CCJ_ma50_dist":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "VRT_ma50_dist":   {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "AVGO_ma50_dist":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PPFB_ma50_dist":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
+    "PHAG_ma50_dist":  {"LOW": "LOW", "MID": "MID", "HIGH": "HIGH"},
 }
 
 # Terms that carry a specific numeric definition and cannot be used as p33/p67 bin labels.

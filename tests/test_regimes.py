@@ -77,6 +77,8 @@ def _synthetic_features(seed: int = 42, n: int = 300) -> pd.DataFrame:
             **{f"{t}_mom_{w}d": rng.normal(0.05, 0.15, n)
                for t in ["GC_F","SI_F","LLY","WMT","CCJ","VRT","AVGO","PPFB","PHAG"]
                for w in [21, 63]},
+            **{f"{t}_ma50_dist": rng.normal(0.05, 0.10, n)
+               for t in ["GC_F","SI_F","LLY","WMT","CCJ","VRT","AVGO","PPFB","PHAG"]},
         },
         index=idx,
     )
