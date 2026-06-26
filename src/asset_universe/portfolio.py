@@ -7,6 +7,10 @@ FI@50 AWAR vs required CAGR, and live macro trigger states.
 
 from __future__ import annotations
 
+import csv
+import io
+import re
+import urllib.request
 from datetime import date
 from pathlib import Path
 
@@ -15,6 +19,27 @@ import pandas as pd
 
 from . import config
 from .store import reader
+
+_SHEET_ID  = "1pnwGgNGblXw5X4x7CFmngksQZpL1MIbMJnJvZdsJCRs"
+_SHEET_GID = "0"
+
+
+def _fetch_sheet_tpv() -> float | None:
+    """Fetch current portfolio value from Google Sheet GID 0 row 2."""
+    try:
+        url = (f"https://docs.google.com/spreadsheets/d/{_SHEET_ID}"
+               f"/export?format=csv&gid={_SHEET_GID}")
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            raw = resp.read().decode("utf-8-sig")
+        rows = list(csv.reader(io.StringIO(raw)))
+        # Row index 1: current date + current value
+        if len(rows) >= 2 and len(rows[1]) >= 2:
+            digits = re.sub(r"[^\d]", "", rows[1][1])
+            return float(digits) if digits else None
+    except Exception:
+        pass
+    return None
 
 try:
     import tomllib
@@ -108,8 +133,8 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     cfg = _load_portfolio_config()
     fi = cfg["fi"]
 
-    snap = snapshot(data_dir)
-    tpv = snap["value_sek"].sum()
+    sheet_tpv = _fetch_sheet_tpv()
+    tpv = sheet_tpv if sheet_tpv is not None else snapshot(data_dir)["value_sek"].sum()
 
     start_date  = pd.Timestamp(fi["start_date"])
     start_value = fi["start_value_sek"]
