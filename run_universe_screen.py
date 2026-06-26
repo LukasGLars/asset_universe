@@ -1,32 +1,25 @@
 """
-Full Universe Screen
+Universe Screen — Regime-Conditional
 
-Screens all Avanza-accessible assets by long-run risk-adjusted compounding.
+Ranks all available assets by their empirical forward return distributions
+conditioned on the current macro regime (Core 3 + USD: ry, nominal_10y,
+baa10y, usd). No history cutoffs. No unconditional Sharpe ranking.
+
+Transparency per row:
+  N         — matched dates with valid 252d forward return
+  diversity — THIN / MODERATE / ROBUST (temporal spread of matched dates)
+  history   — full available history, not truncated
 
 Sources
 -------
-  US equities  : parquet store (504 tickers, data/raw/equities/)
-  Commodities  : parquet store (GC_F=gold, SI_F=silver)
-  Swedish caps : yfinance (.ST)
-  UCITS ETFs   : yfinance (.DE / .L / .CO)
-
-Filter
-------
-  >= 12yr history (spans GFC, COVID, 2022 rate-hike cycle)
-
-Metrics
--------
-  history_yr, CAGR, vol, Sharpe (RF=0), max_dd, Calmar
-
-Regime layer
-------------
-  RY regime (LOW/MID/HIGH) from DFII10 parquet.
-  Conditional CAGR per regime state for top 40 by Sharpe.
+  US equities  : parquet store  (data/raw/equities/)
+  Commodities  : parquet store  (data/raw/commodities/)
+  Swedish caps : yfinance (.ST) — period=max
+  UCITS ETFs   : yfinance (.DE / .L / .CO) — period=max
 
 Output
 ------
-  Console ranked table + regime breakdown + current-regime best-list
-  Saves: universe_screen_results.csv
+  Console ranked table + universe_screen_results.csv
 """
 from __future__ import annotations
 
@@ -42,327 +35,266 @@ import pandas as pd
 import yfinance as yf
 
 from asset_universe import config
+from asset_universe.analysis import regimes as regime_module
+from asset_universe.analysis.engine import current_regime
 
-# ── Config ────────────────────────────────────────────────────────────────────
-MIN_YEARS       = 12
-HISTORY_START   = "2004-01-01"
-TOP_N_REGIME    = 40
-OUT_CSV         = Path(__file__).parent / "universe_screen_results.csv"
-DATA_DIR        = config.raw_data_dir()
+DATA_DIR = config.raw_data_dir()
+OUT_CSV  = Path(__file__).parent / "universe_screen_results.csv"
 
-# ── Avanza-accessible Swedish large caps ─────────────────────────────────────
+# Core conditioning dimensions (empirically validated — signal audit)
+CORE_FEATURES = ["ry_regime", "baa10y_regime"]
+
+MIN_N = 10  # minimum matched dates to include an asset
+
 SWEDISH: dict[str, str] = {
-    "INVE-B.ST":    "Investor B",
-    "ATCO-A.ST":    "Atlas Copco A",
-    "HEX-B.ST":     "Hexagon B",
-    "SAND.ST":      "Sandvik",
-    "VOLV-B.ST":    "Volvo B",
-    "ESSITY-B.ST":  "Essity B",
-    "ERIC-B.ST":    "Ericsson B",
-    "AZN.ST":       "AstraZeneca",
-    "SHB-A.ST":     "Handelsbanken A",
-    "SEB-A.ST":     "SEB A",
-    "ALFA.ST":      "Alfa Laval",
-    "SKF-B.ST":     "SKF B",
-    "SWED-A.ST":    "Swedbank A",
-    "NIBE-B.ST":    "NIBE B",
-    "HM-B.ST":      "H&M B",
+    "INVE-B.ST":  "Investor B",
+    "ATCO-A.ST":  "Atlas Copco A",
+    "HEX-B.ST":   "Hexagon B",
+    "SAND.ST":    "Sandvik",
+    "VOLV-B.ST":  "Volvo B",
+    "ESSITY-B.ST":"Essity B",
+    "ERIC-B.ST":  "Ericsson B",
+    "AZN.ST":     "AstraZeneca",
+    "SHB-A.ST":   "Handelsbanken A",
+    "SEB-A.ST":   "SEB A",
+    "ALFA.ST":    "Alfa Laval",
+    "SKF-B.ST":   "SKF B",
+    "SWED-A.ST":  "Swedbank A",
+    "NIBE-B.ST":  "NIBE B",
+    "HM-B.ST":    "H&M B",
 }
 
-# ── UCITS ETFs available on Avanza ────────────────────────────────────────────
 UCITS: dict[str, str] = {
-    "SXR8.DE":    "iSh Core S&P 500",
-    "EUNL.DE":    "iSh MSCI World",
-    "EXXT.DE":    "iSh NASDAQ-100",
-    "EXSA.DE":    "iSh STOXX Europe 600",
-    "IQQH.DE":    "iSh Global Healthcare",
-    "EXV3.DE":    "iSh STOXX 600 HC",
-    "EXI2.DE":    "iSh STOXX 600 Tech",
-    "EXV6.DE":    "iSh STOXX 600 Energy",
-    "EXH1.DE":    "iSh Core MSCI Europe",
-    "SXRJ.DE":    "iSh Core MSCI Japan",
-    "EMIM.L":     "iSh Core MSCI EM",
-    "INRG.L":     "iSh Global Clean Energy",
-    "XMWO.DE":    "Xtrackers MSCI World",
-    "PPFB.DE":    "WisdomTree Phys Gold",
-    "PHAG.L":     "WisdomTree Phys Silver",
-    "4GLD.DE":    "Xetra-Gold",
-    "NOVO-B.CO":  "Novo Nordisk B",
-    "EXI3.DE":    "iSh STOXX 600 Financials",
-    "EXV1.DE":    "iSh STOXX 600 Materials",
-    "EXV4.DE":    "iSh STOXX 600 Industrials",
+    "SXR8.DE":   "iSh Core S&P 500",
+    "EUNL.DE":   "iSh MSCI World",
+    "EXXT.DE":   "iSh NASDAQ-100",
+    "EXSA.DE":   "iSh STOXX Europe 600",
+    "IQQH.DE":   "iSh Global Healthcare",
+    "EXV3.DE":   "iSh STOXX 600 HC",
+    "EXI2.DE":   "iSh STOXX 600 Tech",
+    "EXV6.DE":   "iSh STOXX 600 Energy",
+    "EXH1.DE":   "iSh Core MSCI Europe",
+    "SXRJ.DE":   "iSh Core MSCI Japan",
+    "EMIM.L":    "iSh Core MSCI EM",
+    "INRG.L":    "iSh Global Clean Energy",
+    "PPFB.DE":   "WisdomTree Phys Gold",
+    "PHAG.L":    "WisdomTree Phys Silver",
+    "4GLD.DE":   "Xetra-Gold",
+    "NOVO-B.CO": "Novo Nordisk B",
+    "EXI3.DE":   "iSh STOXX 600 Financials",
+    "EXV1.DE":   "iSh STOXX 600 Materials",
+    "EXV4.DE":   "iSh STOXX 600 Industrials",
+    "XMWO.DE":   "Xtrackers MSCI World",
 }
 
 
-# ── Metric computation ────────────────────────────────────────────────────────
-def _metrics(prices: pd.Series, name: str, ticker: str, category: str) -> dict | None:
-    s = prices.dropna()
-    if len(s) < MIN_YEARS * 200:
+def _forward_return(prices: pd.Series, date: pd.Timestamp, fwd_days: int) -> float | None:
+    idx = prices.index.searchsorted(date)
+    if idx >= len(prices):
         return None
-    lr   = np.log(s / s.shift(1)).dropna()
-    nyrs = len(lr) / 252
-    if nyrs < MIN_YEARS:
+    if abs((prices.index[idx] - date).days) > 5:
         return None
-    cagr   = (s.iloc[-1] / s.iloc[0]) ** (1 / nyrs) - 1
-    vol    = float(lr.std() * np.sqrt(252))
-    sharpe = cagr / vol if vol > 0 else 0.0
-    cum    = s / s.iloc[0]
-    dd     = (cum - cum.cummax()) / cum.cummax()
-    max_dd = float(dd.min())
-    calmar = cagr / abs(max_dd) if max_dd < 0 else 0.0
-    return {
-        "category":   category,
-        "ticker":     ticker,
-        "name":       name,
+    fwd_idx = idx + fwd_days
+    if fwd_idx >= len(prices):
+        return None
+    p0, p1 = prices.iloc[idx], prices.iloc[fwd_idx]
+    return (p1 - p0) / p0 if p0 > 0 else None
+
+
+def _diversity(dates: pd.DatetimeIndex) -> str:
+    if len(dates) < 2:
+        return "THIN"
+    span_yr = (dates[-1] - dates[0]).days / 365.25
+    pct_3y  = float((dates >= dates[-1] - pd.DateOffset(years=3)).mean())
+    if span_yr >= 10 and pct_3y < 0.50:
+        return "ROBUST"
+    if span_yr < 5 or pct_3y > 0.80:
+        return "THIN"
+    return "MODERATE"
+
+
+def _process(
+    prices: pd.Series,
+    ticker: str,
+    name: str,
+    category: str,
+    matched_dates: pd.DatetimeIndex,
+) -> dict | None:
+    prices = prices.dropna().sort_index()
+    if len(prices) < 50:
+        return None
+
+    nyrs = len(prices) / 252
+    cagr = float((prices.iloc[-1] / prices.iloc[0]) ** (1 / nyrs) - 1) if nyrs > 0.5 else float("nan")
+
+    fwd_horizons = [21, 63, 252]
+    rets: dict[int, list[float]] = {h: [] for h in fwd_horizons}
+    valid_dates_252: list[pd.Timestamp] = []
+
+    for dt in matched_dates:
+        r252 = _forward_return(prices, dt, 252)
+        if r252 is not None:
+            rets[252].append(r252)
+            valid_dates_252.append(dt)
+        for h in [21, 63]:
+            r = _forward_return(prices, dt, h)
+            if r is not None:
+                rets[h].append(r)
+
+    if len(rets[252]) < MIN_N:
+        return None
+
+    div = _diversity(pd.DatetimeIndex(valid_dates_252))
+
+    row: dict = {
+        "ticker":    ticker,
+        "name":      name,
+        "category":  category,
         "history_yr": round(nyrs, 1),
-        "start":      str(s.index[0].date()),
-        "cagr":       round(cagr, 4),
-        "vol":        round(vol, 4),
-        "sharpe":     round(sharpe, 3),
-        "max_dd":     round(max_dd, 4),
-        "calmar":     round(calmar, 3),
+        "start":     str(prices.index[0].date()),
+        "cagr":      round(cagr, 4),
+        "n_matched": len(rets[252]),
+        "diversity": div,
     }
+    for h in fwd_horizons:
+        rs = rets[h]
+        if len(rs) >= MIN_N:
+            s = pd.Series(rs)
+            row[f"med_{h}d"] = round(float(s.median()), 4)
+            row[f"win_{h}d"] = round(float((s > 0).mean()), 4)
+        else:
+            row[f"med_{h}d"] = float("nan")
+            row[f"win_{h}d"] = float("nan")
+    return row
 
 
-def _fetch_yf(ticker: str, name: str, category: str) -> tuple[dict | None, pd.Series | None]:
+def _fetch_yf(ticker: str) -> pd.Series | None:
     try:
-        raw = yf.Ticker(ticker).history(start=HISTORY_START, auto_adjust=True)
+        raw = yf.Ticker(ticker).history(period="max", auto_adjust=True)
         if raw.empty or "Close" not in raw.columns:
-            return None, None
+            return None
         s = raw["Close"].dropna()
         s.index = pd.to_datetime(s.index).tz_localize(None)
-        m = _metrics(s, name, ticker, category)
-        return m, s if m else (None, None)
+        return s.sort_index()
     except Exception:
-        return None, None
+        return None
 
 
-# ── RY regime labels ──────────────────────────────────────────────────────────
-def _ry_regimes() -> pd.Series:
-    path = DATA_DIR / "macro" / "DFII10.parquet"
-    df   = pd.read_parquet(path)
-    df["date"] = pd.to_datetime(df["date"])
-    ry   = df.set_index("date")["value"].sort_index().dropna()
-    ry_m = ry.resample("ME").last().dropna()
-    p33  = float(ry_m.quantile(0.333))
-    p67  = float(ry_m.quantile(0.667))
-    labels = ry_m.map(lambda v: "HIGH" if v >= p67 else ("LOW" if v <= p33 else "MID"))
-    return labels.rename("ry_regime")
+# ── Build regime labels and derive current conditions ─────────────────────────
+print("Building regime labels ...", flush=True)
+labeled_df, thresholds = regime_module.build(DATA_DIR)
 
+regime = current_regime(DATA_DIR)
+conditions: dict[str, str] = {
+    feat: regime["regimes"][feat]
+    for feat in CORE_FEATURES
+    if feat in regime["regimes"]
+}
 
-def _regime_cagr(prices: pd.Series, regimes: pd.Series) -> dict[str, float]:
-    m  = prices.resample("ME").last().dropna()
-    df = pd.DataFrame({"price": m, "regime": regimes}).dropna()
-    if df.empty:
-        return {}
-    df["lr"] = np.log(df["price"] / df["price"].shift(1))
-    df = df.dropna()
-    out: dict[str, float] = {}
-    for state in ("LOW", "MID", "HIGH"):
-        sub = df.loc[df["regime"] == state, "lr"]
-        if len(sub) >= 6:
-            out[state] = round(float(np.exp(sub.mean() * 12) - 1), 4)
-    return out
+print(f"  Date    : {regime['date']}", flush=True)
+print(f"  Conditions: {conditions}", flush=True)
 
+mask = pd.Series(True, index=labeled_df.index)
+for feat, val in conditions.items():
+    mask &= labeled_df[feat] == val
+matched_dates = labeled_df.index[mask]
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-print("Loading RY regimes ...", flush=True)
-ry_regimes = _ry_regimes()
+print(f"  Matched dates: {len(matched_dates)}  "
+      f"({matched_dates[0].date()} — {matched_dates[-1].date()})", flush=True)
 
-rows:     list[dict]       = []
-price_map: dict[str, pd.Series] = {}  # ticker -> price series for regime calc
+rows: list[dict] = []
 
-# 1. US equities from parquet
-print("Screening 504 US equities from parquet ...", flush=True)
+# ── US equities ───────────────────────────────────────────────────────────────
+print("\nScreening US equities ...", flush=True)
 eq_dir = DATA_DIR / "equities"
 us_pass = 0
 for f in sorted(eq_dir.glob("*.parquet")):
     try:
         df = pd.read_parquet(f)
         df["date"] = pd.to_datetime(df["date"])
-        s  = df.set_index("date")["close"].sort_index().dropna()
-        s  = s[s.index >= HISTORY_START]
-        m  = _metrics(s, f.stem, f.stem, "US Equity")
-        if m:
-            price_map[f.stem] = s
-            rows.append(m)
+        s = df.set_index("date")["close"].sort_index().dropna()
+        row = _process(s, f.stem, f.stem, "US Equity", matched_dates)
+        if row:
+            rows.append(row)
             us_pass += 1
     except Exception:
         pass
-print(f"  {us_pass} US equities passed {MIN_YEARS}yr filter", flush=True)
+print(f"  {us_pass} passed (N >= {MIN_N})", flush=True)
 
-# 2. Commodities from parquet (gold / silver as benchmarks)
-COMMODITIES = {"GC_F": "Gold (futures)", "SI_F": "Silver (futures)"}
-for sym, name in COMMODITIES.items():
+# ── Commodities ───────────────────────────────────────────────────────────────
+for sym, name in {"GC_F": "Gold (futures)", "SI_F": "Silver (futures)"}.items():
     path = DATA_DIR / "commodities" / f"{sym}.parquet"
     if not path.exists():
         continue
     try:
         df = pd.read_parquet(path)
         df["date"] = pd.to_datetime(df["date"])
-        s  = df.set_index("date")["close"].sort_index().dropna()
-        s  = s[s.index >= HISTORY_START]
-        m  = _metrics(s, name, sym, "Commodity")
-        if m:
-            price_map[sym] = s
-            rows.append(m)
+        s = df.set_index("date")["close"].sort_index().dropna()
+        row = _process(s, sym, name, "Commodity", matched_dates)
+        if row:
+            rows.append(row)
     except Exception:
         pass
 
-# 3. Swedish stocks via yfinance
-print("Fetching Swedish stocks via yfinance ...", flush=True)
-sw_pass = 0
-sw_fail: list[str] = []
+# ── Swedish stocks ────────────────────────────────────────────────────────────
+print("Fetching Swedish stocks ...", flush=True)
 for ticker, name in SWEDISH.items():
-    m, s = _fetch_yf(ticker, name, "Swedish")
-    if m and s is not None:
-        price_map[ticker] = s
-        rows.append(m)
-        sw_pass += 1
-        print(f"  OK  {ticker:<15}  {name:<22}  {m['history_yr']:.0f}yr  "
-              f"CAGR {m['cagr']:>+.1%}  Sharpe {m['sharpe']:.2f}", flush=True)
+    s = _fetch_yf(ticker)
+    if s is None:
+        print(f"  -- {ticker:<15} no data", flush=True)
+        continue
+    row = _process(s, ticker, name, "Swedish", matched_dates)
+    if row:
+        rows.append(row)
+        print(f"  OK {ticker:<15} {name:<22} {row['history_yr']:.0f}yr  N={row['n_matched']}  {row['diversity']}", flush=True)
     else:
-        sw_fail.append(ticker)
-        print(f"  --  {ticker:<15}  SKIP (no data / <{MIN_YEARS}yr)", flush=True)
+        print(f"  -- {ticker:<15} N < {MIN_N}", flush=True)
 
-# 4. UCITS ETFs via yfinance
-print("Fetching UCITS ETFs via yfinance ...", flush=True)
-etf_pass = 0
-etf_fail: list[str] = []
+# ── UCITS ETFs ────────────────────────────────────────────────────────────────
+print("Fetching UCITS ETFs ...", flush=True)
 for ticker, name in UCITS.items():
-    m, s = _fetch_yf(ticker, name, "UCITS ETF")
-    if m and s is not None:
-        price_map[ticker] = s
-        rows.append(m)
-        etf_pass += 1
-        print(f"  OK  {ticker:<12}  {name:<28}  {m['history_yr']:.0f}yr  "
-              f"CAGR {m['cagr']:>+.1%}  Sharpe {m['sharpe']:.2f}", flush=True)
+    s = _fetch_yf(ticker)
+    if s is None:
+        print(f"  -- {ticker:<12} no data", flush=True)
+        continue
+    row = _process(s, ticker, name, "UCITS ETF", matched_dates)
+    if row:
+        rows.append(row)
+        print(f"  OK {ticker:<12} {name:<28} {row['history_yr']:.0f}yr  N={row['n_matched']}  {row['diversity']}", flush=True)
     else:
-        etf_fail.append(ticker)
-        print(f"  --  {ticker:<12}  SKIP (no data / <{MIN_YEARS}yr)", flush=True)
+        print(f"  -- {ticker:<12} N < {MIN_N}", flush=True)
 
-# ── Compute regime-conditional CAGR for all assets ───────────────────────────
-print("\nComputing regime-conditional returns ...", flush=True)
-for row in rows:
-    tkr = row["ticker"]
-    s   = price_map.get(tkr)
-    if s is not None:
-        row["rc"] = _regime_cagr(s, ry_regimes)
-    else:
-        row["rc"] = {}
+# ── Results ───────────────────────────────────────────────────────────────────
+if not rows:
+    print("No assets passed screening.", flush=True)
+    sys.exit(1)
 
-# ── Build results DataFrame ───────────────────────────────────────────────────
-base_cols = [k for k in rows[0] if k != "rc"]
-df = pd.DataFrame([{k: v for k, v in r.items() if k != "rc"} for r in rows])
-rc_map = {r["ticker"]: r.get("rc", {}) for r in rows}
+df_out = pd.DataFrame(rows)
+df_out = df_out.sort_values("med_252d", ascending=False).reset_index(drop=True)
+df_out.index += 1
+df_out.to_csv(OUT_CSV, index_label="rank")
+print(f"\nSaved: {OUT_CSV}", flush=True)
 
-df["ry_low"]  = df["ticker"].map(lambda t: rc_map.get(t, {}).get("LOW",  float("nan")))
-df["ry_mid"]  = df["ticker"].map(lambda t: rc_map.get(t, {}).get("MID",  float("nan")))
-df["ry_high"] = df["ticker"].map(lambda t: rc_map.get(t, {}).get("HIGH", float("nan")))
-
-df = df.sort_values("sharpe", ascending=False).reset_index(drop=True)
-df.index += 1
-
-df.to_csv(OUT_CSV, index_label="rank")
-print(f"Saved: {OUT_CSV}\n", flush=True)
-
-# ── Print ranked table — top 50 ───────────────────────────────────────────────
-W = 100
+W = 122
+print()
 print("=" * W)
-print("UNIVERSE SCREEN  —  ranked by Sharpe  (>=12yr history, no crypto, no leverage)")
+print(f"UNIVERSE SCREEN  —  ranked by median 252d conditional return")
+print(f"Conditions: {conditions}  |  N >= {MIN_N}")
 print("=" * W)
-print(f"  {'#':>3}  {'Cat':<10}  {'Ticker':<14}  {'Name':<24}  "
-      f"{'Hist':>5}  {'CAGR':>7}  {'Vol':>6}  {'Sharpe':>7}  {'MaxDD':>7}  {'Calmar':>7}")
+print(f"  {'#':>4}  {'Cat':<10}  {'Ticker':<14}  {'Name':<24}  "
+      f"{'Hist':>5}  {'CAGR':>7}  {'N':>5}  {'Div':<8}  "
+      f"{'21d':>7}  {'63d':>7}  {'252d':>7}  {'W252':>6}")
 print("  " + "-" * (W - 2))
 
-for rank, row in df.head(50).iterrows():
-    cat  = row["category"][:10]
-    name = str(row["name"])[:24]
-    print(f"  {rank:>3}  {cat:<10}  {row['ticker']:<14}  {name:<24}  "
+for rank, row in df_out.iterrows():
+    print(f"  {rank:>4}  {str(row['category'])[:10]:<10}  {row['ticker']:<14}  "
+          f"{str(row['name'])[:24]:<24}  "
           f"{row['history_yr']:>5.1f}  {row['cagr']:>+6.1%}  "
-          f"{row['vol']:>5.1%}  {row['sharpe']:>7.3f}  "
-          f"{row['max_dd']:>+6.1%}  {row['calmar']:>7.3f}")
-
-total = len(df)
-print()
-print(f"  Showing top 50 of {total} assets that passed the {MIN_YEARS}yr filter.")
-print(f"  Full rankings saved to: {OUT_CSV}")
-
-# ── Regime breakdown — top 40 ─────────────────────────────────────────────────
-top40 = df.head(TOP_N_REGIME).dropna(subset=["ry_low", "ry_mid", "ry_high"], how="all")
-
-if not top40.empty:
-    print()
-    print("=" * W)
-    print(f"REGIME-CONDITIONAL CAGR  (RY = DFII10 percentile bands)  —  top {TOP_N_REGIME}")
-    print("=" * W)
-    print(f"  {'#':>3}  {'Cat':<10}  {'Ticker':<14}  {'Name':<24}  "
-          f"{'CAGR':>7}  {'Sharpe':>7}  |  "
-          f"{'RY=LOW':>8}  {'RY=MID':>8}  {'RY=HIGH':>8}  {'Spread':>8}")
-    print("  " + "-" * (W - 2))
-    for rank, row in top40.iterrows():
-        lo  = row["ry_low"]
-        mid = row["ry_mid"]
-        hi  = row["ry_high"]
-        spread = (lo - hi) if not (pd.isna(lo) or pd.isna(hi)) else float("nan")
-        fmt = lambda v: f"{v:>+7.1%}" if not pd.isna(v) else f"{'n/a':>8}"
-        print(f"  {rank:>3}  {row['category'][:10]:<10}  {row['ticker']:<14}  "
-              f"{str(row['name'])[:24]:<24}  "
-              f"{row['cagr']:>+6.1%}  {row['sharpe']:>7.3f}  |  "
-              f"{fmt(lo)}  {fmt(mid)}  {fmt(hi)}  {fmt(spread)}")
-
-# ── Current regime intelligence ───────────────────────────────────────────────
-current_ry  = str(ry_regimes.iloc[-1])
-current_ry_val = None
-try:
-    dfii_path = DATA_DIR / "macro" / "DFII10.parquet"
-    _d = pd.read_parquet(dfii_path)
-    _d["date"] = pd.to_datetime(_d["date"])
-    current_ry_val = float(_d.set_index("date")["value"].sort_index().dropna().iloc[-1])
-except Exception:
-    pass
+          f"{row['n_matched']:>5}  {str(row['diversity']):<8}  "
+          f"{row['med_21d']:>+6.1%}  {row['med_63d']:>+6.1%}  "
+          f"{row['med_252d']:>+6.1%}  {row['win_252d']:>5.0%}")
 
 print()
-print("=" * W)
-print(f"CURRENT REGIME  :  RY = {current_ry}"
-      + (f"  (DFII10 = {current_ry_val:.2f}%)" if current_ry_val is not None else "")
-      + f"   as of {ry_regimes.index[-1].date()}")
-print("=" * W)
-print()
-print("  RY=LOW  : real yield below p33  — gold/growth tailwind, expansion regime")
-print("  RY=MID  : real yield p33-p67    — neutral, quality/momentum works")
-print("  RY=HIGH : real yield above p67  — restrictive, current regime")
-print()
-
-full_rc = df.dropna(subset=["ry_high"]).copy()
-full_rc["spread"] = full_rc["ry_low"] - full_rc["ry_high"]
-
-if current_ry == "HIGH":
-    print("  -- Best performers IN current RY=HIGH regime (top 10 by RY=HIGH CAGR) --")
-    best_hi = full_rc.nlargest(10, "ry_high")
-    for _, r in best_hi.iterrows():
-        print(f"    {r['ticker']:<14}  {str(r['name'])[:24]:<24}  "
-              f"RY=HIGH {r['ry_high']:>+6.1%}  Sharpe {r['sharpe']:.2f}")
-
-    print()
-    print("  -- Compression candidates (RY=LOW >> RY=HIGH, top 10 by spread) --")
-    best_sp = full_rc.dropna(subset=["ry_low"]).nlargest(10, "spread")
-    for _, r in best_sp.iterrows():
-        print(f"    {r['ticker']:<14}  {str(r['name'])[:24]:<24}  "
-              f"LOW {r['ry_low']:>+6.1%}  HIGH {r['ry_high']:>+6.1%}  "
-              f"spread {r['spread']:>+6.1%}")
-elif current_ry == "LOW":
-    print("  -- Best performers IN current RY=LOW regime (top 10 by RY=LOW CAGR) --")
-    best_lo = full_rc.dropna(subset=["ry_low"]).nlargest(10, "ry_low")
-    for _, r in best_lo.iterrows():
-        print(f"    {r['ticker']:<14}  {str(r['name'])[:24]:<24}  "
-              f"RY=LOW {r['ry_low']:>+6.1%}  Sharpe {r['sharpe']:.2f}")
-else:
-    print("  -- Best performers IN current RY=MID regime (top 10 by RY=MID CAGR) --")
-    best_mid = df.dropna(subset=["ry_mid"]).nlargest(10, "ry_mid")
-    for _, r in best_mid.iterrows():
-        print(f"    {r['ticker']:<14}  {str(r['name'])[:24]:<24}  "
-              f"RY=MID {r['ry_mid']:>+6.1%}  Sharpe {r['sharpe']:.2f}")
-
-print()
-print(f"  Skipped (no data or <{MIN_YEARS}yr): {sw_fail + etf_fail}")
+print(f"  {len(df_out)} assets  |  {len(matched_dates)} matched dates in current regime  "
+      f"({matched_dates[0].date()} — {matched_dates[-1].date()})")
+print("  Diversity: ROBUST = 10yr+ span, <50% last-3yr  |  THIN = <5yr span or >80% last-3yr")

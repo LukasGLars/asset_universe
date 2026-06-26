@@ -309,11 +309,40 @@ def screen_tactical(
             ma50_ext.reindex(base_dates).fillna(float("inf")) <= p67
         ]
 
+        # Momentum conditioning: filter clean_dates to where ticker was in
+        # the same 21d momentum state as today (own-cycle positioning).
+        # Falls back to clean_dates if N < min_n after filtering.
+        mom_21d_series = prices.pct_change(21)
+        current_mom_21d = float(prices.iloc[-1] / prices.iloc[-22] - 1) if len(prices) >= 22 else None
+        mom_at_clean = mom_21d_series.reindex(clean_dates, method="nearest", tolerance=pd.Timedelta("5D")).dropna()
+
+        mom_state: str | None = None
+        entry_dates = clean_dates  # default: no momentum filter
+
+        if current_mom_21d is not None and len(mom_at_clean) >= min_n * 2:
+            mp33 = float(mom_at_clean.quantile(0.333))
+            mp67 = float(mom_at_clean.quantile(0.667))
+            if current_mom_21d <= mp33:
+                mom_state = "LOW"
+                filtered = mom_at_clean.index[mom_at_clean <= mp33]
+            elif current_mom_21d <= mp67:
+                mom_state = "MID"
+                filtered = mom_at_clean.index[(mom_at_clean > mp33) & (mom_at_clean <= mp67)]
+            else:
+                mom_state = "HIGH"
+                filtered = mom_at_clean.index[mom_at_clean > mp67]
+
+            if len(filtered) >= min_n:
+                entry_dates = filtered
+            else:
+                mom_state = f"{mom_state}~base"  # fell back
+                entry_dates = clean_dates
+
         # Temporal diversity
-        if len(clean_dates) >= 2:
-            span_yr   = (clean_dates[-1] - clean_dates[0]).days / 365.25
-            cutoff_3y = clean_dates[-1] - pd.DateOffset(years=3)
-            pct_3y    = float((clean_dates >= cutoff_3y).mean())
+        if len(entry_dates) >= 2:
+            span_yr   = (entry_dates[-1] - entry_dates[0]).days / 365.25
+            cutoff_3y = entry_dates[-1] - pd.DateOffset(years=3)
+            pct_3y    = float((entry_dates >= cutoff_3y).mean())
         else:
             span_yr, pct_3y = 0.0, 1.0
 
@@ -331,6 +360,7 @@ def screen_tactical(
             "p67_ext":     round(p67, 4),
             "rs_20d":      round(rs_20d, 4),
             "rs_63d":      round(rs_63d, 4) if rs_63d is not None else float("nan"),
+            "mom_state":   mom_state if mom_state is not None else "n/a",
             "earn_flag":   earn_flag,
             "yrs_span":    round(span_yr, 1),
             "pct_3yr":     round(pct_3y, 2),
@@ -339,7 +369,7 @@ def screen_tactical(
 
         for fwd in forward_days:
             rets = [
-                r for dt in clean_dates
+                r for dt in entry_dates
                 if (r := _forward_return(prices, dt, fwd)) is not None
             ]
             if len(rets) >= min_n:
