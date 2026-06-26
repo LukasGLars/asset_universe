@@ -21,7 +21,20 @@ from .engine import TICKER_LOOKUP
 
 SPILTAN_RETURN = 0.03
 
-# Current and target weights — source: config sheet GID 928856970
+# Maps portfolio.toml tickers → transitions analysis keys (TICKER_LOOKUP keys).
+# Tactical positions (HWM) are intentionally excluded — they are excluded from
+# long-run CAGR modelling. Manual positions (ticker="") roll up into "_spiltan".
+PORTFOLIO_TICKER_MAP: dict[str, str] = {
+    "PPFB.DE": "GC_F",
+    "PHAG.L":  "SI_F",
+    "LLY":     "LLY",
+    "WMT":     "WMT",
+    "CCJ":     "CCJ",
+    "VRT":     "VRT",
+    "AVGO":    "AVGO",
+}
+
+# Fallback weights used when live snapshot is unavailable.
 # Keys match TICKER_LOOKUP; "_spiltan" = Spiltan + War Chest (fixed-rate bucket)
 CURRENT_WEIGHTS: dict[str, float] = {
     "GC_F":      0.167,
@@ -349,10 +362,29 @@ def cagr_scenarios(
         [eps["current_episode"]] if eps.get("current_episode") else []
     )
 
-    # Normalize so weights always sum to 1.0 regardless of hardcoded values
-    _cw_total = sum(CURRENT_WEIGHTS.values())
+    # Derive current weights from live portfolio snapshot; fall back to constants
+    try:
+        from ..portfolio import snapshot as _snapshot
+        snap = _snapshot(data_dir)
+        cw: dict[str, float] = {}
+        for _, row in snap.iterrows():
+            tkr = str(row["ticker"])
+            w   = float(row["weight"]) if pd.notna(row["weight"]) else 0.0
+            if tkr in PORTFOLIO_TICKER_MAP:
+                cw[PORTFOLIO_TICKER_MAP[tkr]] = w
+            elif tkr == "":
+                cw["_spiltan"] = cw.get("_spiltan", 0.0) + w
+        _cw_total = sum(cw.values())
+        if _cw_total > 0:
+            cw = {k: v / _cw_total for k, v in cw.items()}
+        else:
+            raise ValueError("empty snapshot")
+    except Exception:
+        _cw_total = sum(CURRENT_WEIGHTS.values())
+        cw = {k: v / _cw_total for k, v in CURRENT_WEIGHTS.items()}
+
+    # TARGET_WEIGHTS stay hardcoded — forward-looking intent, not market reality
     _tw_total = sum(TARGET_WEIGHTS.values())
-    cw = {k: v / _cw_total for k, v in CURRENT_WEIGHTS.items()}
     tw = {k: v / _tw_total for k, v in TARGET_WEIGHTS.items()}
 
     tickers = [t for t in cw if not t.startswith("_")]
