@@ -24,6 +24,7 @@ from asset_universe.analysis.transitions import (
     transition_matrix,
     simulate_compression,
     cagr_scenarios,
+    probability_weighted_cagr,
 )
 
 DATA_DIR = config.raw_data_dir()
@@ -134,3 +135,59 @@ print(f"                 Only windows where RY stayed HIGH throughout.")
 print(f"  Post-compress: 252d returns starting from each episode end date.")
 print(f"                 What assets actually did after RY compression fired.")
 print(f"  *fallback:     N<5 post-compress observations -- drag return used (conservative).")
+
+# ── 5. Probability-weighted CAGR ─────────────────────────────────────────────
+
+YEARS_REMAINING = 11.1
+TARGET_SEK      = 12_934_706
+
+pw = probability_weighted_cagr(
+    sim_months     = sim_months,
+    r_pre          = meta["r_drag"],
+    r_post         = meta["r_compressed"],
+    tpv            = meta["tpv"],
+    years_remaining= YEARS_REMAINING,
+    target_sek     = TARGET_SEK,
+)
+
+print()
+print("5. Probability-Weighted CAGR  [10,000 Monte Carlo paths]")
+print("-" * 50)
+print(f"  E[CAGR]  (mean)  : {pw['mean']:>+7.1%}/yr")
+print(f"  Median CAGR      : {pw['median']:>+7.1%}/yr")
+print(f"  P10 / P90        : {pw['p10']:>+6.1%}  /  {pw['p90']:>+6.1%}")
+print(f"  Required CAGR    : {pw['required']:>+7.1%}/yr")
+print(f"  P(on pace)       : {pw['pct_on_pace']:>6.1%}  of paths end above target")
+
+# ── 6. Stress test — thin-asset cap at 25%/yr ────────────────────────────────
+
+df_stress, meta_stress = cagr_scenarios(DATA_DIR, thin_pre_cap=0.25)
+
+pw_stress = probability_weighted_cagr(
+    sim_months     = sim_months,
+    r_pre          = meta_stress["r_drag"],
+    r_post         = meta_stress["r_compressed"],
+    tpv            = meta_stress["tpv"],
+    years_remaining= YEARS_REMAINING,
+    target_sek     = TARGET_SEK,
+)
+
+print()
+print("6. Stress Test  VRT/AVGO Returns Capped at 25%/yr")
+print("-" * 50)
+print(f"  Drag-phase blend     : {meta_stress['r_drag']:>+7.1%}/yr")
+print(f"  Post-compress blend  : {meta_stress['r_compressed']:>+7.1%}/yr")
+print()
+print(f"  {'Compress':>9}  {'TPV at T':>14}  {'Final TPV':>14}  "
+      f"{'CAGR':>7}  {'vs req':>8}  {'Status'}")
+print("  " + "-" * 72)
+for _, r in df_stress.iterrows():
+    status = "ON PACE" if r["vs_required"] >= 0 else "BEHIND"
+    print(f"  {int(r['compress_months']):>7}m  {r['v_at_compress']:>13,.0f} kr  "
+          f"{r['v_final']:>13,.0f} kr  {r['cagr']:>+6.1%}  "
+          f"{r['vs_required']:>+7.1%}  {status}")
+
+print()
+print(f"  E[CAGR] stressed  : {pw_stress['mean']:>+7.1%}/yr")
+print(f"  P(on pace)        : {pw_stress['pct_on_pace']:>6.1%}  of paths end above target")
+print(f"  Cap applied to    : thin-N assets (VRT, AVGO) pre- and post-compression returns")

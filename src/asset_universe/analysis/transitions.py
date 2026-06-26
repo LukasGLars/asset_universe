@@ -195,6 +195,45 @@ def simulate_compression(
     return results
 
 
+def probability_weighted_cagr(
+    sim_months: list[int],
+    r_pre: float,
+    r_post: float,
+    tpv: float,
+    years_remaining: float,
+    target_sek: float,
+) -> dict[str, float]:
+    """
+    Probability-weighted expected CAGR from Monte Carlo compression timing.
+
+    Each simulated path contributes one CAGR outcome based on when compression
+    fires within that path. Average across all 10,000 paths gives E[CAGR].
+    Paths where compression never fires within years_remaining stay at r_pre.
+    """
+    required = (target_sek / tpv) ** (1 / years_remaining) - 1
+    cagrs: list[float] = []
+
+    for t_months in sim_months:
+        t_yr = t_months / 12
+        if t_yr >= years_remaining:
+            v_final = tpv * (1 + r_pre) ** years_remaining
+        else:
+            remaining  = years_remaining - t_yr
+            v_compress = tpv * (1 + r_pre) ** t_yr
+            v_final    = v_compress * (1 + r_post) ** remaining
+        cagrs.append((v_final / tpv) ** (1 / years_remaining) - 1)
+
+    arr = np.array(cagrs)
+    return {
+        "mean":        float(arr.mean()),
+        "median":      float(np.median(arr)),
+        "p10":         float(np.percentile(arr, 10)),
+        "p90":         float(np.percentile(arr, 90)),
+        "pct_on_pace": float((arr >= required).mean()),
+        "required":    required,
+    }
+
+
 def _load_prices(data_dir: Path, ticker: str) -> pd.Series:
     """Load close price series for a ticker from parquet store."""
     cat, raw = TICKER_LOOKUP[ticker]
@@ -286,6 +325,7 @@ def cagr_scenarios(
     years_remaining: float = 11.1,
     target_sek: float = 12_934_706,
     min_episode_days: int = 20,
+    thin_pre_cap: float | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Portfolio CAGR under different RY compression timings.
@@ -325,10 +365,11 @@ def cagr_scenarios(
         cr, cn = _post_compression_return(prices, episodes)
         # Use drag return as conservative fallback when compressed N is too thin
         fallback = cn < MIN_N_COMPRESSED
+        pre_r  = min(dr, thin_pre_cap) if (thin_pre_cap is not None and fallback) else dr
+        post_r = min((dr if fallback else cr), thin_pre_cap) if (thin_pre_cap is not None and fallback) else (dr if fallback else cr)
         asset_data[tkr] = {
-            "drag_return":        dr, "drag_n": dn,
-            "compressed_return":  dr if fallback else cr,
-            "compressed_n":       cn,
+            "drag_return":         pre_r,  "drag_n": dn,
+            "compressed_return":   post_r, "compressed_n": cn,
             "compressed_fallback": fallback,
         }
 
