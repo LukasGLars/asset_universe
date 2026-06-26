@@ -64,6 +64,14 @@ currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
 
+[[positions]]
+name     = "Howmet Aerospace"
+ticker   = "HWM"
+shares   = 11
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+
 # ── Manual positions (no ticker — update value_sek after each trade) ───────────
 
 [[positions]]
