@@ -3,43 +3,44 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     250     759 kr   189,633 kr  17.1%
-  Silver                    66     523 kr    34,536 kr   3.1%
-  Eli Lilly                 14  10,897 kr   152,561 kr  13.8%
-  Walmart                  126   1,161 kr   146,245 kr  13.2%
-  Cameco                    93   1,040 kr    96,731 kr   8.7%
-  Vertiv                    31   3,086 kr    95,676 kr   8.6%
-  Broadcom                  21   3,727 kr    78,257 kr   7.1%
-  Spiltan Räntefond          -     manual   279,453 kr  25.2%
-  War Chest                  -     manual    34,205 kr   3.1%
+  Gold                     250     760 kr   189,896 kr  17.2%
+  Silver                    66     518 kr    34,189 kr   3.1%
+  Eli Lilly                 14  10,999 kr   153,986 kr  14.0%
+  Walmart                  126   1,129 kr   142,287 kr  12.9%
+  Cameco                    93   1,010 kr    93,955 kr   8.5%
+  Vertiv                    31   3,175 kr    98,439 kr   8.9%
+  Broadcom                  21   3,696 kr    77,610 kr   7.0%
+  Howmet Aerospace          11   2,664 kr    29,305 kr   2.7%
+  Spiltan Räntefond          -     manual   279,489 kr  25.4%
+  War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,107,297 kr
-    Reactor Core            793,639 kr  (72%)
-    Home Base               279,453 kr  (25%)
-    War Chest                34,205 kr  (3%)
+  TPV                                        1,100,253 kr
+    Reactor Core            819,667 kr  (74%)
+    Home Base               279,489 kr  (25%)
+    War Chest                 1,959 kr  (0%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,107,297 kr
+  Now                     :     1,100,253 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.1
 
-  AWAR (trailing)         :  +21.2%
+  AWAR (trailing)         :  +20.4%
   Required CAGR           :  +24.9%
-  Status                  :  BEHIND  (-3.6% margin)
+  Status                  :  BEHIND  (-4.6% margin)
 
-  Projected @ AWAR        :     9,347,617 kr
-  vs target               :    -3,587,089 kr  (deficit)
+  Projected @ AWAR        :     8,551,010 kr
+  vs target               :    -4,383,696 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date
   --------------------------------------------------
-  Bear           +10%       3,180,963 kr       ~2052
-  Conservative   +15%       5,203,586 kr       ~2044
-  Base           +20%       8,335,825 kr       ~2039
-  Current AWAR   +21%       9,347,617 kr       ~2039
-  Bull           +30%      20,222,278 kr       ~2035
+  Bear           +10%       3,159,902 kr       ~2052
+  Conservative   +15%       5,168,504 kr       ~2044
+  Base           +20%       8,278,662 kr       ~2040
+  Current AWAR   +20%       8,551,010 kr       ~2039
+  Bull           +30%      20,079,201 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -69,12 +70,12 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           17.1%     --    --     +5.8%    +36.4%  100%   520  no mom data
-  Silver          3.1%     --    --     +6.9%    +42.6%  100%   519  no mom data
-  Eli Lilly      13.8%     --    --     +5.2%    +24.1%   79%   520  no mom data
-  Walmart        13.2%     --    --     +7.2%    +42.5%  100%   520  no mom data
-  Cameco          8.7%     --    --    +10.1%    +46.5%   91%   520  no mom data
-  Vertiv          8.6%     --    --    +23.3%    +83.4%   93%   520  no mom data
-  Broadcom        7.1%     --    --    +20.2%    +76.1%  100%   520  no mom data
+  Gold           17.2%    LOW   LOW    +14.2%    +36.1%  100%    43  
+  Silver          3.1%    LOW   LOW     +6.8%    +42.6%  100%   520  ~base fallback
+  Eli Lilly      14.0%   HIGH  HIGH     +2.9%    +18.7%   72%   125  
+  Walmart        12.9%    LOW   LOW    +13.4%    +53.0%  100%    38  
+  Cameco          8.5%    LOW   LOW    +35.1%   +155.6%  100%    63  
+  Vertiv          8.9%    MID   MID    +23.2%    +85.1%   93%   521  ~base fallback
+  Broadcom        7.0%    LOW  HIGH    +13.6%    +79.2%  100%    55  
 
 ==============================================================
