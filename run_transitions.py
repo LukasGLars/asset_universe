@@ -111,16 +111,17 @@ print(f"  Post-compress blend  (LOW RY,  target weights)  : {meta['r_compressed'
 print()
 
 print(f"  Per-asset expected returns:")
-print(f"  {'Ticker':>6}  {'Drag(252d)':>11}  N    {'Compressed(252d)':>17}  N")
-print("  " + "-" * 55)
+print(f"  {'Ticker':>6}  {'Drag(ann)':>10}  {'N':>4}    {'Post-compress':>14}  {'N':>4}  Note")
+print("  " + "-" * 62)
 for tkr, d in meta["asset_data"].items():
-    print(f"  {tkr:>6}  {d['drag_return']:>+10.1%}  {d['drag_n']:>4}  "
-          f"  {d['compressed_return']:>+16.1%}  {d['compressed_n']:>4}")
+    note = "*fallback" if d.get("compressed_fallback") else ""
+    print(f"  {tkr:>6}  {d['drag_return']:>+9.1%}  {d['drag_n']:>4}    "
+          f"{d['compressed_return']:>+13.1%}  {d['compressed_n']:>4}  {note}")
 
 print()
 print(f"  {'Compress':>9}  {'TPV at T':>14}  {'Final TPV':>14}  "
       f"{'CAGR':>7}  {'vs req':>8}  {'Status'}")
-print("  " + "-" * 70)
+print("  " + "-" * 72)
 for _, r in df.iterrows():
     status = "ON PACE" if r["vs_required"] >= 0 else "BEHIND"
     print(f"  {int(r['compress_months']):>7}m  {r['v_at_compress']:>13,.0f} kr  "
@@ -128,7 +129,8 @@ for _, r in df.iterrows():
           f"{r['vs_required']:>+7.1%}  {status}")
 
 print()
-print(f"  Drag/compressed returns are 252d empirical medians from conditional engine.")
-print(f"  Drag: ry=HIGH nominal=HIGH baa=TIGHT usd=STRONG")
-print(f"  Post-compress: ry=LOW baa=TIGHT")
-print(f"  THIN N flagged -- treat as directional, not precise.")
+print(f"  Drag:          63d regime-pure returns within HIGH episodes, annualized.")
+print(f"                 Only windows where RY stayed HIGH throughout.")
+print(f"  Post-compress: 252d returns starting from each episode end date.")
+print(f"                 What assets actually did after RY compression fired.")
+print(f"  *fallback:     N<5 post-compress observations -- drag return used (conservative).")

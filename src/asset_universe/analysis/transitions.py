@@ -16,7 +16,8 @@ import pandas as pd
 
 from . import regimes as regime_module
 from .. import config
-from .engine import query as _engine_query, TICKER_LOOKUP
+from ..store import reader
+from .engine import TICKER_LOOKUP
 
 SPILTAN_RETURN = 0.03
 
@@ -194,19 +195,89 @@ def simulate_compression(
     return results
 
 
-def _asset_252d_return(
-    ticker: str,
-    conditions: dict[str, str],
-    data_dir: Path,
+def _load_prices(data_dir: Path, ticker: str) -> pd.Series:
+    """Load close price series for a ticker from parquet store."""
+    cat, raw = TICKER_LOOKUP[ticker]
+    path = reader.ticker_path(data_dir, cat, raw)
+    if not path.exists():
+        return pd.Series(dtype=float)
+    df = pd.read_parquet(path)
+    df["date"] = pd.to_datetime(df["date"])
+    return df.set_index("date")["close"].sort_index()
+
+
+def _regime_pure_drag_return(
+    prices: pd.Series,
+    episodes: list[dict],
+    fwd_days: int = 63,
 ) -> tuple[float, int]:
-    """Query 252d empirical median return for ticker under conditions."""
-    if ticker not in TICKER_LOOKUP:
+    """
+    63d forward returns measured only on dates where RY stays HIGH for the
+    full fwd_days window (regime-pure drag). Annualized to annual rate.
+    Excludes the current ongoing episode (no future prices).
+    """
+    returns: list[float] = []
+
+    for ep in episodes:
+        if ep.get("ongoing"):
+            continue
+        start, end = ep["start"], ep["end"]
+
+        start_idx = prices.index.searchsorted(start)
+        end_idx   = prices.index.searchsorted(end)
+
+        for i in range(start_idx, end_idx):
+            fwd_i = i + fwd_days
+            if fwd_i >= len(prices):
+                break
+            if prices.index[fwd_i] > end:
+                break
+            p0, p1 = float(prices.iloc[i]), float(prices.iloc[fwd_i])
+            if p0 > 0:
+                returns.append(p1 / p0 - 1)
+
+    if not returns:
         return 0.0, 0
-    res = _engine_query(conditions, [ticker], forward_days=[252], data_dir=data_dir)
-    r = res["results"].get(ticker, {}).get("252d", {})
-    if r.get("insufficient"):
-        return 0.0, r.get("n", 0)
-    return float(r.get("median", 0.0)), int(r.get("n", 0))
+
+    median_fwd = float(np.median(returns))
+    annualized = (1 + median_fwd) ** (252 / fwd_days) - 1
+    return annualized, len(returns)
+
+
+def _post_compression_return(
+    prices: pd.Series,
+    episodes: list[dict],
+    fwd_days: int = 252,
+) -> tuple[float, int]:
+    """
+    252d forward returns starting from each completed episode's end date.
+    This captures what actually happened to each asset after RY compression fired.
+    """
+    returns: list[float] = []
+
+    for ep in episodes:
+        if ep.get("ongoing") or ep["end"] is None:
+            continue
+        end_date = ep["end"]
+
+        idx = prices.index.searchsorted(end_date)
+        if idx >= len(prices):
+            continue
+        if abs((prices.index[idx] - end_date).days) > 5:
+            continue
+
+        fwd_idx = idx + fwd_days
+        if fwd_idx >= len(prices):
+            continue
+
+        p0, p1 = float(prices.iloc[idx]), float(prices.iloc[fwd_idx])
+        if p0 > 0:
+            returns.append(p1 / p0 - 1)
+
+    if not returns:
+        return 0.0, 0
+
+    return float(np.median(returns)), len(returns)
 
 
 def cagr_scenarios(
@@ -214,38 +285,51 @@ def cagr_scenarios(
     compression_months: list[int] | None = None,
     years_remaining: float = 11.1,
     target_sek: float = 12_934_706,
+    min_episode_days: int = 20,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Portfolio CAGR under different RY compression timings.
 
-    Drag phase   (0 → T):    current weights, HIGH RY regime returns
-    Compressed   (T → end):  target weights, LOW RY + TIGHT credit returns
+    Drag returns:         63d regime-pure returns within HIGH episodes, annualized.
+                          Only windows where RY stays HIGH throughout — no compression events.
+    Post-compression:     252d returns starting from each episode's end date.
+                          What assets actually did after RY compression fired historically.
 
-    Returns (scenarios_df, metadata) where metadata includes per-asset returns and N.
+    Drag phase   (0 → T):   current weights × drag returns
+    Compressed   (T → end): target weights  × post-compression returns
     """
     if data_dir is None:
         data_dir = config.raw_data_dir()
     if compression_months is None:
         compression_months = [6, 12, 18, 24, 36, 60]
 
-    drag_cond = {
-        "ry_regime": "HIGH", "nominal_10y_regime": "HIGH",
-        "baa10y_regime": "TIGHT", "usd_regime": "STRONG",
-    }
-    # Post-compression: RY has fallen; keep credit tight (likely) but relax RY
-    compressed_cond = {
-        "ry_regime": "LOW", "baa10y_regime": "TIGHT",
-    }
+    eps = episode_stats(data_dir, feature="ry", target_state="HIGH",
+                        min_duration_days=min_episode_days)
+    episodes = eps["episodes"] + (
+        [eps["current_episode"]] if eps.get("current_episode") else []
+    )
 
     tickers = [t for t in CURRENT_WEIGHTS if not t.startswith("_")]
 
+    MIN_N_COMPRESSED = 5  # below this, fall back to drag return for post-compression
+
     asset_data: dict[str, dict] = {}
     for tkr in tickers:
-        dr, dn = _asset_252d_return(tkr, drag_cond, data_dir)
-        cr, cn = _asset_252d_return(tkr, compressed_cond, data_dir)
+        if tkr not in TICKER_LOOKUP:
+            asset_data[tkr] = {"drag_return": 0.0, "drag_n": 0,
+                                "compressed_return": 0.0, "compressed_n": 0,
+                                "compressed_fallback": False}
+            continue
+        prices = _load_prices(data_dir, tkr)
+        dr, dn = _regime_pure_drag_return(prices, episodes)
+        cr, cn = _post_compression_return(prices, episodes)
+        # Use drag return as conservative fallback when compressed N is too thin
+        fallback = cn < MIN_N_COMPRESSED
         asset_data[tkr] = {
-            "drag_return": dr, "drag_n": dn,
-            "compressed_return": cr, "compressed_n": cn,
+            "drag_return":        dr, "drag_n": dn,
+            "compressed_return":  dr if fallback else cr,
+            "compressed_n":       cn,
+            "compressed_fallback": fallback,
         }
 
     r_drag = (
