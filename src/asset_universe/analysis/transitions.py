@@ -349,7 +349,13 @@ def cagr_scenarios(
         [eps["current_episode"]] if eps.get("current_episode") else []
     )
 
-    tickers = [t for t in CURRENT_WEIGHTS if not t.startswith("_")]
+    # Normalize so weights always sum to 1.0 regardless of hardcoded values
+    _cw_total = sum(CURRENT_WEIGHTS.values())
+    _tw_total = sum(TARGET_WEIGHTS.values())
+    cw = {k: v / _cw_total for k, v in CURRENT_WEIGHTS.items()}
+    tw = {k: v / _tw_total for k, v in TARGET_WEIGHTS.items()}
+
+    tickers = [t for t in cw if not t.startswith("_")]
 
     MIN_N_COMPRESSED = 5  # below this, fall back to drag return for post-compression
 
@@ -374,12 +380,12 @@ def cagr_scenarios(
         }
 
     r_drag = (
-        sum(CURRENT_WEIGHTS[t] * asset_data[t]["drag_return"] for t in tickers)
-        + CURRENT_WEIGHTS["_spiltan"] * SPILTAN_RETURN
+        sum(cw[t] * asset_data[t]["drag_return"] for t in tickers)
+        + cw["_spiltan"] * SPILTAN_RETURN
     )
     r_compressed = (
-        sum(TARGET_WEIGHTS[t] * asset_data[t]["compressed_return"] for t in tickers)
-        + TARGET_WEIGHTS["_spiltan"] * SPILTAN_RETURN
+        sum(tw[t] * asset_data[t]["compressed_return"] for t in tickers)
+        + tw["_spiltan"] * SPILTAN_RETURN
     )
 
     try:
