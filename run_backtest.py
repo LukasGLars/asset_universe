@@ -39,8 +39,9 @@ from asset_universe.store import reader
 DATA_DIR    = config.raw_data_dir()
 RESULTS_DIR = Path(__file__).parent / "optimizer_results"
 CATEGORIES  = ["equities", "commodities", "intl_etfs"]
-START_DATE  = "2004-01-01"
-TC_BPS      = 10   # transaction cost per rotation: 0.10%
+START_DATE       = "2004-01-01"
+TC_BPS           = 10    # transaction cost per rotation: 0.10%
+MIN_REGIME_DAYS  = 5     # new regime must hold this many days before switching portfolio
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -153,6 +154,8 @@ regime_log     = []
 current_regime_key  = None
 current_weights     = None
 prev_weights        = None
+pending_regime_key  = None   # regime seen but not yet confirmed
+pending_days        = 0      # how many consecutive days the pending regime has held
 
 for date in ret_df.index:
     # Get regime for this date
@@ -166,24 +169,37 @@ for date in ret_df.index:
 
     regime_key = f"{ry}_{baa}"
 
-    # Regime switch — apply transaction cost
+    # Confirmation window: new regime must hold MIN_REGIME_DAYS before switching
     tc = 0.0
     if regime_key != current_regime_key:
-        if regime_key in regime_portfolios:
-            new_weights = regime_portfolios[regime_key]
-            if prev_weights is not None:
-                # Turnover = sum of absolute weight changes
-                combined = new_weights.align(prev_weights, fill_value=0.0)
-                turnover = float((combined[0] - combined[1]).abs().sum()) / 2
-                tc = turnover * (TC_BPS / 10000)
-            current_weights    = new_weights
-            current_regime_key = regime_key
-            prev_weights       = new_weights
-            regime_log.append({"date": date, "regime": f"{ry}+{baa}", "tc": tc})
+        if regime_key == pending_regime_key:
+            pending_days += 1
         else:
-            # No portfolio for this regime — fall back to equal-weight
-            current_weights    = None
-            current_regime_key = regime_key
+            pending_regime_key = regime_key
+            pending_days = 1
+
+        if pending_days >= MIN_REGIME_DAYS:
+            # Confirmed — switch portfolio
+            if regime_key in regime_portfolios:
+                new_weights = regime_portfolios[regime_key]
+                if prev_weights is not None:
+                    combined = new_weights.align(prev_weights, fill_value=0.0)
+                    turnover = float((combined[0] - combined[1]).abs().sum()) / 2
+                    tc = turnover * (TC_BPS / 10000)
+                current_weights    = new_weights
+                current_regime_key = regime_key
+                prev_weights       = new_weights
+                pending_regime_key = None
+                pending_days       = 0
+                regime_log.append({"date": date, "regime": f"{ry}+{baa}", "tc": tc})
+            else:
+                current_weights    = None
+                current_regime_key = regime_key
+                pending_regime_key = None
+                pending_days       = 0
+    else:
+        pending_regime_key = None
+        pending_days       = 0
 
     # Compute daily returns
     day_rets = ret_df.loc[date]
