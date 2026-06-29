@@ -3,19 +3,19 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     250     759 kr   189,807 kr  17.3%
-  Silver                    66     517 kr    34,142 kr   3.1%
-  Eli Lilly                 14  10,984 kr   153,777 kr  14.0%
-  Walmart                  126   1,128 kr   142,095 kr  12.9%
-  Cameco                    93   1,009 kr    93,828 kr   8.5%
-  Vertiv                    31   3,171 kr    98,306 kr   8.9%
-  Broadcom                  21   3,691 kr    77,505 kr   7.0%
-  Howmet Aerospace          11   2,660 kr    29,265 kr   2.7%
-  Spiltan Räntefond          -     manual   279,489 kr  25.4%
+  Gold                     250     769 kr   192,284 kr  17.4%
+  Silver                    66     525 kr    34,682 kr   3.1%
+  Eli Lilly                 14  11,767 kr   164,745 kr  14.9%
+  Walmart                  126   1,127 kr   141,984 kr  12.8%
+  Cameco                    93   1,018 kr    94,652 kr   8.6%
+  Vertiv                    31   2,961 kr    91,778 kr   8.3%
+  Broadcom                  21   3,555 kr    74,664 kr   6.8%
+  Howmet Aerospace          11   2,619 kr    28,808 kr   2.6%
+  Spiltan Räntefond          -     manual   279,489 kr  25.3%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,103,960 kr
-    Reactor Core            818,725 kr  (74%)
+  TPV                                        1,103,420 kr
+    Reactor Core            823,597 kr  (75%)
     Home Base               279,489 kr  (25%)
     War Chest                 1,959 kr  (0%)
 
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,103,960 kr
+  Now                     :     1,103,420 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.1
 
-  AWAR (trailing)         :  +20.8%
+  AWAR (trailing)         :  +20.5%
   Required CAGR           :  +24.9%
-  Status                  :  BEHIND  (-4.1% margin)
+  Status                  :  BEHIND  (-4.4% margin)
 
-  Projected @ AWAR        :     8,929,939 kr
-  vs target               :    -4,004,767 kr  (deficit)
+  Projected @ AWAR        :     8,700,109 kr
+  vs target               :    -4,234,597 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date
   --------------------------------------------------
-  Bear           +10%       3,170,548 kr       ~2052
-  Conservative   +15%       5,185,918 kr       ~2044
-  Base           +20%       8,306,554 kr       ~2039
-  Current AWAR   +21%       8,929,939 kr       ~2039
-  Bull           +30%      20,146,852 kr       ~2035
+  Bear           +10%       3,166,518 kr       ~2052
+  Conservative   +15%       5,177,435 kr       ~2044
+  Base           +20%       8,290,067 kr       ~2040
+  Current AWAR   +21%       8,700,109 kr       ~2039
+  Bull           +30%      20,093,650 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -70,12 +70,17 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           17.3%     --    --     +5.8%    +36.3%  100%   521  no mom data
-  Silver          3.1%     --    --     +6.8%    +42.6%  100%   520  no mom data
-  Eli Lilly      14.0%     --    --     +2.5%     +5.1%   62%  1178  no mom data
-  Walmart        12.9%     --    --     +2.0%    +16.5%   78%  1178  no mom data
-  Cameco          8.5%     --    --     +8.6%    +23.5%   76%  1178  no mom data
-  Vertiv          8.9%     --    --    +23.2%    +85.1%   93%   521  no mom data
-  Broadcom        7.0%     --    --    +20.2%    +76.0%  100%   521  no mom data
+  Gold           17.4%    LOW   LOW     +0.7%     +0.7%   75%    64  
+  Silver          3.1%    LOW   LOW     +2.3%     +2.3%   84%    31  
+  Eli Lilly      14.9%   HIGH  HIGH     -0.1%     -0.1%   48%   180  
+  Walmart        12.8%    LOW   LOW     +0.5%     +0.5%   62%   196  
+  Cameco          8.6%    MID   MID     -0.2%     -0.2%   48%   149  
+  Vertiv          8.3%    LOW   MID     -0.3%     -0.3%   47%    72  
+  Broadcom        6.8%    LOW  HIGH     +0.8%     +0.8%   56%    62  
 
 ==============================================================
+  Regime check (2026-06-26): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
+Traceback (most recent call last):
+  File "/home/runner/work/asset_universe/asset_universe/run_optimizer.py", line 28, in <module>
+    from scipy.optimize import minimize
+ModuleNotFoundError: No module named 'scipy'
