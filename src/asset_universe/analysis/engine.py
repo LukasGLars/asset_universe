@@ -43,15 +43,56 @@ def _load_prices(data_dir: Path, category: str, ticker: str) -> pd.Series:
     return df.set_index("date")["close"].sort_index()
 
 
-def _forward_return(prices: pd.Series, date: pd.Timestamp, fwd_days: int) -> float | None:
+def _regime_end_dates(
+    labeled_df: pd.DataFrame,
+    conditions: dict[str, str],
+    matched_dates: pd.DatetimeIndex,
+) -> dict[pd.Timestamp, pd.Timestamp | None]:
+    """
+    For each matched date, find the first future date when any condition label
+    changes — i.e. when the current regime ends. Returns None if the regime
+    persists to the end of the data.
+
+    Pre-computed once per query call so it is not repeated per ticker.
+    """
+    result: dict[pd.Timestamp, pd.Timestamp | None] = {}
+    for dt in matched_dates:
+        idx = labeled_df.index.searchsorted(dt)
+        end: pd.Timestamp | None = None
+        for col, required_label in conditions.items():
+            if col not in labeled_df.columns:
+                continue
+            future = labeled_df[col].iloc[idx + 1:]
+            changed = future[future != required_label]
+            if not changed.empty:
+                candidate = changed.index[0]
+                if end is None or candidate < end:
+                    end = candidate
+        result[dt] = end
+    return result
+
+
+def _forward_return(
+    prices: pd.Series,
+    date: pd.Timestamp,
+    fwd_days: int,
+    regime_end: pd.Timestamp | None = None,
+) -> float | None:
     idx = prices.index.searchsorted(date)
     if idx >= len(prices):
         return None
     # Verify the matched date is close (within 5 cal days) to avoid large gaps
     if abs((prices.index[idx] - date).days) > 5:
         return None
+
     fwd_idx = idx + fwd_days
-    if fwd_idx >= len(prices):
+
+    # Cap at regime end: only measure returns while the regime lasted
+    if regime_end is not None:
+        end_idx = prices.index.searchsorted(regime_end)
+        fwd_idx = min(fwd_idx, end_idx)
+
+    if fwd_idx >= len(prices) or fwd_idx <= idx:
         return None
     p0, p1 = prices.iloc[idx], prices.iloc[fwd_idx]
     return (p1 - p0) / p0 if p0 > 0 else None
@@ -113,6 +154,10 @@ def query(
 
     matched_dates = labeled_df.index[mask]
 
+    # Pre-compute regime end dates once — used to cap forward returns so they
+    # don't bleed into the next regime. Shared across all tickers in this query.
+    regime_ends = _regime_end_dates(labeled_df, conditions, matched_dates)
+
     # Current regime confidence and HY velocity
     last = labeled_df.iloc[-1]
     confidence   = str(last.get("regime_confidence", "HIGH"))
@@ -137,7 +182,7 @@ def query(
         for fwd in forward_days:
             rets = [
                 r for dt in matched_dates
-                if (r := _forward_return(prices, dt, fwd)) is not None
+                if (r := _forward_return(prices, dt, fwd, regime_ends.get(dt))) is not None
             ]
             ticker_out[f"{fwd}d"] = _stats(rets, len(rets))
 
