@@ -108,6 +108,22 @@ These terms are prohibited because a percentile split assigns the label to a sta
 
 ---
 
+## Optimizer methodology rules
+
+**Universe selection — never use the screen as a pre-filter.**
+`universe_screen_results.csv` ranks assets on all-history metrics. Using it as a candidate pool for regime-specific optimizers biases selection toward assets that performed well in the most recent dominant regime. Always run the full parquet store through the regime-conditional engine and let each regime surface its own best candidates. The screen is a reporting tool, not an optimizer input.
+
+**Corporate event filter.**
+Exclude any asset where the maximum single-day price gain exceeds 50%. M&A premiums and trading-halt reopenings produce large one-day gains that inflate regime-conditional mu estimates. These events are not repeatable and should not anchor portfolio weights. Use `EXCLUDE_TICKERS` for assets that pass the automatic filter but are known to have episodic return histories (e.g. commodity supercycles).
+
+**Minimum price history.**
+Exclude assets with fewer than 10 years of price history from regime optimizers. Assets that only exist within the current regime episode have no cross-episode validation — their mu estimates are entirely in-sample for the regime being conditioned on.
+
+**Temporal diversity — apply per asset, not just at query level.**
+For each asset, compute the maximum fraction of its valid return observations that fall in any rolling 3-year window. The HIGH+TIGHT regime naturally clusters in two episodes (pre-2008 and 2023-present), so single-episode assets will show ~100% concentration. Apply graduated shrinkage: SINGLE (>95%) → lambda×4, THIN (>80%) → lambda×2, MODERATE/ROBUST → lambda×1. Never auto-exclude based on concentration alone — concentration reflects data availability, not necessarily episodic bias. Use `EXCLUDE_TICKERS` for genuine exclusion.
+
+---
+
 ## Data source decisions
 
 **Credit spread proxy — BAA10Y not BAMLH0A0HYM2**
