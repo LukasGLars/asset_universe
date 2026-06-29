@@ -23,6 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from asset_universe import config
 from asset_universe.analysis import regimes as regime_module
+from asset_universe.analysis.engine import _regime_end_dates
 from asset_universe.store import reader
 
 # ── Holdings ──────────────────────────────────────────────────────────────────
@@ -60,16 +61,24 @@ def load_prices(data_dir: Path, cat: str, safe: str) -> pd.Series:
     return df.set_index("date")["close"].sort_index()
 
 
-def fwd_return(prices: pd.Series, date: pd.Timestamp, days: int) -> float | None:
+def fwd_return(
+    prices: pd.Series,
+    date: pd.Timestamp,
+    days: int,
+    regime_end: pd.Timestamp | None = None,
+) -> float | None:
     idx = prices.index.searchsorted(date)
     if idx >= len(prices):
         return None
     if abs((prices.index[idx] - date).days) > 5:
         return None
-    fwd = idx + days
-    if fwd >= len(prices):
+    fwd_idx = idx + days
+    if regime_end is not None:
+        end_idx = prices.index.searchsorted(regime_end)
+        fwd_idx = min(fwd_idx, end_idx)
+    if fwd_idx >= len(prices) or fwd_idx <= idx:
         return None
-    p0, p1 = prices.iloc[idx], prices.iloc[fwd]
+    p0, p1 = prices.iloc[idx], prices.iloc[fwd_idx]
     return (p1 - p0) / p0 if p0 > 0 else None
 
 
@@ -98,6 +107,12 @@ def print_degradation_matrix(labeled_df: pd.DataFrame, data_dir: Path) -> None:
 
     scen_dates = {name: matched_dates(labeled_df, conds) for name, conds in SCENARIOS.items()}
 
+    # Pre-compute regime end dates per scenario — caps returns at regime boundary
+    scen_ends = {
+        name: _regime_end_dates(labeled_df, conds, scen_dates[name])
+        for name, conds in SCENARIOS.items()
+    }
+
     # Pre-load all prices
     prices_map = {
         h["name"]: load_prices(data_dir, h["cat"], h["safe"])
@@ -120,7 +135,11 @@ def print_degradation_matrix(labeled_df: pd.DataFrame, data_dir: Path) -> None:
 
             row_parts: dict[str, tuple] = {}
             for scen_name, dates in scen_dates.items():
-                rets = [r for dt in dates if (r := fwd_return(prices, dt, horizon)) is not None]
+                ends = scen_ends[scen_name]
+                rets = [
+                    r for dt in dates
+                    if (r := fwd_return(prices, dt, horizon, ends.get(dt))) is not None
+                ]
                 row_parts[scen_name] = stats(rets)
 
             cur_med, cur_win, cur_n = row_parts["Current"]
@@ -223,9 +242,14 @@ def print_screen_overlap(labeled_df: pd.DataFrame, data_dir: Path) -> None:
     current_tickers = {h["ticker"] for h in HOLDINGS}
 
     scen_dates = {name: matched_dates(labeled_df, conds) for name, conds in SCENARIOS.items()}
+    scen_ends  = {
+        name: _regime_end_dates(labeled_df, conds, scen_dates[name])
+        for name, conds in SCENARIOS.items()
+    }
 
     for scen_name in FLIP_SCENARIOS:
         dates = scen_dates[scen_name]
+        ends  = scen_ends[scen_name]
         print(f"\n  {scen_name}  (N={len(dates)} matched dates in history)")
 
         if len(dates) < 10:
@@ -236,7 +260,6 @@ def print_screen_overlap(labeled_df: pd.DataFrame, data_dir: Path) -> None:
         for entry in top50:
             tkr = entry["ticker"]
             cat_raw = entry.get("category", "")
-            # Map screen category to parquet directory
             if "equity" in cat_raw.lower() or "us equity" in cat_raw.lower():
                 cat = "equities"
             elif "swedish" in cat_raw.lower():
@@ -252,8 +275,8 @@ def print_screen_overlap(labeled_df: pd.DataFrame, data_dir: Path) -> None:
             if prices.empty:
                 continue
 
-            rets_252 = [r for dt in dates if (r := fwd_return(prices, dt, 252)) is not None]
-            rets_63  = [r for dt in dates if (r := fwd_return(prices, dt, 63))  is not None]
+            rets_252 = [r for dt in dates if (r := fwd_return(prices, dt, 252, ends.get(dt))) is not None]
+            rets_63  = [r for dt in dates if (r := fwd_return(prices, dt, 63,  ends.get(dt))) is not None]
             med252, win252, n252 = stats(rets_252)
             med63,  win63,  _    = stats(rets_63)
 

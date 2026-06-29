@@ -25,6 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from asset_universe import config
 from asset_universe.analysis import regimes as regime_module
+from asset_universe.analysis.engine import _regime_end_dates
 from asset_universe.store import reader
 
 # ── Configuration ─────────────────────────────────────────────────────────────
@@ -71,27 +72,41 @@ def load_prices(data_dir: Path, cat: str, safe: str) -> pd.Series:
     return df.set_index("date")["close"].sort_index()
 
 
-def fwd_return(prices: pd.Series, date: pd.Timestamp, days: int) -> float | None:
+def fwd_return(
+    prices: pd.Series,
+    date: pd.Timestamp,
+    days: int,
+    regime_end: pd.Timestamp | None = None,
+) -> float | None:
     idx = prices.index.searchsorted(date)
     if idx >= len(prices):
         return None
     if abs((prices.index[idx] - date).days) > 5:
         return None
-    fwd = idx + days
-    if fwd >= len(prices):
+    fwd_idx = idx + days
+    if regime_end is not None:
+        end_idx = prices.index.searchsorted(regime_end)
+        fwd_idx = min(fwd_idx, end_idx)
+    if fwd_idx >= len(prices) or fwd_idx <= idx:
         return None
-    p0, p1 = prices.iloc[idx], prices.iloc[fwd]
+    p0, p1 = prices.iloc[idx], prices.iloc[fwd_idx]
     return (p1 - p0) / p0 if p0 > 0 else None
 
 
-def compute_stats(labeled_df: pd.DataFrame, conditions: dict,
-                  prices: pd.Series, horizon: int) -> tuple[float, float, int]:
-    """Returns (median_pct, win_rate_pct, n)."""
+def compute_stats(
+    labeled_df: pd.DataFrame,
+    conditions: dict,
+    prices: pd.Series,
+    horizon: int,
+    regime_ends: dict | None = None,
+) -> tuple[float, float, int]:
+    """Returns (median_pct, win_rate_pct, n). Caps returns at regime end if provided."""
     mask = pd.Series(True, index=labeled_df.index)
     for k, v in conditions.items():
         mask &= labeled_df[k] == v
     dates = labeled_df.index[mask]
-    rets = [r for dt in dates if (r := fwd_return(prices, dt, horizon)) is not None]
+    ends = regime_ends or {}
+    rets = [r for dt in dates if (r := fwd_return(prices, dt, horizon, ends.get(dt))) is not None]
     if len(rets) < 10:
         return float("nan"), float("nan"), len(rets)
     s = pd.Series(rets)
@@ -172,16 +187,28 @@ def compute_exit_ranking(
     current_conditions: dict,
     new_conditions: dict,
 ) -> pd.DataFrame:
+    # Pre-compute regime ends once per conditions set
+    def _dates(conds):
+        mask = pd.Series(True, index=labeled_df.index)
+        for k, v in conds.items():
+            mask &= labeled_df[k] == v
+        return labeled_df.index[mask]
+
+    cur_dates = _dates(current_conditions)
+    new_dates = _dates(new_conditions)
+    cur_ends  = _regime_end_dates(labeled_df, current_conditions, cur_dates)
+    new_ends  = _regime_end_dates(labeled_df, new_conditions,     new_dates)
+
     rows = []
     for h in HOLDINGS:
         prices = load_prices(data_dir, h["cat"], h["safe"])
         if prices.empty:
             continue
 
-        cur_63,  cur_win63,  cur_n63  = compute_stats(labeled_df, current_conditions, prices, 63)
-        new_63,  new_win63,  new_n63  = compute_stats(labeled_df, new_conditions,     prices, 63)
-        cur_252, cur_win252, cur_n252 = compute_stats(labeled_df, current_conditions, prices, 252)
-        new_252, new_win252, new_n252 = compute_stats(labeled_df, new_conditions,     prices, 252)
+        cur_63,  cur_win63,  cur_n63  = compute_stats(labeled_df, current_conditions, prices, 63,  cur_ends)
+        new_63,  new_win63,  new_n63  = compute_stats(labeled_df, new_conditions,     prices, 63,  new_ends)
+        cur_252, cur_win252, cur_n252 = compute_stats(labeled_df, current_conditions, prices, 252, cur_ends)
+        new_252, new_win252, new_n252 = compute_stats(labeled_df, new_conditions,     prices, 252, new_ends)
 
         delta_63  = new_63  - cur_63  if not (np.isnan(new_63)  or np.isnan(cur_63))  else float("nan")
         delta_252 = new_252 - cur_252 if not (np.isnan(new_252) or np.isnan(cur_252)) else float("nan")
@@ -220,6 +247,13 @@ def top_rotation_targets(
     current_tickers = {h["ticker"] for h in HOLDINGS}
     top50 = screen_df.head(50)[["ticker", "category"]].to_dict("records")
 
+    # Pre-compute regime ends for rotation target scoring
+    mask = pd.Series(True, index=labeled_df.index)
+    for k, v in new_conditions.items():
+        mask &= labeled_df[k] == v
+    new_dates = labeled_df.index[mask]
+    new_ends  = _regime_end_dates(labeled_df, new_conditions, new_dates)
+
     rows = []
     for entry in top50:
         tkr = entry["ticker"]
@@ -239,7 +273,7 @@ def top_rotation_targets(
         if prices.empty:
             continue
 
-        med, win, n_obs = compute_stats(labeled_df, new_conditions, prices, 252)
+        med, win, n_obs = compute_stats(labeled_df, new_conditions, prices, 252, new_ends)
         if np.isnan(med) or n_obs < 10:
             continue
         rows.append({"ticker": tkr, "med252": med, "win252": win, "n": n_obs})
