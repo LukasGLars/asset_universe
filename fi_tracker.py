@@ -298,4 +298,34 @@ try:
 except Exception as _e:
     print(f"\n  AVGO 200d Guard : [unavailable — {_e}]")
 
+# ── AVGO earnings checkpoint (manual — guard is price-lagging, this is not) ─────
+# 2026-07-01 baseline: fwd/trail EPS ratio 3.23x, vs 1.1-1.5x for quality peers
+# (AAPL, GOOG, MA, TDG, MNST, ANET, COST) — AVGO is uniquely priced for a near-
+# tripling of EPS. Guard reacts to sustained price decline; this catches a
+# guided-trajectory miss before SMA200 would.
+try:
+    import datetime
+    import yfinance as yf
+
+    _av_info   = yf.Ticker("AVGO").info
+    _trail_eps = _av_info.get("trailingEps")
+    _fwd_eps   = _av_info.get("forwardEps")
+    _eps_ratio = (_fwd_eps / _trail_eps) if (_trail_eps and _fwd_eps) else None
+    _next_ts   = _av_info.get("earningsTimestampStart")
+    _next_date = (datetime.datetime.fromtimestamp(_next_ts, datetime.timezone.utc).date()
+                  if _next_ts else None)
+
+    print(f"\n  AVGO Earnings Checkpoint")
+    print(f"    Trailing EPS   : ${_trail_eps:.2f}" if _trail_eps else "    Trailing EPS   : n/a")
+    print(f"    Forward EPS    : ${_fwd_eps:.2f}" if _fwd_eps else "    Forward EPS    : n/a")
+    if _eps_ratio:
+        print(f"    Fwd/Trail ratio: {_eps_ratio:.2f}x  (baseline 2026-07-01: 3.23x)")
+    print(f"    Next earnings  : {_next_date}" if _next_date else "    Next earnings  : n/a")
+    print(f"    Action         : after the print, check actual AI revenue/EPS against the")
+    print(f"                     $56B FY26 / $100B FY27 guided path. Meaningfully short of")
+    print(f"                     trajectory -> revisit conviction, even if price > SMA200.")
+
+except Exception as _e:
+    print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
+
 print(f"\n{'='*62}")
