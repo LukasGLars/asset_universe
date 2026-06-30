@@ -74,3 +74,6 @@ jobs:
           git commit -m "chore(sync): daily update [skip ci]"
           git pull --rebase origin master
           git push
+
+      - name: Sync health check
+        run: python check_sync_health.py status.md
