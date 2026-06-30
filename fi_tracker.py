@@ -204,4 +204,98 @@ if reg:
 else:
     print("  [signals unavailable — regime could not be computed]")
 
+# ── Tactical rules ──────────────────────────────────────────────────────────────
+
+print(f"\n{'='*62}")
+print("TACTICAL RULES")
+print(f"{'='*62}")
+
+# ── Silver GSR tactical ─────────────────────────────────────────────────────────
+GSR_T1              = 83.36   # p85
+GSR_T2              = 86.45   # p90
+GSR_EXIT            = 62.56   # p33 cycle-complete (100% WR on 162 instances)
+GSR_PEAK_WINDOW     = 60      # days for rolling peak
+GSR_PEAK_FALL_PCT   = 0.05    # must fall ≥5% from peak before signal valid
+
+try:
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    _gc_path = DATA_DIR / "commodities" / "GC_F.parquet"
+    _si_path = DATA_DIR / "commodities" / "SI_F.parquet"
+
+    _gc = pd.read_parquet(_gc_path)
+    _gc["date"] = pd.to_datetime(_gc["date"])
+    _gc = _gc.set_index("date")["close"].sort_index().dropna()
+
+    _si = pd.read_parquet(_si_path)
+    _si["date"] = pd.to_datetime(_si["date"])
+    _si = _si.set_index("date")["close"].sort_index().dropna()
+
+    _common = _gc.index.intersection(_si.index)
+    _gsr    = (_gc.reindex(_common) / _si.reindex(_common)).dropna()
+
+    _gsr_now      = float(_gsr.iloc[-1])
+    _gsr_date     = _gsr.index[-1].date()
+    _peak_60d     = float(_gsr.iloc[-GSR_PEAK_WINDOW:].max())
+    _fall_from_pk = (_peak_60d - _gsr_now) / _peak_60d  # positive = fallen
+
+    _fallen_enough = _fall_from_pk >= GSR_PEAK_FALL_PCT
+
+    if _gsr_now >= GSR_T2 and _fallen_enough:
+        _silver_signal = "T2 ACTIVE"
+        _silver_action = "ADD +17% silver (fund from AVGO: AVGO -> 38%, Silver -> 17%)"
+    elif _gsr_now >= GSR_T1 and _fallen_enough:
+        _silver_signal = "T1 ACTIVE"
+        _silver_action = "ADD +12% silver (fund from AVGO: AVGO -> 43%, Silver -> 12%)"
+    elif _gsr_now < GSR_EXIT:
+        _silver_signal = "EXIT"
+        _silver_action = "SELL silver, return to base (AVGO back to 55%, Silver -> 0%)"
+    else:
+        _silver_signal = "INACTIVE"
+        _silver_action = "No action -- hold base"
+
+    print(f"\n  Silver GSR Tactical")
+    print(f"    GSR now        : {_gsr_now:.2f}  (as of {_gsr_date})")
+    print(f"    60d GSR peak   : {_peak_60d:.2f}")
+    print(f"    Fall from peak : {_fall_from_pk:.1%}  "
+          f"({'yes' if _fallen_enough else 'no (need >=5% fall for signal)'})")
+    print(f"    T1 threshold   : {GSR_T1}  |  T2: {GSR_T2}  |  Exit: {GSR_EXIT}")
+    print(f"    Signal         : {_silver_signal}")
+    print(f"    Action         : {_silver_action}")
+
+except Exception as _e:
+    print(f"\n  Silver GSR Tactical : [unavailable — {_e}]")
+
+# ── AVGO 200d guard ─────────────────────────────────────────────────────────────
+AVGO_MA = 200
+
+try:
+    _av_path = DATA_DIR / "equities" / "AVGO.parquet"
+    _av      = pd.read_parquet(_av_path)
+    _av["date"] = pd.to_datetime(_av["date"])
+    _av      = _av.set_index("date")["close"].sort_index().dropna()
+
+    _av_now   = float(_av.iloc[-1])
+    _av_date  = _av.index[-1].date()
+    _sma200   = float(_av.iloc[-AVGO_MA:].mean())
+    _above    = _av_now >= _sma200
+    _gap_pct  = (_av_now - _sma200) / _sma200
+
+    if _above:
+        _avgo_signal = "BASE"
+        _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
+    else:
+        _avgo_signal = "DEFENSIVE"
+        _avgo_action = "Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)"
+
+    print(f"\n  AVGO 200d Guard")
+    print(f"    AVGO now       : ${_av_now:.2f}  (as of {_av_date})")
+    print(f"    200d SMA       : ${_sma200:.2f}  ({_gap_pct:+.1%} gap)")
+    print(f"    Signal         : {_avgo_signal}")
+    print(f"    Action         : {_avgo_action}")
+
+except Exception as _e:
+    print(f"\n  AVGO 200d Guard : [unavailable — {_e}]")
+
 print(f"\n{'='*62}")
