@@ -1,0 +1,363 @@
+"""
+run_combined_system.py
+
+Complete integrated system backtest.
+
+Layers:
+  1. Base          : Gold 25%, AVGO 55%, LLY 20%
+  2. AVGO 200d guard: AVGO < 200d SMA → Gold 52.5%, AVGO 0%, LLY 47.5%
+  3. Silver tactical: T1/T2 adds funded from AVGO (base) or Gold (guard)
+
+Priority rule (guard + silver simultaneous):
+  Silver funded from AVGO in base mode, from Gold in guard mode.
+
+Weight table:
+  Base          : Gold 25%   AVGO 55%  LLY 20%   Silver 0%
+  Base + T1     : Gold 25%   AVGO 43%  LLY 20%   Silver 12%
+  Base + T2     : Gold 25%   AVGO 38%  LLY 20%   Silver 17%
+  Guard         : Gold 52.5% AVGO 0%   LLY 47.5% Silver 0%
+  Guard + T1    : Gold 40.5% AVGO 0%   LLY 47.5% Silver 12%
+  Guard + T2    : Gold 35.5% AVGO 0%   LLY 47.5% Silver 17%
+
+Silver state machine:
+  INACTIVE → T1/T2 when GSR >= threshold AND fallen >=5% from 60d peak
+  T1/T2    → INACTIVE when GSR < 62.56 (cycle-complete exit)
+
+Comparison strategies:
+  A. Static base only
+  B. Base + AVGO guard only
+  C. Base + silver tactical only
+  D. Base + guard + silver (combined system)
+
+TC: 10bps per asset per transition.
+Output: comparison_results/combined_system.csv
+"""
+from __future__ import annotations
+
+import io
+import sys
+import warnings
+from pathlib import Path
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+
+PROJECT_ROOT = Path(__file__).parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from asset_universe import config
+
+DATA_DIR = config.raw_data_dir()
+OUT_CSV  = PROJECT_ROOT / "comparison_results" / "combined_system.csv"
+
+# ── Thresholds ────────────────────────────────────────────────────────────────
+AVGO_MA          = 200
+GSR_T1           = 83.36
+GSR_T2           = 86.45
+GSR_EXIT         = 62.56
+GSR_PEAK_WINDOW  = 60
+GSR_PEAK_FALL    = 0.05
+TC               = 0.0010
+AVGO_IPO         = pd.Timestamp("2009-08-06")
+OOS_START        = pd.Timestamp("2020-01-01")
+
+# ── Weight table ──────────────────────────────────────────────────────────────
+WEIGHTS: dict[tuple[bool, str], dict[str, float]] = {
+    (False, "INACTIVE"): {"GC_F": 0.250, "AVGO": 0.550, "LLY": 0.200, "SI_F": 0.000},
+    (False, "T1"):       {"GC_F": 0.250, "AVGO": 0.430, "LLY": 0.200, "SI_F": 0.120},
+    (False, "T2"):       {"GC_F": 0.250, "AVGO": 0.380, "LLY": 0.200, "SI_F": 0.170},
+    (True,  "INACTIVE"): {"GC_F": 0.525, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.000},
+    (True,  "T1"):       {"GC_F": 0.405, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.120},
+    (True,  "T2"):       {"GC_F": 0.355, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.170},
+}
+
+
+def load_prices(category: str, stem: str) -> pd.Series | None:
+    path = DATA_DIR / category / f"{stem}.parquet"
+    if not path.exists():
+        return None
+    try:
+        df = pd.read_parquet(path)
+        df["date"] = pd.to_datetime(df["date"])
+        return df.set_index("date")["close"].sort_index().dropna()
+    except Exception:
+        return None
+
+
+def perf(equity: pd.Series, label: str = "") -> dict:
+    r      = equity.pct_change().dropna()
+    yrs    = (equity.index[-1] - equity.index[0]).days / 365.25
+    cagr   = float(equity.iloc[-1] ** (1 / yrs) - 1) if yrs > 0 else 0
+    dd     = equity / equity.cummax() - 1
+    maxdd  = float(dd.min())
+    sharpe = float(r.mean() / r.std() * np.sqrt(252)) if r.std() > 0 else 0
+    calmar = cagr / abs(maxdd) if maxdd != 0 else 0
+    return {
+        "label":  label,
+        "cagr":   round(cagr, 4),
+        "sharpe": round(sharpe, 3),
+        "maxdd":  round(maxdd, 4),
+        "calmar": round(calmar, 3),
+        "years":  round(yrs, 1),
+    }
+
+
+def tc_cost(prev: dict, curr: dict) -> float:
+    """10bps per asset that changed weight meaningfully."""
+    cost = 0.0
+    for asset in set(list(prev.keys()) + list(curr.keys())):
+        if abs(prev.get(asset, 0) - curr.get(asset, 0)) > 0.005:
+            cost += TC
+    return cost
+
+
+def build_signals(
+    avgo_p: pd.Series,
+    gold_p: pd.Series,
+    silver_p: pd.Series,
+    common: pd.DatetimeIndex,
+) -> pd.DataFrame:
+    """
+    Build daily guard and silver state signals.
+    Returns DataFrame with columns: guard, silver_state
+    """
+    avgo_r   = avgo_p.reindex(common)
+    sma200   = avgo_r.rolling(AVGO_MA).mean()
+    guard    = (avgo_r < sma200).fillna(False)
+
+    gold_r   = gold_p.reindex(common)
+    silv_r   = silver_p.reindex(common)
+    gsr      = (gold_r / silv_r).dropna()
+    gsr      = gsr.reindex(common)
+    peak_60d = gsr.rolling(GSR_PEAK_WINDOW).max()
+    fall_pct = (peak_60d - gsr) / peak_60d.replace(0, np.nan)
+
+    # Silver state machine
+    silver_states = []
+    state = "INACTIVE"
+    for i in range(len(common)):
+        gsr_val  = gsr.iloc[i]  if not pd.isna(gsr.iloc[i])  else np.nan
+        fall_val = fall_pct.iloc[i] if not pd.isna(fall_pct.iloc[i]) else 0.0
+
+        if pd.isna(gsr_val):
+            silver_states.append(state)
+            continue
+
+        # Exit check first
+        if state in ("T1", "T2") and gsr_val < GSR_EXIT:
+            state = "INACTIVE"
+
+        # Entry check (only from INACTIVE)
+        if state == "INACTIVE":
+            fallen = fall_val >= GSR_PEAK_FALL
+            if gsr_val >= GSR_T2 and fallen:
+                state = "T2"
+            elif gsr_val >= GSR_T1 and fallen:
+                state = "T1"
+
+        silver_states.append(state)
+
+    return pd.DataFrame({
+        "guard":        guard.values,
+        "silver_state": silver_states,
+    }, index=common)
+
+
+def run_strategy(
+    prices: dict[str, pd.Series],
+    signals: pd.DataFrame,
+    use_guard: bool,
+    use_silver: bool,
+    label: str,
+) -> tuple[pd.Series, list[dict]]:
+    """
+    Simulate portfolio using given signal flags.
+    Returns (equity curve, list of state change events).
+    """
+    common = signals.index
+    rets   = {t: prices[t].reindex(common).pct_change() for t in prices}
+
+    port_ret = pd.Series(0.0, index=common)
+    prev_w   = None
+    events   = []
+
+    for i, date in enumerate(common):
+        guard  = bool(signals["guard"].iloc[i])  if use_guard  else False
+        silver = signals["silver_state"].iloc[i]  if use_silver else "INACTIVE"
+
+        curr_w = WEIGHTS[(guard, silver)]
+
+        # TC on weight change
+        if prev_w is not None and curr_w != prev_w:
+            cost = tc_cost(prev_w, curr_w)
+            port_ret.iloc[i] -= cost
+            events.append({
+                "date":   date,
+                "guard":  guard,
+                "silver": silver,
+                "label":  label,
+            })
+
+        # Portfolio return
+        r = sum(w * (rets[t].iloc[i] if not pd.isna(rets[t].iloc[i]) else 0.0)
+                for t, w in curr_w.items())
+        port_ret.iloc[i] += r
+        prev_w = curr_w
+
+    return (1 + port_ret).cumprod(), events
+
+
+def yearly_breakdown(equity: pd.Series, label: str) -> None:
+    for yr in sorted(equity.index.year.unique()):
+        eq_yr = equity[equity.index.year == yr]
+        if len(eq_yr) < 2:
+            continue
+        ret  = float(eq_yr.iloc[-1] / eq_yr.iloc[0] - 1)
+        dd   = eq_yr / eq_yr.cummax() - 1
+        mdd  = float(dd.min())
+        oos  = "*" if yr >= OOS_START.year else " "
+        print(f"    {yr}{oos}  {ret:+.1%}  (MaxDD {mdd:+.1%})")
+
+
+def main() -> None:
+    print("=" * 70)
+    print("Combined System Backtest — All Layers Integrated")
+    print("  A: Static base | B: +Guard | C: +Silver | D: +Guard +Silver")
+    print(f"  Period: {AVGO_IPO.date()} to present  |  TC: {TC*100:.0f}bps")
+    print("=" * 70)
+
+    gold_p   = load_prices("commodities", "GC_F")
+    avgo_p   = load_prices("equities",    "AVGO")
+    lly_p    = load_prices("equities",    "LLY")
+    silver_p = load_prices("commodities", "SI_F")
+
+    if any(p is None for p in [gold_p, avgo_p, lly_p, silver_p]):
+        print("ERROR: missing price data")
+        return
+
+    common = (gold_p.index
+              .intersection(avgo_p.index)
+              .intersection(lly_p.index)
+              .intersection(silver_p.index))
+    common = common[common >= AVGO_IPO].sort_values()
+    print(f"Common dates: {len(common)} ({common[0].date()} to {common[-1].date()})")
+
+    prices = {
+        "GC_F": gold_p,
+        "AVGO": avgo_p,
+        "LLY":  lly_p,
+        "SI_F": silver_p,
+    }
+
+    # ── Build signals ──────────────────────────────────────────────────────────
+    print("\nBuilding signals...")
+    signals = build_signals(avgo_p, gold_p, silver_p, common)
+
+    guard_days  = signals["guard"].sum()
+    t1_days     = (signals["silver_state"] == "T1").sum()
+    t2_days     = (signals["silver_state"] == "T2").sum()
+    both_days   = (signals["guard"] & (signals["silver_state"] != "INACTIVE")).sum()
+
+    print(f"  Guard active    : {guard_days} days ({guard_days/len(common):.0%})")
+    print(f"  Silver T1       : {t1_days} days ({t1_days/len(common):.0%})")
+    print(f"  Silver T2       : {t2_days} days ({t2_days/len(common):.0%})")
+    print(f"  Both active     : {both_days} days ({both_days/len(common):.0%})")
+
+    # ── Run four strategies ────────────────────────────────────────────────────
+    configs = [
+        (False, False, "A: Static base"),
+        (True,  False, "B: Base + guard"),
+        (False, True,  "C: Base + silver"),
+        (True,  True,  "D: Base + guard + silver"),
+    ]
+
+    results = []
+    equities = {}
+
+    print("\n── Full-period results ───────────────────────────────────────────────")
+    print(f"  {'Strategy':<28}  {'CAGR':>8}  {'Sharpe':>7}  {'MaxDD':>8}  {'Calmar':>7}")
+    print("  " + "-" * 65)
+
+    for use_guard, use_silver, label in configs:
+        eq, events = run_strategy(prices, signals, use_guard, use_silver, label)
+        p = perf(eq, label)
+        p["transitions"] = len(events)
+        results.append(p)
+        equities[label] = eq
+        print(f"  {label:<28}  {p['cagr']:+.1%}    {p['sharpe']:.3f}  "
+              f"{p['maxdd']:+.1%}   {p['calmar']:.3f}  ({len(events)} switches)")
+
+    # ── IS / OOS split ─────────────────────────────────────────────────────────
+    print("\n── IS / OOS breakdown ────────────────────────────────────────────────")
+    is_mask  = common < OOS_START
+    oos_mask = common >= OOS_START
+
+    print(f"\n  {'Strategy':<28}  {'IS CAGR':>8}  {'IS Cal':>7}  "
+          f"{'OOS CAGR':>9}  {'OOS Cal':>8}")
+    print("  " + "-" * 70)
+    for use_guard, use_silver, label in configs:
+        eq = equities[label]
+        p_is  = perf(eq[is_mask])
+        p_oos = perf(eq[oos_mask])
+        print(f"  {label:<28}  {p_is['cagr']:+.1%}    {p_is['calmar']:.3f}  "
+              f"  {p_oos['cagr']:+.1%}    {p_oos['calmar']:.3f}")
+
+    # ── Year-by-year: combined vs static ──────────────────────────────────────
+    print("\n── Year-by-year: Static base vs Combined system (* = OOS) ───────────")
+    eq_a = equities["A: Static base"]
+    eq_d = equities["D: Base + guard + silver"]
+    print(f"\n  {'Year':>5}  {'Base CAGR':>10}  {'Combined CAGR':>14}  "
+          f"{'Base MaxDD':>11}  {'Combined MaxDD':>15}  {'Winner':>8}")
+    print("  " + "-" * 75)
+    for yr in sorted(common.year.unique()):
+        mask = common.year == yr
+        if mask.sum() < 2:
+            continue
+        def yr_ret(eq):
+            s = eq[mask]
+            return float(s.iloc[-1] / s.iloc[0] - 1)
+        def yr_mdd(eq):
+            s = eq[mask]
+            return float((s / s.cummax() - 1).min())
+        oos_tag = "*" if yr >= OOS_START.year else " "
+        r_base = yr_ret(eq_a); r_comb = yr_ret(eq_d)
+        m_base = yr_mdd(eq_a); m_comb = yr_mdd(eq_d)
+        c_base = r_base / abs(m_base) if m_base != 0 else 0
+        c_comb = r_comb / abs(m_comb) if m_comb != 0 else 0
+        winner = "COMB" if c_comb > c_base else "base"
+        print(f"  {yr}{oos_tag}  {r_base:+.1%}        {r_comb:+.1%}           "
+              f"{m_base:+.1%}        {m_comb:+.1%}           {winner}")
+
+    # ── Current state ──────────────────────────────────────────────────────────
+    print("\n── Current state ─────────────────────────────────────────────────────")
+    last = signals.iloc[-1]
+    guard_now  = bool(last["guard"])
+    silver_now = last["silver_state"]
+    curr_w     = WEIGHTS[(guard_now, silver_now)]
+
+    avgo_last  = float(avgo_p.reindex(common).iloc[-1])
+    sma200_now = float(avgo_p.reindex(common).rolling(AVGO_MA).mean().iloc[-1])
+    gsr_last   = float((gold_p.reindex(common) / silver_p.reindex(common)).iloc[-1])
+
+    print(f"  AVGO: ${avgo_last:.2f}  vs 200d SMA ${sma200_now:.2f}  "
+          f"-> guard={'ACTIVE' if guard_now else 'inactive'}")
+    print(f"  GSR:  {gsr_last:.2f}  -> silver={silver_now}")
+    print(f"  Active state: guard={guard_now}, silver={silver_now}")
+    print(f"  Current weights:")
+    for t, w in curr_w.items():
+        if w > 0:
+            name = {"GC_F": "Gold", "AVGO": "AVGO", "LLY": "LLY", "SI_F": "Silver"}[t]
+            print(f"    {name:<8}: {w:.1%}")
+
+    # ── Save ───────────────────────────────────────────────────────────────────
+    OUT_CSV.parent.mkdir(exist_ok=True)
+    pd.DataFrame(results).to_csv(OUT_CSV, index=False)
+    print(f"\nSaved: {OUT_CSV}")
+
+
+if __name__ == "__main__":
+    main()
