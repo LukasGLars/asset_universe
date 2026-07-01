@@ -39,8 +39,12 @@ import sys
 import warnings
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+if __name__ == "__main__":
+    # Windows console UTF-8 wrapping -- only when run directly. Doing this
+    # at import time breaks pytest's stdout/stderr capture for anything
+    # that imports this module (e.g. tests/test_crash_guard.py).
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 warnings.filterwarnings("ignore")
 
 import numpy as np
@@ -64,6 +68,23 @@ GSR_PEAK_FALL    = 0.05
 TC               = 0.0010
 AVGO_IPO         = pd.Timestamp("2009-08-06")
 OOS_START        = pd.Timestamp("2020-01-01")
+
+# Crash guard (2026-07-02): the 200d SMA guard is a lagging indicator -- it
+# can't react to a fast, sharp break (2001 dot-com: -35.3% MaxDD even with
+# the guard active, per the TXN analog test, since a violent move can blow
+# through the SMA cross before it triggers). This is an early-activation
+# layer on the SAME guard, not a separate strategy: if AVGO drops more than
+# CRASH_ROC_THRESHOLD over CRASH_ROC_WINDOW trading days, the guard fires
+# immediately regardless of where price sits vs the 200d SMA. Re-entry is
+# unchanged -- still governed by price closing back above the 200d SMA,
+# since the ROC condition self-clears once the rolling window recovers
+# (confirmed empirically: only a handful of standalone ROC-triggered days
+# in both the TXN-analog and AVGO backtests, not sustained periods).
+# Validated via a 20-cell parameter grid (window x threshold) against both
+# AVGO's own history and a TXN analog (2000-2026, includes 2001 and 2008) --
+# every cell matched or beat the SMA-only guard on both datasets.
+CRASH_ROC_WINDOW    = 5
+CRASH_ROC_THRESHOLD = -0.10
 
 # ── Weight table ──────────────────────────────────────────────────────────────
 WEIGHTS: dict[tuple[bool, str], dict[str, float]] = {
@@ -123,11 +144,15 @@ def build_signals(
 ) -> pd.DataFrame:
     """
     Build daily guard and silver state signals.
-    Returns DataFrame with columns: guard, silver_state
+    Returns DataFrame with columns: guard, guard_ma, guard_crash, silver_state
     """
     avgo_r   = avgo_p.reindex(common)
     sma200   = avgo_r.rolling(AVGO_MA).mean()
-    guard    = (avgo_r < sma200).fillna(False)
+    guard_ma = (avgo_r < sma200).fillna(False)
+
+    roc            = avgo_r.pct_change(CRASH_ROC_WINDOW)
+    guard_crash    = (roc <= CRASH_ROC_THRESHOLD).fillna(False)
+    guard          = guard_ma | guard_crash
 
     gold_r   = gold_p.reindex(common)
     silv_r   = silver_p.reindex(common)
@@ -163,6 +188,8 @@ def build_signals(
 
     return pd.DataFrame({
         "guard":        guard.values,
+        "guard_ma":     guard_ma.values,
+        "guard_crash":  guard_crash.values,
         "silver_state": silver_states,
     }, index=common)
 
@@ -257,12 +284,14 @@ def main() -> None:
     print("\nBuilding signals...")
     signals = build_signals(avgo_p, gold_p, silver_p, common)
 
-    guard_days  = signals["guard"].sum()
-    t1_days     = (signals["silver_state"] == "T1").sum()
-    t2_days     = (signals["silver_state"] == "T2").sum()
-    both_days   = (signals["guard"] & (signals["silver_state"] != "INACTIVE")).sum()
+    guard_days   = signals["guard"].sum()
+    crash_only   = int((signals["guard_crash"] & ~signals["guard_ma"]).sum())
+    t1_days      = (signals["silver_state"] == "T1").sum()
+    t2_days      = (signals["silver_state"] == "T2").sum()
+    both_days    = (signals["guard"] & (signals["silver_state"] != "INACTIVE")).sum()
 
     print(f"  Guard active    : {guard_days} days ({guard_days/len(common):.0%})")
+    print(f"    of which crash-only (ROC fired, MA hadn't yet): {crash_only} days")
     print(f"  Silver T1       : {t1_days} days ({t1_days/len(common):.0%})")
     print(f"  Silver T2       : {t2_days} days ({t2_days/len(common):.0%})")
     print(f"  Both active     : {both_days} days ({both_days/len(common):.0%})")
@@ -341,10 +370,15 @@ def main() -> None:
 
     avgo_last  = float(avgo_p.reindex(common).iloc[-1])
     sma200_now = float(avgo_p.reindex(common).rolling(AVGO_MA).mean().iloc[-1])
+    roc_now    = float(avgo_p.reindex(common).pct_change(CRASH_ROC_WINDOW).iloc[-1])
     gsr_last   = float((gold_p.reindex(common) / silver_p.reindex(common)).iloc[-1])
 
+    ma_active    = bool(last["guard_ma"])
+    crash_active = bool(last["guard_crash"])
+    trigger = "MA" if (ma_active and not crash_active) else ("CRASH" if crash_active and not ma_active else ("MA+CRASH" if guard_now else "none"))
     print(f"  AVGO: ${avgo_last:.2f}  vs 200d SMA ${sma200_now:.2f}  "
-          f"-> guard={'ACTIVE' if guard_now else 'inactive'}")
+          f"-> guard={'ACTIVE' if guard_now else 'inactive'} (trigger: {trigger})")
+    print(f"  AVGO {CRASH_ROC_WINDOW}d ROC: {roc_now:+.1%}  (crash threshold: {CRASH_ROC_THRESHOLD:.0%})")
     print(f"  GSR:  {gsr_last:.2f}  -> silver={silver_now}")
     print(f"  Active state: guard={guard_now}, silver={silver_now}")
     print(f"  Current weights:")

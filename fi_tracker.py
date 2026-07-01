@@ -267,8 +267,19 @@ try:
 except Exception as _e:
     print(f"\n  Silver GSR Tactical : [unavailable — {_e}]")
 
-# ── AVGO 200d guard ─────────────────────────────────────────────────────────────
+# ── AVGO 200d guard (+ crash guard) ───────────────────────────────────────────
 AVGO_MA = 200
+# Crash guard (2026-07-02): early-activation layer on the SAME guard, not a
+# separate strategy -- the 200d SMA can't react to a fast, sharp break (the
+# TXN analog test showed -35.3% MaxDD even with the SMA guard active during
+# the 2001 dot-com crash). If AVGO drops more than CRASH_ROC_THRESHOLD over
+# CRASH_ROC_WINDOW trading days, treat the guard as active immediately.
+# Re-entry unchanged -- still governed by price back above the 200d SMA.
+# Validated: 20-cell parameter grid, every cell matched or beat the SMA-only
+# guard on both AVGO's own history and the TXN analog (2000-2026). See
+# run_combined_system.py and MEMORY.md for the full validation.
+CRASH_ROC_WINDOW    = 5
+CRASH_ROC_THRESHOLD = -0.10
 
 try:
     _av_path = DATA_DIR / "equities" / "AVGO.parquet"
@@ -279,20 +290,34 @@ try:
     _av_now   = float(_av.iloc[-1])
     _av_date  = _av.index[-1].date()
     _sma200   = float(_av.iloc[-AVGO_MA:].mean())
-    _above    = _av_now >= _sma200
+    _ma_above = _av_now >= _sma200
     _gap_pct  = (_av_now - _sma200) / _sma200
 
-    if _above:
+    _roc_now     = float(_av.iloc[-1] / _av.iloc[-(CRASH_ROC_WINDOW + 1)] - 1)
+    _crash_fired = _roc_now <= CRASH_ROC_THRESHOLD
+
+    _above = _ma_above and not _crash_fired
+
+    if _crash_fired:
+        _avgo_signal = "DEFENSIVE"
+        _trigger     = "CRASH"
+    elif not _ma_above:
+        _avgo_signal = "DEFENSIVE"
+        _trigger     = "MA"
+    else:
         _avgo_signal = "BASE"
+        _trigger     = "none"
+
+    if _above:
         _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
     else:
-        _avgo_signal = "DEFENSIVE"
         _avgo_action = "Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)"
 
     print(f"\n  AVGO 200d Guard")
     print(f"    AVGO now       : ${_av_now:.2f}  (as of {_av_date})")
     print(f"    200d SMA       : ${_sma200:.2f}  ({_gap_pct:+.1%} gap)")
-    print(f"    Signal         : {_avgo_signal}")
+    print(f"    {CRASH_ROC_WINDOW}d ROC         : {_roc_now:+.1%}  (crash threshold: {CRASH_ROC_THRESHOLD:.0%})")
+    print(f"    Signal         : {_avgo_signal}  (trigger: {_trigger})")
     print(f"    Action         : {_avgo_action}")
 
 except Exception as _e:
