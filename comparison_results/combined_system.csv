@@ -1,5 +1,5 @@
 label,cagr,sharpe,maxdd,calmar,years,transitions
-A: Static base,0.3242,1.327,-0.305,1.063,16.9,0
-B: Base + guard,0.3925,1.664,-0.1859,2.112,16.9,156
-C: Base + silver,0.3104,1.373,-0.2738,1.134,16.9,2
-D: Base + guard + silver,0.3707,1.688,-0.1681,2.205,16.9,158
+A: Static base,0.3247,1.329,-0.305,1.065,16.9,0
+B: Base + guard,0.4388,1.858,-0.1512,2.902,16.9,198
+C: Base + silver,0.311,1.376,-0.2738,1.136,16.9,2
+D: Base + guard + silver,0.4045,1.841,-0.1681,2.407,16.9,200
