@@ -1,0 +1,23 @@
+# Opportunistic sleeve state — manually maintained, NOT synced from the
+# Google Sheet (unlike portfolio.toml's share counts).
+#
+# Updated via:
+#   python run_entry_screen.py --open TICKER ENTRY_PRICE SHARES CAPITAL_SEK
+#   python run_entry_screen.py --close
+#
+# Position cap: 1 open position at a time. war-chest capital only.
+# See MEMORY.md "Formalize the opportunistic sleeve" for the full rule set.
+
+open       = false
+ticker     = ""
+category   = ""
+entry_date = ""
+entry_price = 0.0
+shares      = 0
+capital_sek = 0.0
+fx_at_entry = 0.0
+
+entry_ry_regime     = ""
+entry_baa10y_regime = ""
+
+cluster_peers = []
