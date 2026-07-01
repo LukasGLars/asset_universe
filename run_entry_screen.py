@@ -415,10 +415,46 @@ def compute_tripwires(state: dict, data_dir: Path, benchmark: str = "SPY") -> di
     }
 
 
+# ── Suggested duration + exact duration-matched return ──────────────────────
+# A candidate's actual runway isn't a flat 21d/30d -- it's capped by its own
+# earnings date. Rather than reading off the fixed med_21d/win_21d CSV
+# columns (a mismatch for anyone whose runway isn't close to 21 trading
+# days), reuse _uncapped_forward_return/_matched_dates -- already built for
+# the 21d/63d/252d columns -- parametrized to each candidate's own suggested
+# duration. No new algorithm, no network calls, cheap: pure price-history
+# math on data already loaded for the MA50 check.
+
+def suggested_duration_days(earn_date, today: _date | None = None) -> int:
+    today = today or _date.today()
+    if earn_date:
+        earn_based = (earn_date - today).days - EARNINGS_BUFFER_DAYS
+        return max(1, min(TIME_EXIT_DAYS, earn_based))
+    return TIME_EXIT_DAYS
+
+
+def duration_matched_return(
+    ticker: str, category: str, matched: pd.DatetimeIndex,
+    calendar_days: int, data_dir: Path,
+) -> tuple[float | None, float | None, int]:
+    """Median return + win rate at calendar_days out, computed fresh from
+    the regime-matched historical dates. Returns (median, win_rate, n)."""
+    path = reader.ticker_path(data_dir, category, ticker)
+    if not path.exists():
+        return None, None, 0
+    prices = reader.load(path)["close"].dropna().sort_index()
+    trading_days = max(1, round(calendar_days * 252 / 365.25))
+    rets = [r for dt in matched if (r := _uncapped_forward_return(prices, dt, trading_days)) is not None]
+    if len(rets) < MIN_N_OBS:
+        return None, None, len(rets)
+    s = pd.Series(rets)
+    return float(s.median()), float((s > 0).mean()), len(rets)
+
+
 # ── Selection rule (no open position): least MA50-extension -> ROBUST
-#    diversity preferred -> win rate. Effect sized on med_21d/win_21d (the
-#    horizon that actually matches a ~30d hold) -- med_252d is kept only as
-#    a diversity/robustness cross-check, not the headline return number. ──
+#    diversity preferred -> win rate at the candidate's own suggested-
+#    duration horizon (falls back to win_21d if that horizon has too few
+#    matched observations). med_252d is kept only as a diversity/robustness
+#    cross-check, not the headline return number. ─────────────────────────
 
 def select_best_candidate(out: pd.DataFrame, held: set[str]) -> dict | None:
     pool = out[(out["verdict"] == "ENTER") & (~out["ticker"].isin(held)) & out["dist_num"].notna()]
@@ -426,8 +462,11 @@ def select_best_candidate(out: pd.DataFrame, held: set[str]) -> dict | None:
         return None
     pool = pool.copy()
     pool["diversity_rank"] = pool["diversity"].map(DIVERSITY_RANK).fillna(3)
+    dur_win = (pd.to_numeric(pool["duration_win"], errors="coerce") if "duration_win" in pool.columns
+               else pd.Series(float("nan"), index=pool.index))
+    pool["rank_win"] = dur_win.combine_first(pd.to_numeric(pool["win_21d"], errors="coerce"))
     pool = pool.sort_values(
-        by=["dist_num", "diversity_rank", "win_21d"],
+        by=["dist_num", "diversity_rank", "rank_win"],
         ascending=[True, True, False],
     )
     return pool.iloc[0].to_dict()
@@ -519,6 +558,7 @@ def run_entry_screen(
 
     candidates, cat_of, source, extra_info = get_regime_candidates(conditions, top_n, data_dir)
     held = already_held_tickers()
+    matched = _matched_dates(conditions, data_dir)
 
     print("=" * 100)
     print("OPPORTUNISTIC ENTRY SCREEN")
@@ -564,6 +604,16 @@ def run_entry_screen(
         verdict = "ENTER" if (gate2_pass and gate34_pass) else "PASS"
 
         info = extra_info.get(t, {})
+
+        # Exact duration-matched return -- only worth computing for ENTER
+        # survivors (that's the pool select_best_candidate ranks over).
+        dur_days = dur_med = dur_win = dur_n = None
+        if verdict == "ENTER":
+            dur_days = suggested_duration_days(earn_date, today)
+            dur_med, dur_win, dur_n = duration_matched_return(
+                t, cat_of.get(t, "equities"), matched, dur_days, data_dir
+            )
+
         row = {
             "rank":          i,
             "ticker":        t,
@@ -582,6 +632,10 @@ def run_entry_screen(
             "med_21d":       info.get("med_21d"),
             "win_21d":       info.get("win_21d"),
             "diversity":     info.get("diversity"),
+            "duration_days": dur_days,
+            "duration_med":  dur_med,
+            "duration_win":  dur_win,
+            "duration_n":    dur_n,
             "med_252d":      info.get("med_252d"),
         }
         rows.append(row)
@@ -607,29 +661,41 @@ def run_entry_screen(
 
     print()
     print("-" * 100)
-    print("  Selection (least MA50-extension -> ROBUST diversity preferred -> 21d win rate)")
-    print("  Effect sized on med_21d/win_21d (matches a ~30d hold); med_252d is a robustness check only.")
+    print("  Selection (least MA50-extension -> ROBUST diversity preferred -> win rate)")
+    print("  Return/win shown at EACH candidate's own suggested duration (min(30d, earnings-3d)),")
+    print("  computed fresh from regime-matched history -- not a flat 21d proxy. med_252d: robustness check only.")
     print("-" * 100)
     pick = select_best_candidate(out, held)
     ranked_pool = out[(out["verdict"] == "ENTER") & (~out["ticker"].isin(held)) & out["dist_num"].notna()].copy()
     if not ranked_pool.empty:
         ranked_pool["diversity_rank"] = ranked_pool["diversity"].map(DIVERSITY_RANK).fillna(3)
-        ranked_pool = ranked_pool.sort_values(by=["dist_num", "diversity_rank", "win_21d"], ascending=[True, True, False])
+        ranked_pool["rank_win"] = ranked_pool["duration_win"].combine_first(ranked_pool["win_21d"])
+        ranked_pool = ranked_pool.sort_values(by=["dist_num", "diversity_rank", "rank_win"], ascending=[True, True, False])
         for _, r in ranked_pool.iterrows():
-            med21 = f"{r['med_21d']:+.1%}" if pd.notna(r["med_21d"]) else "n/a"
-            win21 = f"{r['win_21d']:.1%}" if pd.notna(r["win_21d"]) else "n/a"
-            med252 = f"{r['med_252d']:+.1%}" if "med_252d" in r and pd.notna(r["med_252d"]) else "n/a"
+            dur = f"{int(r['duration_days'])}d" if pd.notna(r["duration_days"]) else "n/a"
+            if pd.notna(r["duration_med"]):
+                dur_med = f"{r['duration_med']:+.1%}"
+                dur_win = f"{r['duration_win']:.1%}"
+                dur_note = f" (n={int(r['duration_n'])})"
+            else:
+                dur_med, dur_win = f"{r['med_21d']:+.1%}" if pd.notna(r["med_21d"]) else "n/a", \
+                                   f"{r['win_21d']:.1%}" if pd.notna(r["win_21d"]) else "n/a"
+                dur_note = " (fallback: 21d fixed, too few obs at exact duration)"
+            med252 = f"{r['med_252d']:+.1%}" if pd.notna(r["med_252d"]) else "n/a"
             div = r["diversity"] if pd.notna(r["diversity"]) else "n/a"
             marker = " <- selected" if pick is not None and r["ticker"] == pick["ticker"] else ""
-            print(f"    {r['ticker']:<8} ext={r['dist_from_ma50']:>7}  div={div:<9}  "
-                  f"21d_med={med21:>7}  21d_win={win21:>7}  (252d robustness: {med252:>8}){marker}")
+            print(f"    {r['ticker']:<8} ext={r['dist_from_ma50']:>7}  div={div:<9}  duration={dur:<4}  "
+                  f"med={dur_med:>7}  win={dur_win:>7}{dur_note}  (252d robustness: {med252:>8}){marker}")
     if pick is None:
         print("  No eligible new candidate (either no ENTER survivors, all already held, or fresh-fallback "
               "path lacks 21d data for ranking).")
     else:
+        pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
+        pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
         print(f"\n  Best candidate: {pick['ticker']}  "
               f"(entry ${pick['price']:.2f}, MA50 ${pick['ma50']:.2f}, ext {pick['dist_from_ma50']}, "
-              f"21d med {pick['med_21d']:+.1%}, 21d win {pick['win_21d']:.1%}, diversity {pick['diversity']})")
+              f"suggested duration {int(pick['duration_days'])}d, "
+              f"med {pick_med:+.1%}, win {pick_win:.1%}, diversity {pick['diversity']})")
         print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
         print(f"    python run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
     print("=" * 100)
@@ -669,6 +735,8 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
     }
     candidates, cat_of, _, extra_info = get_regime_candidates(conditions, top_n, data_dir)
     held = already_held_tickers()
+    matched = _matched_dates(conditions, data_dir)
+    today = _date.today()
 
     survivors_frames = []
     by_cat: dict[str, list[str]] = {}
@@ -688,20 +756,30 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         info = extra_info.get(t, {})
         gate2_pass = bool(ma and ma["above_ma50"])
         verdict = "ENTER" if (gate2_pass and t in survivor_set) else "PASS"
+
+        dur_days = dur_med = dur_win = None
+        if verdict == "ENTER":
+            earn_date = _next_earnings(t)
+            dur_days = suggested_duration_days(earn_date, today)
+            dur_med, dur_win, _ = duration_matched_return(t, cat_of.get(t, "equities"), matched, dur_days, data_dir)
+
         rows.append({
             "ticker": t, "verdict": verdict,
             "dist_num": ma["dist_pct"] if ma else None,
             "dist_from_ma50": f"{ma['dist_pct']:+.1%}" if ma else "n/a",
             "price": ma["price"] if ma else None, "ma50": ma["ma50"] if ma else None,
             "diversity": info.get("diversity"), "med_21d": info.get("med_21d"), "win_21d": info.get("win_21d"),
+            "duration_days": dur_days, "duration_med": dur_med, "duration_win": dur_win,
         })
     out = pd.DataFrame(rows)
     pick = select_best_candidate(out, held) if not out.empty else None
 
     print(f"    Status         : CLOSED (0/1 position)")
     if pick is not None:
+        pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
+        dur = int(pick["duration_days"]) if pd.notna(pick["duration_days"]) else 21
         print(f"    Best candidate : {pick['ticker']}  (ext {pick['dist_from_ma50']}, "
-              f"21d med {pick['med_21d']:+.1%}, div {pick['diversity']}) -- run run_entry_screen.py for full detail")
+              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}) -- run run_entry_screen.py for full detail")
     else:
         print(f"    Best candidate : none eligible today")
 
