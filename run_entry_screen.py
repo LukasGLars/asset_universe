@@ -339,6 +339,20 @@ def _period_return(prices: pd.Series, n_days: int) -> float | None:
     return float(prices.iloc[-1] / prices.iloc[-(n_days + 1)] - 1)
 
 
+def asset_name(ticker: str) -> str:
+    """Full company/asset name via yfinance, for display next to a ticker
+    at the points where a human is actually deciding something (the
+    recommendation, an open position) -- not fetched for every row of the
+    30-candidate table, to avoid ~30 extra API calls on a run where only
+    one or two names actually matter for the decision."""
+    try:
+        import yfinance as yf
+        info = yf.Ticker(ticker).info
+        return info.get("longName") or info.get("shortName") or ""
+    except Exception:
+        return ""
+
+
 def discover_cluster_peers(
     ticker: str, gate1_candidates: list[str], exclude: set[str],
     data_dir: Path, max_peers: int = 4,
@@ -562,8 +576,9 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
     print("=" * 100)
     print("OPPORTUNISTIC SLEEVE")
     print("=" * 100)
+    name = asset_name(ticker)
     print(f"  Status          : OPEN (1/1 position -- new entries blocked)")
-    print(f"  Ticker          : {ticker}")
+    print(f"  Ticker          : {ticker}" + (f"  ({name})" if name else ""))
     print(f"  Already held?   : {held} ({state['shares']} shares from this entry)")
     print(f"  Entered         : {state['entry_date']}")
     print(f"  Entry price     : ${state['entry_price']:.2f}  "
@@ -771,7 +786,8 @@ def run_entry_screen(
     else:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
-        print(f"\n  Best candidate: {pick['ticker']}  "
+        pick_name = asset_name(pick["ticker"])
+        print(f"\n  Best candidate: {pick['ticker']}" + (f"  ({pick_name})" if pick_name else "") + "  "
               f"(entry ${pick['price']:.2f}, MA50 ${pick['ma50']:.2f}, ext {pick['dist_from_ma50']}, "
               f"suggested duration {int(pick['duration_days'])}d, "
               f"med {pick_med:+.1%}, win {pick_win:.1%}, diversity {pick['diversity']})")
@@ -874,7 +890,9 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
     if pick is not None:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         dur = int(pick["duration_days"]) if pd.notna(pick["duration_days"]) else 21
-        print(f"    Best candidate : {pick['ticker']}  (ext {pick['dist_from_ma50']}, "
+        pick_name = asset_name(pick["ticker"])
+        print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + "  "
+              f"(ext {pick['dist_from_ma50']}, "
               f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED) "
               f"-- run run_entry_screen.py for full detail")
         try:
