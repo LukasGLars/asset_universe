@@ -3,7 +3,7 @@ import datetime as dt
 import pandas as pd
 
 import run_entry_screen
-from run_entry_screen import binding_stop, select_best_candidate, suggested_duration_days
+from run_entry_screen import binding_stop, select_best_candidate, suggested_duration_days, _vix_stats
 
 
 def test_binding_stop_ma50_binds_below_crossover():
@@ -172,3 +172,41 @@ def test_pretrade_gate_skipped_without_data_dir():
     pick = select_best_candidate(out, held=set())
     assert pick["ticker"] == "A"
     assert pick["pretrade_tripwires"] is None
+
+
+# ── VIX review: informational, ranks today's level against its full
+# history rather than a local 20d baseline (which would read "calm" even
+# during a month-long elevated stretch).
+
+def _vix_series(values, start="2020-01-01"):
+    idx = pd.date_range(start, periods=len(values), freq="D")
+    return pd.Series(values, index=idx)
+
+
+def test_vix_stats_percentile_is_relative_to_full_history_not_local_window():
+    # 95 low days followed by 5 elevated days -- today's level (30) is only
+    # slightly above the recent 5-day stretch (all ~28-30) but is at the
+    # top of the FULL history, which is what should be reported.
+    vix = _vix_series([15.0] * 95 + [28, 29, 29.5, 29.8, 30.0])
+    stats = _vix_stats(vix)
+    assert stats["now"] == 30.0
+    assert stats["percentile"] > 0.9  # elevated by full-history standards
+
+
+def test_vix_stats_trend_spiking():
+    vix = _vix_series([15.0] * 20 + [16, 17, 19, 21, 23, 24])
+    stats = _vix_stats(vix)
+    assert stats["chg_5d"] == 24 - 16  # today (24, last) vs iloc[-6] (16)
+    assert stats["trend"] == "spiking"
+
+
+def test_vix_stats_trend_falling():
+    vix = _vix_series([25.0] * 20 + [24, 22, 20, 18, 16, 15])
+    stats = _vix_stats(vix)
+    assert stats["trend"] == "falling"
+
+
+def test_vix_stats_trend_flat_within_noise_band():
+    vix = _vix_series([15.0] * 20 + [15.2, 15.1, 15.3, 15.0, 14.9, 15.1])
+    stats = _vix_stats(vix)
+    assert stats["trend"] == "flat"

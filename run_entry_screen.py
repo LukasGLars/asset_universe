@@ -370,6 +370,32 @@ def discover_cluster_peers(
     return peers
 
 
+# ── VIX review at entry (informational -- for you to weigh, not an
+#    automated gate). The post-entry tripwire compares VIX to its own 20d
+#    average, which is a LOCAL baseline -- if VIX has been elevated for a
+#    month, that comparison would still read "calm relative to recent."
+#    This instead ranks today's level against its full ~26yr history, so
+#    "elevated" means something absolute, not just relative-to-last-month.
+#    No tested evidence a VIX threshold improves outcomes in this
+#    framework, so this stays a review line, not a block. ────────────────
+
+def _vix_stats(vix: pd.Series) -> dict:
+    now = float(vix.iloc[-1])
+    percentile = float((vix < now).mean())
+    chg_5d = float(vix.iloc[-1] - vix.iloc[-6]) if len(vix) > 6 else None
+    trend = "spiking" if (chg_5d is not None and chg_5d > 1.0) else \
+            ("falling" if (chg_5d is not None and chg_5d < -1.0) else "flat")
+    return {
+        "now": now, "percentile": percentile, "chg_5d": chg_5d, "trend": trend,
+        "years": round((vix.index[-1] - vix.index[0]).days / 365.25, 1),
+    }
+
+
+def vix_review(data_dir: Path) -> dict:
+    vix = reader.load(reader.ticker_path(data_dir, "volatility", "VIX"))["close"].dropna().sort_index()
+    return _vix_stats(vix)
+
+
 def compute_tripwires(state: dict, data_dir: Path, benchmark: str = "SPY") -> dict:
     ticker, category = state["ticker"], state["category"]
 
@@ -757,6 +783,13 @@ def run_entry_screen(
                   f"vetted as-if-entering-now, not just statically ranked.")
         else:
             print("  Pre-entry tripwire gate: not run (no data_dir -- static ranking only).")
+        try:
+            vr = vix_review(data_dir)
+            print(f"  VIX review (for you to weigh, not a gate): {vr['now']:.2f}  "
+                  f"({vr['percentile']:.0%} percentile over {vr['years']:.0f}yr history, "
+                  f"5d {vr['chg_5d']:+.2f} -- {vr['trend']})")
+        except Exception:
+            pass
         print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
         print(f"    python run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
     print("=" * 100)
@@ -844,6 +877,12 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         print(f"    Best candidate : {pick['ticker']}  (ext {pick['dist_from_ma50']}, "
               f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED) "
               f"-- run run_entry_screen.py for full detail")
+        try:
+            vr = vix_review(data_dir)
+            print(f"    VIX review     : {vr['now']:.2f}  ({vr['percentile']:.0%} percentile, "
+                  f"{vr['trend']}) -- for review, not a gate")
+        except Exception:
+            pass
     else:
         print(f"    Best candidate : none eligible today (either no ENTER survivors, or all "
               f"failed the pre-entry tripwire gate)")
