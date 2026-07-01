@@ -47,6 +47,11 @@ jobs:
           path: data/
           key: parquet-${{ github.run_id }}
 
+      - name: Refresh universe screen
+        run: mkdir -p logs && python run_universe_screen.py > logs/universe_screen.log 2>&1
+        env:
+          PYTHONIOENCODING: utf-8
+
       - name: Run fi_tracker
         run: python fi_tracker.py 2>&1 | tee status.md
         env:
@@ -69,7 +74,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add config/portfolio.toml status.md
+          git add config/portfolio.toml status.md universe_screen_results.csv
           git diff --staged --quiet && echo "nothing to commit" && exit 0
           git commit -m "chore(sync): daily update [skip ci]"
           git pull --rebase origin master
