@@ -2,6 +2,7 @@ import datetime as dt
 
 import pandas as pd
 
+import run_entry_screen
 from run_entry_screen import binding_stop, select_best_candidate, suggested_duration_days
 
 
@@ -123,3 +124,51 @@ def test_suggested_duration_floors_at_one_day():
     today = dt.date(2026, 6, 30)
     earn = dt.date(2026, 7, 2)  # only 2 days out, earnings-3d would go negative
     assert suggested_duration_days(earn, today) == 1
+
+
+# ── Pre-entry tripwire gate: a statically top-ranked candidate must ALSO
+# clear the live tripwire check before being recommended -- these tests
+# monkeypatch _pretrade_tripwire_check so the gating logic in
+# select_best_candidate can be verified without live data/network access.
+
+def _fake_tripwire(passed_map):
+    def _check(ticker, category, gate1_candidates, held, regime_labels, data_dir, benchmark="SPY"):
+        passed = passed_map.get(ticker, True)
+        return passed, {"rs_20d": 0.05, "cluster_breakdown": not passed, "ma50_rising": passed}
+    return _check
+
+
+def test_pretrade_gate_disqualifies_top_rank_and_falls_to_next(monkeypatch):
+    # A ranks best statically (tightest entry) but fails the live tripwire
+    # check -- B should be recommended instead, not A.
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         _fake_tripwire({"A": False, "B": True}))
+    out = pd.DataFrame([
+        {**_candidate_row("A", 0.010, "ROBUST", 0.90), "category": "equities"},
+        {**_candidate_row("B", 0.050, "ROBUST", 0.60), "category": "equities"},
+    ])
+    pick = select_best_candidate(out, held=set(), data_dir="dummy", gate1_candidates=["A", "B"],
+                                  regime_labels={"ry_regime": "HIGH", "baa10y_regime": "TIGHT"})
+    assert pick["ticker"] == "B"
+    assert pick["pretrade_tripwires"]["cluster_breakdown"] is False
+
+
+def test_pretrade_gate_returns_none_when_everyone_fails(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         _fake_tripwire({"A": False, "B": False}))
+    out = pd.DataFrame([
+        {**_candidate_row("A", 0.010, "ROBUST", 0.90), "category": "equities"},
+        {**_candidate_row("B", 0.050, "ROBUST", 0.60), "category": "equities"},
+    ])
+    pick = select_best_candidate(out, held=set(), data_dir="dummy", gate1_candidates=["A", "B"],
+                                  regime_labels={"ry_regime": "HIGH", "baa10y_regime": "TIGHT"})
+    assert pick is None
+
+
+def test_pretrade_gate_skipped_without_data_dir():
+    # No data_dir/gate1_candidates/regime_labels -- falls back to the
+    # static ranking alone (used by the existing synthetic-data tests).
+    out = pd.DataFrame([_candidate_row("A", 0.010, "ROBUST", 0.90)])
+    pick = select_best_candidate(out, held=set())
+    assert pick["ticker"] == "A"
+    assert pick["pretrade_tripwires"] is None

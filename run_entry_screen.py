@@ -450,13 +450,47 @@ def duration_matched_return(
     return float(s.median()), float((s > 0).mean()), len(rets)
 
 
+# ── Pre-entry tripwire gate: the recommendation must earn it, not just the
+#    static gates. Of the 5 post-entry tripwires, 3 are meaningful checked
+#    "as if entering right now": RS-vs-benchmark, cluster health, MA50
+#    slope. Regime-changed is skipped (trivially unchanged pre-entry --
+#    there's no elapsed time yet for it to have flipped). VIX regime is
+#    contextual framing for interpreting a move, not itself a pass/fail on
+#    the candidate, so it's not a gate either. A candidate that fails any
+#    of the 3 is disqualified and the next-ranked one is checked instead. ──
+
+def _pretrade_tripwire_check(
+    ticker: str, category: str, gate1_candidates: list[str], held: set[str],
+    regime_labels: dict, data_dir: Path, benchmark: str = "SPY",
+) -> tuple[bool, dict]:
+    peers = discover_cluster_peers(ticker, gate1_candidates, exclude=held, data_dir=data_dir)
+    synthetic_state = {
+        "ticker": ticker, "category": category,
+        "entry_ry_regime": regime_labels["ry_regime"],
+        "entry_baa10y_regime": regime_labels["baa10y_regime"],
+        "cluster_peers": peers,
+    }
+    tw = compute_tripwires(synthetic_state, data_dir, benchmark)
+    passed = tw["rs_ok"] and (not tw["cluster_breakdown"]) and tw["ma50_rising"]
+    return passed, tw
+
+
 # ── Selection rule (no open position): least MA50-extension -> ROBUST
 #    diversity preferred -> win rate at the candidate's own suggested-
 #    duration horizon (falls back to win_21d if that horizon has too few
 #    matched observations). med_252d is kept only as a diversity/robustness
-#    cross-check, not the headline return number. ─────────────────────────
+#    cross-check, not the headline return number. Walks the ranked list and
+#    returns the first candidate that ALSO clears the pre-entry tripwire
+#    gate above -- a static top-rank alone is not enough to be "the"
+#    recommendation. ─────────────────────────────────────────────────────
 
-def select_best_candidate(out: pd.DataFrame, held: set[str]) -> dict | None:
+def select_best_candidate(
+    out: pd.DataFrame, held: set[str],
+    data_dir: Path | None = None,
+    gate1_candidates: list[str] | None = None,
+    regime_labels: dict | None = None,
+    benchmark: str = "SPY",
+) -> dict | None:
     pool = out[(out["verdict"] == "ENTER") & (~out["ticker"].isin(held)) & out["dist_num"].notna()]
     if pool.empty:
         return None
@@ -469,7 +503,26 @@ def select_best_candidate(out: pd.DataFrame, held: set[str]) -> dict | None:
         by=["dist_num", "diversity_rank", "rank_win"],
         ascending=[True, True, False],
     )
-    return pool.iloc[0].to_dict()
+
+    if data_dir is None or gate1_candidates is None or regime_labels is None:
+        # Pre-entry tripwire vetting needs live data (yfinance sector lookup,
+        # price history) -- unavailable in unit tests with synthetic data.
+        # Falls back to the static ranking alone rather than crashing.
+        result = pool.iloc[0].to_dict()
+        result["pretrade_tripwires"] = None
+        return result
+
+    for _, row in pool.iterrows():
+        passed, tw = _pretrade_tripwire_check(
+            row["ticker"], row["category"], gate1_candidates, held, regime_labels, data_dir, benchmark
+        )
+        if passed:
+            result = row.to_dict()
+            result["pretrade_tripwires"] = tw
+            return result
+        # else: disqualified despite ranking well statically -- try the next one
+
+    return None  # every ranked ENTER candidate failed the pre-entry tripwire gate
 
 
 # ── Sleeve status display (position already open) ──────────────────────────
@@ -665,7 +718,7 @@ def run_entry_screen(
     print("  Return/win shown at EACH candidate's own suggested duration (min(30d, earnings-3d)),")
     print("  computed fresh from regime-matched history -- not a flat 21d proxy. med_252d: robustness check only.")
     print("-" * 100)
-    pick = select_best_candidate(out, held)
+    pick = select_best_candidate(out, held, data_dir=data_dir, gate1_candidates=candidates, regime_labels=conditions, benchmark=benchmark)
     ranked_pool = out[(out["verdict"] == "ENTER") & (~out["ticker"].isin(held)) & out["dist_num"].notna()].copy()
     if not ranked_pool.empty:
         ranked_pool["diversity_rank"] = ranked_pool["diversity"].map(DIVERSITY_RANK).fillna(3)
@@ -687,8 +740,8 @@ def run_entry_screen(
             print(f"    {r['ticker']:<8} ext={r['dist_from_ma50']:>7}  div={div:<9}  duration={dur:<4}  "
                   f"med={dur_med:>7}  win={dur_win:>7}{dur_note}  (252d robustness: {med252:>8}){marker}")
     if pick is None:
-        print("  No eligible new candidate (either no ENTER survivors, all already held, or fresh-fallback "
-              "path lacks 21d data for ranking).")
+        print("  No eligible new candidate (either no ENTER survivors, all already held, fresh-fallback "
+              "path lacks 21d data for ranking, or every ranked candidate FAILED the pre-entry tripwire gate).")
     else:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
@@ -696,6 +749,14 @@ def run_entry_screen(
               f"(entry ${pick['price']:.2f}, MA50 ${pick['ma50']:.2f}, ext {pick['dist_from_ma50']}, "
               f"suggested duration {int(pick['duration_days'])}d, "
               f"med {pick_med:+.1%}, win {pick_win:.1%}, diversity {pick['diversity']})")
+        pt = pick.get("pretrade_tripwires")
+        if pt is not None:
+            print(f"  Pre-entry tripwire gate: PASSED (RS {pt['rs_20d']:+.1%}, "
+                  f"cluster {'ok' if not pt['cluster_breakdown'] else 'BREAKDOWN'}, "
+                  f"MA50 slope {'rising' if pt['ma50_rising'] else 'FALLING'}) -- "
+                  f"vetted as-if-entering-now, not just statically ranked.")
+        else:
+            print("  Pre-entry tripwire gate: not run (no data_dir -- static ranking only).")
         print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
         print(f"    python run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
     print("=" * 100)
@@ -764,7 +825,7 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
             dur_med, dur_win, _ = duration_matched_return(t, cat_of.get(t, "equities"), matched, dur_days, data_dir)
 
         rows.append({
-            "ticker": t, "verdict": verdict,
+            "ticker": t, "verdict": verdict, "category": cat_of.get(t, "equities"),
             "dist_num": ma["dist_pct"] if ma else None,
             "dist_from_ma50": f"{ma['dist_pct']:+.1%}" if ma else "n/a",
             "price": ma["price"] if ma else None, "ma50": ma["ma50"] if ma else None,
@@ -772,16 +833,20 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
             "duration_days": dur_days, "duration_med": dur_med, "duration_win": dur_win,
         })
     out = pd.DataFrame(rows)
-    pick = select_best_candidate(out, held) if not out.empty else None
+    pick = (select_best_candidate(out, held, data_dir=data_dir, gate1_candidates=candidates,
+                                   regime_labels=conditions, benchmark=benchmark)
+            if not out.empty else None)
 
     print(f"    Status         : CLOSED (0/1 position)")
     if pick is not None:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         dur = int(pick["duration_days"]) if pd.notna(pick["duration_days"]) else 21
         print(f"    Best candidate : {pick['ticker']}  (ext {pick['dist_from_ma50']}, "
-              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}) -- run run_entry_screen.py for full detail")
+              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED) "
+              f"-- run run_entry_screen.py for full detail")
     else:
-        print(f"    Best candidate : none eligible today")
+        print(f"    Best candidate : none eligible today (either no ENTER survivors, or all "
+              f"failed the pre-entry tripwire gate)")
 
 
 # ── Position lifecycle (records a manually-executed trade -- no brokerage
