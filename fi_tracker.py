@@ -328,4 +328,11 @@ try:
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
 
+# ── Opportunistic sleeve (war-chest tactical layer, separate from base) ─────
+try:
+    import run_entry_screen
+    run_entry_screen.sleeve_daily_summary()
+except Exception as _e:
+    print(f"\n  Opportunistic Sleeve : [unavailable — {_e}]")
+
 print(f"\n{'='*62}")
