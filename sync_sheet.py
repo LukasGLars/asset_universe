@@ -60,8 +60,8 @@ def fetch_sheet_rows() -> list[dict]:
     # If redirected to a login page the response is HTML, not CSV
     if "text/html" in content_type:
         raise RuntimeError(
-            "Sheet returned HTML — make sure it is shared as "
-            "'Anyone with the link → Viewer'."
+            "Sheet returned HTML -- make sure it is shared as "
+            "'Anyone with the link -> Viewer'."
         )
 
     text = raw.decode("utf-8-sig")
@@ -138,7 +138,7 @@ def main() -> int:
                 updates[name] = ("value_sek", v)
 
     if not updates:
-        print("  No parseable rows in sheet — portfolio.toml unchanged.")
+        print("  No parseable rows in sheet -- portfolio.toml unchanged.")
         return 0
 
     # Load current TOML to compare (read-only, for change detection)
@@ -155,7 +155,7 @@ def main() -> int:
         old_val = pos.get(key)
         if old_val == new_val:
             continue  # already up-to-date
-        print(f"  {name}: {key} {old_val} → {new_val}")
+        print(f"  {name}: {key} {old_val} -> {new_val}")
         toml_text = patch_toml(toml_text, name, key, new_val)
         changed.append(name)
 
