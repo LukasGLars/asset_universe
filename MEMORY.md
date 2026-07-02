@@ -7,6 +7,36 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Signal-change email notification added (2026-07-02, PR #14)
+
+Turning the daily sync from "runs unattended" into "runs unattended and
+tells you when something needs a decision." `sync.yml` now snapshots
+`status.md` before `fi_tracker.py` overwrites it, and after commit, diffs a
+curated fingerprint (AVGO guard signal + trigger, LLY-stress, joint-stress,
+silver GSR signal, opportunistic sleeve status, confirmed regime flip)
+between yesterday's and today's committed dashboard.
+
+**Silent when nothing actionable changed** (the common case — no email
+noise). **One-line email via Gmail SMTP when something did** (e.g. "AVGO
+guard: BASE -> DEFENSIVE; AVGO guard trigger: none -> CRASH"). Deliberately
+excludes price/valuation numbers, which change every day and would make
+this useless as a signal — only state transitions trigger it.
+
+Requires repo secrets `EMAIL_ADDRESS` and `EMAIL_PASSWORD` (a Gmail **App
+Password**, not the real account password — Gmail SMTP rejects real
+passwords outright). Both added 2026-07-02. Failure to send is non-fatal
+(logged, doesn't fail the sync job) — `check_sync_health.py` is still the
+thing responsible for failing loudly on genuinely broken syncs.
+
+New: `check_signal_changes.py` (fingerprint extraction + diff, also
+CLI-usable standalone), `notify_signal_changes.py` (email send, wraps the
+above). 16 new tests. 81 passing project-wide.
+
+**Deliberately out of scope**: the one-off Sept 3 AVGO earnings-checkpoint
+reminder is not part of this pipeline — it's a single dated event, not a
+recurring signal, better served by a calendar entry than folded into daily
+diffing logic.
+
 ## FI@50 pace tracker bug fixed (2026-07-02, PR #13)
 
 `fi_pace()` in `src/asset_universe/portfolio.py` was computing "Required
