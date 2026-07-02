@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,561 kr  21.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,087,479 kr
+  TPV                                        1,088,716 kr
     Reactor Core            849,553 kr  (78%)
     Home Base               234,561 kr  (22%)
     War Chest                 1,959 kr  (0%)
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,087,479 kr
+  Now                     :     1,088,716 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.1
 
-  AWAR (trailing)         :  +18.5%
-  Required CAGR           :  +25.1%
-  Status                  :  BEHIND  (-6.6% margin)
+  AWAR (trailing)         :  +18.6%
+  Required CAGR           :  +22.2%
+  Status                  :  BEHIND  (-3.6% margin)
 
-  Projected @ AWAR        :     7,096,266 kr
-  vs target               :    -5,838,440 kr  (deficit)
+  Projected @ AWAR        :     9,580,564 kr
+  vs target               :    -3,354,142 kr  (deficit)
 
-  Scenario         CAGR       Projected     FI date
-  --------------------------------------------------
-  Bear           +10%       3,118,329 kr       ~2052
-  Conservative   +15%       5,096,783 kr       ~2044
-  Base           +20%       8,158,076 kr       ~2040
-  Current AWAR   +18%       7,096,266 kr       ~2041
-  Bull           +30%      19,760,730 kr       ~2035
+  Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
+  ------------------------------------------------------------------------
+  Bear           +10%       4,538,237 kr       ~2047
+  Conservative   +15%       7,012,954 kr       ~2041
+  Base           +20%      10,754,524 kr       ~2038
+  Current AWAR   +19%       9,580,564 kr       ~2039
+  Bull           +30%      24,547,143 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -51,14 +51,14 @@ MACRO REGIME
   Nominal 10Y             4.44%   HIGH
   Real Yield             +2.20%   HIGH  ^
   Breakeven               2.23%   MID
-  HY OAS                275 bps   TIGHT
+  HY OAS                274 bps   TIGHT
   IG Credit               1.53%   TIGHT
   Curve 10Y-3M          +63 bps   LOW
   Curve 10Y-2Y          +31 bps   LOW
   SE 10Y                  2.75%   MID
   USD                     120.9   STRONG
 
-  HY 20d delta  : +4 bps  (flat)
+  HY 20d delta  : -1 bps  (flat)
   Confidence    : HIGH
   Data through  : 2026-07-01
 
@@ -95,6 +95,8 @@ TACTICAL RULES
     200d SMA       : $360.20  (+2.5% gap)
     5d ROC         : -3.3%  (crash threshold: -10%)
     Signal         : BASE  (trigger: none)
+    LLY stress     : inactive  ($1191.74 vs 200d SMA $980.20, 5d ROC +6.7%)
+    Joint stress   : inactive  (guard AND LLY stress both active)
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
   AVGO Earnings Checkpoint
