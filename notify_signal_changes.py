@@ -24,20 +24,17 @@ import sys
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from check_signal_changes import extract_fingerprint, LABELS
+from check_signal_changes import build_actionable_message, extract_fingerprint
 
 
-def build_change_summary(prev_path: str, curr_path: str) -> str | None:
+def build_change_email(prev_path: str, curr_path: str) -> tuple[str, str] | None:
+    """Returns (subject, body) leading with the exact action to take, or
+    None if nothing actionable changed."""
     if not Path(prev_path).exists() or not Path(curr_path).exists():
         return None
     prev = extract_fingerprint(Path(prev_path).read_text(encoding="utf-8", errors="replace"))
     curr = extract_fingerprint(Path(curr_path).read_text(encoding="utf-8", errors="replace"))
-    changes = [
-        f"{LABELS[k]}: {prev[k]} -> {curr[k]}"
-        for k in LABELS
-        if prev[k] != curr[k] and "unknown" not in (prev[k], curr[k])
-    ]
-    return "; ".join(changes) if changes else None
+    return build_actionable_message(prev, curr)
 
 
 def send_email(subject: str, body: str) -> None:
@@ -71,14 +68,15 @@ def main() -> None:
             print(f"Test email send failed: {e}", file=sys.stderr)
         return
 
-    summary = build_change_summary(sys.argv[1], sys.argv[2])
-    if not summary:
+    result = build_change_email(sys.argv[1], sys.argv[2])
+    if not result:
         print("No actionable signal change -- no email sent.")
         return
 
+    subject, body = result
     try:
-        send_email("Asset Universe: signal change", summary)
-        print(f"Email sent: {summary}")
+        send_email(subject, body)
+        print(f"Email sent -- subject: {subject}\n{body}")
     except Exception as e:
         # Don't fail the sync job over a notification failure -- log and move on.
         print(f"Email send failed (non-fatal): {e}", file=sys.stderr)
