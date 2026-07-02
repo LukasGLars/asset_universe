@@ -17,6 +17,13 @@ def _flat_gold_silver(n):
     return gold, silver
 
 
+def _flat_lly(n):
+    # Flat LLY, always above its own SMA/ROC thresholds -- keeps lly_stress
+    # (and therefore joint) False throughout, isolating the AVGO guard tests
+    # below from the newer joint-stress logic.
+    return _series([500.0] * n)
+
+
 def test_fast_crash_triggers_guard_before_ma_cross():
     # A steady uptrend leaves a real gap between price and its lagging 200d
     # SMA (the situation a fast crash actually happens in -- 2001-style,
@@ -29,12 +36,13 @@ def test_fast_crash_triggers_guard_before_ma_cross():
     crash = [last_price * (1 - pct) for pct in [0.0, 0.03, 0.06, 0.09, 0.10, 0.12]]
     avgo = _series(uptrend + crash)
     gold, silver = _flat_gold_silver(len(avgo))
+    lly = _flat_lly(len(avgo))
     common = avgo.index
 
     sma200_last = avgo.rolling(200).mean().iloc[-1]
     assert crash[-1] > sma200_last, "test setup invariant: crash must land above the SMA"
 
-    signals = build_signals(avgo, gold, silver, common)
+    signals = build_signals(avgo, gold, silver, lly, common)
     last = signals.iloc[-1]
 
     assert last["guard_crash"] == True
@@ -50,9 +58,10 @@ def test_normal_volatility_does_not_trigger_crash_guard():
     prices = 100 * np.cumprod(1 + rets)
     avgo = _series(prices.tolist())
     gold, silver = _flat_gold_silver(len(avgo))
+    lly = _flat_lly(len(avgo))
     common = avgo.index
 
-    signals = build_signals(avgo, gold, silver, common)
+    signals = build_signals(avgo, gold, silver, lly, common)
     assert signals["guard_crash"].sum() == 0
 
 
@@ -65,9 +74,10 @@ def test_slow_decline_still_triggers_via_ma_path_not_crash():
     prices = [100.0 * (1 - 0.0015) ** i for i in range(n)]
     avgo = _series(prices)
     gold, silver = _flat_gold_silver(len(avgo))
+    lly = _flat_lly(len(avgo))
     common = avgo.index
 
-    signals = build_signals(avgo, gold, silver, common)
+    signals = build_signals(avgo, gold, silver, lly, common)
     last = signals.iloc[-1]
 
     assert last["guard_ma"] == True
@@ -84,9 +94,10 @@ def test_guard_crash_self_clears_after_recovery():
     dip_and_recover = [100.0, 88.0, 87.0, 89.0, 95.0, 100.0, 101.0, 102.0, 102.0, 102.0]
     avgo = _series(prices + dip_and_recover)
     gold, silver = _flat_gold_silver(len(avgo))
+    lly = _flat_lly(len(avgo))
     common = avgo.index
 
-    signals = build_signals(avgo, gold, silver, common)
+    signals = build_signals(avgo, gold, silver, lly, common)
     # Some day in the dip should have fired the crash guard...
     assert signals["guard_crash"].any()
     # ...but the most recent days (after recovery) should not still be active.

@@ -40,8 +40,12 @@ tactical rules and one opportunistic sleeve, all computed live in
 `fi_tracker.py`:
 
 - **AVGO 200d guard**: rotates AVGO's weight into Gold+LLY if AVGO closes
-  below its 200-day SMA. Parameter-sensitivity tested (`run_parameter_sensitivity.py`)
-  — robust, not curve-fit.
+  below its 200-day SMA (or a fast-crash trigger fires first). Parameter-sensitivity
+  tested (`run_parameter_sensitivity.py`) — robust, not curve-fit.
+- **AVGO/LLY joint-stress escalation**: if LLY independently trips the same
+  guard logic while AVGO's guard is also active, escalate to 100% Gold — LLY's
+  diversification benefit is regime-dependent and breaks down exactly in
+  macro/trade-driven selloffs. Validated (`run_joint_stress_validation.py`).
 - **Silver GSR tactical**: adds silver (funded from AVGO) when the gold/silver
   ratio spikes and has fallen from its 60-day peak; exits at a cycle-complete
   threshold.
@@ -65,6 +69,7 @@ tactical rules and one opportunistic sleeve, all computed live in
 | `run_universe_screen.py` | Regime-conditional ranking of the full asset universe |
 | `run_combined_system.py` | Backtest of the base + guard + silver system |
 | `run_parameter_sensitivity.py` | Robustness grid for the guard/silver thresholds |
+| `run_joint_stress_validation.py` | Validation for the AVGO/LLY joint-stress escalation rule (TXN analog + sensitivity grids) |
 | `sync_sheet.py` | Pulls share counts from the Google Sheet into `portfolio.toml` |
 | `src/asset_universe/analysis/engine.py` | Core conditional-return engine (`query()`, `current_regime()`, `screen_tactical()`) |
 

@@ -86,6 +86,23 @@ OOS_START        = pd.Timestamp("2020-01-01")
 CRASH_ROC_WINDOW    = 5
 CRASH_ROC_THRESHOLD = -0.10
 
+# Joint-stress escalation (2026-07-02): the guard alone assumes LLY is a
+# reliable diversifier whenever AVGO is stressed, but that correlation is
+# regime-dependent -- it holds in liquidity crashes (COVID) and breaks down
+# in macro/trade-driven selloffs (2022 rate hikes, 2025 tariffs), where LLY
+# fell alongside or worse than AVGO. When LLY independently trips the SAME
+# already-validated guard logic (200d SMA / 5d-(-10%) ROC -- no new
+# parameters) at the same time AVGO's guard is active, that's the signature
+# of the diversification actually breaking down, not just AVGO having a bad
+# day. Escalate fully into Gold rather than splitting into LLY, which is no
+# longer diversifying in that state.
+# Validated via a TXN analog (2000-2026, includes 2001 dot-com + 2008 GFC)
+# plus AVGO's own history: monotonic improvement with more Gold (not a
+# curve-fit interior spike), best at 100%. See run_joint_stress_validation.py.
+#   AVGO actual:  Calmar 2.407 (guard alone) -> 2.957 (100% Gold escalation)
+#   TXN analog:   Calmar 0.824 (guard alone) -> 1.028 (100% Gold escalation)
+LLY_MA = 200
+
 # ── Weight table ──────────────────────────────────────────────────────────────
 WEIGHTS: dict[tuple[bool, str], dict[str, float]] = {
     (False, "INACTIVE"): {"GC_F": 0.250, "AVGO": 0.550, "LLY": 0.200, "SI_F": 0.000},
@@ -94,6 +111,14 @@ WEIGHTS: dict[tuple[bool, str], dict[str, float]] = {
     (True,  "INACTIVE"): {"GC_F": 0.525, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.000},
     (True,  "T1"):       {"GC_F": 0.405, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.120},
     (True,  "T2"):       {"GC_F": 0.355, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.170},
+}
+
+# Joint-stress override: guard active AND LLY independently stressed -> full
+# flight to Gold (silver funded from Gold, not AVGO, since AVGO is already 0).
+JOINT_WEIGHTS: dict[str, dict[str, float]] = {
+    "INACTIVE": {"GC_F": 1.000, "AVGO": 0.000, "LLY": 0.000, "SI_F": 0.000},
+    "T1":       {"GC_F": 0.880, "AVGO": 0.000, "LLY": 0.000, "SI_F": 0.120},
+    "T2":       {"GC_F": 0.830, "AVGO": 0.000, "LLY": 0.000, "SI_F": 0.170},
 }
 
 
@@ -140,11 +165,13 @@ def build_signals(
     avgo_p: pd.Series,
     gold_p: pd.Series,
     silver_p: pd.Series,
+    lly_p: pd.Series,
     common: pd.DatetimeIndex,
 ) -> pd.DataFrame:
     """
-    Build daily guard and silver state signals.
-    Returns DataFrame with columns: guard, guard_ma, guard_crash, silver_state
+    Build daily guard, LLY-stress, and silver state signals.
+    Returns DataFrame with columns: guard, guard_ma, guard_crash, lly_stress,
+    joint, silver_state
     """
     avgo_r   = avgo_p.reindex(common)
     sma200   = avgo_r.rolling(AVGO_MA).mean()
@@ -153,6 +180,16 @@ def build_signals(
     roc            = avgo_r.pct_change(CRASH_ROC_WINDOW)
     guard_crash    = (roc <= CRASH_ROC_THRESHOLD).fillna(False)
     guard          = guard_ma | guard_crash
+
+    # LLY-stress: same validated guard logic (200d SMA / 5d ROC), reused
+    # as-is -- checks whether LLY independently trips it too, not a new fit.
+    lly_r        = lly_p.reindex(common)
+    lly_sma200   = lly_r.rolling(LLY_MA).mean()
+    lly_ma       = (lly_r < lly_sma200).fillna(False)
+    lly_roc      = lly_r.pct_change(CRASH_ROC_WINDOW)
+    lly_crash    = (lly_roc <= CRASH_ROC_THRESHOLD).fillna(False)
+    lly_stress   = lly_ma | lly_crash
+    joint        = guard & lly_stress
 
     gold_r   = gold_p.reindex(common)
     silv_r   = silver_p.reindex(common)
@@ -190,6 +227,8 @@ def build_signals(
         "guard":        guard.values,
         "guard_ma":     guard_ma.values,
         "guard_crash":  guard_crash.values,
+        "lly_stress":   lly_stress.values,
+        "joint":        joint.values,
         "silver_state": silver_states,
     }, index=common)
 
@@ -200,6 +239,7 @@ def run_strategy(
     use_guard: bool,
     use_silver: bool,
     label: str,
+    use_joint: bool = False,
 ) -> tuple[pd.Series, list[dict]]:
     """
     Simulate portfolio using given signal flags.
@@ -214,9 +254,10 @@ def run_strategy(
 
     for i, date in enumerate(common):
         guard  = bool(signals["guard"].iloc[i])  if use_guard  else False
+        joint  = bool(signals["joint"].iloc[i])  if (use_guard and use_joint) else False
         silver = signals["silver_state"].iloc[i]  if use_silver else "INACTIVE"
 
-        curr_w = WEIGHTS[(guard, silver)]
+        curr_w = JOINT_WEIGHTS[silver] if joint else WEIGHTS[(guard, silver)]
 
         # TC on weight change
         if prev_w is not None and curr_w != prev_w:
@@ -282,42 +323,46 @@ def main() -> None:
 
     # ── Build signals ──────────────────────────────────────────────────────────
     print("\nBuilding signals...")
-    signals = build_signals(avgo_p, gold_p, silver_p, common)
+    signals = build_signals(avgo_p, gold_p, silver_p, lly_p, common)
 
     guard_days   = signals["guard"].sum()
     crash_only   = int((signals["guard_crash"] & ~signals["guard_ma"]).sum())
     t1_days      = (signals["silver_state"] == "T1").sum()
     t2_days      = (signals["silver_state"] == "T2").sum()
     both_days    = (signals["guard"] & (signals["silver_state"] != "INACTIVE")).sum()
+    joint_days   = signals["joint"].sum()
 
     print(f"  Guard active    : {guard_days} days ({guard_days/len(common):.0%})")
     print(f"    of which crash-only (ROC fired, MA hadn't yet): {crash_only} days")
     print(f"  Silver T1       : {t1_days} days ({t1_days/len(common):.0%})")
     print(f"  Silver T2       : {t2_days} days ({t2_days/len(common):.0%})")
     print(f"  Both active     : {both_days} days ({both_days/len(common):.0%})")
+    print(f"  Joint stress    : {joint_days} days ({joint_days/len(common):.0%}) "
+          f"-- guard active AND LLY independently stressed")
 
-    # ── Run four strategies ────────────────────────────────────────────────────
+    # ── Run five strategies ────────────────────────────────────────────────────
     configs = [
-        (False, False, "A: Static base"),
-        (True,  False, "B: Base + guard"),
-        (False, True,  "C: Base + silver"),
-        (True,  True,  "D: Base + guard + silver"),
+        (False, False, False, "A: Static base"),
+        (True,  False, False, "B: Base + guard"),
+        (False, True,  False, "C: Base + silver"),
+        (True,  True,  False, "D: Base + guard + silver"),
+        (True,  True,  True,  "E: Base + guard + silver + joint-stress"),
     ]
 
     results = []
     equities = {}
 
     print("\n── Full-period results ───────────────────────────────────────────────")
-    print(f"  {'Strategy':<28}  {'CAGR':>8}  {'Sharpe':>7}  {'MaxDD':>8}  {'Calmar':>7}")
-    print("  " + "-" * 65)
+    print(f"  {'Strategy':<40}  {'CAGR':>8}  {'Sharpe':>7}  {'MaxDD':>8}  {'Calmar':>7}")
+    print("  " + "-" * 77)
 
-    for use_guard, use_silver, label in configs:
-        eq, events = run_strategy(prices, signals, use_guard, use_silver, label)
+    for use_guard, use_silver, use_joint, label in configs:
+        eq, events = run_strategy(prices, signals, use_guard, use_silver, label, use_joint)
         p = perf(eq, label)
         p["transitions"] = len(events)
         results.append(p)
         equities[label] = eq
-        print(f"  {label:<28}  {p['cagr']:+.1%}    {p['sharpe']:.3f}  "
+        print(f"  {label:<40}  {p['cagr']:+.1%}    {p['sharpe']:.3f}  "
               f"{p['maxdd']:+.1%}   {p['calmar']:.3f}  ({len(events)} switches)")
 
     # ── IS / OOS split ─────────────────────────────────────────────────────────
@@ -328,7 +373,7 @@ def main() -> None:
     print(f"\n  {'Strategy':<28}  {'IS CAGR':>8}  {'IS Cal':>7}  "
           f"{'OOS CAGR':>9}  {'OOS Cal':>8}")
     print("  " + "-" * 70)
-    for use_guard, use_silver, label in configs:
+    for use_guard, use_silver, use_joint, label in configs:
         eq = equities[label]
         p_is  = perf(eq[is_mask])
         p_oos = perf(eq[oos_mask])
@@ -338,7 +383,7 @@ def main() -> None:
     # ── Year-by-year: combined vs static ──────────────────────────────────────
     print("\n── Year-by-year: Static base vs Combined system (* = OOS) ───────────")
     eq_a = equities["A: Static base"]
-    eq_d = equities["D: Base + guard + silver"]
+    eq_d = equities["E: Base + guard + silver + joint-stress"]
     print(f"\n  {'Year':>5}  {'Base CAGR':>10}  {'Combined CAGR':>14}  "
           f"{'Base MaxDD':>11}  {'Combined MaxDD':>15}  {'Winner':>8}")
     print("  " + "-" * 75)
@@ -365,12 +410,17 @@ def main() -> None:
     print("\n── Current state ─────────────────────────────────────────────────────")
     last = signals.iloc[-1]
     guard_now  = bool(last["guard"])
+    lly_stress_now = bool(last["lly_stress"])
+    joint_now  = bool(last["joint"])
     silver_now = last["silver_state"]
-    curr_w     = WEIGHTS[(guard_now, silver_now)]
+    curr_w     = JOINT_WEIGHTS[silver_now] if joint_now else WEIGHTS[(guard_now, silver_now)]
 
     avgo_last  = float(avgo_p.reindex(common).iloc[-1])
     sma200_now = float(avgo_p.reindex(common).rolling(AVGO_MA).mean().iloc[-1])
     roc_now    = float(avgo_p.reindex(common).pct_change(CRASH_ROC_WINDOW).iloc[-1])
+    lly_last     = float(lly_p.reindex(common).iloc[-1])
+    lly_sma_now  = float(lly_p.reindex(common).rolling(LLY_MA).mean().iloc[-1])
+    lly_roc_now  = float(lly_p.reindex(common).pct_change(CRASH_ROC_WINDOW).iloc[-1])
     gsr_last   = float((gold_p.reindex(common) / silver_p.reindex(common)).iloc[-1])
 
     ma_active    = bool(last["guard_ma"])
@@ -379,8 +429,12 @@ def main() -> None:
     print(f"  AVGO: ${avgo_last:.2f}  vs 200d SMA ${sma200_now:.2f}  "
           f"-> guard={'ACTIVE' if guard_now else 'inactive'} (trigger: {trigger})")
     print(f"  AVGO {CRASH_ROC_WINDOW}d ROC: {roc_now:+.1%}  (crash threshold: {CRASH_ROC_THRESHOLD:.0%})")
+    print(f"  LLY:  ${lly_last:.2f}  vs 200d SMA ${lly_sma_now:.2f}  "
+          f"-> lly_stress={'ACTIVE' if lly_stress_now else 'inactive'}  "
+          f"({CRASH_ROC_WINDOW}d ROC: {lly_roc_now:+.1%})")
+    print(f"  Joint stress (guard AND lly_stress): {'ACTIVE -> full flight to Gold' if joint_now else 'inactive'}")
     print(f"  GSR:  {gsr_last:.2f}  -> silver={silver_now}")
-    print(f"  Active state: guard={guard_now}, silver={silver_now}")
+    print(f"  Active state: guard={guard_now}, lly_stress={lly_stress_now}, joint={joint_now}, silver={silver_now}")
     print(f"  Current weights:")
     for t, w in curr_w.items():
         if w > 0:

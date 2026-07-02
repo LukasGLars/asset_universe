@@ -267,8 +267,18 @@ try:
 except Exception as _e:
     print(f"\n  Silver GSR Tactical : [unavailable — {_e}]")
 
-# ── AVGO 200d guard (+ crash guard) ───────────────────────────────────────────
+# ── AVGO 200d guard (+ crash guard, + joint-stress escalation) ───────────────
 AVGO_MA = 200
+LLY_MA  = 200
+# Joint-stress escalation (2026-07-02): LLY's diversification vs AVGO is
+# regime-dependent -- real in liquidity crashes (COVID), absent in macro/
+# trade-driven selloffs (2022 rates, 2025 tariffs) where LLY fell alongside
+# or worse than AVGO. When LLY independently trips the SAME validated guard
+# logic used for AVGO (no new parameters) while AVGO's guard is also active,
+# that's the diversification breaking down -- escalate fully into Gold.
+# Validated on AVGO's own history + a TXN analog (2000-2026, incl. 2001/2008):
+# monotonic improvement with more Gold, best at 100%. See
+# run_joint_stress_validation.py and MEMORY.md.
 # Crash guard (2026-07-02): early-activation layer on the SAME guard, not a
 # separate strategy -- the 200d SMA can't react to a fast, sharp break (the
 # TXN analog test showed -35.3% MaxDD even with the SMA guard active during
@@ -297,6 +307,7 @@ try:
     _crash_fired = _roc_now <= CRASH_ROC_THRESHOLD
 
     _above = _ma_above and not _crash_fired
+    _guard_active = not _above
 
     if _crash_fired:
         _avgo_signal = "DEFENSIVE"
@@ -308,16 +319,35 @@ try:
         _avgo_signal = "BASE"
         _trigger     = "none"
 
-    if _above:
-        _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
-    else:
+    # LLY-stress check (same guard logic, reused as-is) + joint-stress override
+    _lly_path  = DATA_DIR / "equities" / "LLY.parquet"
+    _lly       = pd.read_parquet(_lly_path)
+    _lly["date"] = pd.to_datetime(_lly["date"])
+    _lly       = _lly.set_index("date")["close"].sort_index().dropna()
+
+    _lly_now    = float(_lly.iloc[-1])
+    _lly_sma    = float(_lly.iloc[-LLY_MA:].mean())
+    _lly_ma_ok  = _lly_now >= _lly_sma
+    _lly_roc    = float(_lly.iloc[-1] / _lly.iloc[-(CRASH_ROC_WINDOW + 1)] - 1)
+    _lly_stress = (not _lly_ma_ok) or (_lly_roc <= CRASH_ROC_THRESHOLD)
+    _joint      = _guard_active and _lly_stress
+
+    if _joint:
+        _avgo_action = "JOINT STRESS -> full flight to Gold (Gold 100%, AVGO 0%, LLY 0%)"
+    elif _guard_active:
         _avgo_action = "Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)"
+    else:
+        _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
 
     print(f"\n  AVGO 200d Guard")
     print(f"    AVGO now       : ${_av_now:.2f}  (as of {_av_date})")
     print(f"    200d SMA       : ${_sma200:.2f}  ({_gap_pct:+.1%} gap)")
     print(f"    {CRASH_ROC_WINDOW}d ROC         : {_roc_now:+.1%}  (crash threshold: {CRASH_ROC_THRESHOLD:.0%})")
     print(f"    Signal         : {_avgo_signal}  (trigger: {_trigger})")
+    print(f"    LLY stress     : {'ACTIVE' if _lly_stress else 'inactive'}  "
+          f"(${_lly_now:.2f} vs 200d SMA ${_lly_sma:.2f}, {CRASH_ROC_WINDOW}d ROC {_lly_roc:+.1%})")
+    print(f"    Joint stress   : {'ACTIVE' if _joint else 'inactive'}  "
+          f"(guard AND LLY stress both active)")
     print(f"    Action         : {_avgo_action}")
 
 except Exception as _e:
