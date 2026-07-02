@@ -35,14 +35,31 @@ RULES" section):
 - **Silver GSR tactical** — T1 (GSR>=83.36, fallen >=5% from 60d peak) adds
   +12% silver funded from AVGO; T2 (GSR>=86.45) adds +17%; exit at
   GSR<62.56. Currently INACTIVE.
+- **AVGO/LLY joint-stress escalation (PR #12, merged 2026-07-02)** — LLY's
+  diversification vs AVGO is regime-dependent, not stable (tested
+  2026-07-02): real in liquidity crashes (COVID, correlation near 0), absent
+  in macro/trade-driven selloffs (2022 rate hikes +0.32 correlation, 2025
+  tariff shock — LLY fell alongside or worse than AVGO). When LLY
+  independently trips the *same* validated guard logic (200d SMA / 5d-(-10%)
+  ROC — no new parameters, just checking if LLY trips the already-proven
+  AVGO trigger too) while AVGO's guard is also active, that's the
+  diversification actually breaking down — escalate to **100% Gold** (AVGO
+  0%, LLY 0%; silver still funds from Gold if T1/T2 active). Validated via
+  the same TXN-analog methodology as the crash trigger: monotonic
+  improvement with more Gold on both AVGO's own history and the TXN analog
+  (not a curve-fit interior spike) — AVGO actual Calmar 2.407→2.957, TXN
+  analog Calmar 0.824→1.028. Rare (2.6% of days on AVGO's history, 15.9% on
+  the harder analog) but meaningfully improves CAGR/MaxDD/Calmar on both
+  when it fires. See `run_joint_stress_validation.py`.
 - **AVGO earnings checkpoint** (`fi_tracker.py`, after the guard block) —
   prints fwd/trail EPS ratio (baseline 3.23x, vs 1.1-1.5x for quality peers)
   and next earnings date. Manual judgment call after each print, not an
   automated rule. Next earnings: 2026-09-03.
 
-Combined backtest (2009-2026, 10bps TC): CAGR +37.1%, Sharpe 1.688, MaxDD
--16.8%, Calmar 2.205 (SMA-only guard; crash trigger improves the tail case,
-see above).
+Combined backtest (2009-2026, 10bps TC): CAGR +37.1%→+44.0% (with crash
+trigger + joint-stress escalation), Sharpe 1.967, MaxDD -14.9%, Calmar
+2.957 (strategy "E" in `run_combined_system.py`; SMA-only-guard baseline
+was Calmar 2.205, see above for the layered progression).
 
 ## Rebalance — DECIDED 2026-07-02, execution in progress
 
