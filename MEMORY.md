@@ -7,7 +7,7 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
-## Current strategy ("Strategy D", validated 2026-06-30)
+## Current strategy ("Strategy D" + crash guard, validated 2026-07-01)
 
 3-asset scarcity base (static, no dynamic adjustments unless a tactical rule
 below fires):
@@ -22,22 +22,57 @@ RULES" section):
   closes back above 200d SMA. OOS-validated (Calmar 2.658 vs base 1.434,
   2020-2026), dominant lever of the combined system. **Parameter-sensitivity
   tested 2026-07-01 (PR #2): ROBUST** — see below.
+- **AVGO fast-crash trigger (PR #9, merged 2026-07-01)** — the 200d SMA is a
+  lagging indicator that can't react to a sharp, fast break. Tested via a
+  TXN analog (AVGO IPO'd 2009, never saw a dot-com-style crash; TXN's full
+  2000-2026 history includes one) — SMA-only guard took -35.3% MaxDD on the
+  analog. Fix: if AVGO drops >10% over 5 trading days, the guard fires
+  immediately regardless of the SMA. Validated on a 20-cell grid (window ×
+  threshold) — every cell matched or beat SMA-only on both AVGO's own data
+  and the TXN analog. Result: AVGO CAGR +37.1%→+40.5% (MaxDD unchanged
+  -16.8%), TXN-analog MaxDD -35.3%→-30.0%. This -30.0% conservative MaxDD is
+  what the final rebalance sizing (below) is built on.
 - **Silver GSR tactical** — T1 (GSR>=83.36, fallen >=5% from 60d peak) adds
   +12% silver funded from AVGO; T2 (GSR>=86.45) adds +17%; exit at
   GSR<62.56. Currently INACTIVE.
 - **AVGO earnings checkpoint** (`fi_tracker.py`, after the guard block) —
   prints fwd/trail EPS ratio (baseline 3.23x, vs 1.1-1.5x for quality peers)
   and next earnings date. Manual judgment call after each print, not an
-  automated rule.
+  automated rule. Next earnings: 2026-09-03.
 
 Combined backtest (2009-2026, 10bps TC): CAGR +37.1%, Sharpe 1.688, MaxDD
--16.8%, Calmar 2.205.
+-16.8%, Calmar 2.205 (SMA-only guard; crash trigger improves the tail case,
+see above).
 
-Real portfolio (as of 2026-06-24, `config/portfolio.toml`) does **not** yet
-match the target weights — still WMT/CCJ/VRT-heavy, AVGO ~7%. Plus one
-tactical position: **HWM, 11 shares, opened 2026-06-24**, time exit by
-2026-07-25 (or MA50 breach / $271 hard stop). Rebalancing toward the target
-is the next open decision (see below).
+## Rebalance — DECIDED 2026-07-02, execution in progress
+
+Target: **Reactor Core 83.3% / War Chest 4.5% / Home Base 12.2%** (of total
+TPV, not just Reactor Core). Method: drawdown-ceiling sizing —
+confirmed **-25% max drawdown tolerance** ÷ **-30.0% conservative MaxDD**
+(crash-guard-improved TXN-analog figure above) = 83.3%. Also confirmed:
+**6,000 kr/month contributions**, account is **all ISK** (flat annual tax,
+not per-trade capital gains — banded/frequent rebalancing is tax-free).
+
+Execution status:
+- **Gold leg: DONE (2026-07-02).** Bought 54 shares PPFB.DE, funded from
+  Home Base (Spiltan Räntefond). Live in `config/portfolio.toml` (304
+  shares).
+- **Remaining legs (sell Silver/WMT/CCJ/VRT, buy AVGO/LLY, top up War
+  Chest): NOT yet executed.** Deliberately sequenced to happen *after* the
+  HWM tactical position exits (time exit 2026-07-25, or earlier on MA50
+  breach / $271 hard stop) — let HWM's own exit rule run its course first,
+  then fold proceeds into the rest of the rebalance.
+- **The one open sub-decision: lump-sum vs. staged/tranched entry for the
+  ~430k kr AVGO buy** (roughly 5-6x the current position). Not resolved as
+  of this writing. Matters more than it looks — the 2026-07-01 valuation
+  review flagged AVGO at 63x trailing P/E, "priced for near-perfection."
+  Resolve deliberately before executing, don't let it happen by default
+  when HWM closes.
+
+Full kr-denominated trade list and the annuity-adjusted required-CAGR math
+(22.06% with contributions vs 24.88% without) are in the operator's personal
+memory — ask if you need the exact numbers re-derived at execution-time
+prices.
 
 ## Key scripts
 
@@ -144,15 +179,13 @@ done)
 1. ~~Parameter sensitivity~~ — DONE, robust (see above).
 2. ~~Operational fail-safe check~~ — DONE (see above).
 3. ~~Opportunistic entry screen~~ — DONE (see above).
-4. **Rebalancing decision** — current portfolio (WMT/CCJ/VRT/HWM-heavy)
-   still doesn't match the target (Gold25/AVGO55/LLY20). Open sub-question:
-   lump-sum into AVGO now (63x trailing P/E, priced for near-perfection per
-   2026-07-01 valuation review) vs. staging the entry over time — the
-   backtest assumes the target weight is held from day one and doesn't
-   answer this. **This is next up now that 1-3 are closed.**
+4. **Rebalancing decision** — DECIDED 2026-07-02 (see "Rebalance" section
+   above): target 83.3/4.5/12.2, Gold leg executed, remaining legs sequenced
+   post-HWM. **Only open sub-question: lump-sum vs. staged AVGO entry** —
+   still unresolved, resolve before executing.
 5. **HWM tactical exit** — time exit by 2026-07-25 (or MA50 breach / $271
-   hard stop, whichever first). Check `run_entry_screen.py` output / Avanza
-   MA50 daily.
+   hard stop, whichever first). Blocks the remaining rebalance legs. Check
+   `run_entry_screen.py` output / Avanza MA50 daily.
 6. **AVGO conviction tests** — deferred until the 200d guard fires and stays
    active (tripwire). Not yet triggered.
 7. **Valuation screen** — generalize the trailing/forward EPS-ratio check
@@ -160,9 +193,29 @@ done)
    quality-filtered universe. Monitoring tool, not an AVGO-replacement
    search — doesn't override item 6's tripwire. Not yet built.
 
-**Other gaps flagged 2026-07-01, not yet on a numbered item:**
-currency/account-type never discussed (Gold=EUR, AVGO/LLY/WMT=USD, FI@50
-tracked in SEK — is the AVGO position in an ISK or a regular depå, and is FX
-hedging worth considering for a Swedish investor with most net worth in USD
-mega-caps?). LLY's correlation to AVGO in a *broad* AI-theme drawdown (not an
-AVGO-specific miss) is still unresolved.
+**Other gaps flagged 2026-07-01, updated 2026-07-02:**
+- Account type **resolved**: all positions are ISK (flat annual tax, not
+  per-trade capital gains).
+- **FX hedging still open.** Gold=EUR-listed (PPFB.DE, Xetra), AVGO/LLY/WMT=
+  USD, FI@50 tracked in SEK. Reconciled 2026-07-02: SEK value = gold(USD) ×
+  EURUSD × EURSEK, a genuine two-hop chain (not a data bug) — one hop more
+  than the rest of the book. Fix identified: **IGLN** (LSE, USD-denominated)
+  shares the exact same ISIN as PPFB.DE (IE00B4ND3602) — same fund, same
+  bullion, same custodian, would collapse the chain to one hop. Not yet
+  confirmed tradeable on Avanza — check before the next Gold touch-point.
+  Backtest evidence (15y, 2011-2026) says don't overreact to this either
+  way: unhedged gold(SEK) beat a fully-hedged gold(USD)-only proxy on CAGR
+  (+10.0% vs +6.85%), Sharpe (0.56 vs 0.44), *and* MaxDD (-36.9% vs -44.4%)
+  over the full period — hedging would have been strictly worse, not a
+  wash. A tested USD/SEK 200d-MA tactical overlay also underperformed
+  buy-and-hold on Sharpe — rejected, same fate as the retired RY signal.
+- **AVGO/LLY correlation in a broad drawdown — tested, still not fully
+  resolved.** Full-period daily-return correlation is +0.21 (real but
+  modest). It's regime-dependent, not stable: rose to +0.32 during the 2022
+  rate-hike growth selloff (correlation increasing exactly during macro
+  stress), fell to ~0 in 2025-26 when each stock ran on its own idiosyncratic
+  narrative. On AVGO's 10 worst days, LLY decoupled during the COVID crash
+  (real ballast) but fell alongside or worse than AVGO during the April 2025
+  tariff shock (no ballast). Conclusion: LLY hedges liquidity/structural
+  crashes, not macro/trade-driven risk-off — diversification is real but
+  narrower than the "different sector" framing suggests.
