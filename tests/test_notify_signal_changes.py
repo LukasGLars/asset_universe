@@ -78,6 +78,22 @@ def test_main_sends_email_when_changed():
         assert "AVGO guard" in args[1]
 
 
+def test_main_force_test_email_bypasses_diff_and_sends(monkeypatch):
+    monkeypatch.setenv("FORCE_TEST_EMAIL", "true")
+    with patch.object(nsc, "build_change_summary") as mock_summary, \
+         patch.object(nsc, "send_email") as mock_send:
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
+        try:
+            nsc.main()
+        finally:
+            sys.argv = old_argv
+        mock_summary.assert_not_called()  # diff is bypassed entirely
+        mock_send.assert_called_once()
+        assert "test email" in mock_send.call_args[0][0].lower()
+
+
 def test_main_does_not_raise_when_send_email_fails():
     with patch.object(nsc, "build_change_summary", return_value="AVGO guard: BASE -> DEFENSIVE"), \
          patch.object(nsc, "send_email", side_effect=RuntimeError("smtp auth failed")):

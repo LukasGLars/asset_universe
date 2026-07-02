@@ -60,6 +60,17 @@ def main() -> None:
         print("usage: notify_signal_changes.py <prev_status.md> <curr_status.md>", file=sys.stderr)
         return
 
+    # Manual on-demand test send (workflow_dispatch input), bypasses the
+    # diff entirely -- lets you verify Gmail SMTP auth works without
+    # waiting for a real signal to flip.
+    if os.environ.get("FORCE_TEST_EMAIL") == "true":
+        try:
+            send_email("Asset Universe: test email", "This is a manual test send -- notification pipeline is working.")
+            print("Test email sent.")
+        except Exception as e:
+            print(f"Test email send failed: {e}", file=sys.stderr)
+        return
+
     summary = build_change_summary(sys.argv[1], sys.argv[2])
     if not summary:
         print("No actionable signal change -- no email sent.")
