@@ -3,19 +3,19 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     304     770 kr   234,048 kr  21.5%
-  Silver                    66     531 kr    35,059 kr   3.2%
-  Eli Lilly                 14  11,567 kr   161,934 kr  14.9%
-  Walmart                  126   1,056 kr   133,078 kr  12.3%
-  Cameco                    93     945 kr    87,907 kr   8.1%
-  Vertiv                    31   3,023 kr    93,699 kr   8.6%
-  Broadcom                  21   3,585 kr    75,279 kr   6.9%
-  Howmet Aerospace          11   2,595 kr    28,549 kr   2.6%
+  Gold                     304     769 kr   233,660 kr  21.5%
+  Silver                    66     532 kr    35,109 kr   3.2%
+  Eli Lilly                 14  11,583 kr   162,164 kr  14.9%
+  Walmart                  126   1,058 kr   133,268 kr  12.3%
+  Cameco                    93     947 kr    88,032 kr   8.1%
+  Vertiv                    31   3,027 kr    93,833 kr   8.6%
+  Broadcom                  21   3,590 kr    75,386 kr   6.9%
+  Howmet Aerospace          11   2,599 kr    28,590 kr   2.6%
   Spiltan Räntefond          -     manual   234,561 kr  21.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,088,716 kr
-    Reactor Core            849,553 kr  (78%)
+  TPV                                        1,087,289 kr
+    Reactor Core            850,043 kr  (78%)
     Home Base               234,561 kr  (22%)
     War Chest                 1,959 kr  (0%)
 
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,088,716 kr
+  Now                     :     1,087,289 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.1
 
-  AWAR (trailing)         :  +18.6%
+  AWAR (trailing)         :  +18.5%
   Required CAGR           :  +22.2%
-  Status                  :  BEHIND  (-3.6% margin)
+  Status                  :  BEHIND  (-3.7% margin)
 
-  Projected @ AWAR        :     9,580,564 kr
-  vs target               :    -3,354,142 kr  (deficit)
+  Projected @ AWAR        :     9,438,298 kr
+  vs target               :    -3,496,408 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,538,237 kr       ~2047
-  Conservative   +15%       7,012,954 kr       ~2041
-  Base           +20%      10,754,524 kr       ~2038
-  Current AWAR   +19%       9,580,564 kr       ~2039
-  Bull           +30%      24,547,143 kr       ~2035
+  Bear           +10%       4,534,145 kr       ~2047
+  Conservative   +15%       7,006,266 kr       ~2041
+  Base           +20%      10,743,819 kr       ~2038
+  Current AWAR   +18%       9,438,298 kr       ~2039
+  Bull           +30%      24,521,213 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -48,19 +48,19 @@ MACRO REGIME
 
   Feature                 Value   Regime  
   ------------------------------------------
-  Nominal 10Y             4.44%   HIGH
-  Real Yield             +2.20%   HIGH  ^
+  Nominal 10Y             4.48%   HIGH
+  Real Yield             +2.25%   HIGH  ^
   Breakeven               2.23%   MID
   HY OAS                274 bps   TIGHT
-  IG Credit               1.53%   TIGHT
-  Curve 10Y-3M          +63 bps   LOW
-  Curve 10Y-2Y          +31 bps   LOW
+  IG Credit               1.54%   TIGHT
+  Curve 10Y-3M          +67 bps   MID
+  Curve 10Y-2Y          +35 bps   LOW
   SE 10Y                  2.75%   MID
   USD                     120.9   STRONG
 
   HY 20d delta  : -1 bps  (flat)
   Confidence    : HIGH
-  Data through  : 2026-07-01
+  Data through  : 2026-07-02
 
 ==============================================================
 PORTFOLIO SIGNALS
@@ -70,13 +70,13 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           21.5%    LOW   LOW     +0.7%     +0.7%   75%    63  
-  Silver          3.2%    LOW   LOW     +2.3%     +2.3%   84%    31  
-  Eli Lilly      14.9%   HIGH  HIGH     -0.2%     -0.2%   46%   137  
-  Walmart        12.3%    LOW   LOW     +0.7%     +0.7%   62%    58  
-  Cameco          8.1%    LOW   LOW     +2.0%     +2.0%   66%    80  
-  Vertiv          8.6%    LOW  HIGH     +2.8%     +2.8%   66%    35  
-  Broadcom        6.9%    LOW  HIGH     +0.8%     +0.8%   56%    62  
+  Gold           21.5%     --    --     +3.3%     +4.3%   92%   522  no mom data
+  Silver          3.2%     --    --     +4.0%     +3.9%   70%   522  no mom data
+  Eli Lilly      14.9%     --    --     -0.1%     -0.6%   43%   525  no mom data
+  Walmart        12.3%     --    --     +1.4%     +1.4%   60%   525  no mom data
+  Cameco          8.1%     --    --     -0.9%     -1.5%   43%   525  no mom data
+  Vertiv          8.6%     --    --     +1.2%     -2.1%   44%   525  no mom data
+  Broadcom        6.9%     --    --     +7.4%     +3.6%   60%   525  no mom data
 
 ==============================================================
 TACTICAL RULES
@@ -114,10 +114,10 @@ TACTICAL RULES
     VIX review     : 16.59  (42% percentile, falling) -- for review, not a gate
 
 ==============================================================
-  Regime check (2026-07-01): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
+  Regime check (2026-07-02): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 Building regime labels ...
   Conditions    : {'ry_regime': 'HIGH', 'baa10y_regime': 'TIGHT'}
-  Matched dates : 1383  (2004-05-07 - 2026-07-01)  MODERATE
+  Matched dates : 1384  (2004-05-07 - 2026-07-02)  MODERATE
 
 Computing capped 252d distributions for 51 candidates ...
   SNDK      hist=1yr  (below min 10yr, skipped)
@@ -181,7 +181,7 @@ Optimizing (50 restarts, 30 candidates) ...
 PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
 ========================================================================
   Universe       : top 50 screen candidates + GC_F
-  Matched dates  : 1383  MODERATE
+  Matched dates  : 1384  MODERATE
   Shrinkage      : lambda=100  prior=+19.1%
 
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
