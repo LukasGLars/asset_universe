@@ -3,19 +3,19 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     304     758 kr   230,563 kr  20.9%
-  Silver                    66     528 kr    34,822 kr   3.2%
-  Eli Lilly                 14  11,641 kr   162,978 kr  14.8%
-  Walmart                  126   1,099 kr   138,508 kr  12.6%
-  Cameco                    93     989 kr    91,942 kr   8.3%
-  Vertiv                    31   3,250 kr   100,740 kr   9.1%
-  Broadcom                  21   3,666 kr    76,993 kr   7.0%
-  Howmet Aerospace          11   2,609 kr    28,704 kr   2.6%
-  Spiltan Räntefond          -     manual   234,561 kr  21.3%
+  Gold                     304     770 kr   234,048 kr  21.5%
+  Silver                    66     531 kr    35,059 kr   3.2%
+  Eli Lilly                 14  11,567 kr   161,934 kr  14.9%
+  Walmart                  126   1,056 kr   133,078 kr  12.3%
+  Cameco                    93     945 kr    87,907 kr   8.1%
+  Vertiv                    31   3,023 kr    93,699 kr   8.6%
+  Broadcom                  21   3,585 kr    75,279 kr   6.9%
+  Howmet Aerospace          11   2,595 kr    28,549 kr   2.6%
+  Spiltan Räntefond          -     manual   234,561 kr  21.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,089,539 kr
-    Reactor Core            865,250 kr  (79%)
+  TPV                                        1,087,479 kr
+    Reactor Core            849,553 kr  (78%)
     Home Base               234,561 kr  (22%)
     War Chest                 1,959 kr  (0%)
 
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,089,539 kr
+  Now                     :     1,087,479 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.1
 
-  AWAR (trailing)         :  +18.8%
+  AWAR (trailing)         :  +18.5%
   Required CAGR           :  +25.1%
-  Status                  :  BEHIND  (-6.3% margin)
+  Status                  :  BEHIND  (-6.6% margin)
 
-  Projected @ AWAR        :     7,311,983 kr
-  vs target               :    -5,622,723 kr  (deficit)
+  Projected @ AWAR        :     7,096,266 kr
+  vs target               :    -5,838,440 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date
   --------------------------------------------------
-  Bear           +10%       3,125,052 kr       ~2052
-  Conservative   +15%       5,108,392 kr       ~2044
-  Base           +20%       8,177,610 kr       ~2040
-  Current AWAR   +19%       7,311,983 kr       ~2040
-  Bull           +30%      19,812,389 kr       ~2035
+  Bear           +10%       3,118,329 kr       ~2052
+  Conservative   +15%       5,096,783 kr       ~2044
+  Base           +20%       8,158,076 kr       ~2040
+  Current AWAR   +18%       7,096,266 kr       ~2041
+  Bull           +30%      19,760,730 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -70,37 +70,37 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           20.9%     --    --     +3.3%     +4.3%   92%   521  no mom data
-  Silver          3.2%     --    --     +4.0%     +3.9%   70%   521  no mom data
-  Eli Lilly      14.8%     --    --     -0.1%     -0.6%   43%   524  no mom data
-  Walmart        12.6%     --    --     +1.4%     +1.4%   60%   524  no mom data
-  Cameco          8.3%     --    --     -0.9%     -1.5%   43%   524  no mom data
-  Vertiv          9.1%     --    --     +1.2%     -2.1%   44%   524  no mom data
-  Broadcom        7.0%     --    --     +7.4%     +3.6%   60%   524  no mom data
+  Gold           21.5%    LOW   LOW     +0.7%     +0.7%   75%    63  
+  Silver          3.2%    LOW   LOW     +2.3%     +2.3%   84%    31  
+  Eli Lilly      14.9%   HIGH  HIGH     -0.2%     -0.2%   46%   137  
+  Walmart        12.3%    LOW   LOW     +0.7%     +0.7%   62%    58  
+  Cameco          8.1%    LOW   LOW     +2.0%     +2.0%   66%    80  
+  Vertiv          8.6%    LOW  HIGH     +2.8%     +2.8%   66%    35  
+  Broadcom        6.9%    LOW  HIGH     +0.8%     +0.8%   56%    62  
 
 ==============================================================
 TACTICAL RULES
 ==============================================================
 
   Silver GSR Tactical
-    GSR now        : 67.64  (as of 2026-06-30)
+    GSR now        : 67.71  (as of 2026-07-01)
     60d GSR peak   : 69.14
-    Fall from peak : 2.2%  (no (need >=5% fall for signal))
+    Fall from peak : 2.1%  (no (need >=5% fall for signal))
     T1 threshold   : 83.36  |  T2: 86.45  |  Exit: 62.56
     Signal         : INACTIVE
     Action         : No action -- hold base
 
   AVGO 200d Guard
-    AVGO now       : $377.75  (as of 2026-06-30)
-    200d SMA       : $360.14  (+4.9% gap)
-    5d ROC         : -0.6%  (crash threshold: -10%)
+    AVGO now       : $369.34  (as of 2026-07-01)
+    200d SMA       : $360.20  (+2.5% gap)
+    5d ROC         : -3.3%  (crash threshold: -10%)
     Signal         : BASE  (trigger: none)
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
   AVGO Earnings Checkpoint
-    Trailing EPS   : $6.01
+    Trailing EPS   : $6.02
     Forward EPS    : $19.40
-    Fwd/Trail ratio: 3.23x  (baseline 2026-07-01: 3.23x)
+    Fwd/Trail ratio: 3.22x  (baseline 2026-07-01: 3.23x)
     Next earnings  : 2026-09-03
     Action         : after the print, check actual AI revenue/EPS against the
                      $56B FY26 / $100B FY27 guided path. Meaningfully short of
@@ -108,8 +108,8 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : PWR (Quanta Services, Inc.)  (ext +1.6%, 26d med +3.6%, div ROBUST, pre-entry tripwires PASSED) -- run run_entry_screen.py for full detail
-    VIX review     : 16.45  (42% percentile, falling) -- for review, not a gate
+    Best candidate : CMI (Cummins Inc.)  (ext +1.1%, 30d med +3.6%, div ROBUST, pre-entry tripwires PASSED) -- run run_entry_screen.py for full detail
+    VIX review     : 16.59  (42% percentile, falling) -- for review, not a gate
 
 ==============================================================
   Regime check (2026-07-01): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
@@ -148,12 +148,12 @@ Computing capped 252d distributions for 51 candidates ...
   CMI       N=1201  mu= +25.6%  sigma= 29.9%  hist=26yr  [MODERATE]
   GM        N= 546  mu=  +8.4%  sigma= 13.3%  hist=16yr  [SINGLE]
   RL        N=1201  mu= +15.4%  sigma= 26.9%  hist=26yr  [MODERATE]
-  FOX       hist=7yr  (below min 10yr, skipped)
   TPR       N=1201  mu= +17.5%  sigma= 31.9%  hist=26yr  [MODERATE]
+  FOX       hist=7yr  (below min 10yr, skipped)
   CFG       N= 546  mu= +16.4%  sigma= 13.5%  hist=12yr  [SINGLE]
   WDC       N=1201  mu= +20.2%  sigma= 38.8%  hist=26yr  [MODERATE]
   GS        N=1201  mu= +13.3%  sigma= 23.8%  hist=26yr  [MODERATE]
-  GRMN      N=1201  mu= +30.2%  sigma= 32.6%  hist=25yr  [MODERATE]
+  GRMN      N=1201  mu= +30.2%  sigma= 32.6%  hist=26yr  [MODERATE]
   PHAG.L    no data
   CIEN      N=1201  mu= +19.7%  sigma= 27.1%  hist=26yr  [MODERATE]
   FSLR      N= 784  mu= +29.1%  sigma= 53.6%  hist=20yr  [MODERATE]
@@ -185,7 +185,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
   -----------------------------------------------------------------
   BKNG        33.4%    +35.3%    +34.1%    47.1%   1201    26yr  MODERATE
-  GRMN        24.9%    +30.2%    +29.3%    32.6%   1201    25yr  MODERATE
+  GRMN        24.9%    +30.2%    +29.3%    32.6%   1201    26yr  MODERATE
   LITE        14.7%    +39.8%    +31.0%    54.3%    546    11yr    SINGLE
   DECK        12.3%    +31.4%    +30.4%    55.2%   1201    26yr  MODERATE
   AVGO         5.1%    +33.4%    +27.3%    35.6%    546    17yr    SINGLE
