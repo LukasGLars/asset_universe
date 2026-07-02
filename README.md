@@ -30,8 +30,14 @@ Weekdays ~08:00 and ~22:30 CEST, unattended:
    AVGO 200d guard, Silver GSR tactical, AVGO earnings checkpoint, Opportunistic
    Sleeve)
 5. Regime-flip alert, portfolio optimizer
-6. Commit + push, then a health check that fails the run (and triggers a
-   GitHub notification) if `status.md` is stale or contains a failure signature
+6. Commit + push
+7. **Signal-change email**: compares today's guard/LLY-stress/joint-stress/
+   silver/sleeve/regime state against yesterday's committed `status.md` —
+   silent if nothing actionable changed, one-line email via Gmail SMTP if
+   it did (`EMAIL_ADDRESS`/`EMAIL_PASSWORD` secrets, the latter a Gmail App
+   Password). See `check_signal_changes.py` / `notify_signal_changes.py`.
+8. Health check that fails the run (and triggers a GitHub notification) if
+   `status.md` is stale or contains a failure signature
 
 ## Live strategy
 
