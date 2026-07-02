@@ -7,6 +7,37 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Signal-change email redesigned to lead with the action (2026-07-02, PR #17)
+
+First version (PR #14) emailed the raw state transition only, e.g. "AVGO
+guard: BASE -> DEFENSIVE" — user feedback: that doesn't tell you what to
+*do*, just what changed, and it must. Fixed: `check_signal_changes.py` now
+also extracts the exact `Action` line text `fi_tracker.py` already computes
+and prints live (e.g. "Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY
+47.5%)"), and `build_actionable_message()` builds `(subject, body)` where
+the body always pairs a state change with its instruction:
+
+```
+AVGO GUARD: BASE -> DEFENSIVE (trigger: CRASH, joint stress: inactive)
+ACTION: Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)
+```
+
+Subject line is also dynamic now (e.g. "Asset Universe: AVGO guard ->
+DEFENSIVE") instead of a fixed generic "signal change" — the phone
+lock-screen preview should already say what happened, not require opening
+the email. Silver GSR gets the same ACTION treatment. Sleeve/regime-flip
+changes are labeled REVIEW (no forced trade, just something to check) to
+distinguish "must act" from "worth a look." LLY-stress flipping on its own
+(without the AVGO guard also firing) is explicitly labeled informational --
+no action follows from it alone.
+
+Wording can never drift from the live dashboard's own instructions, since
+it's extracted from the same text, not independently authored.
+
+Live-verified via the manual `preview_email.yml` workflow (see below) with
+a real simulated AVGO guard flip -- confirmed both the log output and the
+actual received email matched exactly.
+
 ## Signal-change email notification added (2026-07-02, PR #14)
 
 Turning the daily sync from "runs unattended" into "runs unattended and

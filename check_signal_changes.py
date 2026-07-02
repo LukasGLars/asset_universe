@@ -34,9 +34,11 @@ def extract_fingerprint(text: str) -> dict:
     return {
         "avgo_guard": _find(r"AVGO 200d Guard.*?Signal\s*:\s*(\S+)", text),
         "avgo_trigger": _find(r"AVGO 200d Guard.*?trigger:\s*(\S+)\)", text),
+        "avgo_action": _find(r"AVGO 200d Guard.*?Action\s*:\s*([^\n]+)", text),
         "lly_stress": _find(r"LLY stress\s*:\s*(\S+)", text),
         "joint_stress": _find(r"Joint stress\s*:\s*(\S+)", text),
         "silver_signal": _find(r"Silver GSR Tactical.*?Signal\s*:\s*(\S+)", text),
+        "silver_action": _find(r"Silver GSR Tactical.*?Action\s*:\s*([^\n]+)", text),
         "sleeve_status": _find(r"Opportunistic Sleeve.*?Status\s*:\s*(\S+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
     }
@@ -51,6 +53,69 @@ LABELS = {
     "sleeve_status": "Opportunistic sleeve",
     "regime_flip": "Regime",
 }
+
+
+def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
+    """
+    Builds (subject, body) leading with the exact instruction to act on --
+    not just "X changed to Y". Pulls the same Action-line text fi_tracker.py
+    already computes and prints live, so the wording here can never drift
+    from what the dashboard itself says to do.
+
+    Returns None if nothing actionable changed.
+    """
+    blocks: list[str] = []
+    subject_parts: list[str] = []
+
+    avgo_changed = (prev["avgo_guard"] != curr["avgo_guard"]
+                     or prev["avgo_trigger"] != curr["avgo_trigger"]
+                     or prev["joint_stress"] != curr["joint_stress"])
+    if avgo_changed and "unknown" not in (prev["avgo_guard"], curr["avgo_guard"]):
+        blocks.append(
+            f"AVGO GUARD: {prev['avgo_guard']} -> {curr['avgo_guard']}"
+            f" (trigger: {curr['avgo_trigger']}, joint stress: {curr['joint_stress']})\n"
+            f"ACTION: {curr['avgo_action']}"
+        )
+        subject_parts.append(f"AVGO guard -> {curr['avgo_guard']}")
+
+    # LLY stress can flip on its own without the AVGO guard also firing --
+    # informational only in that case, no trade follows from it alone.
+    if (prev["lly_stress"] != curr["lly_stress"] and not avgo_changed
+            and "unknown" not in (prev["lly_stress"], curr["lly_stress"])):
+        blocks.append(
+            f"LLY STRESS (informational, no AVGO guard change): "
+            f"{prev['lly_stress']} -> {curr['lly_stress']}\n"
+            f"No action -- only matters if the AVGO guard fires too."
+        )
+
+    if prev["silver_signal"] != curr["silver_signal"] and "unknown" not in (prev["silver_signal"], curr["silver_signal"]):
+        blocks.append(
+            f"SILVER GSR: {prev['silver_signal']} -> {curr['silver_signal']}\n"
+            f"ACTION: {curr['silver_action']}"
+        )
+        subject_parts.append(f"Silver -> {curr['silver_signal']}")
+
+    if prev["sleeve_status"] != curr["sleeve_status"] and "unknown" not in (prev["sleeve_status"], curr["sleeve_status"]):
+        blocks.append(
+            f"OPPORTUNISTIC SLEEVE: {prev['sleeve_status']} -> {curr['sleeve_status']}\n"
+            f"REVIEW: run `run_entry_screen.py` for the candidate/exit details."
+        )
+        subject_parts.append(f"Sleeve -> {curr['sleeve_status']}")
+
+    if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":
+        blocks.append(
+            "REGIME FLIP confirmed.\n"
+            "REVIEW: rotation-sleeve candidates may have changed -- check "
+            "status.md's exit-priority table / run_universe_screen.py."
+        )
+        subject_parts.append("Regime FLIP")
+
+    if not blocks:
+        return None
+
+    subject = "Asset Universe: " + (", ".join(subject_parts) if subject_parts else "review needed")
+    body = "\n\n".join(blocks)
+    return subject, body
 
 
 def main() -> None:
@@ -68,14 +133,10 @@ def main() -> None:
         # No previous snapshot (first run ever) -- nothing to compare against.
         sys.exit(0)
 
-    changes = [
-        f"{LABELS[k]}: {prev[k]} -> {curr[k]}"
-        for k in LABELS
-        if prev[k] != curr[k] and "unknown" not in (prev[k], curr[k])
-    ]
-
-    if changes:
-        print("Asset Universe signal change: " + "; ".join(changes))
+    result = build_actionable_message(prev, curr)
+    if result:
+        subject, body = result
+        print(f"{subject}\n{body}")
 
 
 if __name__ == "__main__":
