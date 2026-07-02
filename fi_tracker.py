@@ -74,13 +74,15 @@ surplus = fi["surplus_deficit"]
 label = "surplus" if surplus >= 0 else "deficit"
 print(f"  vs target               :  {surplus:>+12,.0f} kr  ({label})")
 
+monthly_contrib = fi["monthly_contribution_sek"]
 print()
-print(f"  {'Scenario':<14} {'CAGR':>6}  {'Projected':>14}  {'FI date':>10}")
-print(f"  {'-'*50}")
+print(f"  {'Scenario':<14} {'CAGR':>6}  {'Projected':>14}  {'FI date':>10}"
+      f"   (incl. {monthly_contrib:,.0f} kr/mo contributions)")
+print(f"  {'-'*72}")
 for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
                     ("Current AWAR", fi["awar"]), ("Bull", 0.30)]:
-    proj      = tpv * (1 + rate) ** fi["years_remaining"]
-    yrs_to_fi = math.log(fi["target_sek"] / tpv) / math.log(1 + rate) if rate > 0 else float("inf")
+    proj      = portfolio.future_value_with_contributions(tpv, rate, fi["years_remaining"], monthly_contrib)
+    yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib, fi["target_sek"])
     fi_year   = 2026 + yrs_to_fi
     fi_str    = f"~{fi_year:.0f}" if fi_year < 2100 else ">2100"
     print(f"  {label:<14} {rate:>+.0%}  {proj:>14,.0f} kr  {fi_str:>10}")

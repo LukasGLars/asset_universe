@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import brentq
 
 from . import config
 from .store import reader
@@ -120,12 +121,92 @@ def snapshot(data_dir: Path | None = None) -> pd.DataFrame:
     return df
 
 
+def _annuity_due_fv_factor(monthly_rate: float, n_months: float) -> float:
+    """
+    Future-value factor for 1 kr/month contributed at the start of each
+    month (annuity-due -- matches run_terminal_wealth.py's SP_ANNUITY
+    convention), compounded at monthly_rate for n_months.
+    """
+    if n_months <= 0:
+        return 0.0
+    if abs(monthly_rate) < 1e-12:
+        return n_months
+    return (1 + monthly_rate) * ((1 + monthly_rate) ** n_months - 1) / monthly_rate
+
+
+def future_value_with_contributions(
+    tpv: float, annual_rate: float, years: float, monthly_contribution: float,
+) -> float:
+    """FV of current TPV plus ongoing monthly contributions, both compounded
+    at annual_rate (contributions compounded via the monthly-equivalent
+    rate)."""
+    monthly_rate = (1 + annual_rate) ** (1 / 12) - 1
+    n_months = years * 12
+    return (tpv * (1 + annual_rate) ** years
+            + monthly_contribution * _annuity_due_fv_factor(monthly_rate, n_months))
+
+
+def _solve_required_cagr(
+    tpv: float, target: float, years: float, monthly_contribution: float,
+) -> float:
+    """
+    Required annual CAGR such that TPV + ongoing monthly contributions reach
+    target in `years`. Falls back to pure-compounding (no contributions) if
+    monthly_contribution is 0, reproducing the prior formula exactly.
+    """
+    if years <= 0:
+        return float("nan")
+    if monthly_contribution <= 0:
+        return (target / tpv) ** (1 / years) - 1
+
+    def f(r: float) -> float:
+        return future_value_with_contributions(tpv, r, years, monthly_contribution) - target
+
+    # Required CAGR is well inside (-99%, 1000%) for any sane FI@50 scenario;
+    # brentq needs a bracketing sign change.
+    lo, hi = -0.99, 10.0
+    if f(lo) > 0:
+        return lo  # target already reachable even with a near-total-loss rate
+    if f(hi) < 0:
+        return hi  # target not reachable even at an absurd rate -- report the cap
+    return brentq(f, lo, hi, xtol=1e-6)
+
+
+def years_to_reach_target(
+    tpv: float, annual_rate: float, monthly_contribution: float, target: float,
+) -> float:
+    """
+    Years (possibly fractional) for TPV + ongoing monthly contributions,
+    compounded at annual_rate, to reach target. inf if unreachable within a
+    century even at the given rate (e.g. rate <= 0 and contributions too
+    small).
+    """
+    if tpv >= target:
+        return 0.0
+
+    def f(years: float) -> float:
+        return future_value_with_contributions(tpv, annual_rate, years, monthly_contribution) - target
+
+    lo, hi = 0.0, 100.0
+    if f(hi) < 0:
+        return float("inf")
+    return brentq(f, lo, hi, xtol=1e-4)
+
+
 def fi_pace(data_dir: Path | None = None) -> dict:
     """
     Returns FI@50 pace metrics:
         tpv_sek, start_value, start_date, target_sek, years_remaining,
         days_elapsed, awar, required_cagr, on_pace, projected_value,
-        surplus_deficit_sek
+        surplus_deficit_sek, monthly_contribution_sek
+
+    required_cagr and projected_sek both account for the ongoing monthly
+    contribution (config: fi.monthly_contribution_sek), not just compounding
+    of the current TPV -- ignoring it overstates how far behind pace the
+    portfolio actually is (confirmed materially: dropped the required-CAGR
+    bar from 24.88% to 22.06% in the 2026-07-02 rebalance sizing exercise,
+    the largest single lever found in that analysis, previously never wired
+    back into this live tracker).
     """
     if data_dir is None:
         data_dir = config.raw_data_dir()
@@ -140,6 +221,7 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     start_value = fi["start_value_sek"]
     target      = fi["target_sek"]
     years_total = fi["years"]
+    monthly_contribution = fi.get("monthly_contribution_sek", 0)
 
     today         = pd.Timestamp(date.today())
     days_elapsed  = (today - start_date).days
@@ -147,22 +229,24 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     years_left    = years_total - years_elapsed
 
     awar          = (tpv / start_value) ** (365.25 / days_elapsed) - 1 if days_elapsed > 0 else 0.0
-    required_cagr = (target / tpv) ** (1 / years_left) - 1 if years_left > 0 else float("nan")
-    projected     = tpv * (1 + awar) ** years_left
+    required_cagr = _solve_required_cagr(tpv, target, years_left, monthly_contribution)
+    projected     = (future_value_with_contributions(tpv, awar, years_left, monthly_contribution)
+                      if years_left > 0 else tpv)
     surplus       = projected - target
 
     return {
-        "tpv_sek":          tpv,
-        "start_value_sek":  start_value,
-        "start_date":       fi["start_date"],
-        "target_sek":       target,
-        "years_remaining":  years_left,
-        "days_elapsed":     days_elapsed,
-        "awar":             awar,
-        "required_cagr":    required_cagr,
-        "on_pace":          awar >= required_cagr,
-        "projected_sek":    projected,
-        "surplus_deficit":  surplus,
+        "tpv_sek":              tpv,
+        "start_value_sek":      start_value,
+        "start_date":           fi["start_date"],
+        "target_sek":           target,
+        "years_remaining":      years_left,
+        "days_elapsed":         days_elapsed,
+        "awar":                 awar,
+        "required_cagr":        required_cagr,
+        "on_pace":              awar >= required_cagr,
+        "projected_sek":        projected,
+        "surplus_deficit":      surplus,
+        "monthly_contribution_sek": monthly_contribution,
     }
 
 
