@@ -1,8 +1,9 @@
 [fi]
-start_date       = "2025-07-21"
-start_value_sek  = 925983
-target_sek       = 12934706
-years            = 12
+start_date               = "2025-07-21"
+start_value_sek          = 925983
+target_sek               = 12934706
+years                    = 12
+monthly_contribution_sek = 6000
 
 # ── Reactor Core positions ─────────────────────────────────────────────────────
 # currency: USD = convert via USDSEK, EUR = convert via EURSEK, SEK = no conversion

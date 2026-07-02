@@ -7,6 +7,38 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## FI@50 pace tracker bug fixed (2026-07-02, PR #13)
+
+`fi_pace()` in `src/asset_universe/portfolio.py` was computing "Required
+CAGR" and "Projected @ AWAR" via pure compounding of current TPV only —
+**silently ignoring the confirmed 6,000 kr/month ongoing contributions**,
+even though that adjustment was already derived once (off-system, during
+the 2026-07-02 rebalance sizing exercise: required CAGR 24.88% → 22.06%,
+"the single largest lever found in that analysis") and never wired back
+into the live daily dashboard. Every run was reporting a harsher "BEHIND
+pace" figure than reality.
+
+Fixed: `config/portfolio.toml`'s `[fi]` section now has
+`monthly_contribution_sek = 6000`; `fi_pace()` solves for required CAGR and
+projects future value via a proper annuity-due formula (`brentq`, `scipy`
+already a dependency) instead of ignoring the contribution term entirely.
+Falls back to the exact old pure-compounding formula if
+`monthly_contribution_sek` is 0 or absent — not a behavior change for
+zero-contribution scenarios. Also fixed the same omission in the
+Bear/Conservative/Base/Bull scenario table in `fi_tracker.py` (was using
+`math.log` pure-compounding for "years to FI", now uses
+`portfolio.years_to_reach_target()`, contribution-aware).
+
+**Effect (2026-07-02 snapshot):** Required CAGR +25.1% → +22.2%, margin
+-6.6% → -3.0%, Projected @ AWAR 7.1M → 10.1M kr. Still behind pace, but
+meaningfully less behind than the tracker was reporting.
+
+6 new tests (`tests/test_fi_pace.py`): zero-contribution regression
+(reproduces the old formula exactly), contributions lower the required-CAGR
+bar (not just "differ"), magnitude sanity check against the known
+24.9%→22.1% figure, FV/years-to-target round-trip. 70 tests passing
+project-wide.
+
 ## Current strategy ("Strategy D" + crash guard, validated 2026-07-01)
 
 3-asset scarcity base (static, no dynamic adjustments unless a tactical rule
