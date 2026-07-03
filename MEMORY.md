@@ -64,6 +64,18 @@ to the same pattern if this resurfaces.
   and rejected as a standalone signal -- already tested, found to add zero
   discriminating power beyond Core 3 for this asset set.
 
+- **Standalone LLY guard, independent of AVGO's state (logged
+  2026-07-03).** LLY already has the identical detection logic as AVGO's
+  guard (same 200d SMA / 5d-(-10%) ROC combo, reused as-is) -- but only as
+  a *confirmation* input to the joint-stress escalation. A standalone rule
+  (LLY rotates its own weight into Gold when *it alone* is stressed,
+  regardless of whether AVGO's guard is active) has never been built or
+  backtested as its own strategy variant. **This is an untested hypothesis,
+  not a confirmed non-finding** -- don't assume it adds zero value just
+  because LLY is a smaller slice (20% vs. AVGO's 55%) than the mechanism
+  it'd be modeled on. If tested, same TXN-analog + AVGO-actual methodology
+  already validated (see `run_joint_stress_validation.py` as the template).
+
 - ~~Self-updating Google Calendar integration for dated reminders~~ --
   **DROPPED 2026-07-03.** Superseded by the finalized ops-notification
   scope below: AVGO + LLY earnings reminders go via Telegram directly
