@@ -11,36 +11,36 @@ Position                Shares      Price    Value SEK     Wt
   Vertiv                    31   2,921 kr    90,551 kr   8.3%
   Broadcom                  21   3,503 kr    73,572 kr   6.7%
   Howmet Aerospace          11   2,628 kr    28,911 kr   2.7%
-  Spiltan Räntefond          -     manual   234,561 kr  21.5%
+  Spiltan Räntefond          -     manual   234,623 kr  21.5%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,085,349 kr
+  TPV                                        1,086,016 kr
     Reactor Core            853,550 kr  (79%)
-    Home Base               234,561 kr  (22%)
+    Home Base               234,623 kr  (22%)
     War Chest                 1,959 kr  (0%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,085,349 kr
+  Now                     :     1,086,016 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +18.2%
+  AWAR (trailing)         :  +18.3%
   Required CAGR           :  +22.2%
   Status                  :  BEHIND  (-4.0% margin)
 
-  Projected @ AWAR        :     9,198,835 kr
-  vs target               :    -3,735,871 kr  (deficit)
+  Projected @ AWAR        :     9,263,231 kr
+  vs target               :    -3,671,475 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,527,202 kr       ~2047
-  Conservative   +15%       6,994,298 kr       ~2041
-  Base           +20%      10,723,712 kr       ~2038
-  Current AWAR   +18%       9,198,835 kr       ~2039
-  Bull           +30%      24,468,179 kr       ~2035
+  Bear           +10%       4,529,115 kr       ~2047
+  Conservative   +15%       6,997,423 kr       ~2041
+  Base           +20%      10,728,713 kr       ~2038
+  Current AWAR   +18%       9,263,231 kr       ~2039
+  Bull           +30%      24,480,291 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -137,8 +137,8 @@ Computing capped 252d distributions for 51 candidates ...
   DASH      hist=6yr  (below min 10yr, skipped)
   NRG       N=1201  mu= +21.2%  sigma= 28.7%  hist=23yr  [MODERATE]
   CF        excluded (see EXCLUDE_TICKERS)
-  PWR       N=1201  mu= +19.2%  sigma= 28.3%  hist=26yr  [MODERATE]
   BKNG      N=1201  mu= +35.3%  sigma= 47.1%  hist=26yr  [MODERATE]
+  PWR       N=1201  mu= +19.2%  sigma= 28.3%  hist=26yr  [MODERATE]
   FOXA      hist=7yr  (below min 10yr, skipped)
   TRGP      N= 546  mu=  -0.6%  sigma= 12.8%  hist=16yr  [SINGLE]
   STLD      N=1201  mu= +15.2%  sigma= 31.1%  hist=26yr  [MODERATE]
