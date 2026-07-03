@@ -7,6 +7,29 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Signal-change notifications migrated Gmail -> Telegram (2026-07-03)
+
+Per the finalized ops-notification scope (see below): urgent items go via
+Telegram now, not email. `notify_signal_changes.py` rewritten --
+`send_email()` replaced with `send_telegram()` (plain `urllib.request` POST
+to the Bot API, no new dependency). Requires `TELEGRAM_BOT_TOKEN` (secret)
+and `TELEGRAM_CHAT_ID` (variable -- `8990937151`, not sensitive, just an
+identifier). `sync.yml`'s `workflow_dispatch` input renamed `test_email` ->
+`test_telegram`. `preview_email.yml` renamed to `preview_notification.yml`
+and updated to the same Telegram creds -- also fixed a latent bug found
+during the migration: its diff-preview step still referenced `LABELS`,
+which `check_signal_changes.py` stopped exporting back in the PR #17
+actionable-message redesign (silently broken since 2026-07-02, never
+actually re-run until now). Bot: **@A_Sheetsbot** ("FiBot"). Live-verified
+via a real Telegram send before trusting it, same standard as everything
+else in this project.
+
+Email is not going away entirely -- it's still the intended channel for
+the FI@50 pace digest and quarterly thesis re-check (not built yet, see
+"Operations notification scope" below). `send_email`/Gmail App Password
+setup docs from 2026-07-02 are historical record for that future work, not
+currently wired to anything.
+
 ## Google Calendar workflow -- ON HOLD (2026-07-03)
 
 `.github/workflows/google-calendar.yml` exists (triggers on push to `main` +
@@ -86,25 +109,18 @@ to the same pattern if this resurfaces.
   calendar-visible entry was identified, so this is closed, not just
   paused.
 
-## Operations notification scope -- FINALIZED 2026-07-03, not yet built
+## Operations notification scope -- FINALIZED 2026-07-03, partially built
 
 Channel split, by urgency (per the operator's own stated principle:
 Telegram for urgency, email for everything else):
 
-| Item | Channel |
-|---|---|
-| Guard / joint-stress / silver-GSR / opportunistic-sleeve events | Telegram |
-| GSR watch-zone leading-indicator gauge (not yet designed in detail) | Telegram |
-| AVGO + LLY earnings reminders (data-driven, days-to-event) | Telegram |
-| FI@50 CAGR/AWAR pace digest (monthly cadence) | Email |
-| Quarterly thesis re-check reminder | Email |
-
-Known small gap when this gets built: `fi_tracker.py`'s AVGO Earnings
-Checkpoint already computes days-to-next-earnings live via yfinance; LLY
-needs the same lookup added (same pattern, not yet written).
-
-Not started -- this is the scope to build against next, not a completed
-feature.
+| Item | Channel | Status |
+|---|---|---|
+| Guard / joint-stress / silver-GSR / opportunistic-sleeve events | Telegram | **Built, live-verified (2026-07-03)** |
+| GSR watch-zone leading-indicator gauge | Telegram | Not built -- needs its own state machine, see ops-conversation notes |
+| AVGO + LLY earnings reminders (data-driven, days-to-event) | Telegram | Not built -- LLY needs the same yfinance lookup AVGO already has |
+| FI@50 CAGR/AWAR pace digest (monthly cadence) | Email | Not built |
+| Quarterly thesis re-check reminder | Email | Not built |
 
 ## Signal-change email redesigned to lead with the action (2026-07-02, PR #17)
 

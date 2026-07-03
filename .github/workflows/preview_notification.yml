@@ -1,15 +1,16 @@
-name: preview-signal-email
+name: preview-signal-notification
 
 # Manual-only, one-off review tool: generates a REAL status.md from live
 # data, then builds a throwaway *local, uncommitted* copy with the AVGO
 # guard line flipped to simulate a real signal change, and runs it through
 # the actual production notify_signal_changes.py -- same code, same
-# secrets, real send. Nothing in this workflow ever commits, pushes, or
+# secrets, real send (Telegram, migrated 2026-07-03 from the original
+# Gmail-based version). Nothing in this workflow ever commits, pushes, or
 # modifies any tracked file in the repo; the fake "previous" snapshot only
 # ever exists on the ephemeral runner's disk. Safe to run repeatedly.
 #
-# Intended to be deleted after the review it was requested for (2026-07-02)
-# -- not part of the daily automation, not referenced by sync.yml.
+# Originally added 2026-07-02 for the email pipeline review; kept as a
+# standing review tool since it's proven useful more than once.
 
 on:
   workflow_dispatch:
@@ -57,24 +58,31 @@ jobs:
           fake_prev = text.replace(
               "Signal         : BASE  (trigger: none)",
               "Signal         : DEFENSIVE  (trigger: CRASH)",
+          ).replace(
+              "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
+              "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
           )
           open("preview_status_prev.md", "w", encoding="utf-8").write(fake_prev)
           PYEOF
 
-      - name: Show what will be diffed (visible in this log for review)
+      - name: Show what will be sent (visible in this log for review)
         run: |
-          echo "--- Fingerprint diff that will be emailed ---"
+          echo "--- Actionable message that will be sent ---"
           python -c "
-          from check_signal_changes import extract_fingerprint, LABELS
+          from check_signal_changes import extract_fingerprint, build_actionable_message
           prev = extract_fingerprint(open('preview_status_prev.md', encoding='utf-8').read())
           curr = extract_fingerprint(open('preview_status_curr.md', encoding='utf-8').read())
-          for k in LABELS:
-              marker = ' <-- CHANGED' if prev[k] != curr[k] else ''
-              print(f'{LABELS[k]:24s} {prev[k]:12s} -> {curr[k]:12s}{marker}')
+          result = build_actionable_message(prev, curr)
+          if result is None:
+              print('No actionable change detected.')
+          else:
+              subject, body = result
+              print(f'SUBJECT: {subject}')
+              print(f'BODY:\n{body}')
           "
 
-      - name: Send the real preview email (production code, real secrets, real send)
+      - name: Send the real preview notification (production code, real secrets, real send)
         run: python notify_signal_changes.py preview_status_prev.md preview_status_curr.md
         env:
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}

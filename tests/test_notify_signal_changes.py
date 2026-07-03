@@ -53,13 +53,13 @@ def test_build_change_email_none_when_prev_missing(tmp_path):
     assert nsc.build_change_email(str(tmp_path / "nope.md"), str(curr)) is None
 
 
-def test_main_does_not_send_email_when_unchanged(tmp_path):
+def test_main_does_not_send_when_unchanged(tmp_path):
     prev = tmp_path / "prev.md"
     curr = tmp_path / "curr.md"
     prev.write_text(BASE, encoding="utf-8")
     curr.write_text(BASE, encoding="utf-8")
 
-    with patch.object(nsc, "send_email") as mock_send:
+    with patch.object(nsc, "send_telegram") as mock_send:
         import sys
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", str(prev), str(curr)]
@@ -70,11 +70,11 @@ def test_main_does_not_send_email_when_unchanged(tmp_path):
         mock_send.assert_not_called()
 
 
-def test_main_sends_email_with_action_when_changed():
+def test_main_sends_telegram_with_action_when_changed():
     with patch.object(nsc, "build_change_email",
                        return_value=("Asset Universe: AVGO guard -> DEFENSIVE",
                                      "AVGO GUARD: BASE -> DEFENSIVE\nACTION: Rotate AVGO -> Gold+LLY")), \
-         patch.object(nsc, "send_email") as mock_send:
+         patch.object(nsc, "send_telegram") as mock_send:
         import sys
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
@@ -88,10 +88,10 @@ def test_main_sends_email_with_action_when_changed():
         assert "ACTION:" in body
 
 
-def test_main_force_test_email_bypasses_diff_and_sends(monkeypatch):
-    monkeypatch.setenv("FORCE_TEST_EMAIL", "true")
+def test_main_force_test_telegram_bypasses_diff_and_sends(monkeypatch):
+    monkeypatch.setenv("FORCE_TEST_TELEGRAM", "true")
     with patch.object(nsc, "build_change_email") as mock_email, \
-         patch.object(nsc, "send_email") as mock_send:
+         patch.object(nsc, "send_telegram") as mock_send:
         import sys
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
@@ -101,13 +101,13 @@ def test_main_force_test_email_bypasses_diff_and_sends(monkeypatch):
             sys.argv = old_argv
         mock_email.assert_not_called()  # diff is bypassed entirely
         mock_send.assert_called_once()
-        assert "test email" in mock_send.call_args[0][0].lower()
+        assert "test message" in mock_send.call_args[0][0].lower()
 
 
-def test_main_does_not_raise_when_send_email_fails():
+def test_main_does_not_raise_when_send_telegram_fails():
     with patch.object(nsc, "build_change_email",
                        return_value=("Asset Universe: AVGO guard -> DEFENSIVE", "ACTION: Rotate AVGO")), \
-         patch.object(nsc, "send_email", side_effect=RuntimeError("smtp auth failed")):
+         patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")):
         import sys
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
@@ -115,3 +115,23 @@ def test_main_does_not_raise_when_send_email_fails():
             nsc.main()  # must not raise
         finally:
             sys.argv = old_argv
+
+
+def test_send_telegram_raises_on_not_ok_response(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "12345")
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self):
+            return b'{"ok": false, "description": "chat not found"}'
+
+    with patch("notify_signal_changes.urllib.request.urlopen", return_value=FakeResponse()):
+        try:
+            nsc.send_telegram("subject", "body")
+            assert False, "expected RuntimeError"
+        except RuntimeError as e:
+            assert "not-ok" in str(e)

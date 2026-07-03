@@ -6,8 +6,8 @@ on:
     - cron: '0 6 * * 1-5'     # 08:00 CEST (06:00 UTC) Mon-Fri — morning FRED catch-up
   workflow_dispatch:
     inputs:
-      test_email:
-        description: "Force-send a test email (bypasses signal-change diff)"
+      test_telegram:
+        description: "Force-send a test Telegram message (bypasses signal-change diff)"
         type: boolean
         default: false
 
@@ -91,9 +91,9 @@ jobs:
       - name: Notify on signal change
         run: python notify_signal_changes.py status.md.prev status.md
         env:
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          FORCE_TEST_EMAIL: ${{ github.event.inputs.test_email || 'false' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+          FORCE_TEST_TELEGRAM: ${{ github.event.inputs.test_telegram || 'false' }}
 
       - name: Sync health check
         run: python check_sync_health.py status.md
