@@ -7,6 +7,23 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Research backlog (not scheduled, not built -- ideas awaiting validation)
+
+- **BAA10Y credit-spread confirmation for the AVGO/LLY joint-stress rule
+  (logged 2026-07-03).** Hypothesis: the 2022 episode where AVGO/LLY
+  correlation spiked to +0.32 was a rate/credit-driven macro event, not an
+  idiosyncratic one -- a credit-spread confirmation might make the joint-
+  stress escalation more precise (confirm it's genuinely macro-driven) or
+  fire earlier (credit often leads equity price action). **Use BAA10Y
+  (26yr history, already a Core-3 regime input), not HY OAS** (only 3yr of
+  API history -- not enough to backtest rigorously, per `INTEGRITY.md`'s
+  no-assumptions standard). If tested, use the same TXN-analog +
+  parameter-grid methodology already validated for the guard/crash-trigger/
+  joint-stress work (see `run_joint_stress_validation.py` as the template).
+  Separately: plain yield-curve inversion (T10Y3M/T10Y2Y) was considered
+  and rejected as a standalone signal -- already tested, found to add zero
+  discriminating power beyond Core 3 for this asset set.
+
 ## Signal-change email redesigned to lead with the action (2026-07-02, PR #17)
 
 First version (PR #14) emailed the raw state transition only, e.g. "AVGO
