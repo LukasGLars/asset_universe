@@ -1,0 +1,62 @@
+name: Skapa Kalenderhändelse
+
+# Skapar en Google Calendar-händelse varje gång kod pushas till main.
+# Autentiserar keyless via Workload Identity Federation (OIDC) -- inga
+# Google-nycklar lagras i repot, bara projekt-/pool-/provider-namn som
+# GitHub Actions Variables (Settings -> Secrets and variables -> Actions ->
+# Variables). Om OIDC-förtroendet mellan detta repo och GCP-projektet inte
+# faktiskt är konfigurerat rätt misslyckas auth-steget säkert (ingen
+# händelse skapas, inget annat händer) -- se det första körningsloggen
+# innan du litar på att detta fungerar.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Gör att du kan starta testet manuellt under fliken Actions
+
+permissions:
+  id-token: write  # Krävs för nyckellös inloggning via OIDC
+  contents: read
+
+jobs:
+  add-event:
+    runs-on: ubuntu-latest
+    steps:
+      # Steg 1: Autentisera mot Google Cloud med dina sparade variabler
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ vars.VAR_GCP_PROJECT_NUM }}/locations/global/workloadIdentityPools/${{ vars.VAR_GCP_WORKLOAD_POOL }}/providers/${{ vars.VAR_GCP_WORKLOAD_PROVIDER }}'
+          service_account: 'github-calendar-sync@${{ vars.VAR_GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          token_format: 'access_token'
+
+      # Steg 2: Skapa händelsen i din Google-kalender
+      - name: Create Google Calendar Event
+        env:
+          CALENDAR_ID: ${{ vars.VAR_GCP_CALENDAR_ID }}
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          END_TIME=$(date -u -d '+1 hour' +"%Y-%m-%dT%H:%M:%SZ")
+          # Calendar ID is an email address -- must be URL-encoded as a path segment (@ -> %40 etc.)
+          CALENDAR_ID_ENCODED=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['CALENDAR_ID'], safe=''))")
+
+          HTTP_STATUS=$(curl -sS -o response.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"summary\": \"GitHub Push: ${{ github.repository }}\",
+              \"description\": \"Kod pushad av ${{ github.actor }}. Commit: ${{ github.sha }}\",
+              \"start\": { \"dateTime\": \"${START_TIME}\" },
+              \"end\": { \"dateTime\": \"${END_TIME}\" }
+            }" \
+            "https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID_ENCODED}/events")
+
+          echo "HTTP status: ${HTTP_STATUS}"
+          cat response.json
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            echo "Calendar API call failed (see response body above)."
+            exit 1
+          fi
