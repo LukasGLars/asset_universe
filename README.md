@@ -31,11 +31,14 @@ Weekdays ~08:00 and ~22:30 CEST, unattended:
    Sleeve)
 5. Regime-flip alert, portfolio optimizer
 6. Commit + push
-7. **Signal-change email**: compares today's guard/LLY-stress/joint-stress/
-   silver/sleeve/regime state against yesterday's committed `status.md` —
-   silent if nothing actionable changed, one-line email via Gmail SMTP if
-   it did (`EMAIL_ADDRESS`/`EMAIL_PASSWORD` secrets, the latter a Gmail App
-   Password). See `check_signal_changes.py` / `notify_signal_changes.py`.
+7. **Signal-change notification**: compares today's guard/LLY-stress/
+   joint-stress/silver/sleeve/regime state against yesterday's committed
+   `status.md` — silent if nothing actionable changed, one Telegram message
+   if it did (`TELEGRAM_BOT_TOKEN` secret, `TELEGRAM_CHAT_ID` variable).
+   Telegram carries urgent/time-sensitive items per the 2026-07-03
+   ops-scope decision; the (not yet built) FI@50 pace digest and quarterly
+   thesis re-check go via email instead, since they're low-urgency. See
+   `check_signal_changes.py` / `notify_signal_changes.py`.
 8. Health check that fails the run (and triggers a GitHub notification) if
    `status.md` is stale or contains a failure signature
 
