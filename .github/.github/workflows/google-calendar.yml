@@ -1,0 +1,41 @@
+name: Skapa Kalenderhändelse
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Gör att du kan starta testet manuellt under fliken Actions
+
+permissions:
+  id-token: write  # Krävs för nyckellös inloggning via OIDC
+  contents: read
+
+jobs:
+  add-event:
+    runs-on: ubuntu-latest
+    steps:
+      # Steg 1: Autentisera mot Google Cloud med dina sparade variabler
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/${{ vars.VAR_GCP_PROJECT_NUM }}/locations/global/workloadIdentityPools/${{ vars.VAR_GCP_WORKLOAD_POOL }}/providers/${{ vars.VAR_GCP_WORKLOAD_PROVIDER }}'
+          service_account: 'github-calendar-sync@${{ vars.VAR_GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          token_format: 'access_token'
+
+      # Steg 2: Skapa händelsen i din Google-kalender
+      - name: Create Google Calendar Event
+        run: |
+          START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          END_TIME=$(date -u -d '+1 hour' +"%Y-%m-%dT%H:%M:%SZ")
+
+          curl -X POST \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.access_token }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"summary\": \"GitHub Push: ${{ github.repository }}\",
+              \"description\": \"Kod pushad av ${{ github.actor }}. Commit: ${{ github.sha }}\",
+              \"start\": { \"dateTime\": \"$START_TIME\" },
+              \"end\": { \"dateTime\": \"$END_TIME\" }
+            }" \
+            "https://googleapis.com{{ vars.VAR_GCP_CALENDAR_ID }}/events"
