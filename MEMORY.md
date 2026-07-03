@@ -24,6 +24,27 @@ this file is meant to be self-contained for day-to-day continuation.
   and rejected as a standalone signal -- already tested, found to add zero
   discriminating power beyond Core 3 for this asset set.
 
+- **Self-updating Google Calendar integration for dated reminders (logged
+  2026-07-03).** Two categories need a "reminder" mechanism: the AVGO
+  earnings checkpoint (data-driven -- `fi_tracker.py` already computes
+  days-to-next-earnings live via yfinance) and the quarterly thesis
+  re-check (pure calendar recurrence, not data-driven). Requirement,
+  explicit: **the calendar entry must correct itself automatically if the
+  real earnings date shifts** -- a one-time/manually-created calendar event
+  fails the same way any static reminder does (silently goes stale). That
+  means the daily sync workflow itself needs to talk to the Google Calendar
+  API directly (create/update the event each run from the live date),
+  which requires Google Cloud OAuth/service-account credentials stored as a
+  repo secret -- a heavier one-time setup than the Gmail App Password (a
+  Cloud Console project + API enablement + credential generation, not just
+  a password). Not started. Operations-statement discussion (2026-07-03)
+  settled that urgent/time-sensitive items (guard/joint-stress/silver/
+  sleeve events, and this earnings reminder) go via Telegram once that
+  channel is built; the FI@50 pace digest stays on email since it's
+  low-urgency and better suited to an at-leisure read. Calendar integration
+  is a separate, additional surface (visible in advance when planning a
+  week), not a replacement for the Telegram nudge.
+
 ## Signal-change email redesigned to lead with the action (2026-07-02, PR #17)
 
 First version (PR #14) emailed the raw state transition only, e.g. "AVGO
