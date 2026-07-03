@@ -1,0 +1,33 @@
+name: telegram-diagnostic
+
+# Manual-only, temporary diagnostic tool: verifies the TELEGRAM_BOT_TOKEN
+# secret is valid (getMe) and lists any pending chat updates (getUpdates)
+# so the chat ID can be read from the log. Never prints the token itself.
+# No writes to the repo or to Telegram -- read-only API calls. Delete once
+# the Telegram notification setup is working.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check bot token validity (getMe)
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          echo "--- getMe (confirms the token is valid, shows bot username) ---"
+          curl -sS "https://api.telegram.org/bot${TOKEN}/getMe"
+          echo
+
+      - name: List pending updates (getUpdates -- shows chat IDs)
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          echo "--- getUpdates (shows any messages sent to the bot, including chat.id) ---"
+          curl -sS "https://api.telegram.org/bot${TOKEN}/getUpdates"
+          echo
