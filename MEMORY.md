@@ -64,26 +64,35 @@ to the same pattern if this resurfaces.
   and rejected as a standalone signal -- already tested, found to add zero
   discriminating power beyond Core 3 for this asset set.
 
-- **Self-updating Google Calendar integration for dated reminders (logged
-  2026-07-03).** Two categories need a "reminder" mechanism: the AVGO
-  earnings checkpoint (data-driven -- `fi_tracker.py` already computes
-  days-to-next-earnings live via yfinance) and the quarterly thesis
-  re-check (pure calendar recurrence, not data-driven). Requirement,
-  explicit: **the calendar entry must correct itself automatically if the
-  real earnings date shifts** -- a one-time/manually-created calendar event
-  fails the same way any static reminder does (silently goes stale). That
-  means the daily sync workflow itself needs to talk to the Google Calendar
-  API directly (create/update the event each run from the live date),
-  which requires Google Cloud OAuth/service-account credentials stored as a
-  repo secret -- a heavier one-time setup than the Gmail App Password (a
-  Cloud Console project + API enablement + credential generation, not just
-  a password). Not started. Operations-statement discussion (2026-07-03)
-  settled that urgent/time-sensitive items (guard/joint-stress/silver/
-  sleeve events, and this earnings reminder) go via Telegram once that
-  channel is built; the FI@50 pace digest stays on email since it's
-  low-urgency and better suited to an at-leisure read. Calendar integration
-  is a separate, additional surface (visible in advance when planning a
-  week), not a replacement for the Telegram nudge.
+- ~~Self-updating Google Calendar integration for dated reminders~~ --
+  **DROPPED 2026-07-03.** Superseded by the finalized ops-notification
+  scope below: AVGO + LLY earnings reminders go via Telegram directly
+  (data-driven, reusing `fi_tracker.py`'s existing yfinance lookup), which
+  covers the actual need ("don't miss the print") without the GCP
+  Workload Identity Federation complexity that stalled the Calendar
+  workflow (see "ON HOLD" section above). No remaining need for a
+  calendar-visible entry was identified, so this is closed, not just
+  paused.
+
+## Operations notification scope -- FINALIZED 2026-07-03, not yet built
+
+Channel split, by urgency (per the operator's own stated principle:
+Telegram for urgency, email for everything else):
+
+| Item | Channel |
+|---|---|
+| Guard / joint-stress / silver-GSR / opportunistic-sleeve events | Telegram |
+| GSR watch-zone leading-indicator gauge (not yet designed in detail) | Telegram |
+| AVGO + LLY earnings reminders (data-driven, days-to-event) | Telegram |
+| FI@50 CAGR/AWAR pace digest (monthly cadence) | Email |
+| Quarterly thesis re-check reminder | Email |
+
+Known small gap when this gets built: `fi_tracker.py`'s AVGO Earnings
+Checkpoint already computes days-to-next-earnings live via yfinance; LLY
+needs the same lookup added (same pattern, not yet written).
+
+Not started -- this is the scope to build against next, not a completed
+feature.
 
 ## Signal-change email redesigned to lead with the action (2026-07-02, PR #17)
 
