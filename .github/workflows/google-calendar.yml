@@ -23,7 +23,7 @@ jobs:
   add-event:
     runs-on: ubuntu-latest
     steps:
-      # Steg 1: Autentisera mot Google Cloud med dina sparade variabler
+      # Steg 1: Autentisera mot Google Cloud med dina sparade variabler och rätt scopes
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
@@ -31,6 +31,7 @@ jobs:
           workload_identity_provider: 'projects/${{ vars.VAR_GCP_PROJECT_NUM }}/locations/global/workloadIdentityPools/${{ vars.VAR_GCP_WORKLOAD_POOL }}/providers/${{ vars.VAR_GCP_WORKLOAD_PROVIDER }}'
           service_account: 'github-calendar-sync@${{ vars.VAR_GCP_PROJECT_ID }}.iam.gserviceaccount.com'
           token_format: 'access_token'
+          scopes: 'https://googleapis.com' # Ger tillåtelse att skriva händelser i kalendern
 
       # Steg 2: Skapa händelsen i din Google-kalender
       - name: Create Google Calendar Event
