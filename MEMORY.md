@@ -7,6 +7,46 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Google Calendar workflow -- ON HOLD (2026-07-03)
+
+`.github/workflows/google-calendar.yml` exists (triggers on push to `main` +
+`workflow_dispatch`), but **currently fails at the Google Cloud OIDC auth
+step every time** -- confirmed via a real `workflow_dispatch` test run, not
+assumed:
+
+```
+failed to generate Google Cloud federated token for
+//iam.googleapis.com/projects/456157896331/locations/global/workloadIdentityPools/github-pool/providers/github-provider:
+{"error":"invalid_grant","error_description":"Error connecting to the given credential's issuer."}
+```
+
+This means the Workload Identity Pool/Provider isn't correctly configured
+to trust this repo's OIDC issuer on the Google Cloud side -- **entirely a
+GCP Console/`gcloud` configuration issue, not fixable from this repo.**
+
+Repo-side bugs already found and fixed (PR #20): the workflow originally
+lived at `.github/.github/workflows/` (invisible to GitHub Actions --
+wrong path, would never have triggered) and had a malformed Calendar API
+endpoint. A further edit pushed directly to master afterward
+(`c7fe72c`) added `scopes: 'https://googleapis.com'` to the auth step,
+which also isn't a valid OAuth scope format (real Calendar scopes look
+like `https://www.googleapis.com/auth/calendar`) -- not fixed, per the
+hold below.
+
+**User decision (2026-07-03): hold this feature. Do not continue
+debugging or building without being asked.** If revisited, the GCP-side
+Workload Identity Federation setup (issuer trust, attribute condition,
+IAM binding) needs to be fixed first -- that work has to happen in Google
+Cloud Console, not in this repo.
+
+**Process note, for continuity:** this feature arrived via a request
+containing malformed/unverifiable infrastructure values (a syntactically
+invalid service account email, then a project ID that read as a truncated
+UUID), followed by two direct pushes to `master` bypassing the branch/PR
+review used for everything else in this project. Confirmed with the
+account owner that the pushes were genuinely theirs. Worth staying alert
+to the same pattern if this resurfaces.
+
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
 - **BAA10Y credit-spread confirmation for the AVGO/LLY joint-stress rule
