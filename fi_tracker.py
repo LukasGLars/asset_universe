@@ -356,31 +356,40 @@ except Exception as _e:
     print(f"\n  AVGO 200d Guard : [unavailable — {_e}]")
 
 # ── AVGO earnings checkpoint (manual — guard is price-lagging, this is not) ─────
-# 2026-07-01 baseline: fwd/trail EPS ratio 3.23x, vs 1.1-1.5x for quality peers
-# (AAPL, GOOG, MA, TDG, MNST, ANET, COST) — AVGO is uniquely priced for a near-
-# tripling of EPS. Guard reacts to sustained price decline; this catches a
-# guided-trajectory miss before SMA200 would.
+# Fixed 2026-07-06: yfinance's raw trailingEps (GAAP) vs forwardEps (non-GAAP
+# consensus) mixes conventions -- for AVGO specifically, VMware-acquisition
+# amortization depresses the GAAP side, which inflated the ratio to 3.22x.
+# Normalized (non-GAAP TTM actual vs non-GAAP +1yr estimate, both from
+# earnings_history/eps_trend), the real ratio is ~2.39x -- still the highest
+# in its peer set (1.17-1.41x for AAPL/TDG/ANET), just a smaller outlier than
+# the mismatched comparison implied. See eps_ratio.py.
 try:
     import datetime
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
+    from eps_ratio import normalized_eps_ratio
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
 
-    _av_info   = yf.Ticker("AVGO").info
-    _trail_eps = _av_info.get("trailingEps")
-    _fwd_eps   = _av_info.get("forwardEps")
-    _eps_ratio = (_fwd_eps / _trail_eps) if (_trail_eps and _fwd_eps) else None
-    _next_ts   = _av_info.get("earningsTimestampStart")
-    _next_date = (datetime.datetime.fromtimestamp(_next_ts, datetime.timezone.utc).date()
-                  if _next_ts else None)
-    _reminder  = earnings_reminder_state(_next_date, _today_utc)
+    _av_tk       = yf.Ticker("AVGO")
+    _av_info     = _av_tk.info
+    _av_hist     = _av_tk.earnings_history
+    _av_trend    = _av_tk.eps_trend
+    _av_ttm      = _av_hist["epsActual"].tolist() if _av_hist is not None and not _av_hist.empty else []
+    _av_fwd_1y   = (_av_trend.loc["+1y", "current"]
+                    if _av_trend is not None and "+1y" in _av_trend.index else None)
+    _eps_ratio   = normalized_eps_ratio(_av_ttm, _av_fwd_1y)
+    _next_ts     = _av_info.get("earningsTimestampStart")
+    _next_date   = (datetime.datetime.fromtimestamp(_next_ts, datetime.timezone.utc).date()
+                    if _next_ts else None)
+    _reminder    = earnings_reminder_state(_next_date, _today_utc)
 
     print(f"\n  AVGO Earnings Checkpoint")
-    print(f"    Trailing EPS   : ${_trail_eps:.2f}" if _trail_eps else "    Trailing EPS   : n/a")
-    print(f"    Forward EPS    : ${_fwd_eps:.2f}" if _fwd_eps else "    Forward EPS    : n/a")
+    print(f"    TTM EPS (non-GAAP actual)  : ${sum(_av_ttm):.2f}" if _av_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
+    print(f"    Forward EPS (+1yr est.)    : ${_av_fwd_1y:.2f}" if _av_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _eps_ratio:
-        print(f"    Fwd/Trail ratio: {_eps_ratio:.2f}x  (baseline 2026-07-01: 3.23x)")
+        print(f"    Fwd/Trail ratio (normalized): {_eps_ratio:.2f}x  (peer range 1.17-1.41x; "
+              f"corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)")
     print(f"    Next earnings  : {_next_date}" if _next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_reminder}")
     print(f"    Action         : after the print, check actual AI revenue/EPS against the")
@@ -390,35 +399,39 @@ try:
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
 
-# ── LLY earnings checkpoint (mirrors AVGO's -- no peer-valuation study done ──
-# yet, this establishes the fwd/trail EPS baseline for LLY for the first time;
-# see MEMORY.md backlog item "extend valuation checkpoint to LLY").
+# ── LLY earnings checkpoint (mirrors AVGO's, same normalized method) ────────
 try:
     import datetime
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
+    from eps_ratio import normalized_eps_ratio
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
 
-    _lly_info      = yf.Ticker("LLY").info
-    _lly_trail_eps = _lly_info.get("trailingEps")
-    _lly_fwd_eps   = _lly_info.get("forwardEps")
-    _lly_eps_ratio = (_lly_fwd_eps / _lly_trail_eps) if (_lly_trail_eps and _lly_fwd_eps) else None
+    _lly_tk      = yf.Ticker("LLY")
+    _lly_info    = _lly_tk.info
+    _lly_hist    = _lly_tk.earnings_history
+    _lly_trend   = _lly_tk.eps_trend
+    _lly_ttm     = _lly_hist["epsActual"].tolist() if _lly_hist is not None and not _lly_hist.empty else []
+    _lly_fwd_1y  = (_lly_trend.loc["+1y", "current"]
+                    if _lly_trend is not None and "+1y" in _lly_trend.index else None)
+    _lly_ratio   = normalized_eps_ratio(_lly_ttm, _lly_fwd_1y)
     _lly_next_ts   = _lly_info.get("earningsTimestampStart")
     _lly_next_date = (datetime.datetime.fromtimestamp(_lly_next_ts, datetime.timezone.utc).date()
                       if _lly_next_ts else None)
     _lly_reminder  = earnings_reminder_state(_lly_next_date, _today_utc)
 
     print(f"\n  LLY Earnings Checkpoint")
-    print(f"    Trailing EPS   : ${_lly_trail_eps:.2f}" if _lly_trail_eps else "    Trailing EPS   : n/a")
-    print(f"    Forward EPS    : ${_lly_fwd_eps:.2f}" if _lly_fwd_eps else "    Forward EPS    : n/a")
-    if _lly_eps_ratio:
-        print(f"    Fwd/Trail ratio: {_lly_eps_ratio:.2f}x  (baseline established today: {_today_utc})")
+    print(f"    TTM EPS (non-GAAP actual)  : ${sum(_lly_ttm):.2f}" if _lly_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
+    print(f"    Forward EPS (+1yr est.)    : ${_lly_fwd_1y:.2f}" if _lly_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
+    if _lly_ratio:
+        print(f"    Fwd/Trail ratio (normalized): {_lly_ratio:.2f}x  (baseline established 2026-07-06; "
+              f"in line with peer range 1.17-1.41x)")
     print(f"    Next earnings  : {_lly_next_date}" if _lly_next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_lly_reminder}")
     print(f"    Action         : after the print, check GLP-1/AI-healthcare growth against")
-    print(f"                     guidance. No established trajectory baseline yet (first")
-    print(f"                     observation) -- compare future ratio prints against this.")
+    print(f"                     guidance. Baseline established today -- compare future ratio")
+    print(f"                     prints against this.")
 
 except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")

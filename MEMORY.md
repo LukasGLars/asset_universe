@@ -291,9 +291,18 @@ RULES" section):
   the harder analog) but meaningfully improves CAGR/MaxDD/Calmar on both
   when it fires. See `run_joint_stress_validation.py`.
 - **AVGO earnings checkpoint** (`fi_tracker.py`, after the guard block) —
-  prints fwd/trail EPS ratio (baseline 3.23x, vs 1.1-1.5x for quality peers)
-  and next earnings date. Manual judgment call after each print, not an
-  automated rule. Next earnings: 2026-09-03.
+  prints fwd/trail EPS ratio and next earnings date. Manual judgment call
+  after each print, not an automated rule. Next earnings: 2026-09-03.
+  **Ratio corrected 2026-07-06** (`eps_ratio.py`): the original 3.23x
+  baseline compared GAAP trailing EPS to non-GAAP forward EPS -- a
+  mismatch that inflates the ratio for any company with large GAAP/non-GAAP
+  charges (AVGO's VMware-acquisition amortization, specifically). Properly
+  normalized (non-GAAP TTM actual vs non-GAAP +1yr estimate), the real
+  ratio is **2.39x** -- still the highest vs. the quality-peer set (AAPL
+  1.17x, TDG 1.22x, ANET 1.41x), just a smaller outlier than the mismatched
+  number implied. LLY's equivalent (added same day) is 1.51x, in line with
+  peers. If you see "3.23x" or "3.22x" cited anywhere else, it's the stale
+  pre-fix number.
 
 Combined backtest (2009-2026, 10bps TC): CAGR +37.1%→+44.0% (with crash
 trigger + joint-stress escalation), Sharpe 1.967, MaxDD -14.9%, Calmar
