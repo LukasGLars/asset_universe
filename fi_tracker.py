@@ -363,6 +363,9 @@ except Exception as _e:
 try:
     import datetime
     import yfinance as yf
+    from earnings_reminder import earnings_reminder_state
+
+    _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
 
     _av_info   = yf.Ticker("AVGO").info
     _trail_eps = _av_info.get("trailingEps")
@@ -371,6 +374,7 @@ try:
     _next_ts   = _av_info.get("earningsTimestampStart")
     _next_date = (datetime.datetime.fromtimestamp(_next_ts, datetime.timezone.utc).date()
                   if _next_ts else None)
+    _reminder  = earnings_reminder_state(_next_date, _today_utc)
 
     print(f"\n  AVGO Earnings Checkpoint")
     print(f"    Trailing EPS   : ${_trail_eps:.2f}" if _trail_eps else "    Trailing EPS   : n/a")
@@ -378,12 +382,46 @@ try:
     if _eps_ratio:
         print(f"    Fwd/Trail ratio: {_eps_ratio:.2f}x  (baseline 2026-07-01: 3.23x)")
     print(f"    Next earnings  : {_next_date}" if _next_date else "    Next earnings  : n/a")
+    print(f"    Reminder       : {_reminder}")
     print(f"    Action         : after the print, check actual AI revenue/EPS against the")
     print(f"                     $56B FY26 / $100B FY27 guided path. Meaningfully short of")
     print(f"                     trajectory -> revisit conviction, even if price > SMA200.")
 
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
+
+# ── LLY earnings checkpoint (mirrors AVGO's -- no peer-valuation study done ──
+# yet, this establishes the fwd/trail EPS baseline for LLY for the first time;
+# see MEMORY.md backlog item "extend valuation checkpoint to LLY").
+try:
+    import datetime
+    import yfinance as yf
+    from earnings_reminder import earnings_reminder_state
+
+    _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
+
+    _lly_info      = yf.Ticker("LLY").info
+    _lly_trail_eps = _lly_info.get("trailingEps")
+    _lly_fwd_eps   = _lly_info.get("forwardEps")
+    _lly_eps_ratio = (_lly_fwd_eps / _lly_trail_eps) if (_lly_trail_eps and _lly_fwd_eps) else None
+    _lly_next_ts   = _lly_info.get("earningsTimestampStart")
+    _lly_next_date = (datetime.datetime.fromtimestamp(_lly_next_ts, datetime.timezone.utc).date()
+                      if _lly_next_ts else None)
+    _lly_reminder  = earnings_reminder_state(_lly_next_date, _today_utc)
+
+    print(f"\n  LLY Earnings Checkpoint")
+    print(f"    Trailing EPS   : ${_lly_trail_eps:.2f}" if _lly_trail_eps else "    Trailing EPS   : n/a")
+    print(f"    Forward EPS    : ${_lly_fwd_eps:.2f}" if _lly_fwd_eps else "    Forward EPS    : n/a")
+    if _lly_eps_ratio:
+        print(f"    Fwd/Trail ratio: {_lly_eps_ratio:.2f}x  (baseline established today: {_today_utc})")
+    print(f"    Next earnings  : {_lly_next_date}" if _lly_next_date else "    Next earnings  : n/a")
+    print(f"    Reminder       : {_lly_reminder}")
+    print(f"    Action         : after the print, check GLP-1/AI-healthcare growth against")
+    print(f"                     guidance. No established trajectory baseline yet (first")
+    print(f"                     observation) -- compare future ratio prints against this.")
+
+except Exception as _e:
+    print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")
 
 # ── Opportunistic sleeve (war-chest tactical layer, separate from base) ─────
 try:

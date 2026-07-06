@@ -3,11 +3,11 @@ check_signal_changes.py
 
 Extracts an "actionable signal fingerprint" from a status.md dashboard
 snapshot (AVGO guard state, LLY-stress, joint-stress, silver GSR state,
-opportunistic sleeve status, confirmed regime flip) and compares two
-snapshots. Used by sync.yml to decide whether the daily run is worth an
-email: silence when nothing actionable changed, a one-line summary when
-something did. Price/valuation noise (which changes every day) is
-deliberately not part of the fingerprint.
+opportunistic sleeve status, confirmed regime flip, AVGO/LLY earnings
+reminders) and compares two snapshots. Used by sync.yml to decide whether
+the daily run is worth an email: silence when nothing actionable changed,
+a one-line summary when something did. Price/valuation noise (which
+changes every day) is deliberately not part of the fingerprint.
 
 Usage:
     python check_signal_changes.py <prev_status.md> <curr_status.md>
@@ -41,6 +41,8 @@ def extract_fingerprint(text: str) -> dict:
         "silver_action": _find(r"Silver GSR Tactical.*?Action\s*:\s*([^\n]+)", text),
         "sleeve_status": _find(r"Opportunistic Sleeve.*?Status\s*:\s*(\S+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
+        "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
+        "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
     }
 
 
@@ -109,6 +111,25 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             "status.md's exit-priority table / run_universe_screen.py."
         )
         subject_parts.append("Regime FLIP")
+
+    # Earnings reminders fire once, on the not_due -> DUE transition only --
+    # the reverse (DUE -> not_due, once the date passes) isn't actionable.
+    if (curr["avgo_earnings_reminder"] == "DUE" and prev["avgo_earnings_reminder"] != "DUE"
+            and "unknown" not in (prev["avgo_earnings_reminder"], curr["avgo_earnings_reminder"])):
+        blocks.append(
+            "AVGO EARNINGS due within the next 7 days.\n"
+            "ACTION: after the print, check actual AI revenue/EPS against the "
+            "$56B FY26 / $100B FY27 guided path."
+        )
+        subject_parts.append("AVGO earnings due")
+
+    if (curr["lly_earnings_reminder"] == "DUE" and prev["lly_earnings_reminder"] != "DUE"
+            and "unknown" not in (prev["lly_earnings_reminder"], curr["lly_earnings_reminder"])):
+        blocks.append(
+            "LLY EARNINGS due within the next 7 days.\n"
+            "ACTION: after the print, check the growth trajectory against guidance."
+        )
+        subject_parts.append("LLY earnings due")
 
     if not blocks:
         return None

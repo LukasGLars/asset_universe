@@ -24,6 +24,10 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Next earnings  : 2026-09-03
     Action         : check guided trajectory
+
+  LLY Earnings Checkpoint
+    Next earnings  : 2026-08-06
+    Action         : check guided trajectory
 """
 
 
