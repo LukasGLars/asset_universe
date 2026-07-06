@@ -114,6 +114,22 @@ to the same pattern if this resurfaces.
   dependency for a failure mode that's still rare. Revisit if the
   in-repo watchdog itself is ever observed to miss a fire.
 
+- **War-Chest-funded Silver, hybrid with AVGO/Gold-sale for any shortfall
+  (logged 2026-07-06).** Silver's GSR tactical trigger currently funds
+  itself by *selling* AVGO (base mode) or Gold (guard mode) -- the
+  mechanism behind the validated Calmar 2.957 number. Idea: fund from
+  already-idle War Chest cash instead, which would resolve an already-
+  flagged tension (selling AVGO to buy Silver cuts against the guard/
+  sleeve's own momentum-following philosophy -- "don't trim strength").
+  **Explicitly deferred, not built**: War Chest's target size (~50k kr,
+  4.5% of TPV) is likely too small to fully fund a T2 fire (~17% of
+  Reactor Core, could be 150k+ kr), so it'd need to be War-Chest-first-
+  then-AVGO/Gold-sale-for-the-remainder, not a full replacement -- and
+  that hybrid has never been backtested (the 2.957 number assumes 100%
+  AVGO/Gold-funded Silver). Do not silently swap the funding source without
+  re-running `run_combined_system.py`/`run_joint_stress_validation.py`
+  under the hybrid rule first.
+
 - ~~Self-updating Google Calendar integration for dated reminders~~ --
   **DROPPED 2026-07-03.** Superseded by the finalized ops-notification
   scope below: AVGO + LLY earnings reminders go via Telegram directly
