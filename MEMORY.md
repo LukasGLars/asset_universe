@@ -260,6 +260,74 @@ review used for everything else in this project. Confirmed with the
 account owner that the pushes were genuinely theirs. Worth staying alert
 to the same pattern if this resurfaces.
 
+## Overnight session 2026-07-06 -- three items built, NONE merged
+
+Requested explicitly: build all three, leave every PR unmerged for
+morning review, don't touch live money-routing or change any live
+constant automatically. All three respected that boundary.
+
+**PR #39 -- record earnings verdict.** `earnings_verdict.py` /
+`record_earnings_verdict.py` -- CLI records the judgment call (AI revenue
+vs. guided pace, contract-timing commentary) formed after actually
+reading the release/call, shows on `fi_tracker.py`'s dashboard from then
+on ("Last verdict: ..."). Intended workflow, documented in both modules:
+Claude reads the release, drafts the verdict, user confirms, THEN it's
+recorded -- not something to fill in independently. Not wired to gate
+money-routing yet (deliberate -- that's a bigger decision for later).
+Live-smoke-tested end to end (recorded a real test verdict, confirmed
+display, removed the test artifact before committing). 11 new tests.
+
+**PR #40 -- sleeve exit-duration sensitivity.** Tests whether
+`TIME_EXIT_DAYS=30` (`run_entry_screen.py`) is validated or just
+inherited from the HWM precedent. **Real methodological bug caught and
+fixed mid-build**: raw per-trade return trivially increases with holding
+period for any generally-appreciating stock -- comparing 15d/30d/60d/90d
+windows on raw return would always favor the longest one regardless of
+whether it's actually better. Added proper (compounding) annualization.
+**Deeper population-mismatch bug caught after that (by the user, not by
+me) and tightened per explicit instruction ("yes, tighten it")**: this
+measures ALL regime-matched dates for top-ranked momentum names, which is
+NOT the same population as the sleeve's actual gated entries (MA50 not
+extended, momentum conditioning, RS-vs-benchmark, earnings clear) --
+those are a materially narrower set, and a dip-entry vs. a random date in
+an ongoing uptrend are not the same setup. The original "90d beats 30d"
+framing (even hedged as "directional only") implied this test says
+something about whether 30d is right for the sleeve's real trades -- it
+doesn't, one way or the other. Report output rewritten to drop the
+"winner" framing entirely: leads with the population-mismatch caveat,
+states the numbers are for pipeline verification only, and explicitly
+says not to use them to justify changing `TIME_EXIT_DAYS`. Properly
+answering the real question needs `screen_tactical()`'s 4-gate entry
+logic (`engine.py`) reconstructed at each historical as-of date (it's
+currently built around today-only values, `_date.today()` /
+`prices.iloc[-1]`) -- bigger, separate task, logged as a NEXT STEP in the
+script's own output, not started. Also confirmed (not assumed):
+`EARNINGS_BUFFER_DAYS=3` can't be backtested the same way -- yfinance
+only exposes each ticker's CURRENT earnings calendar, not a
+point-in-time historical one. Report-only, doesn't touch the live
+constant. 10 tests (unchanged by the tightening -- it only touched report
+framing/docstrings, not the underlying calculation).
+
+**PR #41 -- richer earnings message.** Adds total-company revenue
+(actual via SEC EDGAR + TTM YoY growth, next-quarter consensus + implied
+growth) alongside the existing EPS beat streak/guidance trend. **Real bug
+caught before shipping**: initially used yfinance's "+1q" revenue_estimate
+period for "next quarter" -- verified against the actual next-earnings
+date and found "+1q" is the quarter AFTER the upcoming one; corrected to
+"0q". Per explicit feedback: dropped "MANUAL REVIEW STILL NEEDED" and the
+hardcoded "$56B FY26/$100B FY27" figure from both the earnings-due
+reminder and the just-reported message -- a hardcoded guidance number in
+a recurring alert would silently go stale if guidance changes before the
+print actually happens. No "revising up/down" trend shown for revenue
+(unlike EPS) -- confirmed `revenue_estimate` has no historical revision
+snapshot to compare against.
+
+**Known conflict waiting in the morning**: PR #39 and #41 both touch the
+AVGO/LLY Earnings Checkpoint blocks in `fi_tracker.py` (verdict line vs.
+revenue lines, inserted at nearby points). Whichever merges second will
+need a small manual conflict resolution -- combine both additions, don't
+just pick one side. Flagged here so it's expected, not alarming.
+
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
 - **Opportunistic sleeve's 30-day time exit was never validated against
