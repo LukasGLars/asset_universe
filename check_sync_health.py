@@ -26,6 +26,7 @@ owner.
 from __future__ import annotations
 
 import datetime as dt
+import subprocess
 import sys
 from pathlib import Path
 
@@ -75,11 +76,33 @@ def most_recent_required_run(now_utc: dt.datetime) -> dt.datetime:
     raise RuntimeError("no scheduled run found within 10-day lookback")
 
 
+def _last_updated(status_path: Path) -> dt.datetime:
+    """Prefer the file's last git-commit time over filesystem mtime.
+    `actions/checkout` resets mtimes to checkout time on every job, so mtime
+    alone would make a stale file look freshly-written to any workflow other
+    than the one that generated it. Falls back to mtime when the path isn't
+    in a git repo (e.g. tests using a bare tmp_path)."""
+    try:
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%cI", "--", status_path.name],
+            cwd=status_path.resolve().parent,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        out = result.stdout.strip()
+        if result.returncode == 0 and out:
+            return dt.datetime.fromisoformat(out)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return dt.datetime.fromtimestamp(status_path.stat().st_mtime, tz=dt.timezone.utc)
+
+
 def check_freshness(status_path: Path, now_utc: dt.datetime) -> list[str]:
     if not status_path.exists():
         return [f"{status_path} does not exist"]
 
-    mtime = dt.datetime.fromtimestamp(status_path.stat().st_mtime, tz=dt.timezone.utc)
+    mtime = _last_updated(status_path)
     required_since = most_recent_required_run(now_utc)
 
     if mtime < required_since:

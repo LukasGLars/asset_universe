@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+import subprocess
 
 from check_sync_health import (
     GRACE_PERIOD,
@@ -87,3 +88,32 @@ def test_missing_section_fails(tmp_path):
 
     problems = run_health_check(status_path, now)
     assert any("AVGO Earnings Checkpoint" in p for p in problems)
+
+
+def test_freshness_uses_git_commit_time_not_checkout_mtime(tmp_path):
+    # Simulates the exact failure mode this check exists to catch: a fresh
+    # `actions/checkout` resets the file's mtime to "now" even though the
+    # content is a month-old commit. If freshness used mtime alone, a stale
+    # file checked out today would wrongly read as fresh.
+    repo = tmp_path
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+
+    status_path = repo / "status.md"
+    _write(status_path, HEALTHY_STATUS, mtime=None)  # mtime = now, as a real checkout would leave it
+
+    old_commit_date = "2026-06-01T12:00:00+00:00"
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_DATE": old_commit_date,
+        "GIT_COMMITTER_DATE": old_commit_date,
+    }
+    subprocess.run(["git", "add", "status.md"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "-c", "commit.gpgsign=false", "-c", "user.email=t@example.com",
+         "-c", "user.name=Test", "commit", "-q", "-m", "old"],
+        cwd=repo, check=True, env=env,
+    )
+
+    now = dt.datetime(2026, 7, 6, 10, 0, tzinfo=dt.timezone.utc)
+    problems = run_health_check(status_path, now)
+    assert any("last modified" in p for p in problems)
