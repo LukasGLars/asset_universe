@@ -1,0 +1,33 @@
+name: preview-all-triggers
+
+# Manual-only diagnostic: sends a REAL Telegram message for every known
+# actionable trigger (guard flip, silver signal, sleeve status, regime
+# flip, both earnings reminders, both "just reported" events) using
+# synthetic data through the real production code -- confirms delivery
+# actually works for every trigger type, not just the one
+# preview-signal-notification.yml already covers. Nothing here commits,
+# pushes, or touches any tracked file. Safe to run repeatedly.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Send a real Telegram test message for every trigger type
+        run: python preview_all_triggers.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
