@@ -284,16 +284,29 @@ fixed mid-build**: raw per-trade return trivially increases with holding
 period for any generally-appreciating stock -- comparing 15d/30d/60d/90d
 windows on raw return would always favor the longest one regardless of
 whether it's actually better. Added proper (compounding) annualization.
-**Real result even after the fix**: 90d beats 30d annualized in this
-sample -- but flagged as directional only, not decision-grade, because
-this measures regime-matched dates broadly for top-ranked momentum names,
-not specifically dates passing the sleeve's actual entry gate (MA50 not
-extended, momentum conditioning). Properly testing that needs re-running
-the entry-gate logic historically -- bigger, separate task. Also
-confirmed (not assumed): `EARNINGS_BUFFER_DAYS=3` can't be backtested the
-same way -- yfinance only exposes each ticker's CURRENT earnings calendar,
-not a point-in-time historical one. Report-only, doesn't touch the live
-constant. 10 new tests.
+**Deeper population-mismatch bug caught after that (by the user, not by
+me) and tightened per explicit instruction ("yes, tighten it")**: this
+measures ALL regime-matched dates for top-ranked momentum names, which is
+NOT the same population as the sleeve's actual gated entries (MA50 not
+extended, momentum conditioning, RS-vs-benchmark, earnings clear) --
+those are a materially narrower set, and a dip-entry vs. a random date in
+an ongoing uptrend are not the same setup. The original "90d beats 30d"
+framing (even hedged as "directional only") implied this test says
+something about whether 30d is right for the sleeve's real trades -- it
+doesn't, one way or the other. Report output rewritten to drop the
+"winner" framing entirely: leads with the population-mismatch caveat,
+states the numbers are for pipeline verification only, and explicitly
+says not to use them to justify changing `TIME_EXIT_DAYS`. Properly
+answering the real question needs `screen_tactical()`'s 4-gate entry
+logic (`engine.py`) reconstructed at each historical as-of date (it's
+currently built around today-only values, `_date.today()` /
+`prices.iloc[-1]`) -- bigger, separate task, logged as a NEXT STEP in the
+script's own output, not started. Also confirmed (not assumed):
+`EARNINGS_BUFFER_DAYS=3` can't be backtested the same way -- yfinance
+only exposes each ticker's CURRENT earnings calendar, not a
+point-in-time historical one. Report-only, doesn't touch the live
+constant. 10 tests (unchanged by the tightening -- it only touched report
+framing/docstrings, not the underlying calculation).
 
 **PR #41 -- richer earnings message.** Adds total-company revenue
 (actual via SEC EDGAR + TTM YoY growth, next-quarter consensus + implied
