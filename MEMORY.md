@@ -262,6 +262,25 @@ to the same pattern if this resurfaces.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **Opportunistic sleeve's 30-day time exit was never validated against
+  alternative durations (logged 2026-07-06).** `TIME_EXIT_DAYS = 30` in
+  `run_entry_screen.py` traces back to the informal HWM precedent (a
+  judgment call made before this mechanism existed, PR #6), then got
+  formalized as a fixed constant -- never backtested against 15d/45d/60d/
+  90d to check 30 is actually near-optimal rather than just inherited.
+  **This is directly testable with infrastructure that already exists**:
+  same parameter-grid methodology already used to validate the AVGO
+  guard's SMA window/crash threshold (20-cell grid, PR #2), applied to
+  exit-duration instead, reusing `duration_matched_return()` /
+  `_uncapped_forward_return()` (already built for the duration-matched
+  win-rate work, second commit of PR #6). **Also worth checking whether a
+  single fixed cap is even the right shape of rule** -- the optimal
+  duration might vary by candidate (how extended the entry was, which
+  regime it's in) the same way the entry ranking itself already varies
+  per candidate rather than one rule for everyone. **Explicitly deferred,
+  not built** -- logged as a real gap, not just a style question, since
+  the current number was never actually tested against the alternative.
+
 - **Record the earnings-day manual verdict, not just alert on it (logged
   2026-07-06).** The earnings-day checklist (`earnings_trajectory.py`,
   PR #35) automates beat streak and guidance direction, but the two
