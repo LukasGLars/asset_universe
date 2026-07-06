@@ -52,7 +52,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Vertiv"
 ticker   = "VRT"
-shares   = 31
+shares   = 0
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -60,7 +60,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Broadcom"
 ticker   = "AVGO"
-shares   = 21
+shares   = 49
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
