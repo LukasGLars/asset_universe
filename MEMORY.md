@@ -99,6 +99,21 @@ to the same pattern if this resurfaces.
   it'd be modeled on. If tested, same TXN-analog + AVGO-actual methodology
   already validated (see `run_joint_stress_validation.py` as the template).
 
+- **External dead-man's-switch for daily-sync, independent of GitHub's own
+  scheduler (logged 2026-07-06).** The sync watchdog (`check_daily_sync_watchdog.py`,
+  added same day) catches a missed `daily-sync` cron fire by piggybacking
+  on `sync-sheet`'s ~2h cadence -- but that's still one GitHub-internal
+  cron checking another. If GitHub's scheduler has a broader hiccup that
+  also skips `sync-sheet`, nothing checks anything. A third-party
+  dead-man's-switch (e.g. healthchecks.io free tier) would close that gap
+  fully: `daily-sync` pings it on every successful run, and the external
+  service -- running outside GitHub entirely -- alerts if no ping arrives
+  in time. **Explicitly deferred, not rejected**: the in-repo watchdog is
+  judged sufficient for now (this is the first missed fire in ~2 weeks of
+  continuous operation), and an external service adds a signup + secret +
+  dependency for a failure mode that's still rare. Revisit if the
+  in-repo watchdog itself is ever observed to miss a fire.
+
 - ~~Self-updating Google Calendar integration for dated reminders~~ --
   **DROPPED 2026-07-03.** Superseded by the finalized ops-notification
   scope below: AVGO + LLY earnings reminders go via Telegram directly
