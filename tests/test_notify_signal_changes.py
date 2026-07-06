@@ -64,10 +64,11 @@ def test_main_does_not_send_when_unchanged(tmp_path):
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", str(prev), str(curr)]
         try:
-            nsc.main()
+            code = nsc.main()
         finally:
             sys.argv = old_argv
         mock_send.assert_not_called()
+        assert code == 0
 
 
 def test_main_sends_telegram_with_action_when_changed():
@@ -79,13 +80,14 @@ def test_main_sends_telegram_with_action_when_changed():
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
         try:
-            nsc.main()
+            code = nsc.main()
         finally:
             sys.argv = old_argv
         mock_send.assert_called_once()
         subject, body = mock_send.call_args[0]
         assert "AVGO guard" in subject
         assert "ACTION:" in body
+        assert code == 0
 
 
 def test_main_force_test_telegram_bypasses_diff_and_sends(monkeypatch):
@@ -96,15 +98,36 @@ def test_main_force_test_telegram_bypasses_diff_and_sends(monkeypatch):
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
         try:
-            nsc.main()
+            code = nsc.main()
         finally:
             sys.argv = old_argv
         mock_email.assert_not_called()  # diff is bypassed entirely
         mock_send.assert_called_once()
         assert "test message" in mock_send.call_args[0][0].lower()
+        assert code == 0
 
 
-def test_main_does_not_raise_when_send_telegram_fails():
+def test_main_diagnostic_send_failure_does_not_escalate(monkeypatch):
+    # The manual FORCE_TEST_TELEGRAM diagnostic isn't a real actionable
+    # event -- its own send failure should stay non-fatal, unlike a real
+    # signal change's send failure below.
+    monkeypatch.setenv("FORCE_TEST_TELEGRAM", "true")
+    with patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")):
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
+        try:
+            code = nsc.main()
+        finally:
+            sys.argv = old_argv
+        assert code == 0
+
+
+def test_main_does_not_raise_but_escalates_when_actionable_send_fails():
+    # Fixed 2026-07-06: a failed Telegram send for a REAL actionable change
+    # must fail the job (non-zero exit) so GitHub's failure-run email is the
+    # fallback channel -- previously this was silent, so a broken delivery
+    # for a genuine guard flip would never reach anyone.
     with patch.object(nsc, "build_change_email",
                        return_value=("Asset Universe: AVGO guard -> DEFENSIVE", "ACTION: Rotate AVGO")), \
          patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")):
@@ -112,9 +135,10 @@ def test_main_does_not_raise_when_send_telegram_fails():
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
         try:
-            nsc.main()  # must not raise
+            code = nsc.main()  # must not raise, but must signal failure
         finally:
             sys.argv = old_argv
+        assert code == 1
 
 
 def test_send_telegram_raises_on_not_ok_response(monkeypatch):
