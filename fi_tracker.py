@@ -392,4 +392,51 @@ try:
 except Exception as _e:
     print(f"\n  Opportunistic Sleeve : [unavailable — {_e}]")
 
+# ── Next contribution (where should the next kr go) ──────────────────────────
+# Answers "where does new/monthly capital go today", not "should we hold what
+# we already own" (that's the guard above). Gold/AVGO/LLY only -- Silver is
+# excluded by design, it has its own GSR trigger and its own funding
+# mechanism, not new contributions (see MEMORY.md backlog).
+try:
+    from run_combined_system import WEIGHTS, JOINT_WEIGHTS
+    from next_contribution import next_contribution_target
+
+    _rc_total = snap[snap["bucket"] == "reactor_core"]["value_sek"].sum()
+
+    def _rc_weight(name):
+        row = snap[snap["name"] == name]
+        if row.empty or not _rc_total:
+            return 0.0
+        return float(row["value_sek"].iloc[0]) / _rc_total
+
+    _current_weights = {
+        "GC_F": _rc_weight("Gold"),
+        "AVGO": _rc_weight("Broadcom"),
+        "LLY":  _rc_weight("Eli Lilly"),
+    }
+
+    _silver_state = ("T2" if _silver_signal == "T2 ACTIVE"
+                      else "T1" if _silver_signal == "T1 ACTIVE"
+                      else "INACTIVE")
+    _target_weights = JOINT_WEIGHTS[_silver_state] if _joint else WEIGHTS[(_guard_active, _silver_state)]
+
+    _next_allowed = {"GC_F": True, "AVGO": not _guard_active, "LLY": not _lly_stress}
+
+    _next_ticker, _next_detail = next_contribution_target(_current_weights, _target_weights, _next_allowed)
+    _next_name = {"GC_F": "Gold", "AVGO": "Broadcom (AVGO)", "LLY": "Eli Lilly (LLY)"}[_next_ticker]
+    _next_row  = _next_detail[_next_ticker]
+
+    print(f"\n{'='*62}")
+    print("NEXT CONTRIBUTION")
+    print(f"{'='*62}")
+    print(f"\n  Next kr        -> {_next_name}")
+    print(f"    Current wt (of Reactor Core) : {_next_row['current']:.1%}")
+    print(f"    Target wt (current regime)   : {_next_row['target']:.1%}")
+    print(f"    Gap                          : {_next_row['gap']:+.1%}")
+    print(f"    Gate                         : {'OPEN' if _next_row['allowed'] else 'CLOSED (fallback)'}")
+    print(f"    Note: Silver excluded -- funded by its own GSR trigger, not new contributions")
+
+except Exception as _e:
+    print(f"\n  Next Contribution : [unavailable — {_e}]")
+
 print(f"\n{'='*62}")
