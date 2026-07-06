@@ -262,6 +262,27 @@ to the same pattern if this resurfaces.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **Record the earnings-day manual verdict, not just alert on it (logged
+  2026-07-06).** The earnings-day checklist (`earnings_trajectory.py`,
+  PR #35) automates beat streak and guidance direction, but the two
+  checklist items that actually matter (AI revenue vs. the $56B FY26/$100B
+  FY27 guided pace, Anthropic/OpenAI contract-timing commentary) require a
+  human reading the real release/call -- confirmed not automatable, AVGO's
+  full SEC XBRL fact list has no segment-revenue breakdown, only a segment
+  *count*. Right now that manual judgment, once formed, has nowhere to go
+  -- it lives in the operator's memory across the gap until the remaining
+  AVGO tranche actually executes (which could be weeks after Sept 3, since
+  HWM's own deadline is 07-25 but the earnings gate is 09-03 -- the tranche
+  waits for whichever is later). Idea: a small CLI (mirrors
+  `run_entry_screen.py --open/--close`) -- `record_earnings_verdict.py AVGO
+  --cleared "..."` / `--not-cleared "..."` -- writing a persistent record
+  (ticker, date, verdict, free-text reasoning) that (a) shows on the daily
+  dashboard going forward instead of disappearing after one Telegram
+  message, and (b) could gate the remaining-tranche decision and "next kr"
+  routing mechanically, the same way the price guard already does, instead
+  of relying on memory to enforce "wait for a cleared verdict."
+  **Explicitly deferred, not built** -- logged for later.
+
 - **BAA10Y credit-spread confirmation for the AVGO/LLY joint-stress rule
   (logged 2026-07-03).** Hypothesis: the 2022 episode where AVGO/LLY
   correlation spiked to +0.32 was a rate/credit-driven macro event, not an
