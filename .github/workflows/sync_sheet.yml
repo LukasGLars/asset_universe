@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   sync:
@@ -23,6 +24,13 @@ jobs:
 
       - name: Install tomllib shim (stdlib in 3.11+, no extra deps needed)
         run: python -c "import tomllib; print('tomllib ok')"
+
+      - name: Watchdog -- catch a missed daily-sync schedule
+        run: python check_daily_sync_watchdog.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
 
       - name: Sync Google Sheet → portfolio.toml
         run: python sync_sheet.py
