@@ -370,7 +370,11 @@ try:
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
     from earnings_trajectory import beat_streak, guidance_direction
+    from eps_growth_regime import ttm_series, yoy_growth_series
     from eps_ratio import normalized_eps_ratio
+    from sec_edgar import fetch_revenue_facts, reconstruct_quarterly_facts
+
+    AVGO_CIK = "0001730168"
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
 
@@ -390,8 +394,7 @@ try:
     # Automatable half of the earnings-day checklist. The other half (actual
     # AI revenue vs. the $56B/$100B guided pace, Anthropic/OpenAI contract
     # commentary) isn't -- no API exposes segment revenue or call transcripts,
-    # so that stays a manual read of the release, flagged explicitly below
-    # rather than implied as covered.
+    # so that stays a manual read of the release (see earnings_verdict.py).
     _av_streak    = (beat_streak(list(zip(_av_hist["epsActual"], _av_hist["epsEstimate"])))
                       if _av_hist is not None and not _av_hist.empty else None)
     _av_fwd_90d   = (_av_trend.loc["+1y", "90daysAgo"]
@@ -400,24 +403,44 @@ try:
                       if _av_fwd_1y is not None and _av_fwd_90d is not None else "unknown")
     _av_latest_q  = (str(_av_hist.index[-1].date()) if _av_hist is not None and not _av_hist.empty else "n/a")
 
+    # Total-company revenue (NOT the AI-specific segment -- confirmed not
+    # available anywhere structured). Actual via SEC EDGAR, TTM YoY growth
+    # via the same machinery the research study used. No "revising up/down"
+    # trend shown for revenue -- yfinance's revenue_estimate has no
+    # historical revision snapshot (unlike eps_trend's 7/30/60/90-day
+    # columns), confirmed by checking, not assumed.
+    _av_rev_quarters = reconstruct_quarterly_facts(fetch_revenue_facts(AVGO_CIK))
+    _av_rev_latest    = next(iter(_av_rev_quarters.values()), None)
+    _av_rev_growth_series = yoy_growth_series(ttm_series(_av_rev_quarters))
+    _av_rev_growth    = (_av_rev_growth_series[max(_av_rev_growth_series)]
+                          if _av_rev_growth_series else None)
+    _av_rev_table     = _av_tk.revenue_estimate
+    # "0q" is yfinance's label for the upcoming (not-yet-reported) quarter --
+    # confirmed against the actual next-earnings date, not assumed. "+1q"
+    # would be the quarter AFTER that, one too many periods ahead.
+    _av_rev_next_q    = (_av_rev_table.loc["0q", "avg"]
+                          if _av_rev_table is not None and "0q" in _av_rev_table.index else None)
+    _av_rev_next_g    = (_av_rev_table.loc["0q", "growth"]
+                          if _av_rev_table is not None and "0q" in _av_rev_table.index else None)
+
     print(f"\n  AVGO Earnings Checkpoint")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_av_ttm):.2f}" if _av_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_av_fwd_1y:.2f}" if _av_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _eps_ratio:
         print(f"    Fwd/Trail ratio (normalized): {_eps_ratio:.2f}x  (peer range 1.17-1.41x; "
               f"corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)")
+    if _av_rev_latest:
+        _av_rev_growth_str = f"  (TTM YoY: {_av_rev_growth:+.1%})" if _av_rev_growth is not None else ""
+        print(f"    Revenue (latest qtr, actual): ${_av_rev_latest/1e9:.2f}B{_av_rev_growth_str}")
+    else:
+        print(f"    Revenue (latest qtr, actual): n/a")
+    print(f"    Next-qtr revenue consensus : ${_av_rev_next_q/1e9:.2f}B (implied YoY {_av_rev_next_g:+.1%})"
+          if _av_rev_next_q is not None and _av_rev_next_g is not None else "    Next-qtr revenue consensus : n/a")
     print(f"    Next earnings  : {_next_date}" if _next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_reminder}")
     print(f"    Latest quarter : {_av_latest_q}")
     print(f"    Beat streak    : {_av_streak}" if _av_streak is not None else "    Beat streak    : n/a")
     print(f"    Guidance trend : {_av_guidance}  (+1yr estimate vs. 90 days ago)")
-    print(f"    Action         : after the print, check actual AI revenue/EPS against the")
-    print(f"                     $56B FY26 / $100B FY27 guided path. Meaningfully short of")
-    print(f"                     trajectory -> revisit conviction, even if price > SMA200.")
-    print(f"    MANUAL REVIEW  : AI revenue pace vs. guided path and Anthropic/OpenAI")
-    print(f"                     contract-timing commentary aren't in any API -- read the")
-    print(f"                     actual release/call. Beat streak + guidance trend above are")
-    print(f"                     automated pre-checks only, not a substitute for those two.")
 
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
@@ -428,7 +451,11 @@ try:
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
     from earnings_trajectory import beat_streak, guidance_direction
+    from eps_growth_regime import ttm_series, yoy_growth_series
     from eps_ratio import normalized_eps_ratio
+    from sec_edgar import fetch_revenue_facts, reconstruct_quarterly_facts
+
+    LLY_CIK = "0000059478"
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
 
@@ -453,20 +480,37 @@ try:
                       if _lly_fwd_1y is not None and _lly_fwd_90d is not None else "unknown")
     _lly_latest_q = (str(_lly_hist.index[-1].date()) if _lly_hist is not None and not _lly_hist.empty else "n/a")
 
+    _lly_rev_quarters = reconstruct_quarterly_facts(fetch_revenue_facts(LLY_CIK))
+    _lly_rev_latest    = next(iter(_lly_rev_quarters.values()), None)
+    _lly_rev_growth_series = yoy_growth_series(ttm_series(_lly_rev_quarters))
+    _lly_rev_growth    = (_lly_rev_growth_series[max(_lly_rev_growth_series)]
+                           if _lly_rev_growth_series else None)
+    _lly_rev_table     = _lly_tk.revenue_estimate
+    # "0q" is yfinance's label for the upcoming (not-yet-reported) quarter --
+    # see the AVGO block above for the same confirmed convention.
+    _lly_rev_next_q    = (_lly_rev_table.loc["0q", "avg"]
+                           if _lly_rev_table is not None and "0q" in _lly_rev_table.index else None)
+    _lly_rev_next_g    = (_lly_rev_table.loc["0q", "growth"]
+                           if _lly_rev_table is not None and "0q" in _lly_rev_table.index else None)
+
     print(f"\n  LLY Earnings Checkpoint")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_lly_ttm):.2f}" if _lly_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_lly_fwd_1y:.2f}" if _lly_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _lly_ratio:
         print(f"    Fwd/Trail ratio (normalized): {_lly_ratio:.2f}x  (baseline established 2026-07-06; "
               f"in line with peer range 1.17-1.41x)")
+    if _lly_rev_latest:
+        _lly_rev_growth_str = f"  (TTM YoY: {_lly_rev_growth:+.1%})" if _lly_rev_growth is not None else ""
+        print(f"    Revenue (latest qtr, actual): ${_lly_rev_latest/1e9:.2f}B{_lly_rev_growth_str}")
+    else:
+        print(f"    Revenue (latest qtr, actual): n/a")
+    print(f"    Next-qtr revenue consensus : ${_lly_rev_next_q/1e9:.2f}B (implied YoY {_lly_rev_next_g:+.1%})"
+          if _lly_rev_next_q is not None and _lly_rev_next_g is not None else "    Next-qtr revenue consensus : n/a")
     print(f"    Next earnings  : {_lly_next_date}" if _lly_next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_lly_reminder}")
     print(f"    Latest quarter : {_lly_latest_q}")
     print(f"    Beat streak    : {_lly_streak}" if _lly_streak is not None else "    Beat streak    : n/a")
     print(f"    Guidance trend : {_lly_guidance}  (+1yr estimate vs. 90 days ago)")
-    print(f"    Action         : after the print, check GLP-1/AI-healthcare growth against")
-    print(f"                     guidance. Baseline established today -- compare future ratio")
-    print(f"                     prints against this.")
 
 except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")

@@ -54,9 +54,13 @@ def extract_fingerprint(text: str) -> dict:
         "avgo_latest_quarter": _find(r"AVGO Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
         "avgo_beat_streak": _find(r"AVGO Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
         "avgo_guidance_trend": _find(r"AVGO Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
+        "avgo_revenue_actual": _find(r"AVGO Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
+        "avgo_revenue_next_q": _find(r"AVGO Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
         "lly_latest_quarter": _find(r"LLY Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
         "lly_beat_streak": _find(r"LLY Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
         "lly_guidance_trend": _find(r"LLY Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
+        "lly_revenue_actual": _find(r"LLY Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
+        "lly_revenue_next_q": _find(r"LLY Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
     }
 
 
@@ -132,8 +136,8 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and "unknown" not in (prev["avgo_earnings_reminder"], curr["avgo_earnings_reminder"])):
         blocks.append(
             "AVGO EARNINGS due within the next 7 days.\n"
-            "ACTION: after the print, check actual AI revenue/EPS against the "
-            "$56B FY26 / $100B FY27 guided path."
+            "ACTION: after the print, check AI revenue against management's CURRENT guided "
+            "pace -- don't assume prior guidance still holds."
         )
         subject_parts.append("AVGO earnings due")
 
@@ -147,19 +151,16 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
 
     # A new reported quarter appearing is the actual earnings-day trigger --
     # distinct from the reminder above (which fires *before* the print).
-    # Includes the automatable pre-checks (beat streak, guidance trend), but
-    # explicitly does not claim those cover the two checklist items that
-    # need a human reading the real release/call (AI revenue vs. guided
-    # pace, Anthropic/OpenAI contract commentary).
+    # Reports what changed (revenue, EPS beat streak, guidance trend) --
+    # no "go check X" language; the two items that genuinely need a human
+    # reading the release (AI revenue vs. guided pace, contract-timing
+    # commentary) aren't restated here every time -- see earnings_verdict.py.
     if (curr["avgo_latest_quarter"] != prev["avgo_latest_quarter"]
             and "unknown" not in (prev["avgo_latest_quarter"], curr["avgo_latest_quarter"])):
         blocks.append(
             f"AVGO EARNINGS JUST REPORTED (quarter: {curr['avgo_latest_quarter']}).\n"
-            f"Automated pre-check: beat streak {curr['avgo_beat_streak']}, "
-            f"guidance {curr['avgo_guidance_trend']}.\n"
-            f"MANUAL REVIEW STILL NEEDED before treating the remaining AVGO tranche's gate as "
-            f"cleared: (1) actual AI revenue vs. the $56B FY26/$100B FY27 guided pace from the "
-            f"release, (2) Anthropic/OpenAI contract-timing commentary from the call."
+            f"Revenue: {curr['avgo_revenue_actual']} | Next-qtr consensus: {curr['avgo_revenue_next_q']}\n"
+            f"EPS beat streak: {curr['avgo_beat_streak']} | Guidance: {curr['avgo_guidance_trend']}"
         )
         subject_parts.append("AVGO earnings reported")
 
@@ -167,9 +168,8 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and "unknown" not in (prev["lly_latest_quarter"], curr["lly_latest_quarter"])):
         blocks.append(
             f"LLY EARNINGS JUST REPORTED (quarter: {curr['lly_latest_quarter']}).\n"
-            f"Automated pre-check: beat streak {curr['lly_beat_streak']}, "
-            f"guidance {curr['lly_guidance_trend']}.\n"
-            f"MANUAL REVIEW: check GLP-1/AI-healthcare growth against guidance from the release."
+            f"Revenue: {curr['lly_revenue_actual']} | Next-qtr consensus: {curr['lly_revenue_next_q']}\n"
+            f"EPS beat streak: {curr['lly_beat_streak']} | Guidance: {curr['lly_guidance_trend']}"
         )
         subject_parts.append("LLY earnings reported")
 
