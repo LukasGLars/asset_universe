@@ -369,6 +369,7 @@ try:
     import datetime
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
+    from earnings_trajectory import beat_streak, guidance_direction
     from eps_ratio import normalized_eps_ratio
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
@@ -386,6 +387,19 @@ try:
                     if _next_ts else None)
     _reminder    = earnings_reminder_state(_next_date, _today_utc)
 
+    # Automatable half of the earnings-day checklist. The other half (actual
+    # AI revenue vs. the $56B/$100B guided pace, Anthropic/OpenAI contract
+    # commentary) isn't -- no API exposes segment revenue or call transcripts,
+    # so that stays a manual read of the release, flagged explicitly below
+    # rather than implied as covered.
+    _av_streak    = (beat_streak(list(zip(_av_hist["epsActual"], _av_hist["epsEstimate"])))
+                      if _av_hist is not None and not _av_hist.empty else None)
+    _av_fwd_90d   = (_av_trend.loc["+1y", "90daysAgo"]
+                      if _av_trend is not None and "+1y" in _av_trend.index else None)
+    _av_guidance  = (guidance_direction(_av_fwd_1y, _av_fwd_90d)
+                      if _av_fwd_1y is not None and _av_fwd_90d is not None else "unknown")
+    _av_latest_q  = (str(_av_hist.index[-1].date()) if _av_hist is not None and not _av_hist.empty else "n/a")
+
     print(f"\n  AVGO Earnings Checkpoint")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_av_ttm):.2f}" if _av_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_av_fwd_1y:.2f}" if _av_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
@@ -394,9 +408,16 @@ try:
               f"corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)")
     print(f"    Next earnings  : {_next_date}" if _next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_reminder}")
+    print(f"    Latest quarter : {_av_latest_q}")
+    print(f"    Beat streak    : {_av_streak}" if _av_streak is not None else "    Beat streak    : n/a")
+    print(f"    Guidance trend : {_av_guidance}  (+1yr estimate vs. 90 days ago)")
     print(f"    Action         : after the print, check actual AI revenue/EPS against the")
     print(f"                     $56B FY26 / $100B FY27 guided path. Meaningfully short of")
     print(f"                     trajectory -> revisit conviction, even if price > SMA200.")
+    print(f"    MANUAL REVIEW  : AI revenue pace vs. guided path and Anthropic/OpenAI")
+    print(f"                     contract-timing commentary aren't in any API -- read the")
+    print(f"                     actual release/call. Beat streak + guidance trend above are")
+    print(f"                     automated pre-checks only, not a substitute for those two.")
 
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
@@ -406,6 +427,7 @@ try:
     import datetime
     import yfinance as yf
     from earnings_reminder import earnings_reminder_state
+    from earnings_trajectory import beat_streak, guidance_direction
     from eps_ratio import normalized_eps_ratio
 
     _today_utc = datetime.datetime.now(datetime.timezone.utc).date()
@@ -423,6 +445,14 @@ try:
                       if _lly_next_ts else None)
     _lly_reminder  = earnings_reminder_state(_lly_next_date, _today_utc)
 
+    _lly_streak   = (beat_streak(list(zip(_lly_hist["epsActual"], _lly_hist["epsEstimate"])))
+                      if _lly_hist is not None and not _lly_hist.empty else None)
+    _lly_fwd_90d  = (_lly_trend.loc["+1y", "90daysAgo"]
+                      if _lly_trend is not None and "+1y" in _lly_trend.index else None)
+    _lly_guidance = (guidance_direction(_lly_fwd_1y, _lly_fwd_90d)
+                      if _lly_fwd_1y is not None and _lly_fwd_90d is not None else "unknown")
+    _lly_latest_q = (str(_lly_hist.index[-1].date()) if _lly_hist is not None and not _lly_hist.empty else "n/a")
+
     print(f"\n  LLY Earnings Checkpoint")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_lly_ttm):.2f}" if _lly_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_lly_fwd_1y:.2f}" if _lly_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
@@ -431,6 +461,9 @@ try:
               f"in line with peer range 1.17-1.41x)")
     print(f"    Next earnings  : {_lly_next_date}" if _lly_next_date else "    Next earnings  : n/a")
     print(f"    Reminder       : {_lly_reminder}")
+    print(f"    Latest quarter : {_lly_latest_q}")
+    print(f"    Beat streak    : {_lly_streak}" if _lly_streak is not None else "    Beat streak    : n/a")
+    print(f"    Guidance trend : {_lly_guidance}  (+1yr estimate vs. 90 days ago)")
     print(f"    Action         : after the print, check GLP-1/AI-healthcare growth against")
     print(f"                     guidance. Baseline established today -- compare future ratio")
     print(f"                     prints against this.")

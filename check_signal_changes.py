@@ -4,10 +4,18 @@ check_signal_changes.py
 Extracts an "actionable signal fingerprint" from a status.md dashboard
 snapshot (AVGO guard state, LLY-stress, joint-stress, silver GSR state,
 opportunistic sleeve status, confirmed regime flip, AVGO/LLY earnings
-reminders) and compares two snapshots. Used by sync.yml to decide whether
-the daily run is worth an email: silence when nothing actionable changed,
-a one-line summary when something did. Price/valuation noise (which
-changes every day) is deliberately not part of the fingerprint.
+reminders and reported-quarter changes) and compares two snapshots. Used
+by sync.yml to decide whether the daily run is worth an email: silence
+when nothing actionable changed, a one-line summary when something did.
+Price/valuation noise (which changes every day) is deliberately not part
+of the fingerprint.
+
+The "just reported" trigger (latest_quarter changing) fires the automated
+half of the earnings-day checklist (beat streak, guidance-revision
+direction) alongside an explicit prompt for the two items that aren't
+automatable -- actual AI revenue vs. guided pace and contract-timing
+commentary both require reading the real release/call, no API exposes
+them.
 
 Usage:
     python check_signal_changes.py <prev_status.md> <curr_status.md>
@@ -43,6 +51,12 @@ def extract_fingerprint(text: str) -> dict:
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
+        "avgo_latest_quarter": _find(r"AVGO Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
+        "avgo_beat_streak": _find(r"AVGO Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
+        "avgo_guidance_trend": _find(r"AVGO Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
+        "lly_latest_quarter": _find(r"LLY Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
+        "lly_beat_streak": _find(r"LLY Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
+        "lly_guidance_trend": _find(r"LLY Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
     }
 
 
@@ -130,6 +144,34 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             "ACTION: after the print, check the growth trajectory against guidance."
         )
         subject_parts.append("LLY earnings due")
+
+    # A new reported quarter appearing is the actual earnings-day trigger --
+    # distinct from the reminder above (which fires *before* the print).
+    # Includes the automatable pre-checks (beat streak, guidance trend), but
+    # explicitly does not claim those cover the two checklist items that
+    # need a human reading the real release/call (AI revenue vs. guided
+    # pace, Anthropic/OpenAI contract commentary).
+    if (curr["avgo_latest_quarter"] != prev["avgo_latest_quarter"]
+            and "unknown" not in (prev["avgo_latest_quarter"], curr["avgo_latest_quarter"])):
+        blocks.append(
+            f"AVGO EARNINGS JUST REPORTED (quarter: {curr['avgo_latest_quarter']}).\n"
+            f"Automated pre-check: beat streak {curr['avgo_beat_streak']}, "
+            f"guidance {curr['avgo_guidance_trend']}.\n"
+            f"MANUAL REVIEW STILL NEEDED before treating the remaining AVGO tranche's gate as "
+            f"cleared: (1) actual AI revenue vs. the $56B FY26/$100B FY27 guided pace from the "
+            f"release, (2) Anthropic/OpenAI contract-timing commentary from the call."
+        )
+        subject_parts.append("AVGO earnings reported")
+
+    if (curr["lly_latest_quarter"] != prev["lly_latest_quarter"]
+            and "unknown" not in (prev["lly_latest_quarter"], curr["lly_latest_quarter"])):
+        blocks.append(
+            f"LLY EARNINGS JUST REPORTED (quarter: {curr['lly_latest_quarter']}).\n"
+            f"Automated pre-check: beat streak {curr['lly_beat_streak']}, "
+            f"guidance {curr['lly_guidance_trend']}.\n"
+            f"MANUAL REVIEW: check GLP-1/AI-healthcare growth against guidance from the release."
+        )
+        subject_parts.append("LLY earnings reported")
 
     if not blocks:
         return None
