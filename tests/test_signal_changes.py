@@ -25,10 +25,16 @@ FIXTURE_BASE = """
   AVGO Earnings Checkpoint
     Next earnings  : 2026-09-03
     Reminder       : not_due
+    Latest quarter : 2026-04-30
+    Beat streak    : 4
+    Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
     Next earnings  : 2026-08-06
     Reminder       : not_due
+    Latest quarter : 2026-03-31
+    Beat streak    : 4
+    Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 """
@@ -56,6 +62,12 @@ def test_extract_fingerprint_parses_known_fields():
     assert fp["regime_flip"] == "stable"
     assert fp["avgo_earnings_reminder"] == "not_due"
     assert fp["lly_earnings_reminder"] == "not_due"
+    assert fp["avgo_latest_quarter"] == "2026-04-30"
+    assert fp["avgo_beat_streak"] == "4"
+    assert fp["avgo_guidance_trend"] == "revising up"
+    assert fp["lly_latest_quarter"] == "2026-03-31"
+    assert fp["lly_beat_streak"] == "4"
+    assert fp["lly_guidance_trend"] == "revising up"
 
 
 def test_extract_fingerprint_detects_regime_flip():
@@ -126,6 +138,41 @@ def test_earnings_reminder_does_not_refire_while_still_due():
         "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : DUE",
     )
     fp = extract_fingerprint(due)
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_avgo_new_quarter_fires_with_prechecks_and_manual_review_prompt():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_BASE.replace(
+        "Latest quarter : 2026-04-30\n    Beat streak    : 4\n    Guidance trend : revising up",
+        "Latest quarter : 2026-07-30\n    Beat streak    : 5\n    Guidance trend : revising up",
+    ))
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "AVGO earnings reported" in subject
+    assert "AVGO EARNINGS JUST REPORTED" in body
+    assert "beat streak 5" in body
+    assert "MANUAL REVIEW STILL NEEDED" in body
+    assert "AI revenue vs. the $56B FY26/$100B FY27 guided pace" in body
+    assert "Anthropic/OpenAI contract-timing commentary" in body
+
+
+def test_lly_new_quarter_fires():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_BASE.replace(
+        "Latest quarter : 2026-03-31\n    Beat streak    : 4",
+        "Latest quarter : 2026-06-30\n    Beat streak    : 5",
+    ))
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "LLY earnings reported" in subject
+    assert "LLY EARNINGS JUST REPORTED" in body
+
+
+def test_new_quarter_does_not_fire_when_unchanged():
+    fp = extract_fingerprint(FIXTURE_BASE)
     assert build_actionable_message(fp, fp) is None
 
 
