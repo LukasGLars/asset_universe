@@ -7,6 +7,126 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-07-06 — sync reliability, LLY parity, EPS ratio fix, VRT->AVGO trade
+
+**Sync watchdog (PR #26).** `daily-sync`'s Monday 06:00 UTC cron fire was
+silently delayed ~4h with no error surfaced -- caught by chance while
+checking a live price. Fix: `sync-sheet` (fires every ~2h, never missed a
+slot) now also checks whether `daily-sync` has gone stale and re-triggers
+it via `workflow_dispatch` if so. Silent on self-heal, Telegram alert only
+if the re-trigger itself fails -- explicit user preference: no notification
+for "worked as expected," only for "needs a human." Along the way, fixed a
+real bug in `check_sync_health.py`: freshness was checked via filesystem
+mtime, which `actions/checkout` resets on every job -- would have made the
+watchdog always see "fresh" since it runs in a different workflow than the
+one that writes `status.md`. Now uses git commit time instead, with mtime
+as a fallback outside a git repo (tests). Not yet tested by a real miss --
+this morning's incident turned out to be a GitHub-side delay, not a true
+drop (the watchdog PR merged after that run's own late completion).
+
+**"Next kr" routing (PR #28).** Recurring contributions needed a rule for
+where new capital goes, distinct from the guard's hold-vs-rotate decision
+for capital already invested. `next_contribution_target()` in
+`next_contribution.py` routes to whichever of Gold/AVGO/LLY is furthest
+below its own current target weight (`WEIGHTS`/`JOINT_WEIGHTS` from
+`run_combined_system.py`, already regime/guard-aware) among assets whose
+gate is open. Silver excluded -- own trigger, own funding mechanism.
+Deliberately pull-only in `status.md`, not pushed -- the one time the
+destination actually changes (a gate flipping) is already covered by the
+existing guard-change Telegram alert.
+
+**LLY valuation checkpoint + earnings reminders for both tickers (PR #29).**
+LLY never had AVGO's fwd/trail EPS-ratio checkpoint (backlog since
+2026-06-30) -- built it, same structure as AVGO's. Separately, real gap
+found: this file previously claimed earnings reminders already went via
+Telegram (cited as why Google Calendar was dropped) -- that was never
+actually built. `earnings_reminder.py`'s `earnings_reminder_state()` is a
+binary DUE/not_due flag (deliberately not a day-count, which would re-fire
+daily inside the window) that flips once when earnings come within 7 days
+-- reuses the existing diff-based `check_signal_changes.py` -> Telegram
+pipeline as-is, no new send logic.
+
+**EPS ratio GAAP/non-GAAP mismatch fixed (PR #30) -- and a process gotcha
+worth remembering.** The original AVGO checkpoint compared `trailingEps`
+(GAAP) to `forwardEps` (non-GAAP consensus) -- inflates the ratio for any
+company with a large GAAP/non-GAAP gap. AVGO's VMware-acquisition
+amortization creates exactly that gap. Normalized (TTM actual EPS from
+`earnings_history`, +1yr estimate from `eps_trend`, both non-GAAP): AVGO's
+real ratio is **2.39x**, not 3.22x. `eps_ratio.py` does this, validated
+against LLY (1.58x naive -> 1.51x normalized, barely moves -- confirms the
+effect is AVGO-specific, not a bug in the method). **Process gotcha: this
+PR was opened, verified, and reported as done in conversation, but never
+actually merged -- sat open for ~2h while later PRs (#28, #29, #31) landed
+on top of a master that still had the old, unfixed ratio.** Caught and
+merged same session when building on the fix again. Lesson: "PR opened"
+and "PR merged" are different states -- confirm merge status before
+treating a fix as live, especially across a long session with many PRs in
+flight.
+
+**Peer-set correction on the same question (not yet a code change, just an
+analysis worth recording):** the original outlier framing (2.39x vs. a
+1.1-1.5x "quality peer set" of AAPL/GOOG/MA/TDG/MNST/ANET/COST) compared
+AVGO against companies that don't share its AI-capex growth story at all.
+Checked against actual AI/semi peers (same normalized method): MU 3.32x,
+AMD 2.88x, **AVGO 2.39x**, NVDA 2.19x, MRVL 2.04x, TSM 1.69x, ASML 1.67x,
+ANET 1.41x, QCOM 0.92x. AVGO is solidly mid-pack among real comparables --
+below MU/AMD, in line with NVDA/MRVL, above TSM/ASML/ANET. The "clear
+outlier" framing that drove a lot of this session's back-and-forth was
+itself partly a peer-selection artifact, on top of the GAAP/non-GAAP one.
+
+**Realized-growth regime research study (PR #31, `sec_edgar.py` /
+`eps_growth_regime.py` / `run_eps_growth_regime_study.py`).** Explores
+whether AVGO's growth premium historically precedes good or bad forward
+returns, using SEC EDGAR's XBRL API (free, ~10yr depth, validated against
+yfinance to within a 1-cent rounding artifact -- real gotcha found: many
+10-Ks only tag annual EPS, not a discrete Q4, which has to be derived as
+annual minus the other three quarters). Explicitly conditions on REALIZED
+past growth, not analyst-estimated forward growth -- historical
+point-in-time consensus data isn't available anywhere free (I/B/E/S/
+FactSet are paid, institutional-only). **Honest result, not decision-grade:**
+a quality-only peer set showed misleadingly reassuring numbers (survivorship
+bias -- the peer set was pre-selected for having succeeded). Adding a
+deliberate "growth disappointment" cohort (INTC/PYPL/ZM/PTON) and switching
+to revenue growth (EPS growth is inflated by AVGO's own GAAP distortion,
+same root cause as the ratio fix above) shows a real cautionary skew in the
+HIGH->MID/LOW deceleration case -- negative median at 63d, ~coin-flip win
+rate at 252d -- but N=12 is too thin to be conclusive even pooled across
+10 tickers. Full fix needs SEC's complete filer universe including
+delistings (survivorship-bias-free), a separate, bigger piece of work --
+delisted-company price history isn't in the parquet store or yfinance.
+Not built. Net effect: doesn't override the sizing decision (built on
+risk-capacity/guard-coverage, not on an assumption growth never
+decelerates), but raises the stakes on actually using the Sept earnings
+checkpoint as a real gate, not a formality.
+
+**VRT -> AVGO trade executed and confirmed (2026-07-06).** Sold Vertiv in
+full (31 -> 0 shares, unconditional exit regardless of price -- excluded
+from the target base on the merits), routed proceeds into AVGO (21 -> 49
+shares, +28) rather than splitting with LLY -- consistent with "next kr"
+routing (AVGO's RC gap dwarfed LLY's). Confirmed via the Google Sheet
+`config` tab (gid=1133887937, the exact tab `sync_sheet.py` reads) and a
+manually-triggered `sync_sheet.yml` run, since the edit postdated the last
+scheduled sync. **Gotcha for future sessions:** the "FI@50" Google Sheet
+has ~19 tabs covering unrelated things (a separate crypto/thematic ETF
+portfolio, fee calculators, an LLM prompt template, etc.) -- Drive API
+tools (`read_file_content`, CSV export) only reach the default/first tab,
+not a specific gid. To reach a specific tab, export the whole workbook as
+`.xlsx` (`download_file_content` with the OOXML spreadsheet mimeType) and
+read it with openpyxl by sheet *name* -- gid isn't preserved in xlsx, but
+tab names are. The live automation itself hits Google's direct CSV export
+URL with an explicit `gid` param, which does support tab targeting (see
+`sync_sheet.py`'s `SHEET_ID`/`GID` constants) -- only the generic Drive
+export tools have this limitation, not the pipeline itself.
+
+**AVGO's remaining rebalance tranche (funded by WMT/CCJ/HWM proceeds, still
+sequenced to wait for HWM's exit by 07-25) is now also explicitly gated on
+the 2026-09-03 earnings print** clearing against the guided AI-revenue
+path (not just guard status) -- new condition added this session given the
+deceleration-risk finding above. Watch specifically: AI revenue pace vs.
+guided $56B FY26/$100B FY27, whether the 4-for-4 beat streak continues,
+forward guidance direction (has been revising up for 90 days), and any
+Anthropic/OpenAI contract-timing commentary.
+
 ## Signal-change notifications migrated Gmail -> Telegram (2026-07-03)
 
 Per the finalized ops-notification scope (see below): urgent items go via
