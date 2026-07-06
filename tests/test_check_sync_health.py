@@ -84,6 +84,27 @@ def test_broken_content_fails(tmp_path):
     assert any("[unavailable" in p for p in problems)
 
 
+def test_regime_failure_message_is_caught(tmp_path):
+    # Regression test for a real gap found 2026-07-06: fi_tracker.py's
+    # regime-computation failure used to print "[regime unavailable]" /
+    # "[signals unavailable -- ...]", neither of which matched the
+    # "[unavailable" failure signature -- a caught-internally regime
+    # failure (current_regime() raising, gracefully handled) would
+    # silently degrade the dashboard with no exit-code and no content
+    # signal at all. Fixed to use the same "{Section} : [unavailable --
+    # {reason}]" format every other section already uses.
+    status_path = tmp_path / "status.md"
+    now = dt.datetime(2026, 7, 6, 10, 0, tzinfo=dt.timezone.utc)
+    broken = HEALTHY_STATUS.replace(
+        "  Silver GSR Tactical",
+        "  Macro Regime : [unavailable -- KeyError('DFII10')]\n\n  Silver GSR Tactical",
+    )
+    _write(status_path, broken, mtime=now - dt.timedelta(minutes=5))
+
+    problems = run_health_check(status_path, now)
+    assert any("[unavailable" in p for p in problems)
+
+
 def test_missing_section_fails(tmp_path):
     status_path = tmp_path / "status.md"
     now = dt.datetime(2026, 7, 6, 10, 0, tzinfo=dt.timezone.utc)

@@ -23,8 +23,10 @@ DATA_DIR = config.raw_data_dir()
 
 try:
     reg = current_regime(DATA_DIR)
+    _regime_error = None
 except Exception as _e:
     reg = None
+    _regime_error = _e
 
 # ── Portfolio snapshot ──────────────────────────────────────────────────────────
 
@@ -123,7 +125,7 @@ if reg:
     print(f"  Confidence    : {reg['confidence']}")
     print(f"  Data through  : {reg['date']}")
 else:
-    print("  [regime unavailable]")
+    print(f"  Macro Regime : [unavailable — {_regime_error}]")
 
 # ── Portfolio signals ───────────────────────────────────────────────────────────
 
@@ -204,7 +206,7 @@ if reg:
               f"{_s(s63,'median'):>8} {_s(s252,'median'):>9} "
               f"{_s(s252,'win_rate','.0%'):>5} {n_show:>5}  {note}")
 else:
-    print("  [signals unavailable — regime could not be computed]")
+    print(f"  Portfolio Signals : [unavailable — regime unavailable: {_regime_error}]")
 
 # ── Tactical rules ──────────────────────────────────────────────────────────────
 
