@@ -22,6 +22,14 @@ FIXTURE_BASE = """
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
 
+  AVGO Earnings Checkpoint
+    Next earnings  : 2026-09-03
+    Reminder       : not_due
+
+  LLY Earnings Checkpoint
+    Next earnings  : 2026-08-06
+    Reminder       : not_due
+
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 """
 
@@ -46,6 +54,8 @@ def test_extract_fingerprint_parses_known_fields():
     assert fp["silver_action"] == "No action -- hold base"
     assert fp["sleeve_status"] == "CLOSED"
     assert fp["regime_flip"] == "stable"
+    assert fp["avgo_earnings_reminder"] == "not_due"
+    assert fp["lly_earnings_reminder"] == "not_due"
 
 
 def test_extract_fingerprint_detects_regime_flip():
@@ -81,6 +91,42 @@ def test_lly_stress_alone_is_informational_not_actioned():
     _, body = result
     assert "informational" in body.lower()
     assert "No action" in body
+
+
+def test_avgo_earnings_reminder_fires_once_on_transition():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_BASE.replace(
+        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : not_due",
+        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : DUE",
+    ))
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "AVGO earnings due" in subject
+    assert "AVGO EARNINGS due" in body
+
+
+def test_lly_earnings_reminder_fires_once_on_transition():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_BASE.replace(
+        "LLY Earnings Checkpoint\n    Next earnings  : 2026-08-06\n    Reminder       : not_due",
+        "LLY Earnings Checkpoint\n    Next earnings  : 2026-08-06\n    Reminder       : DUE",
+    ))
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "LLY earnings due" in subject
+    assert "LLY EARNINGS due" in body
+
+
+def test_earnings_reminder_does_not_refire_while_still_due():
+    # Both prev and curr already "DUE" -- no transition, no new message.
+    due = FIXTURE_BASE.replace(
+        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : not_due",
+        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : DUE",
+    )
+    fp = extract_fingerprint(due)
+    assert build_actionable_message(fp, fp) is None
 
 
 def _run_cli(prev_text: str, curr_text: str, tmp_path: Path) -> str:

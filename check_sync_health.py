@@ -51,6 +51,7 @@ REQUIRED_SECTIONS = [
     "Silver GSR Tactical",
     "AVGO 200d Guard",
     "AVGO Earnings Checkpoint",
+    "LLY Earnings Checkpoint",
 ]
 
 FAILURE_SIGNATURES = [
