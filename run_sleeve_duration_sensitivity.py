@@ -1,16 +1,23 @@
 """run_sleeve_duration_sensitivity.py
 
-Runs the sleeve exit-duration sensitivity test for real, against the
-current top-ranked candidates in universe_screen_results.csv -- reuses
-run_entry_screen.py's own duration_matched_return() (same regime-
-conditioned, uncapped forward-return machinery already validated for
-per-candidate duration-matched win rates), swept across a grid of exit
-windows instead of a single fixed one.
+PIPELINE CHECK, NOT YET AN ANSWER. Runs the sleeve exit-duration
+sensitivity test against the current top-ranked candidates in
+universe_screen_results.csv -- reuses run_entry_screen.py's own
+duration_matched_return() (same regime-conditioned, uncapped
+forward-return machinery already validated for per-candidate
+duration-matched win rates), swept across a grid of exit windows instead
+of a single fixed one.
 
-Report-only. Does not change the live TIME_EXIT_DAYS constant in
-run_entry_screen.py -- that's a real change to how future sleeve trades
-are managed and needs an explicit decision after seeing this result, not
-an automatic change.
+This measures returns from ALL regime-matched dates, NOT specifically
+from dates that would have passed the sleeve's actual 4-gate entry logic
+(screen_tactical() in engine.py: regime, MA50-not-extended, relative
+strength, earnings-clear). That's a materially different, narrower
+population -- a dip-entry and a random date in an ongoing uptrend are not
+the same setup. Confirms the pipeline and annualization math work; does
+NOT establish whether TIME_EXIT_DAYS=30 is actually right for the
+sleeve's real trades. See the printed NEXT STEP for what that would need.
+
+Report-only regardless. Does not change the live TIME_EXIT_DAYS constant.
 
 Usage:
     python run_sleeve_duration_sensitivity.py [--top N]
@@ -29,7 +36,7 @@ warnings.filterwarnings("ignore")
 from asset_universe import config
 from asset_universe.analysis.engine import current_regime
 from run_entry_screen import CATEGORY_DIR, MIN_N_OBS, _matched_dates, duration_matched_return
-from sleeve_duration_sensitivity import DURATIONS_TO_TEST, aggregate_duration_results, best_duration_by_median
+from sleeve_duration_sensitivity import DURATIONS_TO_TEST, aggregate_duration_results
 
 UNIVERSE_CSV = Path(__file__).parent / "universe_screen_results.csv"
 
@@ -74,11 +81,25 @@ def main(argv: list[str]) -> int:
     aggregated = aggregate_duration_results(per_ticker)
 
     print("=" * 72)
-    print("SLEEVE EXIT-DURATION SENSITIVITY (flat-window component only)")
+    print("SLEEVE EXIT-DURATION SENSITIVITY -- PIPELINE CHECK, NOT AN ANSWER YET")
     print("=" * 72)
-    print("\n  Raw median is period return over that window -- NOT comparable across")
-    print("  windows on its own (more calendar time trivially means more return for")
-    print("  any generally-appreciating stock). Annualized is the real comparison.")
+    print("\n  READ THIS FIRST: this does NOT test whether 30 days is right for the")
+    print("  sleeve's actual trades. It measures returns from ALL regime-matched")
+    print("  dates for top-ranked momentum names -- NOT specifically from dates that")
+    print("  would have passed the sleeve's real entry gate (MA50 not extended,")
+    print("  momentum conditioning, RS-vs-benchmark, earnings clear). Those are a")
+    print("  different, much narrower population. A dip-entry and a random date in")
+    print("  an ongoing uptrend are not the same setup, and this test can't tell them")
+    print("  apart -- it never conditions on non-extension at all.")
+    print("\n  What this DOES establish: the pipeline works (real data, real N, no")
+    print("  crashes) and the annualization math is correct (raw per-trade return")
+    print("  trivially favors longer windows for any appreciating stock -- fixed by")
+    print("  comparing annualized-equivalent rates instead, below). What it does NOT")
+    print("  establish: whether 30d, 60d, or any other window is actually better for")
+    print("  the sleeve's real dip-entries. That needs the entry-gate logic")
+    print("  reconstructed at each historical date -- a bigger, separate task, not")
+    print("  done here. Numbers below are shown for pipeline verification only --")
+    print("  do not use them to justify changing TIME_EXIT_DAYS.")
     print(f"\n  {'Window':<12} {'Raw median':>11} {'Annualized':>11} {'Win rate':>9} {'N':>7} {'Tickers':>8}")
     print(f"  {'-'*62}")
     for duration in DURATIONS_TO_TEST:
@@ -91,28 +112,15 @@ def main(argv: list[str]) -> int:
             print(f"  {tag:<12} {r['median']:>+10.1%} {ann_str:>11} {r['win_rate']:>8.0%} "
                   f"{r['n_total']:>7} {r['n_tickers']:>8}")
 
-    best = best_duration_by_median(aggregated)
-    if best is not None:
-        print(f"\n  Best ANNUALIZED return: {best}d window")
-        if best != 30:
-            print(f"  30d (current) is NOT the strongest window in this sample once time-normalized.")
-        else:
-            print(f"  30d (current) IS the strongest window in this sample once time-normalized.")
-
-    print("\n  NOTE 1: this tests the flat-window component only. The earnings-buffer")
-    print("  component (EARNINGS_BUFFER_DAYS=3) can't be backtested the same way --")
+    print("\n  NOTE: EARNINGS_BUFFER_DAYS=3 also can't be backtested the same way --")
     print("  yfinance only exposes each ticker's CURRENT earnings calendar, not a")
-    print("  point-in-time historical one, so there's no way to know what \"next")
-    print("  earnings date\" the strategy would have seen looking forward from an")
-    print("  arbitrary past date. Not tested here rather than faked.")
-    print("\n  NOTE 2 (important): this measures returns from ALL regime-matched dates")
-    print("  for top-ranked momentum candidates -- NOT specifically from dates that")
-    print("  would have passed the sleeve's actual entry gate (MA50 not extended,")
-    print("  momentum conditioning). A smooth monotonic improvement out to 90d likely")
-    print("  reflects \"strong momentum names keep compounding broadly\" more than it")
-    print("  proves the sleeve's specific dip-entry setup benefits from a 90d hold.")
-    print("  Directional finding only -- not decision-grade without re-running the")
-    print("  actual entry-gate logic at each historical date, a bigger separate task.")
+    print("  point-in-time historical one. Not tested here rather than faked.")
+    print("\n  NEXT STEP (not done here): reconstruct the sleeve's 4-gate entry logic")
+    print("  (screen_tactical() in engine.py) at each historical date instead of")
+    print("  today only, collect the dates that would have actually qualified, and")
+    print("  re-run this same duration sweep restricted to those dates. Until that")
+    print("  exists, treat 30d as unvalidated but NOT as shown-worse -- this table")
+    print("  doesn't settle that question either way.")
     print("=" * 72)
 
     return 0
