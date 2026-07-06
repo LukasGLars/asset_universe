@@ -419,6 +419,11 @@ try:
     print(f"                     actual release/call. Beat streak + guidance trend above are")
     print(f"                     automated pre-checks only, not a substitute for those two.")
 
+    from earnings_verdict import format_verdict_line
+    _av_verdict_line = format_verdict_line("AVGO")
+    if _av_verdict_line:
+        print(f"    Last verdict   : {_av_verdict_line}")
+
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
 
@@ -467,6 +472,11 @@ try:
     print(f"    Action         : after the print, check GLP-1/AI-healthcare growth against")
     print(f"                     guidance. Baseline established today -- compare future ratio")
     print(f"                     prints against this.")
+
+    from earnings_verdict import format_verdict_line
+    _lly_verdict_line = format_verdict_line("LLY")
+    if _lly_verdict_line:
+        print(f"    Last verdict   : {_lly_verdict_line}")
 
 except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")
