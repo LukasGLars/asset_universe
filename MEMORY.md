@@ -127,6 +127,76 @@ guided $56B FY26/$100B FY27, whether the 4-for-4 beat streak continues,
 forward guidance direction (has been revising up for 90 days), and any
 Anthropic/OpenAI contract-timing commentary.
 
+**AVGO's valuation reassessed twice more, same day (peer-set correction).**
+The 2.39x normalized ratio, checked against genuine AI/semi peers instead
+of the mixed "quality" set (AAPL/GOOG/MA/TDG/MNST/ANET/COST), is mid-pack:
+MU 3.32x, AMD 2.88x, **AVGO 2.39x**, NVDA 2.19x, MRVL 2.04x, TSM 1.69x,
+ASML 1.67x, ANET 1.41x, QCOM 0.92x. Separately, on absolute valuation
+(not growth-embedded ratio): AVGO's forward P/E (19.4x) and PEG (0.41) are
+both on the *cheap* side of that same peer group -- only NVDA/QCOM have a
+lower forward P/E, only MU has a lower PEG. Net: the "priced for
+perfection" framing that drove a lot of this session's back-and-forth was
+substantially a peer-selection and accounting-mismatch artifact, not a
+reflection of AVGO actually being expensive vs. real comparables. Decided
+**not** to add PEG/forward-P/E tracking to the daily checkpoint -- these
+barely move day-to-day except through price (which the guard already
+tracks), and without peer context or a validated trigger it'd be a number
+nobody looks at, not real signal. Stays a periodic, triggered exercise.
+
+**Operational reliability push, prompted by the user's actual long-term
+goal ("urgent actionable info must reach me immediately, and I must be
+able to act on it from anywhere").** Three concrete pieces:
+
+1. **Telegram delivery failures now escalate for real actionable events**
+   (`notify_signal_changes.py`). Previously any send failure was silently
+   logged and swallowed -- fine for the manual test diagnostic, but meant
+   a genuine guard flip / silver trigger / earnings-due event could fail
+   to deliver with nothing surfacing it. Now a failed send for an actual
+   actionable change exits non-zero, failing the Actions run so GitHub's
+   own failure-run email is the fallback channel -- same escalation
+   pattern as the sync watchdog. The diagnostic path stays non-fatal.
+2. **Full pipeline audit for the same silent-failure class.** Found one
+   real, concrete gap: if `current_regime()` raised (caught internally in
+   `fi_tracker.py`, not crashing), the Macro Regime and Portfolio Signals
+   sections printed `[regime unavailable]` / `[signals unavailable --
+   ...]` -- neither matched `check_sync_health.py`'s `"[unavailable"`
+   signature, and since the script didn't crash (exit 0), **nothing would
+   have caught it** -- no exit-code signal, no content signal, and the
+   actual exception message was being discarded entirely. Fixed:
+   standardized both messages to the same `"{Section} : [unavailable --
+   {reason}]"` format every other section already uses. Rest of the
+   pipeline audited and found sound: `run_regime_alert.py`/
+   `run_optimizer.py` have no swallow pattern (crash -> Traceback,
+   already caught, or explicit `sys.exit(1)`); `sync_sheet.py` already
+   escalates correctly. A few minor, non-gating swallows in
+   `run_entry_screen.py` (VIX review, company-name lookups) left as-is --
+   informational only, not part of any actionable decision path.
+3. **Mobile trigger path live-verified, from two independent vantage
+   points** -- not just the mobile app's self-report. Dispatched
+   `sync-sheet` via `gh workflow run` from Claude Code mobile, confirmed
+   completed/success both from the mobile session's own check and
+   independently from this session via `gh run view`. Confirms the full
+   loop: alert reaches phone -> can trigger a fix from phone -> verified
+   it actually ran against the real repo.
+
+**Net effect: the notification/escalation chain covering guard flips,
+silver triggers, joint-stress, earnings-due reminders, sync staleness,
+and now regime-computation failures has no known silent-failure gaps left
+in the parts that actually drive decisions.** Cadence is twice-daily
+(06:00/20:30 UTC), not instant -- worth remembering that's a deliberate
+match to the guard's own 5-day-ROC/200d-SMA design, not a latency gap to
+close further.
+
+**Process note for future sessions, worth repeating from earlier:** PR #30
+sat merged-but-not-actually-merged for ~2 hours earlier this same session
+before being caught. Today's later PRs (#32, #33) were pushed to their own
+branches and merged properly each time -- but the very first memory update
+of this session (the section above this one) was mistakenly pushed
+**directly to master**, skipping the branch/PR step every other change
+this session went through. Caught and named at the time, not hidden.
+Two reminders in one day: "PR opened" isn't "PR merged," and "docs-only"
+isn't an exemption from the branch/PR discipline either.
+
 ## Signal-change notifications migrated Gmail -> Telegram (2026-07-03)
 
 Per the finalized ops-notification scope (see below): urgent items go via
