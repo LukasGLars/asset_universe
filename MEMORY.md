@@ -260,22 +260,24 @@ review used for everything else in this project. Confirmed with the
 account owner that the pushes were genuinely theirs. Worth staying alert
 to the same pattern if this resurfaces.
 
-## Overnight session 2026-07-06 -- three items built, NONE merged
+## Overnight session 2026-07-06 -- three items built; #39 and #43 (docs) now merged, #40/#41 still open
 
 Requested explicitly: build all three, leave every PR unmerged for
 morning review, don't touch live money-routing or change any live
 constant automatically. All three respected that boundary.
 
-**PR #39 -- record earnings verdict.** `earnings_verdict.py` /
-`record_earnings_verdict.py` -- CLI records the judgment call (AI revenue
-vs. guided pace, contract-timing commentary) formed after actually
-reading the release/call, shows on `fi_tracker.py`'s dashboard from then
-on ("Last verdict: ..."). Intended workflow, documented in both modules:
-Claude reads the release, drafts the verdict, user confirms, THEN it's
-recorded -- not something to fill in independently. Not wired to gate
-money-routing yet (deliberate -- that's a bigger decision for later).
-Live-smoke-tested end to end (recorded a real test verdict, confirmed
-display, removed the test artifact before committing). 11 new tests.
+**PR #39 -- record earnings verdict. MERGED 2026-07-06 (commit 4f19b55).**
+`earnings_verdict.py` / `record_earnings_verdict.py` -- CLI records the
+judgment call (AI revenue vs. guided pace, contract-timing commentary)
+formed after actually reading the release/call, shows on
+`fi_tracker.py`'s dashboard from then on ("Last verdict: ..."). Intended
+workflow, documented in both modules: Claude reads the release, drafts
+the verdict, user confirms, THEN it's recorded -- not something to fill
+in independently. Not wired to gate money-routing yet (deliberate --
+that's a bigger decision for later). Live-smoke-tested end to end
+(recorded a real test verdict, confirmed display, removed the test
+artifact before committing). 11 tests. Merged after rebasing onto
+master and a clean full-suite run (161 passed, no conflicts).
 
 **PR #40 -- sleeve exit-duration sensitivity.** Tests whether
 `TIME_EXIT_DAYS=30` (`run_entry_screen.py`) is validated or just
@@ -322,11 +324,11 @@ print actually happens. No "revising up/down" trend shown for revenue
 (unlike EPS) -- confirmed `revenue_estimate` has no historical revision
 snapshot to compare against.
 
-**Known conflict waiting in the morning**: PR #39 and #41 both touch the
-AVGO/LLY Earnings Checkpoint blocks in `fi_tracker.py` (verdict line vs.
-revenue lines, inserted at nearby points). Whichever merges second will
-need a small manual conflict resolution -- combine both additions, don't
-just pick one side. Flagged here so it's expected, not alarming.
+**Conflict to expect when #41 merges**: PR #39 (merged) and PR #41 (still
+open) both touch the AVGO/LLY Earnings Checkpoint blocks in
+`fi_tracker.py` (verdict line vs. revenue lines, inserted at nearby
+points). Merging master into the #41 branch will need a small manual
+resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
