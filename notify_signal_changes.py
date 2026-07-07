@@ -14,15 +14,26 @@ for urgent/time-sensitive items per the 2026-07-03 ops-scope decision
 quarterly thesis re-check are separate, lower-urgency work that goes via
 email instead, not built here.
 
-A failed send is escalated (non-zero exit) only when there was an actual
-actionable change to report -- that fails the Actions run, which triggers
-GitHub's default failure-run email as a second channel independent of
-Telegram (same pattern as check_sync_health.py's watchdog escalation).
-Fixed 2026-07-06: previously this was silent-only, so a broken Telegram
-delivery for a real guard flip / silver trigger / earnings-due event would
-never reach anyone. The "nothing actionable changed" case and the manual
-FORCE_TEST_TELEGRAM diagnostic path stay non-fatal -- there's nothing
-urgent to escalate in either of those.
+Delivery for a real actionable change retries Telegram a couple of times,
+then falls back to email (EMAIL_ADDRESS/EMAIL_PASSWORD -- the same Gmail
+App Password secrets provisioned for the pre-Telegram pipeline, PR #14)
+before giving up. Only if BOTH channels fail does this escalate (non-zero
+exit), which fails the Actions run so GitHub's own failure-run email is a
+third, independent channel. Fixed 2026-07-07: previously a single Telegram
+API hiccup would jump straight to "hope you read the GitHub failure email"
+with no attempt to route around it first.
+
+SUPPRESS_NOTIFY=true skips sending entirely, before the diff even runs.
+For use when deploying a fix that changes tracked state (e.g. backfilling
+a state file) -- the diff would otherwise read the correction itself as a
+"real" transition and fire a phantom alert (this happened for real on
+2026-07-07 fixing the HWM sleeve-state gap: a manual re-run to verify the
+fix sent a live "Sleeve CLOSED -> OPEN" message for a position that had
+actually been open since 2026-06-24).
+
+The "nothing actionable changed" case and the manual FORCE_TEST_TELEGRAM
+diagnostic path stay single-attempt/non-fatal -- there's nothing urgent to
+retry or escalate in either of those.
 
 Usage:
     python notify_signal_changes.py status.md.prev status.md
@@ -31,12 +42,18 @@ from __future__ import annotations
 
 import json
 import os
+import smtplib
 import sys
+import time
 import urllib.error
 import urllib.request
+from email.mime.text import MIMEText
 from pathlib import Path
 
 from check_signal_changes import build_actionable_message, extract_fingerprint
+
+TELEGRAM_RETRIES = 2
+RETRY_DELAY_SECONDS = 2
 
 
 def build_change_email(prev_path: str, curr_path: str) -> tuple[str, str] | None:
@@ -66,15 +83,62 @@ def send_telegram(subject: str, body: str) -> None:
         raise RuntimeError(f"Telegram API returned not-ok: {result}")
 
 
+def send_email_fallback(subject: str, body: str) -> None:
+    """Backup delivery via Gmail SMTP, used only when Telegram itself is
+    unreachable. Reuses EMAIL_ADDRESS/EMAIL_PASSWORD -- already provisioned
+    as repo secrets from the pre-Telegram notification pipeline."""
+    address = os.environ["EMAIL_ADDRESS"]
+    password = os.environ["EMAIL_PASSWORD"]
+
+    msg = MIMEText(body)
+    msg["Subject"] = f"[Telegram unreachable] {subject}"
+    msg["From"] = address
+    msg["To"] = address
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(address, password)
+        server.send_message(msg)
+
+
+def send_with_retry_and_fallback(subject: str, body: str) -> None:
+    """Retry Telegram a couple of times, then fall back to email, before
+    giving up. Raises only if every channel fails."""
+    last_err: Exception | None = None
+    for attempt in range(TELEGRAM_RETRIES):
+        try:
+            send_telegram(subject, body)
+            return
+        except Exception as e:
+            last_err = e
+            if attempt < TELEGRAM_RETRIES - 1:
+                time.sleep(RETRY_DELAY_SECONDS)
+
+    try:
+        send_email_fallback(subject, body)
+        print(f"Telegram failed after {TELEGRAM_RETRIES} attempts ({last_err}) -- email fallback succeeded.")
+        return
+    except Exception as email_err:
+        raise RuntimeError(
+            f"Telegram failed ({last_err}) and email fallback also failed ({email_err})"
+        ) from email_err
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print("usage: notify_signal_changes.py <prev_status.md> <curr_status.md>", file=sys.stderr)
         return 0
 
+    # State-correction escape hatch -- see module docstring. Checked before
+    # anything else so a fix deploy never masquerades as a real event.
+    if os.environ.get("SUPPRESS_NOTIFY") == "true":
+        print("Notification suppressed (SUPPRESS_NOTIFY=true) -- state correction, not a real event.")
+        return 0
+
     # Manual on-demand test send (workflow_dispatch input), bypasses the
     # diff entirely -- lets you verify Telegram delivery works without
-    # waiting for a real signal to flip. Non-fatal: this is a diagnostic,
-    # not a real actionable event.
+    # waiting for a real signal to flip. Non-fatal, single-attempt: this is
+    # a diagnostic, not a real actionable event.
     if os.environ.get("FORCE_TEST_TELEGRAM") == "true":
         try:
             send_telegram("Asset Universe: test message", "This is a manual test send -- notification pipeline is working.")
@@ -90,14 +154,14 @@ def main() -> int:
 
     subject, body = result
     try:
-        send_telegram(subject, body)
-        print(f"Telegram message sent -- subject: {subject}\n{body}")
+        send_with_retry_and_fallback(subject, body)
+        print(f"Message delivered -- subject: {subject}\n{body}")
         return 0
     except Exception as e:
-        # This IS a real actionable event that failed to deliver -- escalate
-        # by failing the job, so GitHub's own failure-run email is the
-        # fallback channel instead of this going unnoticed.
-        print(f"Telegram send FAILED for an actionable change: {e}", file=sys.stderr)
+        # This IS a real actionable event that failed on every channel --
+        # escalate by failing the job, so GitHub's own failure-run email is
+        # a third, independent fallback.
+        print(f"Delivery FAILED on all channels for an actionable change: {e}", file=sys.stderr)
         print(f"Undelivered message was:\n{subject}\n{body}", file=sys.stderr)
         return 1
 

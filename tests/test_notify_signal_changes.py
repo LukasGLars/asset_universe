@@ -123,14 +123,18 @@ def test_main_diagnostic_send_failure_does_not_escalate(monkeypatch):
         assert code == 0
 
 
-def test_main_does_not_raise_but_escalates_when_actionable_send_fails():
-    # Fixed 2026-07-06: a failed Telegram send for a REAL actionable change
-    # must fail the job (non-zero exit) so GitHub's failure-run email is the
-    # fallback channel -- previously this was silent, so a broken delivery
-    # for a genuine guard flip would never reach anyone.
+def test_main_does_not_raise_but_escalates_when_all_channels_fail(monkeypatch):
+    # A failed Telegram send (all retries) AND a failed email fallback for a
+    # REAL actionable change must fail the job (non-zero exit) so GitHub's
+    # failure-run email is a third, independent channel -- previously this
+    # was silent-only, so a broken delivery for a genuine guard flip would
+    # never reach anyone.
+    monkeypatch.delenv("EMAIL_ADDRESS", raising=False)
+    monkeypatch.delenv("EMAIL_PASSWORD", raising=False)
     with patch.object(nsc, "build_change_email",
                        return_value=("Asset Universe: AVGO guard -> DEFENSIVE", "ACTION: Rotate AVGO")), \
-         patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")):
+         patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")), \
+         patch.object(nsc.time, "sleep"):
         import sys
         old_argv = sys.argv
         sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
@@ -139,6 +143,58 @@ def test_main_does_not_raise_but_escalates_when_actionable_send_fails():
         finally:
             sys.argv = old_argv
         assert code == 1
+
+
+def test_send_with_retry_succeeds_on_second_attempt():
+    # First Telegram attempt fails, second succeeds -- no email fallback
+    # needed, and the retry itself is invisible to the caller.
+    with patch.object(nsc, "send_telegram", side_effect=[RuntimeError("transient"), None]) as mock_send, \
+         patch.object(nsc.time, "sleep") as mock_sleep:
+        nsc.send_with_retry_and_fallback("subject", "body")
+        assert mock_send.call_count == 2
+        mock_sleep.assert_called_once()
+
+
+def test_send_with_retry_falls_back_to_email_when_telegram_exhausted(monkeypatch):
+    monkeypatch.setenv("EMAIL_ADDRESS", "me@example.com")
+    monkeypatch.setenv("EMAIL_PASSWORD", "app-password")
+    with patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram down")), \
+         patch.object(nsc, "send_email_fallback") as mock_email, \
+         patch.object(nsc.time, "sleep"):
+        nsc.send_with_retry_and_fallback("subject", "body")  # must not raise
+        mock_email.assert_called_once_with("subject", "body")
+
+
+def test_send_with_retry_raises_when_both_channels_fail():
+    with patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram down")), \
+         patch.object(nsc, "send_email_fallback", side_effect=RuntimeError("smtp auth failed")), \
+         patch.object(nsc.time, "sleep"):
+        try:
+            nsc.send_with_retry_and_fallback("subject", "body")
+            assert False, "expected RuntimeError"
+        except RuntimeError as e:
+            assert "telegram down" in str(e)
+            assert "smtp auth failed" in str(e)
+
+
+def test_main_suppress_notify_skips_even_a_real_change(monkeypatch):
+    # 2026-07-07: deploying a state-file correction (e.g. the HWM sleeve-
+    # state backfill) must not fire a phantom "real event" alert -- this
+    # flag is the escape hatch, checked before the diff even runs.
+    monkeypatch.setenv("SUPPRESS_NOTIFY", "true")
+    with patch.object(nsc, "build_change_email",
+                       return_value=("Asset Universe: Sleeve -> OPEN", "REVIEW: ...")) as mock_diff, \
+         patch.object(nsc, "send_with_retry_and_fallback") as mock_send:
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", "a.md", "b.md"]
+        try:
+            code = nsc.main()
+        finally:
+            sys.argv = old_argv
+        mock_diff.assert_not_called()
+        mock_send.assert_not_called()
+        assert code == 0
 
 
 def test_send_telegram_raises_on_not_ok_response(monkeypatch):
