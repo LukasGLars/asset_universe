@@ -450,6 +450,34 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
+  the rebalance deploys (logged 2026-07-07).** Everything in this system --
+  guard, crash trigger, joint-stress escalation -- is alert-only. It has no
+  execution capability: a real breach still requires the operator to see a
+  Telegram message and manually trade at Avanza. HWM is the sole exception
+  -- its $271.39 hard stop is a real resting sell order at the broker,
+  which executes with zero software or human involvement, including through
+  a total outage of this entire pipeline or the operator being fully
+  unreachable. Once the rebalance executes and AVGO reaches its 55% target
+  (currently only 16.1%, so this is explicitly deferred until then, per the
+  operator's own call), the same mechanism should be considered for at
+  least part of the AVGO position -- it is the only protection that
+  survives total human/system unavailability, and AVGO/LLY/Gold currently
+  have none.
+
+  **Key design difference from HWM, flagged before building:** HWM's stop
+  is a fixed price for a single one-shot 30-day tactical trade -- set once,
+  done. AVGO's guard is dynamic (200d SMA + 5-day/-10% crash ROC, both
+  move with price), so a broker-side stop mirroring it would need periodic
+  re-pricing on some cadence, not a set-and-forget order. That update
+  mechanism (who/what re-prices it, how often, what happens if a
+  re-pricing is missed) needs to be designed before this is built, not
+  assumed away.
+
+  **Explicitly deferred, not built** -- revisit once the rebalance
+  (remaining legs, sequenced post-HWM-exit) actually deploys and AVGO is
+  at or near target weight.
+
 - **Sleeve's `HARD_STOP_PCT` (2%) is a flat, unvalidated constant, not
   derived from asset volatility (logged 2026-07-07).** `run_entry_screen.py`
   computes the hard stop as a fixed `entry_price * (1 - 0.02)` for every
