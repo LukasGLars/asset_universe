@@ -7,6 +7,59 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Alert-robustness hardening (2026-07-07, PR #53) -- prompted by the operator going offline for several days
+
+Live audit of the whole notification chain surfaced three real weaknesses
+(not hypothetical -- one of them fired for real during this same session,
+see below):
+
+1. **Two silent gaps already happened** (HWM sleeve-state, scipy
+   dependency) before being caught by accident, not by any check.
+2. **The notifier can't tell a real event from a bookkeeping correction.**
+   Confirmed live: re-triggering `daily-sync` to verify the HWM sleeve-
+   state fix (see below) caused a genuine Telegram send of "Sleeve CLOSED
+   -> OPEN" -- a false positive, since HWM had been open since 2026-06-24
+   and nothing about the position actually changed.
+3. **Single delivery channel, single point of failure.** Telegram-only,
+   no retry, no fallback -- one API hiccup and a real guard flip/stop
+   breach silently doesn't reach anyone.
+
+**Built and merged (PR #53):**
+- `notify_signal_changes.py`: Telegram send now retries twice (2s backoff)
+  before falling back to email (`EMAIL_ADDRESS`/`EMAIL_PASSWORD` -- the
+  same Gmail App Password secrets from the pre-Telegram pipeline, still
+  provisioned, now reused as a backup channel instead of the primary).
+  Only if *both* channels fail does the job fail (GitHub's own failure-run
+  email is a third, independent fallback).
+- `SUPPRESS_NOTIFY` workflow_dispatch flag -- skips notification entirely,
+  checked before the diff even runs. For any future run that's a state
+  correction rather than a real event (exactly the gap that caused #2
+  above). Should be set to `true` whenever manually re-running `daily-sync`
+  to verify a fix that changes tracked state.
+- 4 new tests (retry-then-succeed, retry-exhausted-then-email-fallback,
+  both-channels-fail, suppress-flag). 187 passing project-wide.
+- Live-verified on a branch via real `workflow_dispatch` against actual
+  secrets in CI before merging -- not just local mocks.
+
+**Explicitly deferred, not built (needs the operator's own action):**
+external heartbeat / dead-man's-switch (e.g. healthchecks.io) -- would
+catch a full GitHub Actions outage, which nothing today can (both the
+pipeline and its watchdog live inside GitHub). Needs a third-party account
+signup, so it's config-only whenever the operator has 2 minutes: add the
+ping URL as a repo secret/step, wire once, done. Auto-remediation
+(retry/fallback above) was prioritized first since it needed no new
+external dependency and covers the more probable failure class (a
+transient API/delivery hiccup, not a full platform outage).
+
+**Design principle applied, worth repeating:** auto-remediate every
+*mechanical* failure class (transient API errors, a missed cron fire --
+already self-healing via the existing watchdog) so a human is only paged
+for things that genuinely need one. The one thing that can never
+self-heal is total pipeline death -- a dead system can't resurrect
+itself, which is exactly why a human-facing heartbeat is still the right
+tool for that one specific case, not more automation trying to fix a
+dead thing.
+
 ## Session 2026-07-07 — sleeve entry reconstruction, HWM state gap, risk alerting
 
 **AVGO guard constructiveness + dip-buy overlay, discussed not built.**
@@ -449,6 +502,19 @@ points). Merging master into the #41 branch will need a small manual
 resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
+
+- **External heartbeat / dead-man's-switch (e.g. healthchecks.io), needs
+  operator signup (logged 2026-07-07, see "Alert-robustness hardening"
+  above for full context).** The one alert-robustness gap not closed by
+  PR #53's auto-retry/fallback: a full GitHub Actions platform outage,
+  which nothing today catches since both the pipeline and its watchdog
+  live inside GitHub. Config-only once the operator has 2 minutes: sign up
+  (free tier), add the ping URL as a repo secret, add one curl step to
+  `sync.yml` after a successful run. Important design note from the same
+  review: whatever channel this heartbeat's *own* missed-ping alert uses
+  must be one the operator actually watches (Telegram/SMS), not email --
+  otherwise the backstop for "everything else failed" could itself go
+  unread in an inbox nobody's checking while traveling.
 
 - **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
   the rebalance deploys (logged 2026-07-07).** Everything in this system --
