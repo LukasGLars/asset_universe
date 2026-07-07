@@ -625,22 +625,21 @@ resolution -- combine both additions, don't just pick one side.
   EPS $ + consensus + beat magnitude to the message. Quick, not urgent --
   next prints are LLY 2026-08-05, AVGO 2026-09-03.
 
-- **PR #40 (`research/sleeve-duration-sensitivity`), open, not merged --
-  important, operator flagged this as worth prioritizing: does the
-  sleeve's 30-day time exit actually optimize trade duration, or is 30
-  just inherited from the informal HWM precedent?** Real finding: 90 days
-  beats 30 even after fixing a real annualization bug (raw return
-  trivially favors longer windows for any appreciating stock -- fixed
-  with proper compounding annualization first). **Not decision-grade yet**
-  -- measured broad regime-matched dates for top-ranked momentum names,
-  not specifically dates passing the sleeve's actual entry gate (MA50-
-  not-extended, momentum conditioning). Closing that gap needs re-running
-  the entry-gate logic historically (bigger task, but `run_sleeve_entry_
-  reconstruction.py`, built since this PR opened for the exit-duration
-  backlog item, may already have the reusable gate-reconstruction
-  machinery needed). Report-only PR, does not change the live
-  `TIME_EXIT_DAYS=30` constant. 160 tests passed pre-merge on its own
-  branch.
+- ~~PR #40 (`research/sleeve-duration-sensitivity`), open, not merged~~
+  -- **CORRECTED 2026-07-08: superseded, not an open question.** PR #40's
+  finding (90d beats 30d) used the wrong population (broad regime-matched
+  dates, not the sleeve's actual gated entries) and disclaimed itself as
+  not decision-grade for exactly that reason. **PR #45 (already merged)
+  redid this properly** against the real ~4,300-entry gated-entry
+  population (via `run_sleeve_entry_reconstruction.py`) and found the
+  **opposite**: annualized median return *declines* with duration (26.5%
+  at 15d down to ~20-22% at 45-90d) -- suggesting `TIME_EXIT_DAYS=30` is
+  already on the generous side, not that it should be lengthened. Trust
+  PR #45's answer over PR #40's. PR #40 itself can be closed without
+  merging (superseded), not left open as unresolved. Still genuinely not
+  a full verdict either way -- PR #45's own caveat stands: population-
+  level stat, not a compound-exit simulation (MA50 breach/hard stop would
+  truncate many real trades before the time exit ever binds).
 
 - ~~healthchecks.io check: switch Simple Period to Cron mode~~ -- **DONE
   2026-07-07/08.** Switched to Cron expression `30 20 * * 1-5` (the
@@ -790,26 +789,10 @@ resolution -- combine both additions, don't just pick one side.
   racing the time exit) -- that remains a separate, bigger follow-on if
   this sweep's results warrant it.
 
-- **Record the earnings-day manual verdict, not just alert on it (logged
-  2026-07-06).** The earnings-day checklist (`earnings_trajectory.py`,
-  PR #35) automates beat streak and guidance direction, but the two
-  checklist items that actually matter (AI revenue vs. the $56B FY26/$100B
-  FY27 guided pace, Anthropic/OpenAI contract-timing commentary) require a
-  human reading the real release/call -- confirmed not automatable, AVGO's
-  full SEC XBRL fact list has no segment-revenue breakdown, only a segment
-  *count*. Right now that manual judgment, once formed, has nowhere to go
-  -- it lives in the operator's memory across the gap until the remaining
-  AVGO tranche actually executes (which could be weeks after Sept 3, since
-  HWM's own deadline is 07-25 but the earnings gate is 09-03 -- the tranche
-  waits for whichever is later). Idea: a small CLI (mirrors
-  `run_entry_screen.py --open/--close`) -- `record_earnings_verdict.py AVGO
-  --cleared "..."` / `--not-cleared "..."` -- writing a persistent record
-  (ticker, date, verdict, free-text reasoning) that (a) shows on the daily
-  dashboard going forward instead of disappearing after one Telegram
-  message, and (b) could gate the remaining-tranche decision and "next kr"
-  routing mechanically, the same way the price guard already does, instead
-  of relying on memory to enforce "wait for a cleared verdict."
-  **Explicitly deferred, not built** -- logged for later.
+- ~~Record the earnings-day manual verdict, not just alert on it~~ --
+  **DONE, stale entry.** `record_earnings_verdict.py` shipped via PR #39
+  (merged 2026-07-06) -- exactly the CLI described below. Corrected
+  2026-07-08 after finding this entry hadn't been marked done.
 
 - **BAA10Y credit-spread confirmation for the AVGO/LLY joint-stress rule
   (logged 2026-07-03).** Hypothesis: the 2022 episode where AVGO/LLY
