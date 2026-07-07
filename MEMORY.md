@@ -679,21 +679,26 @@ resolution -- combine both additions, don't just pick one side.
   (remaining legs, sequenced post-HWM-exit) actually deploys and AVGO is
   at or near target weight.
 
-- **Sleeve's `HARD_STOP_PCT` (2%) is a flat, unvalidated constant, not
-  derived from asset volatility (logged 2026-07-07).** `run_entry_screen.py`
-  computes the hard stop as a fixed `entry_price * (1 - 0.02)` for every
-  sleeve candidate regardless of the asset's own normal vol -- HWM and a
-  much choppier candidate would get the identical 2% cap. Set once at the
-  sleeve's original design (PR #6) and never revisited. Unlike the AVGO
-  guard's SMA window/crash threshold (validated via a 20-cell parameter
-  grid, PR #2) or the 30-day time exit (duration sweep done, PR #45), this
-  parameter has had **no sensitivity test and no vol-scaling alternative
-  considered**. If tested: (a) grid 2% against neighboring flat values
-  (1%/1.5%/3%) the same way the guard grid worked, and/or (b) replace the
-  flat percentage with a per-candidate vol-scaled stop (e.g. a multiple of
-  the asset's own ATR/historical daily move) so a calmer name and a choppier
-  one aren't held to the identical risk-cap distance. **Explicitly
-  deferred, not built** -- logged as a real gap, not just a style question.
+- **Sleeve's `HARD_STOP_PCT` (2%) -- validated against real data (PR #68,
+  2026-07-08), and the finding is more important than a simple "is 2% ok"
+  answer.** Grid tested [1%, 1.5%, 2%, 3%, 4%] via compound stop-loss
+  simulation against PR #45's real ~4,300-entry gated-entry population
+  (`run_sleeve_stop_sensitivity.py`). **Every threshold gets stopped out
+  on more than half of trades** (73% at 1%, 63% at the live 2%, still 48%
+  even at the loosest tested 4%), and **every threshold shows a negative
+  median return** -- in real tension with PR #45's own no-stop duration
+  study, which found positive annualized returns (~20%+) on this exact
+  same population. **Plausible explanation, not yet confirmed:** a fixed
+  stop permanently locks in a loss for any entry that dips past it, even
+  ones that would have recovered by the 30-day time exit -- meaning the
+  real question this raises isn't "what percentage" but **"should any
+  fixed stop exist at all."** Honestly flagged as unreconciled in the
+  script's own output -- needs a direct side-by-side no-stop-vs-stop
+  comparison on the identical population before treating either result as
+  decision-grade. **Report-only, live `HARD_STOP_PCT` unchanged.** This is
+  a genuinely bigger finding than the original "is 2% the right number"
+  question -- worth the operator's own review, not a quiet parameter
+  tweak.
 
 - **Two-message earnings design: structured-data verdict + transcript-read
   qualitative follow-up (logged 2026-07-07, design only, no code written).**
