@@ -14,33 +14,33 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,623 kr  21.4%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,091,425 kr
+  TPV                                        1,090,234 kr
     Reactor Core            862,037 kr  (79%)
-    Home Base               234,623 kr  (21%)
+    Home Base               234,623 kr  (22%)
     War Chest                 1,959 kr  (0%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,091,425 kr
+  Now                     :     1,090,234 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +18.7%
+  AWAR (trailing)         :  +18.5%
   Required CAGR           :  +22.2%
-  Status                  :  BEHIND  (-3.5% margin)
+  Status                  :  BEHIND  (-3.7% margin)
 
-  Projected @ AWAR        :     9,589,700 kr
-  vs target               :    -3,345,006 kr  (deficit)
+  Projected @ AWAR        :     9,472,672 kr
+  vs target               :    -3,462,034 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,539,088 kr       ~2047
-  Conservative   +15%       7,011,231 kr       ~2041
-  Base           +20%      10,746,995 kr       ~2038
-  Current AWAR   +19%       9,589,700 kr       ~2039
-  Bull           +30%      24,507,193 kr       ~2035
+  Bear           +10%       4,535,678 kr       ~2047
+  Conservative   +15%       7,005,660 kr       ~2041
+  Base           +20%      10,738,083 kr       ~2038
+  Current AWAR   +19%       9,472,672 kr       ~2039
+  Bull           +30%      24,485,629 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -51,14 +51,14 @@ MACRO REGIME
   Nominal 10Y             4.49%   HIGH
   Real Yield             +2.26%   HIGH  ^
   Breakeven               2.24%   MID
-  HY OAS                274 bps   TIGHT
+  HY OAS                272 bps   TIGHT
   IG Credit               1.54%   TIGHT
   Curve 10Y-3M          +61 bps   LOW
   Curve 10Y-2Y          +35 bps   LOW
   SE 10Y                   nan%   --
   USD                     120.7   STRONG
 
-  HY 20d delta  : -2 bps  (flat)
+  HY 20d delta  : -3 bps  (flat)
   Confidence    : HIGH
   Data through  : 2026-07-06
 
@@ -130,9 +130,12 @@ TACTICAL RULES
                      prints against this.
 
   Opportunistic Sleeve
-    Status         : CLOSED (0/1 position)
-    Best candidate : RL (Ralph Lauren Corporation)  (ext +6.0%, 27d med +2.0%, div ROBUST, pre-entry tripwires PASSED) -- run run_entry_screen.py for full detail
-    VIX review     : 15.57  (35% percentile, falling) -- for review, not a gate
+    Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
+    Current price  : $277.91
+    Time exit      : 2026-07-24  (17d left)
+    Binding stop   : $271.39 (HARD)
+    Tripwires      : CLEAN
+    Risk           : CLEAN
 
 ==============================================================
 NEXT CONTRIBUTION
