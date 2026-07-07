@@ -1,21 +1,29 @@
 """
 check_local_data_freshness.py
 
-Guards against the failure mode from 2026-07-07: the local `data/` parquet
-store (gitignored, never synced anywhere -- see .gitignore) only refreshes
+Originally built 2026-07-07 to guard the local `data/` parquet store
+(gitignored, never synced anywhere -- see .gitignore), which only refreshes
 when someone explicitly runs `python -m asset_universe.update`. Nothing
 checked its age before local analysis scripts trusted it, and it sat a full
 week stale (last updated 2026-06-30) without any warning, which nearly
 produced a wrong "HWM has breached its stop" claim during a session that
 used it directly.
 
-This is UNRELATED to the live GitHub Actions pipeline (daily-sync /
-sync-sheet / check_sync_health.py), which has its own fresh cache per run
-and was never affected -- this script only guards local, ad-hoc analysis.
+Also wired into `sync.yml` itself (2026-07-07, after the alert-robustness
+review): the live pipeline's own `asset_universe.update` step was assumed
+to always produce fresh data since it runs every scheduled fire -- but
+that assumption was never actually verified, and the healthchecks.io
+heartbeat only proves the job *ran*, not that it ran on good data (a
+silent yfinance/FRED hiccup that returns stale data without erroring would
+still ping heartbeat healthy). Same check, same auto-refresh-then-fail
+logic, now gates the live pipeline too, right after "Update prices" and
+before any signal is computed from it.
 
-Usage: run this FIRST, before any local script that reads from data/raw/.
+Usage: run this FIRST, before any local script that reads from data/raw/,
+or as a `sync.yml` step right after `python -m asset_universe.update`.
 Auto-refreshes if stale (more than 1 trading day behind, weekends
-excluded) rather than just warning, since the fix is one command either way.
+excluded) rather than just warning, since the fix is one command either
+way; fails loudly (non-zero exit) only if a refresh attempt doesn't fix it.
 """
 from __future__ import annotations
 

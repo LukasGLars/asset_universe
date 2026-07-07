@@ -53,6 +53,11 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
 
+      - name: Verify data is actually fresh (not just that the update ran)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
       - name: Save parquet cache
         uses: actions/cache/save@v4
         with:
