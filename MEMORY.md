@@ -615,19 +615,15 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
-- **healthchecks.io check: switch Simple Period to Cron mode (logged
-  2026-07-07).** Currently Period=3 days/Grace=1h (Simple mode) -- fixed
-  and working, but only catches "pipeline dead" within up to 3 days.
-  Discussed switching to Cron mode with expression `30 20 * * 1-5`
-  (the evening run) + Grace ~2h -- same weekend-blind-spot as today (any
-  ping, from either daily run, resets the timer either way) but same-day
-  detection instead of up-to-3-day. Strict improvement, no downside
-  identified. Not yet done -- one dashboard field change. Optional
-  follow-on: a second check keyed to the morning run (`0 6 * * 1-5`)
-  would close the one remaining blind spot (a morning-only failure that
-  doesn't also take down the evening run) -- needs `sync.yml` to route
-  pings by `github.event.schedule`, real but small code change, not
-  started.
+- ~~healthchecks.io check: switch Simple Period to Cron mode~~ -- **DONE
+  2026-07-07/08.** Switched to Cron expression `30 20 * * 1-5` (the
+  evening run), Grace ~2h -- same-day detection instead of up-to-3-day,
+  same weekend-blind-spot as before (unavoidable in this design, not a
+  regression). **Optional follow-on still open:** a second check keyed to
+  the morning run (`0 6 * * 1-5`) would close the one remaining blind spot
+  (a morning-only failure that doesn't also take down the evening run) --
+  needs `sync.yml` to route pings by `github.event.schedule`, real but
+  small code change, not started.
 
 - **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
   the rebalance deploys (logged 2026-07-07).** Everything in this system --
