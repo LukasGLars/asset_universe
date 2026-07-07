@@ -3,7 +3,10 @@ import datetime as dt
 import pandas as pd
 
 import run_entry_screen
-from run_entry_screen import binding_stop, select_best_candidate, suggested_duration_days, _vix_stats
+from run_entry_screen import (
+    binding_stop, select_best_candidate, suggested_duration_days, _vix_stats,
+    sleeve_risk_state,
+)
 
 
 def test_binding_stop_ma50_binds_below_crossover():
@@ -65,6 +68,36 @@ def test_select_best_candidate_excludes_already_held():
     ])
     pick = select_best_candidate(out, held={"HELD"})
     assert pick["ticker"] == "NEW"
+
+
+def _trig(current_price=280.0, binding_stop=271.39, time_exit_days_remaining=10):
+    return {"current_price": current_price, "binding_stop": binding_stop,
+            "time_exit_days_remaining": time_exit_days_remaining}
+
+
+def test_sleeve_risk_stopped_when_price_at_or_below_binding_stop():
+    assert sleeve_risk_state(_trig(current_price=271.0), any_watch=False) == "STOPPED"
+    assert sleeve_risk_state(_trig(current_price=271.39), any_watch=False) == "STOPPED"  # exactly at stop
+
+
+def test_sleeve_risk_time_exit_due_outranks_tripwire():
+    trig = _trig(current_price=280.0, time_exit_days_remaining=0)
+    assert sleeve_risk_state(trig, any_watch=True) == "TIME-EXIT-DUE"
+
+
+def test_sleeve_risk_stopped_outranks_time_exit_due():
+    trig = _trig(current_price=271.0, time_exit_days_remaining=0)
+    assert sleeve_risk_state(trig, any_watch=False) == "STOPPED"
+
+
+def test_sleeve_risk_tripwire_when_only_soft_flags():
+    trig = _trig(current_price=280.0, time_exit_days_remaining=5)
+    assert sleeve_risk_state(trig, any_watch=True) == "TRIPWIRE"
+
+
+def test_sleeve_risk_clean_when_nothing_flagged():
+    trig = _trig(current_price=280.0, time_exit_days_remaining=5)
+    assert sleeve_risk_state(trig, any_watch=False) == "CLEAN"
 
 
 def test_select_best_candidate_excludes_non_enter():
