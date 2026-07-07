@@ -7,6 +7,25 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Heartbeat (healthchecks.io) wired in (2026-07-07, PR #55) -- closes the last alert-robustness gap
+
+The one item deferred from the alert-robustness hardening below (needed
+the operator's own signup). Operator created a free healthchecks.io check
+("asset_universe") same day. `HEALTHCHECKS_PING_URL` added as a repo
+secret (URL confirmed reachable via a direct curl before wiring). `sync.yml`
+now curls it as the last step in the job -- only reached if every prior
+step succeeded, so a dead/broken pipeline shows up as a missed ping on an
+independent third-party service, not just inside GitHub. `|| true` on the
+curl so a transient healthchecks.io-side hiccup never fails the sync job
+itself. Live-verified via a real `workflow_dispatch` run (suppressed
+notify) before merging -- heartbeat step confirmed to fire.
+
+**One thing left for the operator, not urgent:** the check's default
+"Period: 1 day" will false-alarm every weekend, since the pipeline only
+runs weekdays (same Fri-evening -> Mon-morning gap `check_sync_health.py`
+already special-cases). Fix is a single dashboard field -- set Period to
+~2.5 days / 60h. Flagged to the operator, not yet confirmed done.
+
 ## Alert-robustness hardening (2026-07-07, PR #53) -- prompted by the operator going offline for several days
 
 Live audit of the whole notification chain surfaced three real weaknesses
@@ -503,18 +522,14 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
-- **External heartbeat / dead-man's-switch (e.g. healthchecks.io), needs
-  operator signup (logged 2026-07-07, see "Alert-robustness hardening"
-  above for full context).** The one alert-robustness gap not closed by
-  PR #53's auto-retry/fallback: a full GitHub Actions platform outage,
-  which nothing today catches since both the pipeline and its watchdog
-  live inside GitHub. Config-only once the operator has 2 minutes: sign up
-  (free tier), add the ping URL as a repo secret, add one curl step to
-  `sync.yml` after a successful run. Important design note from the same
-  review: whatever channel this heartbeat's *own* missed-ping alert uses
-  must be one the operator actually watches (Telegram/SMS), not email --
-  otherwise the backstop for "everything else failed" could itself go
-  unread in an inbox nobody's checking while traveling.
+- **healthchecks.io check's Period needs a 1-field dashboard fix (logged
+  2026-07-07, see "Heartbeat wired in" above -- heartbeat itself is
+  DONE/merged, PR #55).** Default "Period: 1 day" will false-alarm every
+  weekend since the pipeline only runs weekdays. Fix: set Period to ~2.5
+  days / 60h on the healthchecks.io dashboard -- single field, not code.
+  Not yet confirmed done. Also worth checking whenever the operator is on
+  that dashboard: the check's own missed-ping alert should route somewhere
+  actually watched (Telegram/SMS), not just email.
 
 - **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
   the rebalance deploys (logged 2026-07-07).** Everything in this system --
