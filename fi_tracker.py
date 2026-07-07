@@ -442,6 +442,11 @@ try:
     print(f"    Beat streak    : {_av_streak}" if _av_streak is not None else "    Beat streak    : n/a")
     print(f"    Guidance trend : {_av_guidance}  (+1yr estimate vs. 90 days ago)")
 
+    from earnings_verdict import format_verdict_line
+    _av_verdict_line = format_verdict_line("AVGO")
+    if _av_verdict_line:
+        print(f"    Last verdict   : {_av_verdict_line}")
+
 except Exception as _e:
     print(f"\n  AVGO Earnings Checkpoint : [unavailable — {_e}]")
 
@@ -511,6 +516,11 @@ try:
     print(f"    Latest quarter : {_lly_latest_q}")
     print(f"    Beat streak    : {_lly_streak}" if _lly_streak is not None else "    Beat streak    : n/a")
     print(f"    Guidance trend : {_lly_guidance}  (+1yr estimate vs. 90 days ago)")
+
+    from earnings_verdict import format_verdict_line
+    _lly_verdict_line = format_verdict_line("LLY")
+    if _lly_verdict_line:
+        print(f"    Last verdict   : {_lly_verdict_line}")
 
 except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")

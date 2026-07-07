@@ -7,6 +7,277 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Root cause found for 2026-07-07's delayed/failed scheduled run -- concurrency guard added (PR #60)
+
+The 20:30 UTC `daily-sync` cron appeared not to fire for ~80 minutes,
+prompting a long live-debugging session (heartbeat, cron config, etc.)
+before the actual cause was found: **the cron wasn't broken -- it fired
+late (~80min, GitHub-side queuing/congestion, cause not fully confirmed)
+and collided with a concurrent manual `workflow_dispatch` test run.** Both
+tried to commit `status.md` around the same time; the second one's `git
+pull --rebase origin master` hit a real merge conflict (auto-merge failed
+on `status.md`) and the whole job failed outright -- confirmed directly in
+that run's own logs (`CONFLICT (content): Merge conflict in status.md`).
+No data corruption, but that run's notify/heartbeat steps never executed
+since the job failed before reaching them.
+
+**Fix:** added `concurrency: {group: daily-sync, cancel-in-progress:
+false}` to both `sync.yml` and `sync_sheet.yml` -- shared group since both
+workflows commit to `config/portfolio.toml` too, so this closes the
+cross-workflow collision risk, not just within `daily-sync` itself.
+`cancel-in-progress: false` means overlapping runs queue and execute
+sequentially rather than racing -- no run's work gets dropped. Live-
+verified via a real `workflow_dispatch` on a branch before merging.
+
+**Lesson, stated plainly:** none of the alert-robustness work built
+earlier same day (retry/fallback, heartbeat, data-freshness gate) was
+wrong -- the actual bug was a genuinely new failure mode (concurrent-run
+collision), only surfaced because testing that same evening happened to
+overlap with a real delayed cron fire. Worth remembering: manual
+verification dispatches during active development carry a real (if rare)
+risk of colliding with the schedule itself if there's no concurrency
+guard -- now fixed.
+
+**Still open, not resolved:** why the cron was ~80 minutes late in the
+first place. No GitHub-wide incident was active at the time (checked
+githubstatus.com); an earlier documented Actions API incident that day
+had already resolved hours prior. Could be residual congestion, could be
+something specific to this repo/workflow -- not confirmed either way. If
+it recurs on a day with no manual testing to muddy the signal, that's
+worth investigating further; a one-off isn't yet a pattern.
+
+## Heartbeat notification path actually proven end-to-end (2026-07-07)
+
+Following up on the heartbeat build (PR #55): confirming a check exists and
+pings successfully proves detection, not that a real down event actually
+notifies anyone -- so this was deliberately force-tested for real, not
+just trusted.
+
+**First real test (Period/Grace temporarily set to 2min/1min) found a real
+gap:** the check correctly flipped to Down (confirmed in its Event Log --
+"Status change: up -> down" recorded), but **no notification was ever
+attempted** -- the Event Log's "Downtime alert" category was completely
+empty, which rules out a delivery/spam problem (a failed send attempt
+still logs an entry) and points at the email integration's ON toggle not
+having actually been saved/armed. Ruled out a race condition from our own
+testing first (checked `gh run list` -- no scheduled or dispatched run
+fired in the relevant window, next scheduled run was a full hour out).
+
+**Fix: toggle the email integration off, then on again**, to force it to
+actually save. Verified via two independent real (non-test-button) state
+transitions afterward: a genuine recovery ping produced a real "asset_
+universe is UP" email (downtime correctly measured as 23m36s, matching
+the original real down event), and a second forced miss produced a real
+"asset_universe is DOWN" Telegram message.
+
+**Also added: Telegram as a second healthchecks.io integration, alongside
+email.** This directly satisfies the design point flagged when the
+heartbeat was first proposed -- the heartbeat's own alert needs to reach a
+channel actually watched while traveling, not email. Email alone had
+already demonstrated it can silently fail to arm; Telegram is now the
+primary expected channel for this specific alert, with email as a second
+independent path.
+
+**Status: Period/Grace need reverting from the 2min/1min test values back
+to 3 days/1 hour** (set during the earlier gate-tuning session) -- flagged
+to the operator, not yet confirmed done as of this writing.
+
+## Live pipeline gated on actual data freshness, not just exit code (2026-07-07, PR #57)
+
+Closes a gap found while scoping an operations test for the whole alert
+chain: the heartbeat (PR #55) only proves the job *ran*, not that it ran
+on good data. A silent yfinance/FRED hiccup that returns stale data
+without erroring would still ping heartbeat healthy and let every
+downstream signal (guard, silver, sleeve) compute off day(s)-old prices.
+`check_local_data_freshness.py` already had exactly the right logic
+(SPY reference ticker, weekend-aware, auto-refresh-then-fail) but was
+scoped to local ad-hoc sessions only -- the "unrelated to the live
+pipeline" claim in its own docstring was itself unverified, same failure
+class as everything else this project keeps finding. Now also wired into
+`sync.yml` as a step right after "Update prices": auto-refreshes once if
+stale, fails the job loudly if a refresh doesn't fix it, before any signal
+gets computed downstream. Live-verified in real CI before merging (not
+just local). 187 tests passing project-wide, no new tests needed (existing
+4 already cover the trading-day logic this reuses as-is).
+
+## Heartbeat (healthchecks.io) wired in (2026-07-07, PR #55) -- closes the last alert-robustness gap
+
+The one item deferred from the alert-robustness hardening below (needed
+the operator's own signup). Operator created a free healthchecks.io check
+("asset_universe") same day. `HEALTHCHECKS_PING_URL` added as a repo
+secret (URL confirmed reachable via a direct curl before wiring). `sync.yml`
+now curls it as the last step in the job -- only reached if every prior
+step succeeded, so a dead/broken pipeline shows up as a missed ping on an
+independent third-party service, not just inside GitHub. `|| true` on the
+curl so a transient healthchecks.io-side hiccup never fails the sync job
+itself. Live-verified via a real `workflow_dispatch` run (suppressed
+notify) before merging -- heartbeat step confirmed to fire.
+
+**One thing left for the operator, not urgent:** the check's default
+"Period: 1 day" will false-alarm every weekend, since the pipeline only
+runs weekdays (same Fri-evening -> Mon-morning gap `check_sync_health.py`
+already special-cases). Fix is a single dashboard field -- set Period to
+~2.5 days / 60h. Flagged to the operator, not yet confirmed done.
+
+## Alert-robustness hardening (2026-07-07, PR #53) -- prompted by the operator going offline for several days
+
+Live audit of the whole notification chain surfaced three real weaknesses
+(not hypothetical -- one of them fired for real during this same session,
+see below):
+
+1. **Two silent gaps already happened** (HWM sleeve-state, scipy
+   dependency) before being caught by accident, not by any check.
+2. **The notifier can't tell a real event from a bookkeeping correction.**
+   Confirmed live: re-triggering `daily-sync` to verify the HWM sleeve-
+   state fix (see below) caused a genuine Telegram send of "Sleeve CLOSED
+   -> OPEN" -- a false positive, since HWM had been open since 2026-06-24
+   and nothing about the position actually changed.
+3. **Single delivery channel, single point of failure.** Telegram-only,
+   no retry, no fallback -- one API hiccup and a real guard flip/stop
+   breach silently doesn't reach anyone.
+
+**Built and merged (PR #53):**
+- `notify_signal_changes.py`: Telegram send now retries twice (2s backoff)
+  before falling back to email (`EMAIL_ADDRESS`/`EMAIL_PASSWORD` -- the
+  same Gmail App Password secrets from the pre-Telegram pipeline, still
+  provisioned, now reused as a backup channel instead of the primary).
+  Only if *both* channels fail does the job fail (GitHub's own failure-run
+  email is a third, independent fallback).
+- `SUPPRESS_NOTIFY` workflow_dispatch flag -- skips notification entirely,
+  checked before the diff even runs. For any future run that's a state
+  correction rather than a real event (exactly the gap that caused #2
+  above). Should be set to `true` whenever manually re-running `daily-sync`
+  to verify a fix that changes tracked state.
+- 4 new tests (retry-then-succeed, retry-exhausted-then-email-fallback,
+  both-channels-fail, suppress-flag). 187 passing project-wide.
+- Live-verified on a branch via real `workflow_dispatch` against actual
+  secrets in CI before merging -- not just local mocks.
+
+**Explicitly deferred, not built (needs the operator's own action):**
+external heartbeat / dead-man's-switch (e.g. healthchecks.io) -- would
+catch a full GitHub Actions outage, which nothing today can (both the
+pipeline and its watchdog live inside GitHub). Needs a third-party account
+signup, so it's config-only whenever the operator has 2 minutes: add the
+ping URL as a repo secret/step, wire once, done. Auto-remediation
+(retry/fallback above) was prioritized first since it needed no new
+external dependency and covers the more probable failure class (a
+transient API/delivery hiccup, not a full platform outage).
+
+**Design principle applied, worth repeating:** auto-remediate every
+*mechanical* failure class (transient API errors, a missed cron fire --
+already self-healing via the existing watchdog) so a human is only paged
+for things that genuinely need one. The one thing that can never
+self-heal is total pipeline death -- a dead system can't resurrect
+itself, which is exactly why a human-facing heartbeat is still the right
+tool for that one specific case, not more automation trying to fix a
+dead thing.
+
+## Session 2026-07-07 — sleeve entry reconstruction, HWM state gap, risk alerting
+
+**AVGO guard constructiveness + dip-buy overlay, discussed not built.**
+Revisited whether the guard (200d SMA + crash trigger + joint-stress) is
+genuinely constructive: yes, per-year OOS record (`avgo_guard_oos.csv`)
+shows it matched or improved Calmar in 17 of 18 years, with the real wins
+concentrated exactly where you'd want them (2020 COVID Calmar 1.39->3.21,
+2022 bear 0.001->0.87, 2018 vol spike 0.77->3.66) -- not curve-fit, since
+the crash trigger and joint-stress escalation were both validated on a TXN
+analog (a crash type AVGO itself has never lived through) and both showed
+monotonic, not spiky, improvement. Separately discussed a "buy the dip"
+overlay for AVGO/LLY re-entry -- concluded the ~5pp ceiling (the two years
+guard cost raw CAGR: 2009, 2026 YTD) doesn't justify the added whipsaw risk
+that would fight the guard's own purpose. **Not built, correctly**: pure
+discussion, no code changed.
+
+**Sleeve exit-duration backlog item closed (PR #45).** PR #40 had
+disclaimed its own exit-duration sweep because it tested the wrong
+population (all regime-matched momentum dates, not the sleeve's actual
+gated entries) and believed the earnings gate couldn't be reconstructed
+point-in-time ("yfinance only exposes the current earnings calendar").
+**That claim was wrong, not just unverified** -- confirmed directly:
+`yf.Ticker("AVGO").get_earnings_dates(limit=60)` returns the full
+historical record back to 2009-12-03; `_next_earnings()` in `engine.py`
+just filters it to `>=today`. With that unblocked, built
+`run_sleeve_entry_reconstruction.py`: reconstructs all 4 of
+`screen_tactical()`'s gates point-in-time (reusing
+`run_sleeve_backtest.py`'s no-lookahead walk-forward ranking for gate 1),
+generates the real ~4,300-entry declustered gated-entry population
+(2009-2026), and sweeps duration against it. Result: annualized median
+return *declines* with duration (26.5% at 15d down to ~20-22% at 45-90d)
+-- edge looks front-loaded, if anything suggesting `TIME_EXIT_DAYS=30` is
+already on the generous side. **Not a verdict** -- still a population-level
+stat, not a compound-exit simulation (MA50 breach / hard stop would
+truncate many real trades before the time exit ever binds); that stays a
+separate, bigger follow-on. Self-check reproduces PR #5's ground truth
+(HWM clears all 4 gates as of 2026-06-24). `forward_return()` hand-verified
+against real price data. 171 tests passed pre-merge.
+
+**HWM sleeve-state gap found and fixed (PR #46) -- the actual reason for
+"no Telegram messages from the sleeve."** `config/sleeve_state.toml` had
+shown `open=false` since its creation (PR #6) -- HWM was genuinely entered
+2026-06-24 and MEMORY.md had been tracking it against a real exit rule,
+but the state file that `compute_exit_triggers()` needs was never
+populated via `--open`, so there was nothing to monitor and therefore
+nothing that could ever notify, regardless of price action. Backfilled
+with the real entry (2026-06-24, $276.93, 11 shares, HIGH/TIGHT regime, FX
+9.7344 SEK/USD and capital ~29,653 kr both derived from that date's actual
+data) -- **not** via `--open`, which stamps *today's* date and would have
+thrown the 30-day time-exit off by two weeks. Resolved the $258-vs-$271
+sheet discrepancy along the way: $258 was the sheet's manually-noted MA50
+(informational), $271.39 is the real binding hard stop -- consistent with
+MEMORY.md's existing "$271 hard stop" note.
+
+**Local data staleness found and guarded against (same PR #46) --
+separate from the above, and separate from the live pipeline.** While
+investigating HWM, found the local `data/` parquet cache (gitignored,
+never synced anywhere) was a full week stale (2026-06-30) with nothing
+checking or warning about it -- nearly produced a wrong "HWM has breached
+its stop" conclusion mid-session. **Confirmed the live GitHub Actions
+pipeline was never affected** -- it restores/refreshes its own cache every
+scheduled run, independent of this machine; `check_sync_health.py` and the
+watchdog both reported healthy throughout. Added
+`check_local_data_freshness.py`: checks a reference ticker's latest date
+against the most recent trading day and auto-refreshes if stale, meant to
+be run first in any future local ad-hoc analysis session.
+
+**All non-sleeve triggers directly re-verified live, not assumed (per
+explicit request to "be clear").** Ran `extract_fingerprint()` against the
+actual live `status.md` (committed by the pipeline that morning) -- every
+field (AVGO guard/trigger, joint stress, LLY stress, silver GSR, regime
+flip, both earnings reminders + latest-quarter/beat-streak/guidance-trend)
+parsed a real value, none degraded to `unknown`. Confirmed genuinely live,
+not just re-trusting the 2026-07-06 audit's claim.
+
+**Sleeve risk state wired into the Telegram alert diff (PR #47) -- the
+deeper gap even after the state fix.** `check_signal_changes.py` only ever
+diffed the bare `OPEN`/`CLOSED` word -- `compute_exit_triggers()` and
+`compute_tripwires()` were already computing a stop breach, an approaching
+time exit, and tripwire flags, but none of those values were diffed, so a
+real hard-stop breach on a held position would sit silently in
+`status.md`'s text with nothing pushed to Telegram (closing only happens
+via a manual `--close`, run after actually selling -- nothing closes a
+position automatically). Added `sleeve_risk_state()` (`CLEAN` / `TRIPWIRE`
+/ `TIME-EXIT-DUE` / `STOPPED`, in that priority order) to
+`run_entry_screen.py`, printed alongside a new `Current price` line in
+`sleeve_daily_summary()`, and wired into the alert diff -- `ACTION`-framed
+for a stop breach or arrived time exit, `REVIEW`-framed for a softer
+tripwire. **Real display bug fixed along the way**: the `Time exit` line
+was labeling a constant (days from *entry* to exit, always ~30) as "Xd
+left", which would have shown the same number every day regardless of the
+actual date -- added `time_exit_days_remaining`, computed from today, and
+switched the display to use it. Verified end-to-end against real live
+HWM data, not just the test fixtures. 183 tests passed pre-merge.
+
+**Net effect of this session, in plain terms:** HWM's actual exit
+conditions are now genuinely under automated watch for the first time
+since the trade was taken, and a real breach would now actually reach
+Telegram. The live guard/joint-stress/silver/regime/earnings pipeline was
+independently re-confirmed healthy, not just assumed from the prior
+audit. **Confirmed by design, not a gap:** new-opportunity candidate
+suggestions are fully paused while HWM is open -- `sleeve_daily_summary()`
+doesn't even run the screening logic while a position is held (position
+cap = 1). That resumes automatically once `--close` is run after HWM is
+actually sold.
+
 ## Session 2026-07-06 — sync reliability, LLY parity, EPS ratio fix, VRT->AVGO trade
 
 **Sync watchdog (PR #26).** `daily-sync`'s Monday 06:00 UTC cron fire was
@@ -260,7 +531,208 @@ review used for everything else in this project. Confirmed with the
 account owner that the pushes were genuinely theirs. Worth staying alert
 to the same pattern if this resurfaces.
 
+## Overnight session 2026-07-06 -- three items built; #39 and #43 (docs) now merged, #40/#41 still open
+
+Requested explicitly: build all three, leave every PR unmerged for
+morning review, don't touch live money-routing or change any live
+constant automatically. All three respected that boundary.
+
+**PR #39 -- record earnings verdict. MERGED 2026-07-06 (commit 4f19b55).**
+`earnings_verdict.py` / `record_earnings_verdict.py` -- CLI records the
+judgment call (AI revenue vs. guided pace, contract-timing commentary)
+formed after actually reading the release/call, shows on
+`fi_tracker.py`'s dashboard from then on ("Last verdict: ..."). Intended
+workflow, documented in both modules: Claude reads the release, drafts
+the verdict, user confirms, THEN it's recorded -- not something to fill
+in independently. Not wired to gate money-routing yet (deliberate --
+that's a bigger decision for later). Live-smoke-tested end to end
+(recorded a real test verdict, confirmed display, removed the test
+artifact before committing). 11 tests. Merged after rebasing onto
+master and a clean full-suite run (161 passed, no conflicts).
+
+**PR #40 -- sleeve exit-duration sensitivity.** Tests whether
+`TIME_EXIT_DAYS=30` (`run_entry_screen.py`) is validated or just
+inherited from the HWM precedent. **Real methodological bug caught and
+fixed mid-build**: raw per-trade return trivially increases with holding
+period for any generally-appreciating stock -- comparing 15d/30d/60d/90d
+windows on raw return would always favor the longest one regardless of
+whether it's actually better. Added proper (compounding) annualization.
+**Deeper population-mismatch bug caught after that (by the user, not by
+me) and tightened per explicit instruction ("yes, tighten it")**: this
+measures ALL regime-matched dates for top-ranked momentum names, which is
+NOT the same population as the sleeve's actual gated entries (MA50 not
+extended, momentum conditioning, RS-vs-benchmark, earnings clear) --
+those are a materially narrower set, and a dip-entry vs. a random date in
+an ongoing uptrend are not the same setup. The original "90d beats 30d"
+framing (even hedged as "directional only") implied this test says
+something about whether 30d is right for the sleeve's real trades -- it
+doesn't, one way or the other. Report output rewritten to drop the
+"winner" framing entirely: leads with the population-mismatch caveat,
+states the numbers are for pipeline verification only, and explicitly
+says not to use them to justify changing `TIME_EXIT_DAYS`. Properly
+answering the real question needs `screen_tactical()`'s 4-gate entry
+logic (`engine.py`) reconstructed at each historical as-of date (it's
+currently built around today-only values, `_date.today()` /
+`prices.iloc[-1]`) -- bigger, separate task, logged as a NEXT STEP in the
+script's own output, not started. Report-only, doesn't touch the live
+constant. 10 tests (unchanged by the tightening -- it only touched report
+framing/docstrings, not the underlying calculation).
+
+**Correction (2026-07-07): the "yfinance only exposes CURRENT earnings
+calendar" claim above was wrong, not just unverified.** Re-checked
+directly against the raw API: `yf.Ticker("AVGO").get_earnings_dates(limit=60)`
+returns the complete historical earnings-date record back to 2009-12-03
+(AVGO's IPO era) -- 69 rows, not just the next upcoming one. The
+limitation was actually in `_next_earnings()` (`engine.py`), which fetches
+this same data but discards everything before `_date.today()`. Point-in-time
+earnings-gate reconstruction is fully possible with data already available
+via the existing yfinance dependency -- no new data source needed (SEC
+EDGAR filing dates were checked as a fallback and would only have given a
+rough +6-8 day lagged proxy; not needed once this was found). See
+`run_sleeve_entry_reconstruction.py` (PR pending), which reconstructs all 4
+gates point-in-time and generates the real historical gated-entry
+population this PR's own report said was still missing.
+
+**PR #41 -- richer earnings message.** Adds total-company revenue
+(actual via SEC EDGAR + TTM YoY growth, next-quarter consensus + implied
+growth) alongside the existing EPS beat streak/guidance trend. **Real bug
+caught before shipping**: initially used yfinance's "+1q" revenue_estimate
+period for "next quarter" -- verified against the actual next-earnings
+date and found "+1q" is the quarter AFTER the upcoming one; corrected to
+"0q". Per explicit feedback: dropped "MANUAL REVIEW STILL NEEDED" and the
+hardcoded "$56B FY26/$100B FY27" figure from both the earnings-due
+reminder and the just-reported message -- a hardcoded guidance number in
+a recurring alert would silently go stale if guidance changes before the
+print actually happens. No "revising up/down" trend shown for revenue
+(unlike EPS) -- confirmed `revenue_estimate` has no historical revision
+snapshot to compare against.
+
+**Conflict to expect when #41 merges**: PR #39 (merged) and PR #41 (still
+open) both touch the AVGO/LLY Earnings Checkpoint blocks in
+`fi_tracker.py` (verdict line vs. revenue lines, inserted at nearby
+points). Merging master into the #41 branch will need a small manual
+resolution -- combine both additions, don't just pick one side.
+
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
+
+- ~~healthchecks.io check: switch Simple Period to Cron mode~~ -- **DONE
+  2026-07-07/08.** Switched to Cron expression `30 20 * * 1-5` (the
+  evening run), Grace ~2h -- same-day detection instead of up-to-3-day,
+  same weekend-blind-spot as before (unavoidable in this design, not a
+  regression). **Optional follow-on still open:** a second check keyed to
+  the morning run (`0 6 * * 1-5`) would close the one remaining blind spot
+  (a morning-only failure that doesn't also take down the evening run) --
+  needs `sync.yml` to route pings by `github.event.schedule`, real but
+  small code change, not started.
+
+- **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
+  the rebalance deploys (logged 2026-07-07).** Everything in this system --
+  guard, crash trigger, joint-stress escalation -- is alert-only. It has no
+  execution capability: a real breach still requires the operator to see a
+  Telegram message and manually trade at Avanza. HWM is the sole exception
+  -- its $271.39 hard stop is a real resting sell order at the broker,
+  which executes with zero software or human involvement, including through
+  a total outage of this entire pipeline or the operator being fully
+  unreachable. Once the rebalance executes and AVGO reaches its 55% target
+  (currently only 16.1%, so this is explicitly deferred until then, per the
+  operator's own call), the same mechanism should be considered for at
+  least part of the AVGO position -- it is the only protection that
+  survives total human/system unavailability, and AVGO/LLY/Gold currently
+  have none.
+
+  **Key design difference from HWM, flagged before building:** HWM's stop
+  is a fixed price for a single one-shot 30-day tactical trade -- set once,
+  done. AVGO's guard is dynamic (200d SMA + 5-day/-10% crash ROC, both
+  move with price), so a broker-side stop mirroring it would need periodic
+  re-pricing on some cadence, not a set-and-forget order. That update
+  mechanism (who/what re-prices it, how often, what happens if a
+  re-pricing is missed) needs to be designed before this is built, not
+  assumed away.
+
+  **Explicitly deferred, not built** -- revisit once the rebalance
+  (remaining legs, sequenced post-HWM-exit) actually deploys and AVGO is
+  at or near target weight.
+
+- **Sleeve's `HARD_STOP_PCT` (2%) is a flat, unvalidated constant, not
+  derived from asset volatility (logged 2026-07-07).** `run_entry_screen.py`
+  computes the hard stop as a fixed `entry_price * (1 - 0.02)` for every
+  sleeve candidate regardless of the asset's own normal vol -- HWM and a
+  much choppier candidate would get the identical 2% cap. Set once at the
+  sleeve's original design (PR #6) and never revisited. Unlike the AVGO
+  guard's SMA window/crash threshold (validated via a 20-cell parameter
+  grid, PR #2) or the 30-day time exit (duration sweep done, PR #45), this
+  parameter has had **no sensitivity test and no vol-scaling alternative
+  considered**. If tested: (a) grid 2% against neighboring flat values
+  (1%/1.5%/3%) the same way the guard grid worked, and/or (b) replace the
+  flat percentage with a per-candidate vol-scaled stop (e.g. a multiple of
+  the asset's own ATR/historical daily move) so a calmer name and a choppier
+  one aren't held to the identical risk-cap distance. **Explicitly
+  deferred, not built** -- logged as a real gap, not just a style question.
+
+- **Two-message earnings design: structured-data verdict + transcript-read
+  qualitative follow-up (logged 2026-07-07, design only, no code written).**
+  Goal (operator's own framing): the earnings message needs to say what's
+  actually important and how forward guidance moved, not just restate the
+  print -- and it needs to judge whether the new information is
+  *constructive relative to the previous quarter's own guidance and
+  commentary*, not just report the current numbers in isolation. Current
+  automation (`earnings_reminder.py`/PR #35, PR #41's richer message)
+  reports the print itself plus a generic "beat streak / guidance revising
+  up" signal, but never actually diffs today's numbers against what was
+  specifically guided last quarter, and has no path to the qualitative
+  color (named customer contracts, competitive/regulatory commentary,
+  management tone) that only shows up in the earnings call, not the
+  press release.
+
+  **Design agreed in conversation:**
+  1. **Message 1 -- structured data only, same-day, zero transcript
+     dependency.** EPS actual vs. consensus vs. prior guide, revenue
+     actual vs. prior guide, next-quarter/FY guidance -- all from
+     yfinance/SEC EDGAR, the same source `eps_ratio.py` already uses.
+     **Verified directly (2026-07-07): the earnings call transcript does
+     NOT contain the EPS figure at all** -- fetched the real AVGO Q2 2026
+     Motley Fool transcript and confirmed EPS is absent from both prepared
+     remarks and Q&A; it only exists in the press release's financial
+     tables. This is why Message 1 must be structured-data-sourced, not
+     transcript-sourced -- the transcript has no role here.
+  2. **Message 2 -- transcript-dependent, arrives whenever available (lag
+     is real and two-stage: call happens same day as the release, but
+     Motley Fool's transcript publishes anywhere from a few hours to the
+     next day after that -- confirmed by design, not assumed).** Covers
+     only what genuinely doesn't exist anywhere else: named
+     customer/contract commentary, competitive or regulatory color,
+     management tone, analyst Q&A concerns.
+  3. **Verdict (CONSTRUCTIVE / NEUTRAL / CONCERNING) derived from three
+     comparison dimensions, not a snapshot:** (a) actual vs. the company's
+     own prior-quarter guidance (beat/meet/miss, not vs. consensus), (b)
+     new guidance vs. prior guidance (raised/maintained/lowered, by how
+     much), (c) qualitative color this quarter vs. last quarter's
+     equivalent commentary (e.g. more/fewer named contracts, new
+     competitive concerns raised). Dimension (c) is the one only a
+     transcript read can catch -- confirmed via the real AVGO transcript,
+     where FY27 >$100B guidance was reaffirmed but now backed by named
+     multi-year deals (Google, Anthropic, OpenAI, Meta) that weren't
+     itemized the same way before -- a real trajectory signal, not visible
+     in the numbers alone.
+
+  **Requires new persistent state that doesn't exist yet:** a small store
+  of the prior quarter's guidance figures and key qualitative highlights,
+  to diff against -- nothing today remembers what was guided last time.
+
+  **Two worked examples produced from real transcripts** (AVGO Q2 2026,
+  LLY Q1 2026 -- both fetched from Motley Fool call-transcript pages) exist
+  in the operator's Claude Code conversation history as a proof of concept
+  for the message format; not copied here since they're illustrative, not
+  final copy.
+
+  **Explicitly unresolved, needs a decision before building:** trigger
+  model -- on-demand via Claude Code (operator pings after a print, no new
+  infra/cost, can course-correct a bad transcript match live) vs. fully
+  automated in `sync.yml` via a direct Claude API call with web
+  search/fetch tool use (needs `ANTHROPIC_API_KEY` secret, real per-call
+  cost every quarter, no human catch of a bad transcript match before it
+  posts to Telegram). **Do not build either path without that decision
+  first.**
 
 - **Opportunistic sleeve's 30-day time exit was never validated against
   alternative durations (logged 2026-07-06).** `TIME_EXIT_DAYS = 30` in
@@ -280,6 +752,16 @@ to the same pattern if this resurfaces.
   per candidate rather than one rule for everyone. **Explicitly deferred,
   not built** -- logged as a real gap, not just a style question, since
   the current number was never actually tested against the alternative.
+  **Update (2026-07-07): the blocker is resolved.** PR #40's naive sweep
+  used the wrong population (all regime-matched dates, not the sleeve's
+  actual gated entries) and its own report said so. `run_sleeve_entry_
+  reconstruction.py` (PR pending) reconstructs all 4 gates -- including
+  the earnings-clear gate, previously believed unbuildable (see the PR #40
+  correction above) -- point-in-time, producing the real historical
+  gated-entry population and a duration sweep against it. Still NOT a full
+  compound-exit simulation (MA50 breach / hard stop / earnings buffer
+  racing the time exit) -- that remains a separate, bigger follow-on if
+  this sweep's results warrant it.
 
 - **Record the earnings-day manual verdict, not just alert on it (logged
   2026-07-06).** The earnings-day checklist (`earnings_trajectory.py`,
@@ -329,20 +811,9 @@ to the same pattern if this resurfaces.
   it'd be modeled on. If tested, same TXN-analog + AVGO-actual methodology
   already validated (see `run_joint_stress_validation.py` as the template).
 
-- **External dead-man's-switch for daily-sync, independent of GitHub's own
-  scheduler (logged 2026-07-06).** The sync watchdog (`check_daily_sync_watchdog.py`,
-  added same day) catches a missed `daily-sync` cron fire by piggybacking
-  on `sync-sheet`'s ~2h cadence -- but that's still one GitHub-internal
-  cron checking another. If GitHub's scheduler has a broader hiccup that
-  also skips `sync-sheet`, nothing checks anything. A third-party
-  dead-man's-switch (e.g. healthchecks.io free tier) would close that gap
-  fully: `daily-sync` pings it on every successful run, and the external
-  service -- running outside GitHub entirely -- alerts if no ping arrives
-  in time. **Explicitly deferred, not rejected**: the in-repo watchdog is
-  judged sufficient for now (this is the first missed fire in ~2 weeks of
-  continuous operation), and an external service adds a signup + secret +
-  dependency for a failure mode that's still rare. Revisit if the
-  in-repo watchdog itself is ever observed to miss a fire.
+- ~~External dead-man's-switch for daily-sync~~ -- **DONE 2026-07-07**
+  (healthchecks.io heartbeat, PR #55, live-verified on two channels). See
+  "Heartbeat wired in" and "Alert-robustness hardening" sections above.
 
 - **War-Chest-funded Silver, hybrid with AVGO/Gold-sale for any shortfall
   (logged 2026-07-06).** Silver's GSR tactical trigger currently funds
@@ -691,14 +1162,15 @@ done)
 **Other gaps flagged 2026-07-01, updated 2026-07-02:**
 - Account type **resolved**: all positions are ISK (flat annual tax, not
   per-trade capital gains).
-- **FX hedging still open.** Gold=EUR-listed (PPFB.DE, Xetra), AVGO/LLY/WMT=
-  USD, FI@50 tracked in SEK. Reconciled 2026-07-02: SEK value = gold(USD) ×
-  EURUSD × EURSEK, a genuine two-hop chain (not a data bug) — one hop more
-  than the rest of the book. Fix identified: **IGLN** (LSE, USD-denominated)
-  shares the exact same ISIN as PPFB.DE (IE00B4ND3602) — same fund, same
-  bullion, same custodian, would collapse the chain to one hop. Not yet
-  confirmed tradeable on Avanza — check before the next Gold touch-point.
-  Backtest evidence (15y, 2011-2026) says don't overreact to this either
+- **FX hedging: closed, no instrument change.** Gold=EUR-listed (PPFB.DE,
+  Xetra), AVGO/LLY/WMT=USD, FI@50 tracked in SEK. Reconciled 2026-07-02:
+  SEK value = gold(USD) × EURUSD × EURSEK, a genuine two-hop chain (not a
+  data bug) — one hop more than the rest of the book. **IGLN** (LSE,
+  USD-denominated) shares the exact same ISIN as PPFB.DE (IE00B4ND3602) —
+  same fund, same bullion, same custodian — would have collapsed the chain
+  to one hop, but **confirmed 2026-07-07: not tradeable on Avanza.** No
+  further action — stay on PPFB.DE, two-hop chain accepted as-is. Backtest
+  evidence (15y, 2011-2026) already said don't overreact to this either
   way: unhedged gold(SEK) beat a fully-hedged gold(USD)-only proxy on CAGR
   (+10.0% vs +6.85%), Sharpe (0.56 vs 0.44), *and* MaxDD (-36.9% vs -44.4%)
   over the full period — hedging would have been strictly worse, not a

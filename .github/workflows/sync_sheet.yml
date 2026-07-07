@@ -9,6 +9,14 @@ permissions:
   contents: write
   actions: write
 
+concurrency:
+  # Shares daily-sync's group -- both workflows commit to
+  # config/portfolio.toml, so an overlap between them risks the same
+  # merge-conflict-on-rebase failure found for real 2026-07-07 (there,
+  # both runs were daily-sync; this closes the same risk across workflows).
+  group: daily-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest

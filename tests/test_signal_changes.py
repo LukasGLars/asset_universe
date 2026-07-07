@@ -52,6 +52,28 @@ FIXTURE_GUARD_FIRED = FIXTURE_BASE.replace(
 
 FIXTURE_REGIME_FLIP = FIXTURE_BASE + "\n  REGIME CHANGE ALERT -- 2026-07-05\n"
 
+FIXTURE_SLEEVE_OPEN_CLEAN = FIXTURE_BASE.replace(
+    "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
+    "  Opportunistic Sleeve\n"
+    "    Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh\n"
+    "    Current price  : $277.91\n"
+    "    Time exit      : 2026-07-24  (17d left)\n"
+    "    Binding stop   : $271.39 (HARD)\n"
+    "    Tripwires      : CLEAN\n"
+    "    Risk           : CLEAN\n",
+)
+
+FIXTURE_SLEEVE_STOPPED = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
+    "    Current price  : $277.91", "    Current price  : $269.50"
+).replace(
+    "    Tripwires      : CLEAN\n    Risk           : CLEAN", "    Tripwires      : CLEAN\n    Risk           : STOPPED"
+)
+
+FIXTURE_SLEEVE_TRIPWIRE = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
+    "    Tripwires      : CLEAN\n    Risk           : CLEAN",
+    "    Tripwires      : FLAGGED -- run run_entry_screen.py for detail\n    Risk           : TRIPWIRE",
+)
+
 
 def test_extract_fingerprint_parses_known_fields():
     fp = extract_fingerprint(FIXTURE_BASE)
@@ -100,6 +122,42 @@ def test_message_leads_with_action_not_just_state_change():
     # The whole point: the exact instruction must be present, not just the
     # raw state transition.
     assert "ACTION: Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)" in body
+
+
+def test_extract_fingerprint_parses_open_sleeve_risk_fields():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    assert fp["sleeve_status"] == "OPEN"
+    assert fp["sleeve_risk"] == "CLEAN"
+    assert fp["sleeve_price"] == "$277.91"
+    assert fp["sleeve_stop"] == "$271.39"
+
+
+def test_sleeve_risk_stopped_fires_as_action_not_review():
+    prev = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_STOPPED)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "Sleeve risk -> STOPPED" in subject
+    assert "CLEAN -> STOPPED" in body
+    assert "ACTION" in body
+    assert "$269.50" in body and "$271.39" in body
+
+
+def test_sleeve_risk_tripwire_fires_as_review_not_action():
+    prev = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_TRIPWIRE)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    _, body = result
+    assert "CLEAN -> TRIPWIRE" in body
+    assert "REVIEW" in body
+    assert "ACTION" not in body.split("\n")[0]  # not framed as urgent for a soft flag
+
+
+def test_sleeve_risk_unchanged_produces_no_message():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    assert build_actionable_message(fp, fp) is None
 
 
 def test_lly_stress_alone_is_informational_not_actioned():

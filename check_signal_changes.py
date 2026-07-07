@@ -3,8 +3,11 @@ check_signal_changes.py
 
 Extracts an "actionable signal fingerprint" from a status.md dashboard
 snapshot (AVGO guard state, LLY-stress, joint-stress, silver GSR state,
-opportunistic sleeve status, confirmed regime flip, AVGO/LLY earnings
-reminders and reported-quarter changes) and compares two snapshots. Used
+opportunistic sleeve status AND risk state (stop breach / time-exit due /
+tripwire -- not just the bare OPEN/CLOSED word, which never changes for
+the life of a trade no matter what the price does), confirmed regime flip,
+AVGO/LLY earnings reminders and reported-quarter changes) and compares
+two snapshots. Used
 by sync.yml to decide whether the daily run is worth an email: silence
 when nothing actionable changed, a one-line summary when something did.
 Price/valuation noise (which changes every day) is deliberately not part
@@ -48,6 +51,9 @@ def extract_fingerprint(text: str) -> dict:
         "silver_signal": _find(r"Silver GSR Tactical.*?Signal\s*:\s*(\S+)", text),
         "silver_action": _find(r"Silver GSR Tactical.*?Action\s*:\s*([^\n]+)", text),
         "sleeve_status": _find(r"Opportunistic Sleeve.*?Status\s*:\s*(\S+)", text),
+        "sleeve_risk": _find(r"Opportunistic Sleeve.*?Risk\s*:\s*(\S+)", text),
+        "sleeve_price": _find(r"Opportunistic Sleeve.*?Current price\s*:\s*(\S+)", text),
+        "sleeve_stop": _find(r"Opportunistic Sleeve.*?Binding stop\s*:\s*(\S+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -121,6 +127,26 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             f"REVIEW: run `run_entry_screen.py` for the candidate/exit details."
         )
         subject_parts.append(f"Sleeve -> {curr['sleeve_status']}")
+
+    # Risk state on an OPEN position -- distinct from the status line above,
+    # which only flips OPEN/CLOSED on a manual --open/--close and would
+    # otherwise never fire again for the life of the trade no matter what
+    # the price actually does (this was the actual gap: exit triggers were
+    # being computed and shown in status.md, but nothing diffed the values,
+    # only the bare OPEN/CLOSED word).
+    if (prev["sleeve_risk"] != curr["sleeve_risk"]
+            and "unknown" not in (prev["sleeve_risk"], curr["sleeve_risk"])):
+        urgent = curr["sleeve_risk"] in ("STOPPED", "TIME-EXIT-DUE")
+        label = "ACTION" if urgent else "REVIEW"
+        detail = (f"price {curr['sleeve_price']} vs stop {curr['sleeve_stop']}"
+                  if curr["sleeve_risk"] == "STOPPED" else
+                  "time exit has arrived" if curr["sleeve_risk"] == "TIME-EXIT-DUE" else
+                  "run `run_entry_screen.py` for tripwire detail")
+        blocks.append(
+            f"OPPORTUNISTIC SLEEVE RISK: {prev['sleeve_risk']} -> {curr['sleeve_risk']}\n"
+            f"{label}: {detail}"
+        )
+        subject_parts.append(f"Sleeve risk -> {curr['sleeve_risk']}")
 
     if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":
         blocks.append(
