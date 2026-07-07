@@ -7,6 +7,24 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Live pipeline gated on actual data freshness, not just exit code (2026-07-07, PR #57)
+
+Closes a gap found while scoping an operations test for the whole alert
+chain: the heartbeat (PR #55) only proves the job *ran*, not that it ran
+on good data. A silent yfinance/FRED hiccup that returns stale data
+without erroring would still ping heartbeat healthy and let every
+downstream signal (guard, silver, sleeve) compute off day(s)-old prices.
+`check_local_data_freshness.py` already had exactly the right logic
+(SPY reference ticker, weekend-aware, auto-refresh-then-fail) but was
+scoped to local ad-hoc sessions only -- the "unrelated to the live
+pipeline" claim in its own docstring was itself unverified, same failure
+class as everything else this project keeps finding. Now also wired into
+`sync.yml` as a step right after "Update prices": auto-refreshes once if
+stale, fails the job loudly if a refresh doesn't fix it, before any signal
+gets computed downstream. Live-verified in real CI before merging (not
+just local). 187 tests passing project-wide, no new tests needed (existing
+4 already cover the trading-day logic this reuses as-is).
+
 ## Heartbeat (healthchecks.io) wired in (2026-07-07, PR #55) -- closes the last alert-robustness gap
 
 The one item deferred from the alert-robustness hardening below (needed
