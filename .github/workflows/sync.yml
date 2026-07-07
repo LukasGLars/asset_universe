@@ -104,3 +104,11 @@ jobs:
 
       - name: Sync health check
         run: python check_sync_health.py status.md
+
+      - name: Heartbeat ping (healthchecks.io)
+        # Only reached if every prior step succeeded -- a real pipeline
+        # failure means this never fires, so a missed ping on the
+        # healthchecks.io side is itself the alert for "the pipeline is
+        # dead," independent of GitHub Actions entirely. `|| true` so a
+        # transient healthchecks.io-side hiccup never fails the sync job.
+        run: curl -fsS -m 10 --retry 3 "${{ secrets.HEALTHCHECKS_PING_URL }}" > /dev/null || true
