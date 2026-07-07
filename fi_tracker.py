@@ -423,7 +423,20 @@ try:
     _av_rev_next_g    = (_av_rev_table.loc["0q", "growth"]
                           if _av_rev_table is not None and "0q" in _av_rev_table.index else None)
 
+    # Latest reported quarter's actual EPS vs. what it beat/missed --
+    # distinct from TTM EPS above (a trailing sum, not a single print).
+    # This is "the actual earnings" in the literal sense: what got
+    # reported, against what was expected, for the most recent quarter.
+    _av_q_actual   = _av_hist["epsActual"].iloc[-1] if _av_hist is not None and not _av_hist.empty else None
+    _av_q_est      = _av_hist["epsEstimate"].iloc[-1] if _av_hist is not None and not _av_hist.empty else None
+    _av_q_surprise = _av_hist["surprisePercent"].iloc[-1] if _av_hist is not None and not _av_hist.empty else None
+
     print(f"\n  AVGO Earnings Checkpoint")
+    if _av_q_actual is not None and _av_q_est is not None:
+        _surprise_str = f"  ({_av_q_surprise:+.1%} surprise)" if _av_q_surprise is not None else ""
+        print(f"    Latest qtr EPS (actual vs est.): ${_av_q_actual:.2f} vs ${_av_q_est:.2f}{_surprise_str}")
+    else:
+        print(f"    Latest qtr EPS (actual vs est.): n/a")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_av_ttm):.2f}" if _av_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_av_fwd_1y:.2f}" if _av_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _eps_ratio:
@@ -498,7 +511,16 @@ try:
     _lly_rev_next_g    = (_lly_rev_table.loc["0q", "growth"]
                            if _lly_rev_table is not None and "0q" in _lly_rev_table.index else None)
 
+    _lly_q_actual   = _lly_hist["epsActual"].iloc[-1] if _lly_hist is not None and not _lly_hist.empty else None
+    _lly_q_est      = _lly_hist["epsEstimate"].iloc[-1] if _lly_hist is not None and not _lly_hist.empty else None
+    _lly_q_surprise = _lly_hist["surprisePercent"].iloc[-1] if _lly_hist is not None and not _lly_hist.empty else None
+
     print(f"\n  LLY Earnings Checkpoint")
+    if _lly_q_actual is not None and _lly_q_est is not None:
+        _lly_surprise_str = f"  ({_lly_q_surprise:+.1%} surprise)" if _lly_q_surprise is not None else ""
+        print(f"    Latest qtr EPS (actual vs est.): ${_lly_q_actual:.2f} vs ${_lly_q_est:.2f}{_lly_surprise_str}")
+    else:
+        print(f"    Latest qtr EPS (actual vs est.): n/a")
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_lly_ttm):.2f}" if _lly_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_lly_fwd_1y:.2f}" if _lly_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _lly_ratio:

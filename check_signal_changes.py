@@ -60,11 +60,13 @@ def extract_fingerprint(text: str) -> dict:
         "avgo_latest_quarter": _find(r"AVGO Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
         "avgo_beat_streak": _find(r"AVGO Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
         "avgo_guidance_trend": _find(r"AVGO Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
+        "avgo_eps_actual_vs_est": _find(r"AVGO Earnings Checkpoint.*?Latest qtr EPS \(actual vs est\.\)\s*:\s*([^\n]+)", text),
         "avgo_revenue_actual": _find(r"AVGO Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
         "avgo_revenue_next_q": _find(r"AVGO Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
         "lly_latest_quarter": _find(r"LLY Earnings Checkpoint.*?Latest quarter\s*:\s*(\S+)", text),
         "lly_beat_streak": _find(r"LLY Earnings Checkpoint.*?Beat streak\s*:\s*(\S+)", text),
         "lly_guidance_trend": _find(r"LLY Earnings Checkpoint.*?Guidance trend\s*:\s*([^\n(]+)", text),
+        "lly_eps_actual_vs_est": _find(r"LLY Earnings Checkpoint.*?Latest qtr EPS \(actual vs est\.\)\s*:\s*([^\n]+)", text),
         "lly_revenue_actual": _find(r"LLY Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
         "lly_revenue_next_q": _find(r"LLY Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
     }
@@ -185,6 +187,7 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and "unknown" not in (prev["avgo_latest_quarter"], curr["avgo_latest_quarter"])):
         blocks.append(
             f"AVGO EARNINGS JUST REPORTED (quarter: {curr['avgo_latest_quarter']}).\n"
+            f"EPS: {curr['avgo_eps_actual_vs_est']}\n"
             f"Revenue: {curr['avgo_revenue_actual']} | Next-qtr consensus: {curr['avgo_revenue_next_q']}\n"
             f"EPS beat streak: {curr['avgo_beat_streak']} | Guidance: {curr['avgo_guidance_trend']}"
         )
@@ -194,6 +197,7 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and "unknown" not in (prev["lly_latest_quarter"], curr["lly_latest_quarter"])):
         blocks.append(
             f"LLY EARNINGS JUST REPORTED (quarter: {curr['lly_latest_quarter']}).\n"
+            f"EPS: {curr['lly_eps_actual_vs_est']}\n"
             f"Revenue: {curr['lly_revenue_actual']} | Next-qtr consensus: {curr['lly_revenue_next_q']}\n"
             f"EPS beat streak: {curr['lly_beat_streak']} | Guidance: {curr['lly_guidance_trend']}"
         )
