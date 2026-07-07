@@ -615,14 +615,19 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
-- **healthchecks.io check's Period needs a 1-field dashboard fix (logged
-  2026-07-07, see "Heartbeat wired in" above -- heartbeat itself is
-  DONE/merged, PR #55).** Default "Period: 1 day" will false-alarm every
-  weekend since the pipeline only runs weekdays. Fix: set Period to ~2.5
-  days / 60h on the healthchecks.io dashboard -- single field, not code.
-  Not yet confirmed done. Also worth checking whenever the operator is on
-  that dashboard: the check's own missed-ping alert should route somewhere
-  actually watched (Telegram/SMS), not just email.
+- **healthchecks.io check: switch Simple Period to Cron mode (logged
+  2026-07-07).** Currently Period=3 days/Grace=1h (Simple mode) -- fixed
+  and working, but only catches "pipeline dead" within up to 3 days.
+  Discussed switching to Cron mode with expression `30 20 * * 1-5`
+  (the evening run) + Grace ~2h -- same weekend-blind-spot as today (any
+  ping, from either daily run, resets the timer either way) but same-day
+  detection instead of up-to-3-day. Strict improvement, no downside
+  identified. Not yet done -- one dashboard field change. Optional
+  follow-on: a second check keyed to the morning run (`0 6 * * 1-5`)
+  would close the one remaining blind spot (a morning-only failure that
+  doesn't also take down the evening run) -- needs `sync.yml` to route
+  pings by `github.event.schedule`, real but small code change, not
+  started.
 
 - **HIGHEST PRIORITY: broker-side (Avanza) protective stop on AVGO, once
   the rebalance deploys (logged 2026-07-07).** Everything in this system --
@@ -810,20 +815,9 @@ resolution -- combine both additions, don't just pick one side.
   it'd be modeled on. If tested, same TXN-analog + AVGO-actual methodology
   already validated (see `run_joint_stress_validation.py` as the template).
 
-- **External dead-man's-switch for daily-sync, independent of GitHub's own
-  scheduler (logged 2026-07-06).** The sync watchdog (`check_daily_sync_watchdog.py`,
-  added same day) catches a missed `daily-sync` cron fire by piggybacking
-  on `sync-sheet`'s ~2h cadence -- but that's still one GitHub-internal
-  cron checking another. If GitHub's scheduler has a broader hiccup that
-  also skips `sync-sheet`, nothing checks anything. A third-party
-  dead-man's-switch (e.g. healthchecks.io free tier) would close that gap
-  fully: `daily-sync` pings it on every successful run, and the external
-  service -- running outside GitHub entirely -- alerts if no ping arrives
-  in time. **Explicitly deferred, not rejected**: the in-repo watchdog is
-  judged sufficient for now (this is the first missed fire in ~2 weeks of
-  continuous operation), and an external service adds a signup + secret +
-  dependency for a failure mode that's still rare. Revisit if the
-  in-repo watchdog itself is ever observed to miss a fire.
+- ~~External dead-man's-switch for daily-sync~~ -- **DONE 2026-07-07**
+  (healthchecks.io heartbeat, PR #55, live-verified on two channels). See
+  "Heartbeat wired in" and "Alert-robustness hardening" sections above.
 
 - **War-Chest-funded Silver, hybrid with AVGO/Gold-sale for any shortfall
   (logged 2026-07-06).** Silver's GSR tactical trigger currently funds
