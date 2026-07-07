@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,623 kr  21.4%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,093,087 kr
+  TPV                                        1,093,089 kr
     Reactor Core            860,733 kr  (79%)
     Home Base               234,623 kr  (21%)
     War Chest                 1,959 kr  (0%)
@@ -23,7 +23,7 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,093,087 kr
+  Now                     :     1,093,089 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
@@ -31,16 +31,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.2%
   Status                  :  BEHIND  (-3.3% margin)
 
-  Projected @ AWAR        :     9,755,345 kr
-  vs target               :    -3,179,361 kr  (deficit)
+  Projected @ AWAR        :     9,755,546 kr
+  vs target               :    -3,179,160 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,543,848 kr       ~2047
-  Conservative   +15%       7,019,005 kr       ~2041
-  Base           +20%      10,759,432 kr       ~2038
-  Current AWAR   +19%       9,755,345 kr       ~2039
-  Bull           +30%      24,537,285 kr       ~2035
+  Bear           +10%       4,543,854 kr       ~2047
+  Conservative   +15%       7,019,015 kr       ~2041
+  Base           +20%      10,759,447 kr       ~2038
+  Current AWAR   +19%       9,755,546 kr       ~2039
+  Bull           +30%      24,537,321 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -100,6 +100,7 @@ TACTICAL RULES
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
   AVGO Earnings Checkpoint
+    Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
     Forward EPS (+1yr est.)    : $19.40
     Fwd/Trail ratio (normalized): 2.39x  (peer range 1.17-1.41x; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
@@ -112,6 +113,7 @@ TACTICAL RULES
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
+    Latest qtr EPS (actual vs est.): $8.55 vs $6.79  (+25.9% surprise)
     TTM EPS (non-GAAP actual)  : $29.42
     Forward EPS (+1yr est.)    : $44.47
     Fwd/Trail ratio (normalized): 1.51x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
