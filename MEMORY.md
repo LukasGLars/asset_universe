@@ -889,14 +889,15 @@ done)
 **Other gaps flagged 2026-07-01, updated 2026-07-02:**
 - Account type **resolved**: all positions are ISK (flat annual tax, not
   per-trade capital gains).
-- **FX hedging still open.** Gold=EUR-listed (PPFB.DE, Xetra), AVGO/LLY/WMT=
-  USD, FI@50 tracked in SEK. Reconciled 2026-07-02: SEK value = gold(USD) ×
-  EURUSD × EURSEK, a genuine two-hop chain (not a data bug) — one hop more
-  than the rest of the book. Fix identified: **IGLN** (LSE, USD-denominated)
-  shares the exact same ISIN as PPFB.DE (IE00B4ND3602) — same fund, same
-  bullion, same custodian, would collapse the chain to one hop. Not yet
-  confirmed tradeable on Avanza — check before the next Gold touch-point.
-  Backtest evidence (15y, 2011-2026) says don't overreact to this either
+- **FX hedging: closed, no instrument change.** Gold=EUR-listed (PPFB.DE,
+  Xetra), AVGO/LLY/WMT=USD, FI@50 tracked in SEK. Reconciled 2026-07-02:
+  SEK value = gold(USD) × EURUSD × EURSEK, a genuine two-hop chain (not a
+  data bug) — one hop more than the rest of the book. **IGLN** (LSE,
+  USD-denominated) shares the exact same ISIN as PPFB.DE (IE00B4ND3602) —
+  same fund, same bullion, same custodian — would have collapsed the chain
+  to one hop, but **confirmed 2026-07-07: not tradeable on Avanza.** No
+  further action — stay on PPFB.DE, two-hop chain accepted as-is. Backtest
+  evidence (15y, 2011-2026) already said don't overreact to this either
   way: unhedged gold(SEK) beat a fully-hedged gold(USD)-only proxy on CAGR
   (+10.0% vs +6.85%), Sharpe (0.56 vs 0.44), *and* MaxDD (-36.9% vs -44.4%)
   over the full period — hedging would have been strictly worse, not a
