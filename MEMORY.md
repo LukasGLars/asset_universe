@@ -450,6 +450,22 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **Sleeve's `HARD_STOP_PCT` (2%) is a flat, unvalidated constant, not
+  derived from asset volatility (logged 2026-07-07).** `run_entry_screen.py`
+  computes the hard stop as a fixed `entry_price * (1 - 0.02)` for every
+  sleeve candidate regardless of the asset's own normal vol -- HWM and a
+  much choppier candidate would get the identical 2% cap. Set once at the
+  sleeve's original design (PR #6) and never revisited. Unlike the AVGO
+  guard's SMA window/crash threshold (validated via a 20-cell parameter
+  grid, PR #2) or the 30-day time exit (duration sweep done, PR #45), this
+  parameter has had **no sensitivity test and no vol-scaling alternative
+  considered**. If tested: (a) grid 2% against neighboring flat values
+  (1%/1.5%/3%) the same way the guard grid worked, and/or (b) replace the
+  flat percentage with a per-candidate vol-scaled stop (e.g. a multiple of
+  the asset's own ATR/historical daily move) so a calmer name and a choppier
+  one aren't held to the identical risk-cap distance. **Explicitly
+  deferred, not built** -- logged as a real gap, not just a style question.
+
 - **Two-message earnings design: structured-data verdict + transcript-read
   qualitative follow-up (logged 2026-07-07, design only, no code written).**
   Goal (operator's own framing): the earnings message needs to say what's
