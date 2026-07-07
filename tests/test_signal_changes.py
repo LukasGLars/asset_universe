@@ -23,6 +23,7 @@ FIXTURE_BASE = """
     Status         : CLOSED (0/1 position)
 
   AVGO Earnings Checkpoint
+    Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     Revenue (latest qtr, actual): $14.92B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $16.10B (implied YoY +28.1%)
     Next earnings  : 2026-09-03
@@ -32,6 +33,7 @@ FIXTURE_BASE = """
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
+    Latest qtr EPS (actual vs est.): $8.55 vs $6.79  (+25.9% surprise)
     Revenue (latest qtr, actual): $12.73B  (TTM YoY: +47.4%)
     Next-qtr revenue consensus : $13.50B (implied YoY +40.2%)
     Next earnings  : 2026-08-06
@@ -91,11 +93,13 @@ def test_extract_fingerprint_parses_known_fields():
     assert fp["avgo_latest_quarter"] == "2026-04-30"
     assert fp["avgo_beat_streak"] == "4"
     assert fp["avgo_guidance_trend"] == "revising up"
+    assert fp["avgo_eps_actual_vs_est"] == "$2.44 vs $2.40  (+1.7% surprise)"
     assert fp["avgo_revenue_actual"] == "$14.92B  (TTM YoY: +32.3%)"
     assert fp["avgo_revenue_next_q"] == "$16.10B (implied YoY +28.1%)"
     assert fp["lly_latest_quarter"] == "2026-03-31"
     assert fp["lly_beat_streak"] == "4"
     assert fp["lly_guidance_trend"] == "revising up"
+    assert fp["lly_eps_actual_vs_est"] == "$8.55 vs $6.79  (+25.9% surprise)"
     assert fp["lly_revenue_actual"] == "$12.73B  (TTM YoY: +47.4%)"
     assert fp["lly_revenue_next_q"] == "$13.50B (implied YoY +40.2%)"
 
@@ -218,6 +222,7 @@ def test_avgo_new_quarter_fires_with_revenue_and_eps_prechecks():
     subject, body = result
     assert "AVGO earnings reported" in subject
     assert "AVGO EARNINGS JUST REPORTED" in body
+    assert "EPS: $2.44 vs $2.40" in body
     assert "EPS beat streak: 5" in body
     assert "Revenue: $14.92B" in body
     assert "Next-qtr consensus: $16.10B" in body
@@ -238,6 +243,7 @@ def test_lly_new_quarter_fires():
     subject, body = result
     assert "LLY earnings reported" in subject
     assert "LLY EARNINGS JUST REPORTED" in body
+    assert "EPS: $8.55 vs $6.79" in body
 
 
 def test_new_quarter_does_not_fire_when_unchanged():
