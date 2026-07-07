@@ -7,6 +7,45 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Root cause found for 2026-07-07's delayed/failed scheduled run -- concurrency guard added (PR #60)
+
+The 20:30 UTC `daily-sync` cron appeared not to fire for ~80 minutes,
+prompting a long live-debugging session (heartbeat, cron config, etc.)
+before the actual cause was found: **the cron wasn't broken -- it fired
+late (~80min, GitHub-side queuing/congestion, cause not fully confirmed)
+and collided with a concurrent manual `workflow_dispatch` test run.** Both
+tried to commit `status.md` around the same time; the second one's `git
+pull --rebase origin master` hit a real merge conflict (auto-merge failed
+on `status.md`) and the whole job failed outright -- confirmed directly in
+that run's own logs (`CONFLICT (content): Merge conflict in status.md`).
+No data corruption, but that run's notify/heartbeat steps never executed
+since the job failed before reaching them.
+
+**Fix:** added `concurrency: {group: daily-sync, cancel-in-progress:
+false}` to both `sync.yml` and `sync_sheet.yml` -- shared group since both
+workflows commit to `config/portfolio.toml` too, so this closes the
+cross-workflow collision risk, not just within `daily-sync` itself.
+`cancel-in-progress: false` means overlapping runs queue and execute
+sequentially rather than racing -- no run's work gets dropped. Live-
+verified via a real `workflow_dispatch` on a branch before merging.
+
+**Lesson, stated plainly:** none of the alert-robustness work built
+earlier same day (retry/fallback, heartbeat, data-freshness gate) was
+wrong -- the actual bug was a genuinely new failure mode (concurrent-run
+collision), only surfaced because testing that same evening happened to
+overlap with a real delayed cron fire. Worth remembering: manual
+verification dispatches during active development carry a real (if rare)
+risk of colliding with the schedule itself if there's no concurrency
+guard -- now fixed.
+
+**Still open, not resolved:** why the cron was ~80 minutes late in the
+first place. No GitHub-wide incident was active at the time (checked
+githubstatus.com); an earlier documented Actions API incident that day
+had already resolved hours prior. Could be residual congestion, could be
+something specific to this repo/workflow -- not confirmed either way. If
+it recurs on a day with no manual testing to muddy the signal, that's
+worth investigating further; a one-off isn't yet a pattern.
+
 ## Heartbeat notification path actually proven end-to-end (2026-07-07)
 
 Following up on the heartbeat build (PR #55): confirming a check exists and
