@@ -303,12 +303,24 @@ answering the real question needs `screen_tactical()`'s 4-gate entry
 logic (`engine.py`) reconstructed at each historical as-of date (it's
 currently built around today-only values, `_date.today()` /
 `prices.iloc[-1]`) -- bigger, separate task, logged as a NEXT STEP in the
-script's own output, not started. Also confirmed (not assumed):
-`EARNINGS_BUFFER_DAYS=3` can't be backtested the same way -- yfinance
-only exposes each ticker's CURRENT earnings calendar, not a
-point-in-time historical one. Report-only, doesn't touch the live
+script's own output, not started. Report-only, doesn't touch the live
 constant. 10 tests (unchanged by the tightening -- it only touched report
 framing/docstrings, not the underlying calculation).
+
+**Correction (2026-07-07): the "yfinance only exposes CURRENT earnings
+calendar" claim above was wrong, not just unverified.** Re-checked
+directly against the raw API: `yf.Ticker("AVGO").get_earnings_dates(limit=60)`
+returns the complete historical earnings-date record back to 2009-12-03
+(AVGO's IPO era) -- 69 rows, not just the next upcoming one. The
+limitation was actually in `_next_earnings()` (`engine.py`), which fetches
+this same data but discards everything before `_date.today()`. Point-in-time
+earnings-gate reconstruction is fully possible with data already available
+via the existing yfinance dependency -- no new data source needed (SEC
+EDGAR filing dates were checked as a fallback and would only have given a
+rough +6-8 day lagged proxy; not needed once this was found). See
+`run_sleeve_entry_reconstruction.py` (PR pending), which reconstructs all 4
+gates point-in-time and generates the real historical gated-entry
+population this PR's own report said was still missing.
 
 **PR #41 -- richer earnings message.** Adds total-company revenue
 (actual via SEC EDGAR + TTM YoY growth, next-quarter consensus + implied
@@ -350,6 +362,16 @@ resolution -- combine both additions, don't just pick one side.
   per candidate rather than one rule for everyone. **Explicitly deferred,
   not built** -- logged as a real gap, not just a style question, since
   the current number was never actually tested against the alternative.
+  **Update (2026-07-07): the blocker is resolved.** PR #40's naive sweep
+  used the wrong population (all regime-matched dates, not the sleeve's
+  actual gated entries) and its own report said so. `run_sleeve_entry_
+  reconstruction.py` (PR pending) reconstructs all 4 gates -- including
+  the earnings-clear gate, previously believed unbuildable (see the PR #40
+  correction above) -- point-in-time, producing the real historical
+  gated-entry population and a duration sweep against it. Still NOT a full
+  compound-exit simulation (MA50 breach / hard stop / earnings buffer
+  racing the time exit) -- that remains a separate, bigger follow-on if
+  this sweep's results warrant it.
 
 - **Record the earnings-day manual verdict, not just alert on it (logged
   2026-07-06).** The earnings-day checklist (`earnings_trajectory.py`,
