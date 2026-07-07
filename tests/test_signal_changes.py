@@ -23,6 +23,8 @@ FIXTURE_BASE = """
     Status         : CLOSED (0/1 position)
 
   AVGO Earnings Checkpoint
+    Revenue (latest qtr, actual): $14.92B  (TTM YoY: +32.3%)
+    Next-qtr revenue consensus : $16.10B (implied YoY +28.1%)
     Next earnings  : 2026-09-03
     Reminder       : not_due
     Latest quarter : 2026-04-30
@@ -30,6 +32,8 @@ FIXTURE_BASE = """
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
+    Revenue (latest qtr, actual): $12.73B  (TTM YoY: +47.4%)
+    Next-qtr revenue consensus : $13.50B (implied YoY +40.2%)
     Next earnings  : 2026-08-06
     Reminder       : not_due
     Latest quarter : 2026-03-31
@@ -87,9 +91,13 @@ def test_extract_fingerprint_parses_known_fields():
     assert fp["avgo_latest_quarter"] == "2026-04-30"
     assert fp["avgo_beat_streak"] == "4"
     assert fp["avgo_guidance_trend"] == "revising up"
+    assert fp["avgo_revenue_actual"] == "$14.92B  (TTM YoY: +32.3%)"
+    assert fp["avgo_revenue_next_q"] == "$16.10B (implied YoY +28.1%)"
     assert fp["lly_latest_quarter"] == "2026-03-31"
     assert fp["lly_beat_streak"] == "4"
     assert fp["lly_guidance_trend"] == "revising up"
+    assert fp["lly_revenue_actual"] == "$12.73B  (TTM YoY: +47.4%)"
+    assert fp["lly_revenue_next_q"] == "$13.50B (implied YoY +40.2%)"
 
 
 def test_extract_fingerprint_detects_regime_flip():
@@ -166,8 +174,8 @@ def test_lly_stress_alone_is_informational_not_actioned():
 def test_avgo_earnings_reminder_fires_once_on_transition():
     prev = extract_fingerprint(FIXTURE_BASE)
     curr = extract_fingerprint(FIXTURE_BASE.replace(
-        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : not_due",
-        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : DUE",
+        "Next earnings  : 2026-09-03\n    Reminder       : not_due",
+        "Next earnings  : 2026-09-03\n    Reminder       : DUE",
     ))
     result = build_actionable_message(prev, curr)
     assert result is not None
@@ -179,8 +187,8 @@ def test_avgo_earnings_reminder_fires_once_on_transition():
 def test_lly_earnings_reminder_fires_once_on_transition():
     prev = extract_fingerprint(FIXTURE_BASE)
     curr = extract_fingerprint(FIXTURE_BASE.replace(
-        "LLY Earnings Checkpoint\n    Next earnings  : 2026-08-06\n    Reminder       : not_due",
-        "LLY Earnings Checkpoint\n    Next earnings  : 2026-08-06\n    Reminder       : DUE",
+        "Next earnings  : 2026-08-06\n    Reminder       : not_due",
+        "Next earnings  : 2026-08-06\n    Reminder       : DUE",
     ))
     result = build_actionable_message(prev, curr)
     assert result is not None
@@ -192,14 +200,14 @@ def test_lly_earnings_reminder_fires_once_on_transition():
 def test_earnings_reminder_does_not_refire_while_still_due():
     # Both prev and curr already "DUE" -- no transition, no new message.
     due = FIXTURE_BASE.replace(
-        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : not_due",
-        "AVGO Earnings Checkpoint\n    Next earnings  : 2026-09-03\n    Reminder       : DUE",
+        "Next earnings  : 2026-09-03\n    Reminder       : not_due",
+        "Next earnings  : 2026-09-03\n    Reminder       : DUE",
     )
     fp = extract_fingerprint(due)
     assert build_actionable_message(fp, fp) is None
 
 
-def test_avgo_new_quarter_fires_with_prechecks_and_manual_review_prompt():
+def test_avgo_new_quarter_fires_with_revenue_and_eps_prechecks():
     prev = extract_fingerprint(FIXTURE_BASE)
     curr = extract_fingerprint(FIXTURE_BASE.replace(
         "Latest quarter : 2026-04-30\n    Beat streak    : 4\n    Guidance trend : revising up",
@@ -210,10 +218,13 @@ def test_avgo_new_quarter_fires_with_prechecks_and_manual_review_prompt():
     subject, body = result
     assert "AVGO earnings reported" in subject
     assert "AVGO EARNINGS JUST REPORTED" in body
-    assert "beat streak 5" in body
-    assert "MANUAL REVIEW STILL NEEDED" in body
-    assert "AI revenue vs. the $56B FY26/$100B FY27 guided pace" in body
-    assert "Anthropic/OpenAI contract-timing commentary" in body
+    assert "EPS beat streak: 5" in body
+    assert "Revenue: $14.92B" in body
+    assert "Next-qtr consensus: $16.10B" in body
+    # No vague "go check X" deflection and no hardcoded guidance figure --
+    # both dropped per explicit feedback (2026-07-06).
+    assert "MANUAL REVIEW" not in body
+    assert "$56B" not in body
 
 
 def test_lly_new_quarter_fires():
