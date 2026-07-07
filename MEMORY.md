@@ -450,6 +450,71 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **Two-message earnings design: structured-data verdict + transcript-read
+  qualitative follow-up (logged 2026-07-07, design only, no code written).**
+  Goal (operator's own framing): the earnings message needs to say what's
+  actually important and how forward guidance moved, not just restate the
+  print -- and it needs to judge whether the new information is
+  *constructive relative to the previous quarter's own guidance and
+  commentary*, not just report the current numbers in isolation. Current
+  automation (`earnings_reminder.py`/PR #35, PR #41's richer message)
+  reports the print itself plus a generic "beat streak / guidance revising
+  up" signal, but never actually diffs today's numbers against what was
+  specifically guided last quarter, and has no path to the qualitative
+  color (named customer contracts, competitive/regulatory commentary,
+  management tone) that only shows up in the earnings call, not the
+  press release.
+
+  **Design agreed in conversation:**
+  1. **Message 1 -- structured data only, same-day, zero transcript
+     dependency.** EPS actual vs. consensus vs. prior guide, revenue
+     actual vs. prior guide, next-quarter/FY guidance -- all from
+     yfinance/SEC EDGAR, the same source `eps_ratio.py` already uses.
+     **Verified directly (2026-07-07): the earnings call transcript does
+     NOT contain the EPS figure at all** -- fetched the real AVGO Q2 2026
+     Motley Fool transcript and confirmed EPS is absent from both prepared
+     remarks and Q&A; it only exists in the press release's financial
+     tables. This is why Message 1 must be structured-data-sourced, not
+     transcript-sourced -- the transcript has no role here.
+  2. **Message 2 -- transcript-dependent, arrives whenever available (lag
+     is real and two-stage: call happens same day as the release, but
+     Motley Fool's transcript publishes anywhere from a few hours to the
+     next day after that -- confirmed by design, not assumed).** Covers
+     only what genuinely doesn't exist anywhere else: named
+     customer/contract commentary, competitive or regulatory color,
+     management tone, analyst Q&A concerns.
+  3. **Verdict (CONSTRUCTIVE / NEUTRAL / CONCERNING) derived from three
+     comparison dimensions, not a snapshot:** (a) actual vs. the company's
+     own prior-quarter guidance (beat/meet/miss, not vs. consensus), (b)
+     new guidance vs. prior guidance (raised/maintained/lowered, by how
+     much), (c) qualitative color this quarter vs. last quarter's
+     equivalent commentary (e.g. more/fewer named contracts, new
+     competitive concerns raised). Dimension (c) is the one only a
+     transcript read can catch -- confirmed via the real AVGO transcript,
+     where FY27 >$100B guidance was reaffirmed but now backed by named
+     multi-year deals (Google, Anthropic, OpenAI, Meta) that weren't
+     itemized the same way before -- a real trajectory signal, not visible
+     in the numbers alone.
+
+  **Requires new persistent state that doesn't exist yet:** a small store
+  of the prior quarter's guidance figures and key qualitative highlights,
+  to diff against -- nothing today remembers what was guided last time.
+
+  **Two worked examples produced from real transcripts** (AVGO Q2 2026,
+  LLY Q1 2026 -- both fetched from Motley Fool call-transcript pages) exist
+  in the operator's Claude Code conversation history as a proof of concept
+  for the message format; not copied here since they're illustrative, not
+  final copy.
+
+  **Explicitly unresolved, needs a decision before building:** trigger
+  model -- on-demand via Claude Code (operator pings after a print, no new
+  infra/cost, can course-correct a bad transcript match live) vs. fully
+  automated in `sync.yml` via a direct Claude API call with web
+  search/fetch tool use (needs `ANTHROPIC_API_KEY` secret, real per-call
+  cost every quarter, no human catch of a bad transcript match before it
+  posts to Telegram). **Do not build either path without that decision
+  first.**
+
 - **Opportunistic sleeve's 30-day time exit was never validated against
   alternative durations (logged 2026-07-06).** `TIME_EXIT_DAYS = 30` in
   `run_entry_screen.py` traces back to the informal HWM precedent (a
