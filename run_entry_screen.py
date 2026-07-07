@@ -324,6 +324,13 @@ def compute_exit_triggers(
         "binding_label":     stop_label,
         "time_exit_date":    time_exit,
         "time_exit_days":    time_exit_days,
+        # Days remaining FROM TODAY, distinct from time_exit_days above (the
+        # fixed entry-to-exit duration, e.g. always 30 -- that field never
+        # changes day to day, so a "Xd left" display built from it would
+        # silently show the same number every day regardless of how close
+        # the real deadline actually is). This is the one that should be
+        # used anywhere "days left" is the claim.
+        "time_exit_days_remaining": (time_exit - _date.today()).days,
         "time_exit_binding": time_exit_binding,
         "next_earnings":     earn_date,
         "current_price":     ma["price"] if ma else None,
@@ -813,6 +820,25 @@ def run_entry_screen(
     return out
 
 
+# ── Discrete risk state for an open position -- exists so check_signal_
+#    changes.py has a single word to diff, the same pattern the guard/
+#    silver signals already use, instead of only watching the bare
+#    OPEN/CLOSED status word (which never changes while a position is
+#    held, no matter what the price actually does). Priority order: an
+#    actual stop breach outranks a looming time exit, which outranks a
+#    softer tripwire warning. ─────────────────────────────────────────────
+
+def sleeve_risk_state(trig: dict, any_watch: bool) -> str:
+    if trig["current_price"] is not None and trig["binding_stop"] is not None \
+            and trig["current_price"] <= trig["binding_stop"]:
+        return "STOPPED"
+    if trig["time_exit_days_remaining"] <= 0:
+        return "TIME-EXIT-DUE"
+    if any_watch:
+        return "TRIPWIRE"
+    return "CLEAN"
+
+
 # ── Compact daily summary for fi_tracker.py's TACTICAL RULES section --
 #    the full candidate table (~30 rows) belongs in an on-demand run of this
 #    script, not in the daily status.md digest, so this reuses the same
@@ -830,12 +856,15 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
                                       state["ticker"], state["category"], data_dir)
         tw = compute_tripwires(state, data_dir, benchmark)
         any_watch = (not tw["rs_ok"]) or tw["regime_changed"] or tw["cluster_breakdown"] or not tw["ma50_rising"]
+        risk = sleeve_risk_state(trig, any_watch)
         print(f"    Status         : OPEN -- {state['ticker']} @ ${state['entry_price']:.2f} "
               f"({state['entry_date']}), {state['shares']} sh")
-        print(f"    Time exit      : {trig['time_exit_date']}  ({trig['time_exit_days']}d left)")
+        print(f"    Current price  : ${trig['current_price']:.2f}" if trig["current_price"] else "    Current price  : n/a")
+        print(f"    Time exit      : {trig['time_exit_date']}  ({trig['time_exit_days_remaining']}d left)")
         print(f"    Binding stop   : ${trig['binding_stop']:.2f} ({trig['binding_label']})"
               if trig["binding_stop"] else "    Binding stop   : n/a")
         print(f"    Tripwires      : {'CLEAN' if not any_watch else 'FLAGGED -- run run_entry_screen.py for detail'}")
+        print(f"    Risk           : {risk}")
         return
 
     regime = current_regime(data_dir)
