@@ -18,6 +18,18 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  # Serializes overlapping runs (e.g. a delayed cron firing while a manual
+  # dispatch or watchdog re-trigger is still in flight) instead of letting
+  # them race to commit -- found for real 2026-07-07: a delayed schedule
+  # run and a manual dispatch both tried to push a status.md update, the
+  # second one's `git pull --rebase` hit a real merge conflict and the
+  # whole job failed outright. cancel-in-progress: false so a queued run
+  # still executes fresh (after the first finishes and pushes) rather
+  # than being dropped -- no run's work is lost, they just serialize.
+  group: daily-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
