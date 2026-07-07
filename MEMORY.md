@@ -615,6 +615,16 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **Telegram "just reported" earnings message is missing the actual EPS
+  figure (logged 2026-07-08).** `check_signal_changes.py`'s push message
+  (AVGO/LLY EARNINGS JUST REPORTED) includes Revenue actual + next-quarter
+  consensus and an "EPS beat streak" *count* (e.g. "4"), but not the
+  actual reported EPS dollar value or the estimate it beat/missed by --
+  that detail only lives in the full dashboard (`status.md`), not the
+  push. Same shape of fix as PR #41's revenue addition: add the actual
+  EPS $ + consensus + beat magnitude to the message. Quick, not urgent --
+  next prints are LLY 2026-08-05, AVGO 2026-09-03.
+
 - **PR #40 (`research/sleeve-duration-sensitivity`), open, not merged --
   important, operator flagged this as worth prioritizing: does the
   sleeve's 30-day time exit actually optimize trade duration, or is 30
