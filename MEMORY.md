@@ -615,6 +615,23 @@ resolution -- combine both additions, don't just pick one side.
 
 ## Research backlog (not scheduled, not built -- ideas awaiting validation)
 
+- **PR #40 (`research/sleeve-duration-sensitivity`), open, not merged --
+  important, operator flagged this as worth prioritizing: does the
+  sleeve's 30-day time exit actually optimize trade duration, or is 30
+  just inherited from the informal HWM precedent?** Real finding: 90 days
+  beats 30 even after fixing a real annualization bug (raw return
+  trivially favors longer windows for any appreciating stock -- fixed
+  with proper compounding annualization first). **Not decision-grade yet**
+  -- measured broad regime-matched dates for top-ranked momentum names,
+  not specifically dates passing the sleeve's actual entry gate (MA50-
+  not-extended, momentum conditioning). Closing that gap needs re-running
+  the entry-gate logic historically (bigger task, but `run_sleeve_entry_
+  reconstruction.py`, built since this PR opened for the exit-duration
+  backlog item, may already have the reusable gate-reconstruction
+  machinery needed). Report-only PR, does not change the live
+  `TIME_EXIT_DAYS=30` constant. 160 tests passed pre-merge on its own
+  branch.
+
 - ~~healthchecks.io check: switch Simple Period to Cron mode~~ -- **DONE
   2026-07-07/08.** Switched to Cron expression `30 20 * * 1-5` (the
   evening run), Grace ~2h -- same-day detection instead of up-to-3-day,
