@@ -7,6 +7,42 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Heartbeat notification path actually proven end-to-end (2026-07-07)
+
+Following up on the heartbeat build (PR #55): confirming a check exists and
+pings successfully proves detection, not that a real down event actually
+notifies anyone -- so this was deliberately force-tested for real, not
+just trusted.
+
+**First real test (Period/Grace temporarily set to 2min/1min) found a real
+gap:** the check correctly flipped to Down (confirmed in its Event Log --
+"Status change: up -> down" recorded), but **no notification was ever
+attempted** -- the Event Log's "Downtime alert" category was completely
+empty, which rules out a delivery/spam problem (a failed send attempt
+still logs an entry) and points at the email integration's ON toggle not
+having actually been saved/armed. Ruled out a race condition from our own
+testing first (checked `gh run list` -- no scheduled or dispatched run
+fired in the relevant window, next scheduled run was a full hour out).
+
+**Fix: toggle the email integration off, then on again**, to force it to
+actually save. Verified via two independent real (non-test-button) state
+transitions afterward: a genuine recovery ping produced a real "asset_
+universe is UP" email (downtime correctly measured as 23m36s, matching
+the original real down event), and a second forced miss produced a real
+"asset_universe is DOWN" Telegram message.
+
+**Also added: Telegram as a second healthchecks.io integration, alongside
+email.** This directly satisfies the design point flagged when the
+heartbeat was first proposed -- the heartbeat's own alert needs to reach a
+channel actually watched while traveling, not email. Email alone had
+already demonstrated it can silently fail to arm; Telegram is now the
+primary expected channel for this specific alert, with email as a second
+independent path.
+
+**Status: Period/Grace need reverting from the 2min/1min test values back
+to 3 days/1 hour** (set during the earlier gate-tuning session) -- flagged
+to the operator, not yet confirmed done as of this writing.
+
 ## Live pipeline gated on actual data freshness, not just exit code (2026-07-07, PR #57)
 
 Closes a gap found while scoping an operations test for the whole alert
