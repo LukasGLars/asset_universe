@@ -7,6 +7,112 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-07-07 — sleeve entry reconstruction, HWM state gap, risk alerting
+
+**AVGO guard constructiveness + dip-buy overlay, discussed not built.**
+Revisited whether the guard (200d SMA + crash trigger + joint-stress) is
+genuinely constructive: yes, per-year OOS record (`avgo_guard_oos.csv`)
+shows it matched or improved Calmar in 17 of 18 years, with the real wins
+concentrated exactly where you'd want them (2020 COVID Calmar 1.39->3.21,
+2022 bear 0.001->0.87, 2018 vol spike 0.77->3.66) -- not curve-fit, since
+the crash trigger and joint-stress escalation were both validated on a TXN
+analog (a crash type AVGO itself has never lived through) and both showed
+monotonic, not spiky, improvement. Separately discussed a "buy the dip"
+overlay for AVGO/LLY re-entry -- concluded the ~5pp ceiling (the two years
+guard cost raw CAGR: 2009, 2026 YTD) doesn't justify the added whipsaw risk
+that would fight the guard's own purpose. **Not built, correctly**: pure
+discussion, no code changed.
+
+**Sleeve exit-duration backlog item closed (PR #45).** PR #40 had
+disclaimed its own exit-duration sweep because it tested the wrong
+population (all regime-matched momentum dates, not the sleeve's actual
+gated entries) and believed the earnings gate couldn't be reconstructed
+point-in-time ("yfinance only exposes the current earnings calendar").
+**That claim was wrong, not just unverified** -- confirmed directly:
+`yf.Ticker("AVGO").get_earnings_dates(limit=60)` returns the full
+historical record back to 2009-12-03; `_next_earnings()` in `engine.py`
+just filters it to `>=today`. With that unblocked, built
+`run_sleeve_entry_reconstruction.py`: reconstructs all 4 of
+`screen_tactical()`'s gates point-in-time (reusing
+`run_sleeve_backtest.py`'s no-lookahead walk-forward ranking for gate 1),
+generates the real ~4,300-entry declustered gated-entry population
+(2009-2026), and sweeps duration against it. Result: annualized median
+return *declines* with duration (26.5% at 15d down to ~20-22% at 45-90d)
+-- edge looks front-loaded, if anything suggesting `TIME_EXIT_DAYS=30` is
+already on the generous side. **Not a verdict** -- still a population-level
+stat, not a compound-exit simulation (MA50 breach / hard stop would
+truncate many real trades before the time exit ever binds); that stays a
+separate, bigger follow-on. Self-check reproduces PR #5's ground truth
+(HWM clears all 4 gates as of 2026-06-24). `forward_return()` hand-verified
+against real price data. 171 tests passed pre-merge.
+
+**HWM sleeve-state gap found and fixed (PR #46) -- the actual reason for
+"no Telegram messages from the sleeve."** `config/sleeve_state.toml` had
+shown `open=false` since its creation (PR #6) -- HWM was genuinely entered
+2026-06-24 and MEMORY.md had been tracking it against a real exit rule,
+but the state file that `compute_exit_triggers()` needs was never
+populated via `--open`, so there was nothing to monitor and therefore
+nothing that could ever notify, regardless of price action. Backfilled
+with the real entry (2026-06-24, $276.93, 11 shares, HIGH/TIGHT regime, FX
+9.7344 SEK/USD and capital ~29,653 kr both derived from that date's actual
+data) -- **not** via `--open`, which stamps *today's* date and would have
+thrown the 30-day time-exit off by two weeks. Resolved the $258-vs-$271
+sheet discrepancy along the way: $258 was the sheet's manually-noted MA50
+(informational), $271.39 is the real binding hard stop -- consistent with
+MEMORY.md's existing "$271 hard stop" note.
+
+**Local data staleness found and guarded against (same PR #46) --
+separate from the above, and separate from the live pipeline.** While
+investigating HWM, found the local `data/` parquet cache (gitignored,
+never synced anywhere) was a full week stale (2026-06-30) with nothing
+checking or warning about it -- nearly produced a wrong "HWM has breached
+its stop" conclusion mid-session. **Confirmed the live GitHub Actions
+pipeline was never affected** -- it restores/refreshes its own cache every
+scheduled run, independent of this machine; `check_sync_health.py` and the
+watchdog both reported healthy throughout. Added
+`check_local_data_freshness.py`: checks a reference ticker's latest date
+against the most recent trading day and auto-refreshes if stale, meant to
+be run first in any future local ad-hoc analysis session.
+
+**All non-sleeve triggers directly re-verified live, not assumed (per
+explicit request to "be clear").** Ran `extract_fingerprint()` against the
+actual live `status.md` (committed by the pipeline that morning) -- every
+field (AVGO guard/trigger, joint stress, LLY stress, silver GSR, regime
+flip, both earnings reminders + latest-quarter/beat-streak/guidance-trend)
+parsed a real value, none degraded to `unknown`. Confirmed genuinely live,
+not just re-trusting the 2026-07-06 audit's claim.
+
+**Sleeve risk state wired into the Telegram alert diff (PR #47) -- the
+deeper gap even after the state fix.** `check_signal_changes.py` only ever
+diffed the bare `OPEN`/`CLOSED` word -- `compute_exit_triggers()` and
+`compute_tripwires()` were already computing a stop breach, an approaching
+time exit, and tripwire flags, but none of those values were diffed, so a
+real hard-stop breach on a held position would sit silently in
+`status.md`'s text with nothing pushed to Telegram (closing only happens
+via a manual `--close`, run after actually selling -- nothing closes a
+position automatically). Added `sleeve_risk_state()` (`CLEAN` / `TRIPWIRE`
+/ `TIME-EXIT-DUE` / `STOPPED`, in that priority order) to
+`run_entry_screen.py`, printed alongside a new `Current price` line in
+`sleeve_daily_summary()`, and wired into the alert diff -- `ACTION`-framed
+for a stop breach or arrived time exit, `REVIEW`-framed for a softer
+tripwire. **Real display bug fixed along the way**: the `Time exit` line
+was labeling a constant (days from *entry* to exit, always ~30) as "Xd
+left", which would have shown the same number every day regardless of the
+actual date -- added `time_exit_days_remaining`, computed from today, and
+switched the display to use it. Verified end-to-end against real live
+HWM data, not just the test fixtures. 183 tests passed pre-merge.
+
+**Net effect of this session, in plain terms:** HWM's actual exit
+conditions are now genuinely under automated watch for the first time
+since the trade was taken, and a real breach would now actually reach
+Telegram. The live guard/joint-stress/silver/regime/earnings pipeline was
+independently re-confirmed healthy, not just assumed from the prior
+audit. **Confirmed by design, not a gap:** new-opportunity candidate
+suggestions are fully paused while HWM is open -- `sleeve_daily_summary()`
+doesn't even run the screening logic while a position is held (position
+cap = 1). That resumes automatically once `--close` is run after HWM is
+actually sold.
+
 ## Session 2026-07-06 — sync reliability, LLY parity, EPS ratio fix, VRT->AVGO trade
 
 **Sync watchdog (PR #26).** `daily-sync`'s Monday 06:00 UTC cron fire was
