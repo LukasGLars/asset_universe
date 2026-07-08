@@ -9,10 +9,12 @@ to "the guard ran and said hold" -- there's no signal that distinguishes
 them. This script closes that gap with two checks:
 
   1. Freshness -- status.md's last-modified time must be recent enough
-     given the cron schedule in sync.yml (06:00 UTC / 20:30 UTC, Mon-Fri).
-     The Fri-evening -> Mon-morning gap (up to ~60h with no scheduled run)
-     is handled by walking the actual weekday schedule backwards rather
-     than using a flat hour threshold.
+     given the cron schedule in sync.yml (06:07 UTC / 20:37 UTC, Mon-Fri --
+     offset off round minutes 2026-07-08 after measuring a consistent
+     166-286min delay on the old exact-hour slots). The Fri-evening ->
+     Mon-morning gap (up to ~60h with no scheduled run) is handled by
+     walking the actual weekday schedule backwards rather than using a
+     flat hour threshold.
   2. Content -- status.md must be free of failure signatures
      (`[unavailable`, `Traceback`, `Error`) and must contain each of the
      key sections fi_tracker.py is expected to emit.
@@ -32,12 +34,14 @@ from pathlib import Path
 
 STATUS_FILE = Path(__file__).resolve().parent / "status.md"
 
-# Cron schedule mirrored from .github/workflows/sync.yml (UTC, weekdays only):
-#   '30 20 * * 1-5'  -> 22:30 CEST after NYSE close
-#   '0 6 * * 1-5'    -> 08:00 CEST morning FRED catch-up
+# Cron schedule mirrored from .github/workflows/sync.yml (UTC, weekdays only).
+# Offset off round minutes 2026-07-08 -- see sync.yml's own comment for the
+# measured delay data that motivated this:
+#   '37 20 * * 1-5'  -> ~22:37 CEST after NYSE close
+#   '7 6 * * 1-5'    -> ~08:07 CEST morning FRED catch-up
 SCHEDULED_RUN_TIMES_UTC = [
-    dt.time(hour=6, minute=0),
-    dt.time(hour=20, minute=30),
+    dt.time(hour=6, minute=7),
+    dt.time(hour=20, minute=37),
 ]
 
 # How long to wait after a scheduled run time before treating a missing
