@@ -7,6 +7,33 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Cron delay root cause found and fixed (2026-07-08, PR #70)
+
+The 2026-07-07 "cron won't fire" scare (see the concurrency-guard entry
+below) turned out to be a symptom of something bigger, found the next
+morning when `daily-sync`'s 06:07-slot run was still missing ~2h after
+its (old) 06:00 scheduled time. Measured **every** scheduled run since
+2026-06-25 (18 runs): the old exact-`:00` morning slot was delayed
+**166-286 minutes, every single day, without exception**; the old `:30`
+evening slot, 66-90 minutes, also every day. `sync-sheet` -- same repo,
+also hits `:00` among its 12 daily fires -- averaged only ~8min delay,
+proving this wasn't general GitHub congestion but something specific to
+`daily-sync` competing for popular round-minute queue slots (only 2
+fires/day, both on round numbers, vs. sync-sheet's 12 fires spreading
+the exposure).
+
+**Fix:** offset both crons off round minutes -- `37 20 * * 1-5` and
+`7 6 * * 1-5` -- matching GitHub's own documented advice. Also updated
+`check_sync_health.py`'s `SCHEDULED_RUN_TIMES_UTC` (reused by the
+watchdog) to match, and the operator updated healthchecks.io's Cron
+expression to `37 20 * * 1-5` / Grace 2h to stay aligned.
+
+**Honest caveat:** the actual delay reduction can only be confirmed at
+the next real scheduled fires (today 20:37 UTC / tomorrow 06:07 UTC) --
+not provable before merge, since GitHub doesn't expose a way to test
+scheduled-fire timing on demand. Worth checking those first real fires
+land close to on-time before considering this fully resolved.
+
 ## Root cause found for 2026-07-07's delayed/failed scheduled run -- concurrency guard added (PR #60)
 
 The 20:30 UTC `daily-sync` cron appeared not to fire for ~80 minutes,
