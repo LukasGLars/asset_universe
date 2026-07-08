@@ -39,17 +39,17 @@ def _write(path, text, mtime=None):
 
 
 def test_most_recent_required_run_friday_evening_covers_weekend():
-    # Saturday morning -- Friday 20:30 UTC run is still the latest required one.
+    # Saturday morning -- Friday 20:37 UTC run is still the latest required one.
     saturday = dt.datetime(2026, 7, 4, 10, 0, tzinfo=dt.timezone.utc)
     required = most_recent_required_run(saturday)
-    assert required == dt.datetime(2026, 7, 3, 20, 30, tzinfo=dt.timezone.utc)
+    assert required == dt.datetime(2026, 7, 3, 20, 37, tzinfo=dt.timezone.utc)
 
 
 def test_most_recent_required_run_monday_morning_after_grace():
-    # Monday 10:00 UTC, past the 06:00 + 3h grace -> Monday morning run required.
+    # Monday 10:00 UTC, past the 06:07 + 3h grace -> Monday morning run required.
     monday = dt.datetime(2026, 7, 6, 10, 0, tzinfo=dt.timezone.utc)
     required = most_recent_required_run(monday)
-    assert required == dt.datetime(2026, 7, 6, 6, 0, tzinfo=dt.timezone.utc)
+    assert required == dt.datetime(2026, 7, 6, 6, 7, tzinfo=dt.timezone.utc)
 
 
 def test_healthy_status_passes(tmp_path):

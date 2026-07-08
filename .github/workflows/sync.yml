@@ -2,8 +2,15 @@ name: daily-sync
 
 on:
   schedule:
-    - cron: '30 20 * * 1-5'   # 22:30 CEST (20:30 UTC) Mon-Fri — after NYSE close
-    - cron: '0 6 * * 1-5'     # 08:00 CEST (06:00 UTC) Mon-Fri — morning FRED catch-up
+    # Offset off round minutes (2026-07-08): measured every scheduled run
+    # since 2026-06-25 and found a consistent 166-286min delay on the old
+    # ':00' morning slot and 66-90min on the old ':30' evening slot, every
+    # single day -- sync-sheet, which also hits :00 among its 12 daily
+    # fires, averages only ~8min delay, so this is specific to competing
+    # for exact round-minute queue slots, not general GitHub congestion.
+    # Matches GitHub's own documented advice to avoid the top of the hour.
+    - cron: '37 20 * * 1-5'   # ~22:37 CEST Mon-Fri — after NYSE close
+    - cron: '7 6 * * 1-5'     # ~08:07 CEST Mon-Fri — morning FRED catch-up
   workflow_dispatch:
     inputs:
       test_telegram:
