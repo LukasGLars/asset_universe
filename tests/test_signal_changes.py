@@ -76,6 +76,20 @@ FIXTURE_SLEEVE_TRIPWIRE = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
     "    Tripwires      : FLAGGED -- run run_entry_screen.py for detail\n    Risk           : TRIPWIRE",
 )
 
+# Real 2026-07-09 HWM case: cluster health fires, other 3 checks are clean --
+# the enriched fixture carries the full one-line breakdown plus the
+# risk-to-stop annotation, exactly what the daily status.md now prints.
+FIXTURE_SLEEVE_TRIPWIRE_DETAILED = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
+    "    Current price  : $277.91\n",
+    "    Current price  : $271.58  (risk to stop: 20 kr, 0.07% of sleeve capital)\n",
+).replace(
+    "    Tripwires      : CLEAN\n    Risk           : CLEAN",
+    "    Tripwires      : FLAGGED -- run run_entry_screen.py for detail\n"
+    "    Tripwire detail : RS +9.1% [OK] | Regime stable [OK] | MA50 slope +10.68 [OK] | "
+    "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]\n"
+    "    Risk           : TRIPWIRE",
+)
+
 
 def test_extract_fingerprint_parses_known_fields():
     fp = extract_fingerprint(FIXTURE_BASE)
@@ -157,6 +171,49 @@ def test_sleeve_risk_tripwire_fires_as_review_not_action():
     assert "CLEAN -> TRIPWIRE" in body
     assert "REVIEW" in body
     assert "ACTION" not in body.split("\n")[0]  # not framed as urgent for a soft flag
+
+
+def test_extract_fingerprint_parses_tripwire_detail_and_risk_to_stop():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_TRIPWIRE_DETAILED)
+    assert fp["sleeve_tripwire_detail"] == (
+        "RS +9.1% [OK] | Regime stable [OK] | MA50 slope +10.68 [OK] | "
+        "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]"
+    )
+    assert fp["sleeve_risk_to_stop"] == "20 kr, 0.07% of sleeve capital"
+    # existing sleeve_price parsing must still grab just the price token,
+    # not the trailing risk-to-stop parenthetical.
+    assert fp["sleeve_price"] == "$271.58"
+
+
+def test_sleeve_risk_alert_carries_full_tripwire_picture_not_just_cluster():
+    # The actual fix requested 2026-07-09: the alert must include the RS/
+    # regime/MA50 checks too, not just whichever one fired -- cluster
+    # health is the noisiest of the four and shouldn't be the only thing
+    # the message says.
+    prev = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_TRIPWIRE_DETAILED)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    _, body = result
+    assert "CLEAN -> TRIPWIRE" in body
+    assert "RS +9.1% [OK]" in body
+    assert "Regime stable [OK]" in body
+    assert "MA50 slope +10.68 [OK]" in body
+    assert "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]" in body
+    assert "20 kr, 0.07% of sleeve capital" in body
+    assert "$271.58" in body and "$271.39" in body
+
+
+def test_sleeve_risk_alert_omits_detail_lines_when_status_md_lacks_them():
+    # Backward compatible: an older/plain status.md without the new lines
+    # still produces a valid (if less detailed) message, not a crash or
+    # a literal "unknown" leaking into the Telegram text.
+    prev = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_TRIPWIRE)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    _, body = result
+    assert "unknown" not in body
 
 
 def test_sleeve_risk_unchanged_produces_no_message():

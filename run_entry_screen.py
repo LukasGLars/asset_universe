@@ -574,6 +574,45 @@ def select_best_candidate(
 
 # ── Sleeve status display (position already open) ──────────────────────────
 
+def _risk_to_stop_str(trig: dict, shares: int, fx_at_entry: float, capital_sek: float) -> str | None:
+    """kr and % of sleeve capital at risk between current price and the
+    binding stop -- shared by the manual report, the daily status.md
+    summary, and (via check_signal_changes.py) the Telegram alert, so the
+    number can't drift between the three."""
+    if trig["current_price"] is None or trig["binding_stop"] is None:
+        return None
+    risk_sh = trig["current_price"] - trig["binding_stop"]
+    risk_kr = risk_sh * shares * fx_at_entry
+    return f"{risk_kr:,.0f} kr, {risk_kr / capital_sek:.2%} of sleeve capital"
+
+
+def _tripwire_detail_line(tw: dict) -> str:
+    """One-line, always-present breakdown of all 4 post-entry tripwires --
+    not just whichever one happens to have fired -- so a risk-state change
+    (and the Telegram alert built from it, see check_signal_changes.py)
+    carries the full picture instead of a bare CLEAN/FLAGGED label. Cluster
+    health is explicitly flagged as a coarse sector-only match (see
+    discover_cluster_peers, which matches on yfinance's ~11-bucket `sector`
+    field, not the finer `industry` field) -- confirmed 2026-07-09 to group
+    HWM (Aerospace & Defense) with GEV/VRT/PWR/CMI (Electrical Equipment /
+    Engineering & Construction / Machinery), which share a GICS sector but
+    not an actual demand driver. Read it as informational, not equal-
+    confidence with the other three checks."""
+    rs_part = (f"RS {tw['rs_20d']:+.1%} [{'OK' if tw['rs_ok'] else 'WATCH'}]"
+               if tw["rs_20d"] is not None else "RS n/a")
+    regime_part = (f"Regime {'FLIPPED' if tw['regime_changed'] else 'stable'} "
+                   f"[{'WATCH' if tw['regime_changed'] else 'OK'}]")
+    ma50_part = (f"MA50 slope {tw['ma50_slope']:+.2f} [{'OK' if tw['ma50_rising'] else 'WATCH'}]"
+                 if tw["ma50_slope"] is not None else "MA50 slope n/a")
+    if tw["peer_rets"]:
+        cluster_flag = ("WATCH, sector-only match -- low-confidence"
+                         if tw["cluster_breakdown"] else "OK")
+        cluster_part = f"Cluster avg {tw['cluster_avg']:+.1%} [{cluster_flag}]"
+    else:
+        cluster_part = "Cluster n/a (no peers on record)"
+    return f"{rs_part} | {regime_part} | {ma50_part} | {cluster_part}"
+
+
 def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> None:
     ticker, category = state["ticker"], state["category"]
     trig = compute_exit_triggers(state["entry_price"], state["entry_date"], ticker, category, data_dir)
@@ -600,11 +639,9 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
     print(f"    Binding stop    : ${trig['binding_stop']:.2f}  ({trig['binding_label']})"
           if trig["binding_stop"] else "    Binding stop    : n/a")
     print(f"    Next earnings   : {trig['next_earnings'] if trig['next_earnings'] else 'n/a'}")
-    if trig["current_price"] and trig["binding_stop"]:
-        risk_sh = trig["current_price"] - trig["binding_stop"]
-        risk_kr = risk_sh * state["shares"] * state["fx_at_entry"]
-        print(f"    Current price   : ${trig['current_price']:.2f}  "
-              f"(risk to binding stop: {risk_kr:,.0f} kr, {risk_kr/state['capital_sek']:.2%} of sleeve capital)")
+    risk_str = _risk_to_stop_str(trig, state["shares"], state["fx_at_entry"], state["capital_sek"])
+    if risk_str:
+        print(f"    Current price   : ${trig['current_price']:.2f}  (risk to binding stop: {risk_str})")
     print()
     print(f"  Post-entry tripwires")
     rs_flag = "OK" if tw["rs_ok"] else "WATCH"
@@ -617,7 +654,8 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
           f"(entry: {state['entry_ry_regime']}/{state['entry_baa10y_regime']})  [{regime_flag}]")
     if tw["peer_rets"]:
         peer_str = " ".join(f"{k} {v:+.1%}" for k, v in tw["peer_rets"].items())
-        cluster_flag = "WATCH -- BREAKDOWN" if tw["cluster_breakdown"] else "OK"
+        cluster_flag = ("WATCH -- BREAKDOWN (sector-only match, low-confidence)"
+                         if tw["cluster_breakdown"] else "OK")
         print(f"    Cluster health (5d)  : {peer_str}")
         print(f"                           avg {tw['cluster_avg']:+.1%}  [{cluster_flag}]")
     else:
@@ -859,11 +897,17 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         risk = sleeve_risk_state(trig, any_watch)
         print(f"    Status         : OPEN -- {state['ticker']} @ ${state['entry_price']:.2f} "
               f"({state['entry_date']}), {state['shares']} sh")
-        print(f"    Current price  : ${trig['current_price']:.2f}" if trig["current_price"] else "    Current price  : n/a")
+        if trig["current_price"]:
+            risk_str = _risk_to_stop_str(trig, state["shares"], state["fx_at_entry"], state["capital_sek"])
+            print(f"    Current price  : ${trig['current_price']:.2f}"
+                  + (f"  (risk to stop: {risk_str})" if risk_str else ""))
+        else:
+            print(f"    Current price  : n/a")
         print(f"    Time exit      : {trig['time_exit_date']}  ({trig['time_exit_days_remaining']}d left)")
         print(f"    Binding stop   : ${trig['binding_stop']:.2f} ({trig['binding_label']})"
               if trig["binding_stop"] else "    Binding stop   : n/a")
         print(f"    Tripwires      : {'CLEAN' if not any_watch else 'FLAGGED -- run run_entry_screen.py for detail'}")
+        print(f"    Tripwire detail : {_tripwire_detail_line(tw)}")
         print(f"    Risk           : {risk}")
         return
 

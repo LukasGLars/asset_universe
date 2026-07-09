@@ -54,6 +54,9 @@ def extract_fingerprint(text: str) -> dict:
         "sleeve_risk": _find(r"Opportunistic Sleeve.*?Risk\s*:\s*(\S+)", text),
         "sleeve_price": _find(r"Opportunistic Sleeve.*?Current price\s*:\s*(\S+)", text),
         "sleeve_stop": _find(r"Opportunistic Sleeve.*?Binding stop\s*:\s*(\S+)", text),
+        "sleeve_risk_to_stop": _find(
+            r"Opportunistic Sleeve.*?Current price\s*:\s*\S+\s*\(risk to stop:\s*([^)]+)\)", text),
+        "sleeve_tripwire_detail": _find(r"Opportunistic Sleeve.*?Tripwire detail\s*:\s*([^\n]+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -143,11 +146,23 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
         detail = (f"price {curr['sleeve_price']} vs stop {curr['sleeve_stop']}"
                   if curr["sleeve_risk"] == "STOPPED" else
                   "time exit has arrived" if curr["sleeve_risk"] == "TIME-EXIT-DUE" else
-                  "run `run_entry_screen.py` for tripwire detail")
-        blocks.append(
-            f"OPPORTUNISTIC SLEEVE RISK: {prev['sleeve_risk']} -> {curr['sleeve_risk']}\n"
-            f"{label}: {detail}"
-        )
+                  "see tripwire detail below")
+        lines = [
+            f"OPPORTUNISTIC SLEEVE RISK: {prev['sleeve_risk']} -> {curr['sleeve_risk']}",
+            f"{label}: {detail}",
+        ]
+        # Full picture every time, not just whichever check happens to have
+        # fired -- cluster health in particular is a coarse sector-only
+        # match (confirmed 2026-07-09), so it shouldn't be the only thing
+        # the alert says when it's the noisiest of the four checks.
+        if curr["sleeve_tripwire_detail"] != "unknown":
+            lines.append(f"Tripwire detail: {curr['sleeve_tripwire_detail']}")
+        if curr["sleeve_risk_to_stop"] != "unknown":
+            lines.append(
+                f"Risk to stop: {curr['sleeve_risk_to_stop']} "
+                f"(price {curr['sleeve_price']} vs stop {curr['sleeve_stop']})"
+            )
+        blocks.append("\n".join(lines))
         subject_parts.append(f"Sleeve risk -> {curr['sleeve_risk']}")
 
     if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":

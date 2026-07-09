@@ -5,8 +5,58 @@ import pandas as pd
 import run_entry_screen
 from run_entry_screen import (
     binding_stop, select_best_candidate, suggested_duration_days, _vix_stats,
-    sleeve_risk_state,
+    sleeve_risk_state, _tripwire_detail_line, _risk_to_stop_str,
 )
+
+
+def _tw(rs_20d=0.091, rs_ok=True, regime_changed=False, cluster_breakdown=False,
+        cluster_avg=-0.069, peer_rets=None, ma50_slope=10.68, ma50_rising=True):
+    return {
+        "rs_20d": rs_20d, "rs_ok": rs_ok,
+        "regime_changed": regime_changed,
+        "peer_rets": peer_rets if peer_rets is not None else {"GEV": -0.088, "VRT": -0.051, "PWR": -0.075, "CMI": -0.062},
+        "cluster_avg": cluster_avg, "cluster_breakdown": cluster_breakdown,
+        "ma50_slope": ma50_slope, "ma50_rising": ma50_rising,
+    }
+
+
+def test_tripwire_detail_line_all_clean():
+    line = _tripwire_detail_line(_tw())
+    assert "RS +9.1% [OK]" in line
+    assert "Regime stable [OK]" in line
+    assert "MA50 slope +10.68 [OK]" in line
+    assert "Cluster avg -6.9% [OK]" in line
+
+
+def test_tripwire_detail_line_flags_cluster_as_low_confidence():
+    # The real 2026-07-09 HWM case: only cluster fires, and it must be
+    # visibly caveated as a coarse sector-only match, not read as
+    # equal-confidence with the other three checks.
+    line = _tripwire_detail_line(_tw(cluster_breakdown=True))
+    assert "RS +9.1% [OK]" in line
+    assert "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]" in line
+
+
+def test_tripwire_detail_line_no_peers_on_record():
+    line = _tripwire_detail_line(_tw(peer_rets={}))
+    assert "Cluster n/a (no peers on record)" in line
+
+
+def test_tripwire_detail_line_missing_rs_and_ma50():
+    line = _tripwire_detail_line(_tw(rs_20d=None, ma50_slope=None))
+    assert "RS n/a" in line
+    assert "MA50 slope n/a" in line
+
+
+def test_risk_to_stop_str_computes_kr_and_pct():
+    trig = {"current_price": 271.58, "binding_stop": 271.39}
+    result = _risk_to_stop_str(trig, shares=11, fx_at_entry=9.734390258789062, capital_sek=29653.19)
+    assert result is not None
+    assert "kr" in result and "%" in result
+
+
+def test_risk_to_stop_str_none_when_missing_data():
+    assert _risk_to_stop_str({"current_price": None, "binding_stop": 271.39}, 11, 9.73, 29653.19) is None
 
 
 def test_binding_stop_ma50_binds_below_crossover():
