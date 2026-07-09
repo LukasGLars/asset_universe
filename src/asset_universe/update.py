@@ -42,6 +42,12 @@ def run(dry: bool = False) -> None:
     sleep_yf = settings["fetch"]["yf_sleep_seconds"]
     sleep_fred = settings["fetch"]["fred_sleep_seconds"]
     today = date.today().isoformat()
+    # yfinance's `end` is exclusive (end="2023-01-01" -> last bar is 2022-12-31),
+    # unlike FRED's `observation_end`, which is inclusive. Fetching with
+    # end=today therefore always drops today's own close -- a real
+    # one-trading-day lag baked into every run, even one firing after NYSE
+    # close. Use tomorrow as the yfinance `end` so today's bar is included.
+    yf_fetch_end = (date.today() + timedelta(days=1)).isoformat()
 
     print(f"Update: {today}{'  [DRY RUN]' if dry else ''}")
     print("=" * 60)
@@ -66,7 +72,7 @@ def run(dry: bool = False) -> None:
                 continue
 
             try:
-                df = yf_dl.fetch(ticker, fetch_start, today)
+                df = yf_dl.fetch(ticker, fetch_start, yf_fetch_end)
                 if df is None or df.empty:
                     print(f"  {ticker:<16} no data returned")
                 else:
