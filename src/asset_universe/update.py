@@ -8,8 +8,9 @@ Usage:
 
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, time as dt_time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -27,12 +28,36 @@ CATEGORIES = {
     "volatility":   "volatility",
 }
 
+# 5-minute buffer past NYSE's 4:00pm ET close.
+_MARKET_CLOSE_ET = dt_time(16, 5)
+
 
 def _next_fetch_start(path: Path, default_start: str) -> str:
     last = reader.last_date(path)
     if last is None:
         return default_start
     return (pd.Timestamp(last) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def _yf_fetch_end() -> str:
+    """yfinance's `end` is exclusive (end="2023-01-01" -> last bar is
+    2022-12-31), unlike FRED's `observation_end`, which is inclusive.
+    Fetching with end=today therefore always drops today's own close --
+    a real one-trading-day lag, not just a run-timing symptom.
+
+    Only extend to tomorrow (so today's close is included) once NYSE has
+    actually closed, checked in NY local time so it's correct across the
+    US/EU DST mismatch weeks -- a fixed UTC cron offset alone doesn't
+    reliably land after close year-round. Otherwise (e.g. a manual
+    workflow_dispatch or watchdog re-trigger firing mid-session) fetching
+    today would risk capturing a live, not-yet-final intraday print as if
+    it were a completed close -- and since `_next_fetch_start` never
+    revisits an already-recorded date, that bad value would stick until
+    the next calendar day's fetch happens to overwrite it, which it won't."""
+    ny_now = datetime.now(ZoneInfo("America/New_York"))
+    if ny_now.time() < _MARKET_CLOSE_ET:
+        return ny_now.date().isoformat()
+    return (ny_now.date() + timedelta(days=1)).isoformat()
 
 
 def run(dry: bool = False) -> None:
@@ -42,12 +67,7 @@ def run(dry: bool = False) -> None:
     sleep_yf = settings["fetch"]["yf_sleep_seconds"]
     sleep_fred = settings["fetch"]["fred_sleep_seconds"]
     today = date.today().isoformat()
-    # yfinance's `end` is exclusive (end="2023-01-01" -> last bar is 2022-12-31),
-    # unlike FRED's `observation_end`, which is inclusive. Fetching with
-    # end=today therefore always drops today's own close -- a real
-    # one-trading-day lag baked into every run, even one firing after NYSE
-    # close. Use tomorrow as the yfinance `end` so today's bar is included.
-    yf_fetch_end = (date.today() + timedelta(days=1)).isoformat()
+    yf_fetch_end = _yf_fetch_end()
 
     print(f"Update: {today}{'  [DRY RUN]' if dry else ''}")
     print("=" * 60)
