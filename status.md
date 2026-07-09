@@ -3,19 +3,19 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     304     778 kr   236,542 kr  23.2%
-  Silver                    66     536 kr    35,361 kr   3.5%
-  Eli Lilly                 14  11,984 kr   167,774 kr  16.5%
-  Walmart                  126   1,082 kr   136,312 kr  13.4%
-  Cameco                     -     918 kr         0 kr   0.0%
-  Vertiv                     -   2,964 kr         0 kr   0.0%
-  Broadcom                  49   3,596 kr   176,216 kr  17.3%
-  Howmet Aerospace          11   2,671 kr    29,386 kr   2.9%
-  Spiltan Räntefond          -     manual   234,700 kr  23.0%
+  Gold                     304     758 kr   230,574 kr  23.4%
+  Silver                     -     506 kr         0 kr   0.0%
+  Eli Lilly                 14  11,792 kr   165,095 kr  16.8%
+  Walmart                  126   1,097 kr   138,218 kr  14.0%
+  Cameco                     -     919 kr         0 kr   0.0%
+  Vertiv                     -   3,082 kr         0 kr   0.0%
+  Broadcom                  49   3,770 kr   184,728 kr  18.8%
+  Howmet Aerospace          11   2,634 kr    28,975 kr   2.9%
+  Spiltan Räntefond          -     manual   234,700 kr  23.8%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,099,489 kr
-    Reactor Core            781,591 kr  (71%)
+  TPV                                        1,097,874 kr
+    Reactor Core            747,590 kr  (68%)
     Home Base               234,700 kr  (21%)
     War Chest                 1,959 kr  (0%)
 
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,099,489 kr
+  Now                     :     1,097,874 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +19.5%
-  Required CAGR           :  +22.1%
-  Status                  :  BEHIND  (-2.6% margin)
+  AWAR (trailing)         :  +19.3%
+  Required CAGR           :  +22.2%
+  Status                  :  BEHIND  (-2.9% margin)
 
-  Projected @ AWAR        :    10,360,891 kr
-  vs target               :    -2,573,815 kr  (deficit)
+  Projected @ AWAR        :    10,134,268 kr
+  vs target               :    -2,800,438 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,560,793 kr       ~2047
-  Conservative   +15%       7,046,058 kr       ~2041
-  Base           +20%      10,801,747 kr       ~2038
-  Current AWAR   +20%      10,360,891 kr       ~2038
-  Bull           +30%      24,635,298 kr       ~2035
+  Bear           +10%       4,554,783 kr       ~2047
+  Conservative   +15%       7,035,615 kr       ~2041
+  Base           +20%      10,784,085 kr       ~2038
+  Current AWAR   +19%      10,134,268 kr       ~2038
+  Bull           +30%      24,588,210 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -70,32 +70,32 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           23.2%     --    --     +3.3%     +4.3%   92%   528  no mom data
-  Silver          3.5%     --    --     +3.9%     +3.9%   70%   528  no mom data
-  Eli Lilly      16.5%     --    --     -0.1%     -0.6%   43%   529  no mom data
-  Walmart        13.4%     --    --     +1.2%     +1.4%   60%   529  no mom data
-  Cameco          0.0%     --    --     -1.0%     -1.5%   43%   529  no mom data
-  Vertiv          0.0%     --    --     +1.4%     -2.1%   44%   529  no mom data
-  Broadcom       17.3%     --    --     +7.6%     +3.6%   60%   529  no mom data
+  Gold           23.4%    LOW   LOW     +0.7%     +0.7%   75%    63  
+  Silver          0.0%    LOW   LOW     +2.3%     +2.3%   84%    31  
+  Eli Lilly      16.8%   HIGH  HIGH     -0.2%     -0.2%   47%   146  
+  Walmart        14.0%    LOW   LOW     +0.2%     +0.2%   55%    62  
+  Cameco          0.0%    LOW   LOW     +2.0%     +2.0%   67%    82  
+  Vertiv          0.0%    MID   MID     +0.4%     +0.4%   62%    32  
+  Broadcom       18.8%    MID  HIGH     +0.2%     +0.2%   53%    64  
 
 ==============================================================
 TACTICAL RULES
 ==============================================================
 
   Silver GSR Tactical
-    GSR now        : 68.03  (as of 2026-07-07)
-    60d GSR peak   : 69.14
-    Fall from peak : 1.6%  (no (need >=5% fall for signal))
+    GSR now        : 69.99  (as of 2026-07-08)
+    60d GSR peak   : 69.99
+    Fall from peak : 0.0%  (no (need >=5% fall for signal))
     T1 threshold   : 83.36  |  T2: 86.45  |  Exit: 62.56
     Signal         : INACTIVE
     Action         : No action -- hold base
 
   AVGO 200d Guard
-    AVGO now       : $370.78  (as of 2026-07-07)
-    200d SMA       : $360.42  (+2.9% gap)
-    5d ROC         : -0.4%  (crash threshold: -10%)
+    AVGO now       : $388.69  (as of 2026-07-08)
+    200d SMA       : $360.65  (+7.8% gap)
+    5d ROC         : +2.9%  (crash threshold: -10%)
     Signal         : BASE  (trigger: none)
-    LLY stress     : inactive  ($1235.56 vs 200d SMA $987.14, 5d ROC +0.5%)
+    LLY stress     : inactive  ($1215.83 vs 200d SMA $989.42, 5d ROC +1.4%)
     Joint stress   : inactive  (guard AND LLY stress both active)
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
@@ -127,20 +127,20 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
-    Current price  : $275.43
-    Time exit      : 2026-07-24  (16d left)
+    Current price  : $271.58
+    Time exit      : 2026-07-24  (15d left)
     Binding stop   : $271.39 (HARD)
-    Tripwires      : CLEAN
-    Risk           : CLEAN
+    Tripwires      : FLAGGED -- run run_entry_screen.py for detail
+    Risk           : TRIPWIRE
 
 ==============================================================
 NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 22.5%
+    Current wt (of Reactor Core) : 24.7%
     Target wt (current regime)   : 55.0%
-    Gap                          : +32.5%
+    Gap                          : +30.3%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
