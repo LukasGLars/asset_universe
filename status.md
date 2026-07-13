@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,700 kr  23.8%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,101,689 kr
+  TPV                                        1,098,175 kr
     Reactor Core            750,303 kr  (68%)
     Home Base               234,700 kr  (21%)
     War Chest                 1,959 kr  (0%)
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,101,689 kr
+  Now                     :     1,098,175 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +19.6%
-  Required CAGR           :  +22.1%
-  Status                  :  BEHIND  (-2.5% margin)
+  AWAR (trailing)         :  +19.1%
+  Required CAGR           :  +22.2%
+  Status                  :  BEHIND  (-3.1% margin)
 
-  Projected @ AWAR        :    10,477,469 kr
-  vs target               :    -2,457,237 kr  (deficit)
+  Projected @ AWAR        :     9,944,512 kr
+  vs target               :    -2,990,194 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,564,313 kr       ~2047
-  Conservative   +15%       7,050,551 kr       ~2041
-  Base           +20%      10,807,010 kr       ~2038
-  Current AWAR   +20%      10,477,469 kr       ~2038
-  Bull           +30%      24,639,281 kr       ~2035
+  Bear           +10%       4,550,101 kr       ~2047
+  Conservative   +15%       7,025,467 kr       ~2041
+  Base           +20%      10,764,026 kr       ~2038
+  Current AWAR   +19%       9,944,512 kr       ~2038
+  Bull           +30%      24,522,294 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -115,10 +115,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.55 vs $6.79  (+25.9% surprise)
     TTM EPS (non-GAAP actual)  : $29.42
-    Forward EPS (+1yr est.)    : $44.80
+    Forward EPS (+1yr est.)    : $44.82
     Fwd/Trail ratio (normalized): 1.52x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
     Revenue (latest qtr, actual): $19.80B  (TTM YoY: +47.4%)
-    Next-qtr revenue consensus : $20.55B (implied YoY +32.1%)
+    Next-qtr revenue consensus : $20.52B (implied YoY +31.9%)
     Next earnings  : 2026-08-05
     Reminder       : not_due
     Latest quarter : 2026-03-31
@@ -128,7 +128,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
     Current price  : $270.85  (risk to stop: -58 kr, -0.19% of sleeve capital)
-    Time exit      : 2026-07-24  (14d left)
+    Time exit      : 2026-07-24  (11d left)
     Binding stop   : $271.39 (HARD)
     Tripwires      : CLEAN
     Tripwire detail : RS +4.2% [OK] | Regime stable [OK] | MA50 slope +10.81 [OK] | Cluster avg +1.2% [OK]
