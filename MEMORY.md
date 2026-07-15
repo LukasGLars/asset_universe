@@ -1052,6 +1052,30 @@ trigger + joint-stress escalation), Sharpe 1.967, MaxDD -14.9%, Calmar
 2.957 (strategy "E" in `run_combined_system.py`; SMA-only-guard baseline
 was Calmar 2.205, see above for the layered progression).
 
+## AVGO lump-sum-vs-staged entry — DECIDED 2026-07-15, resolves the last open sub-decision below
+
+Operator's call: **staged, not lump-sum.** Add a 31-share tranche to AVGO
+today (2026-07-15) rather than waiting for the full remaining leg to execute
+in one shot after the 2026-09-03 earnings gate clears. **Reasoning, stated
+directly by the operator:** waiting for the full amount means ~7 weeks of a
+large chunk of capital sitting in cash doing nothing (cash drag) — worse
+than accepting a partial entry ahead of the earnings print. At 2026-07-14's
+close ($389.11 / 3,759.16 kr per share), 31 shares ≈ 116,534 kr. **This
+matches the 49→80 share move already reflected in `config/portfolio.toml`
+via this morning's `sync-sheet` run (commit 1e3087c)** — so the trade is
+already executed and synced, not pending; this entry records the decision
+and reasoning behind a change that had already landed.
+
+**What's still gated on 2026-09-03, per the existing earnings-checkpoint
+condition (see "AVGO's remaining rebalance tranche" below) — unchanged by
+this decision:** the remaining leg, computed against the *current* 80-share
+holding — Reactor Core total 856,524 kr, AVGO now 35.1% vs. 55% target — is
+~170,355 kr / ~45 more shares, funded by WMT (138,404 kr) + HWM proceeds
+(29,413 kr, available once HWM exits — time exit 2026-07-25) + trimming
+Gold's ~18,000 kr excess over its 25% target. Today's 31-share tranche is
+explicitly a cash-drag mitigation ahead of that gate, not a signal that the
+earnings gate itself has been waived for the rest of the position.
+
 ## Rebalance — DECIDED 2026-07-02, execution in progress
 
 Target: **Reactor Core 83.3% / War Chest 4.5% / Home Base 12.2%** (of total
@@ -1065,17 +1089,18 @@ Execution status:
 - **Gold leg: DONE (2026-07-02).** Bought 54 shares PPFB.DE, funded from
   Home Base (Spiltan Räntefond). Live in `config/portfolio.toml` (304
   shares).
-- **Remaining legs (sell Silver/WMT/CCJ/VRT, buy AVGO/LLY, top up War
-  Chest): NOT yet executed.** Deliberately sequenced to happen *after* the
-  HWM tactical position exits (time exit 2026-07-25, or earlier on MA50
-  breach / $271 hard stop) — let HWM's own exit rule run its course first,
-  then fold proceeds into the rest of the rebalance.
-- **The one open sub-decision: lump-sum vs. staged/tranched entry for the
-  ~430k kr AVGO buy** (roughly 5-6x the current position). Not resolved as
-  of this writing. Matters more than it looks — the 2026-07-01 valuation
-  review flagged AVGO at 63x trailing P/E, "priced for near-perfection."
-  Resolve deliberately before executing, don't let it happen by default
-  when HWM closes.
+- **Remaining legs (sell WMT/CCJ/VRT, buy AVGO/LLY, top up War Chest): still
+  mostly NOT executed**, still sequenced to happen *after* the HWM tactical
+  position exits (time exit 2026-07-25, or earlier on MA50 breach / $271
+  hard stop) — with one exception: a 31-share AVGO tranche jumped the
+  sequencing on 2026-07-15 for cash-drag reasons (see the dedicated section
+  above this one). That was a deliberate partial exception, not an
+  abandonment of the post-HWM sequencing for the rest of the leg.
+- **Lump-sum vs. staged/tranched entry for the AVGO buy: RESOLVED
+  2026-07-15 — staged**, not lump-sum (see section above). The 2026-07-01
+  valuation review's "63x trailing P/E, priced for near-perfection" flag was
+  the reason staged entry was preferred over deploying the whole remaining
+  leg at once.
 
 Full kr-denominated trade list and the annuity-adjusted required-CAGR math
 (22.06% with contributions vs 24.88% without) are in the operator's personal
