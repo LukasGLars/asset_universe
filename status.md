@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,700 kr  24.0%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,083,879 kr
+  TPV                                        1,083,193 kr
     Reactor Core            739,991 kr  (68%)
     Home Base               234,700 kr  (22%)
     War Chest                 1,959 kr  (0%)
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,083,879 kr
+  Now                     :     1,083,193 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +17.4%
+  AWAR (trailing)         :  +17.3%
   Required CAGR           :  +22.3%
-  Status                  :  BEHIND  (-4.9% margin)
+  Status                  :  BEHIND  (-5.0% margin)
 
-  Projected @ AWAR        :     8,562,652 kr
-  vs target               :    -4,372,054 kr  (deficit)
+  Projected @ AWAR        :     8,461,722 kr
+  vs target               :    -4,472,984 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,507,850 kr       ~2047
-  Conservative   +15%       6,955,886 kr       ~2041
-  Base           +20%      10,651,850 kr       ~2038
-  Current AWAR   +17%       8,562,652 kr       ~2039
-  Bull           +30%      24,246,941 kr       ~2035
+  Bear           +10%       4,504,516 kr       ~2047
+  Conservative   +15%       6,949,827 kr       ~2041
+  Base           +20%      10,641,223 kr       ~2038
+  Current AWAR   +17%       8,461,722 kr       ~2040
+  Bull           +30%      24,216,982 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -128,7 +128,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
     Current price  : $276.78  (risk to stop: 577 kr, 1.95% of sleeve capital)
-    Time exit      : 2026-07-24  (10d left)
+    Time exit      : 2026-07-24  (9d left)
     Binding stop   : $271.39 (HARD)
     Tripwires      : CLEAN
     Tripwire detail : RS +3.0% [OK] | Regime stable [OK] | MA50 slope +10.99 [OK] | Cluster avg +0.3% [OK]
@@ -187,8 +187,8 @@ Computing capped 252d distributions for 51 candidates ...
   CFG       N= 546  mu= +16.4%  sigma= 13.5%  hist=12yr  [SINGLE]
   WDC       N=1201  mu= +20.2%  sigma= 38.8%  hist=26yr  [MODERATE]
   GS        N=1201  mu= +13.3%  sigma= 23.8%  hist=26yr  [MODERATE]
-  GRMN      N=1201  mu= +30.2%  sigma= 32.6%  hist=26yr  [MODERATE]
   PHAG.L    no data
+  GRMN      N=1201  mu= +30.2%  sigma= 32.6%  hist=26yr  [MODERATE]
   CIEN      N=1201  mu= +19.7%  sigma= 27.1%  hist=26yr  [MODERATE]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   FSLR      N= 784  mu= +29.1%  sigma= 53.6%  hist=20yr  [MODERATE]
@@ -200,8 +200,8 @@ Computing capped 252d distributions for 51 candidates ...
   FIX       N=1201  mu= +19.1%  sigma= 28.2%  hist=26yr  [MODERATE]
   APH       N=1201  mu= +17.5%  sigma= 24.8%  hist=26yr  [MODERATE]
   4GLD.DE   no data
-  PPFB.DE   no data
   ETR       N=1201  mu= +13.2%  sigma= 19.1%  hist=26yr  [MODERATE]
+  PPFB.DE   no data
   GC_F      N=1201  mu=  +9.2%  sigma= 11.3%  hist=26yr  [MODERATE]
 
 Cross-sectional prior mu : +19.1%  (shrinkage target)
