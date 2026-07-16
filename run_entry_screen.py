@@ -602,8 +602,9 @@ def _tripwire_detail_line(tw: dict) -> str:
                if tw["rs_20d"] is not None else "RS n/a")
     regime_part = (f"Regime {'FLIPPED' if tw['regime_changed'] else 'stable'} "
                    f"[{'WATCH' if tw['regime_changed'] else 'OK'}]")
-    ma50_part = (f"MA50 slope {tw['ma50_slope']:+.2f} [{'OK' if tw['ma50_rising'] else 'WATCH'}]"
-                 if tw["ma50_slope"] is not None else "MA50 slope n/a")
+    ma50_part = (f"MA50 ${tw['ma50_now']:.2f} (slope {tw['ma50_slope']:+.2f}) "
+                 f"[{'OK' if tw['ma50_rising'] else 'WATCH'}]"
+                 if tw["ma50_slope"] is not None else "MA50 n/a")
     if tw["peer_rets"]:
         cluster_flag = ("WATCH, sector-only match -- low-confidence"
                          if tw["cluster_breakdown"] else "OK")

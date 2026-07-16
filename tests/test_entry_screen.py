@@ -10,13 +10,13 @@ from run_entry_screen import (
 
 
 def _tw(rs_20d=0.091, rs_ok=True, regime_changed=False, cluster_breakdown=False,
-        cluster_avg=-0.069, peer_rets=None, ma50_slope=10.68, ma50_rising=True):
+        cluster_avg=-0.069, peer_rets=None, ma50_now=264.99, ma50_slope=10.68, ma50_rising=True):
     return {
         "rs_20d": rs_20d, "rs_ok": rs_ok,
         "regime_changed": regime_changed,
         "peer_rets": peer_rets if peer_rets is not None else {"GEV": -0.088, "VRT": -0.051, "PWR": -0.075, "CMI": -0.062},
         "cluster_avg": cluster_avg, "cluster_breakdown": cluster_breakdown,
-        "ma50_slope": ma50_slope, "ma50_rising": ma50_rising,
+        "ma50_now": ma50_now, "ma50_slope": ma50_slope, "ma50_rising": ma50_rising,
     }
 
 
@@ -24,7 +24,7 @@ def test_tripwire_detail_line_all_clean():
     line = _tripwire_detail_line(_tw())
     assert "RS +9.1% [OK]" in line
     assert "Regime stable [OK]" in line
-    assert "MA50 slope +10.68 [OK]" in line
+    assert "MA50 $264.99 (slope +10.68) [OK]" in line
     assert "Cluster avg -6.9% [OK]" in line
 
 
@@ -45,7 +45,7 @@ def test_tripwire_detail_line_no_peers_on_record():
 def test_tripwire_detail_line_missing_rs_and_ma50():
     line = _tripwire_detail_line(_tw(rs_20d=None, ma50_slope=None))
     assert "RS n/a" in line
-    assert "MA50 slope n/a" in line
+    assert "MA50 n/a" in line
 
 
 def test_risk_to_stop_str_computes_kr_and_pct():

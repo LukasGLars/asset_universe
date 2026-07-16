@@ -85,7 +85,7 @@ FIXTURE_SLEEVE_TRIPWIRE_DETAILED = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
 ).replace(
     "    Tripwires      : CLEAN\n    Risk           : CLEAN",
     "    Tripwires      : FLAGGED -- run run_entry_screen.py for detail\n"
-    "    Tripwire detail : RS +9.1% [OK] | Regime stable [OK] | MA50 slope +10.68 [OK] | "
+    "    Tripwire detail : RS +9.1% [OK] | Regime stable [OK] | MA50 $264.99 (slope +10.68) [OK] | "
     "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]\n"
     "    Risk           : TRIPWIRE",
 )
@@ -176,7 +176,7 @@ def test_sleeve_risk_tripwire_fires_as_review_not_action():
 def test_extract_fingerprint_parses_tripwire_detail_and_risk_to_stop():
     fp = extract_fingerprint(FIXTURE_SLEEVE_TRIPWIRE_DETAILED)
     assert fp["sleeve_tripwire_detail"] == (
-        "RS +9.1% [OK] | Regime stable [OK] | MA50 slope +10.68 [OK] | "
+        "RS +9.1% [OK] | Regime stable [OK] | MA50 $264.99 (slope +10.68) [OK] | "
         "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]"
     )
     assert fp["sleeve_risk_to_stop"] == "20 kr, 0.07% of sleeve capital"
@@ -198,7 +198,7 @@ def test_sleeve_risk_alert_carries_full_tripwire_picture_not_just_cluster():
     assert "CLEAN -> TRIPWIRE" in body
     assert "RS +9.1% [OK]" in body
     assert "Regime stable [OK]" in body
-    assert "MA50 slope +10.68 [OK]" in body
+    assert "MA50 $264.99 (slope +10.68) [OK]" in body
     assert "Cluster avg -6.9% [WATCH, sector-only match -- low-confidence]" in body
     assert "20 kr, 0.07% of sleeve capital" in body
     assert "$271.58" in body and "$271.39" in body
