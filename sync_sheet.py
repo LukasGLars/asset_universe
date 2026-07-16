@@ -10,7 +10,9 @@ import csv
 import io
 import re
 import sys
+import time
 import tomllib
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -47,15 +49,38 @@ def _lookup(asset: str) -> str | None:
     return None
 
 
-def fetch_sheet_rows() -> list[dict]:
+def fetch_sheet_rows(retries: int = 3, backoff_seconds: float = 2.0) -> list[dict]:
+    """Fetch the sheet CSV, retrying on transient network errors (timeouts,
+    connection resets) -- a single blip on Google's export endpoint
+    previously took down the whole watchdog job with no second attempt
+    (real failure 2026-07-16: "The read operation timed out"). Content
+    errors (e.g. HTML instead of CSV, meaning the sheet sharing setting is
+    wrong) are not retried -- retrying wouldn't fix those."""
     url = (
         f"https://docs.google.com/spreadsheets/d/{SHEET_ID}"
         f"/export?format=csv&gid={GID}"
     )
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        content_type = resp.headers.get("Content-Type", "")
-        raw = resp.read()
+
+    raw = content_type = None
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                raw = resp.read()
+            last_exc = None
+            break
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            last_exc = exc
+            if attempt < retries:
+                print(f"  fetch attempt {attempt}/{retries} failed ({exc}), "
+                      f"retrying in {backoff_seconds:.0f}s...", file=sys.stderr)
+                time.sleep(backoff_seconds)
+                backoff_seconds *= 2
+
+    if last_exc is not None:
+        raise RuntimeError(f"sheet fetch failed after {retries} attempts") from last_exc
 
     # If redirected to a login page the response is HTML, not CSV
     if "text/html" in content_type:
