@@ -7,6 +7,47 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## HWM hard stop: live false-positive confirms the PR #68 finding -- resolution deferred to post-HWM-trade (2026-07-16)
+
+The `HARD_STOP_PCT` (2%) question flagged as unreconciled in PR #68 (see
+below) just played out live, not just in backtest: HWM's sleeve Risk
+flipped CLEAN -> STOPPED on 2026-07-10 (price $270.85 vs hard stop
+$271.39) while every other signal -- RS +4.2%, regime stable, MA50 slope
++10.81 rising, cluster OK -- stayed clean. HWM recovered within days,
+closing back at/above entry ($276.93+). The alert itself worked correctly
+(delivered, confirmed via job logs); the operator correctly discounted
+the *trigger* as noise, not the alerting mechanism.
+
+**Genuine tradeoff, confirmed on real data -- not "just remove it":** the
+hard stop's real purpose is bounding max initial loss-per-trade before
+MA50 (a lagging 50d average) has converged toward entry. For HWM
+specifically, MA50 ($264.99) still sits 4.3% below entry ($276.93) --
+more than double the hard stop's 2% cap. Dropping the hard stop outright
+would mean initial risk is bounded only by however far below entry MA50
+happens to sit at entry time, not a controlled figure. The cost side is
+what just happened: a fixed level sitting near price for weeks produces
+false triggers from ordinary volatility, independent of whether the
+trend is actually intact.
+
+**Decision: explicitly deferred until HWM's position closes** (operator's
+own call, 2026-07-16) -- changing exit rules mid-position was rejected on
+principle, not because the analysis is unclear. Candidate resolutions to
+evaluate then, building on PR #68's unresolved "should any fixed stop
+exist at all" question:
+1. Drop the hard stop entirely, MA50 sole binding stop (RS/regime/cluster
+   stay as tripwires, as already structured).
+2. Time-decay the hard stop -- active only for the first N days
+   post-entry (while MA50 is still converging), then MA50 takes over.
+3. Require multi-day confirmation (e.g. 2 consecutive closes below)
+   rather than any single-day touch, to filter ordinary vol without
+   dropping the initial-risk-cap purpose entirely.
+
+**Interim fix shipped meanwhile (2026-07-16):** the tripwire detail line
+and the Telegram alert now show MA50's actual price level (`MA50 $264.99
+(slope +10.68)`), not just its slope -- previously the alert showed the
+noisy hard-stop distance but never the level the operator actually
+trusts.
+
 ## Cron delay root cause found and fixed (2026-07-08, PR #70)
 
 The 2026-07-07 "cron won't fire" scare (see the concurrency-guard entry
