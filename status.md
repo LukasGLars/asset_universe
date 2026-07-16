@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   234,793 kr  21.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,079,243 kr
+  TPV                                        1,079,894 kr
     Reactor Core            852,369 kr  (79%)
     Home Base               234,793 kr  (22%)
     War Chest                 1,959 kr  (0%)
@@ -23,7 +23,7 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,079,243 kr
+  Now                     :     1,079,894 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
@@ -31,16 +31,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.4%
   Status                  :  BEHIND  (-5.5% margin)
 
-  Projected @ AWAR        :     8,131,158 kr
-  vs target               :    -4,803,548 kr  (deficit)
+  Projected @ AWAR        :     8,145,650 kr
+  vs target               :    -4,789,056 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,493,228 kr       ~2047
-  Conservative   +15%       6,931,406 kr       ~2041
-  Base           +20%      10,611,783 kr       ~2038
-  Current AWAR   +17%       8,131,158 kr       ~2040
-  Bull           +30%      24,145,873 kr       ~2035
+  Bear           +10%       4,493,717 kr       ~2047
+  Conservative   +15%       6,931,591 kr       ~2041
+  Base           +20%      10,611,138 kr       ~2038
+  Current AWAR   +17%       8,145,650 kr       ~2040
+  Bull           +30%      24,140,046 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -102,10 +102,10 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
-    Forward EPS (+1yr est.)    : $19.40
+    Forward EPS (+1yr est.)    : $19.42
     Fwd/Trail ratio (normalized): 2.39x  (peer range 1.17-1.41x; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
-    Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
+    Next-qtr revenue consensus : $29.44B (implied YoY +84.5%)
     Next earnings  : 2026-09-03
     Reminder       : not_due
     Latest quarter : 2026-04-30
@@ -128,7 +128,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
     Current price  : $279.24  (risk to stop: 841 kr, 2.83% of sleeve capital)
-    Time exit      : 2026-07-24  (9d left)
+    Time exit      : 2026-07-24  (8d left)
     Binding stop   : $271.39 (HARD)
     Tripwires      : CLEAN
     Tripwire detail : RS +3.0% [OK] | Regime stable [OK] | MA50 slope +11.03 [OK] | Cluster avg -2.2% [OK]
