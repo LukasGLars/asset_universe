@@ -7,6 +7,46 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Portfolio construction principle: drawdown-tolerance-first sizing (documented 2026-07-17)
+
+Both sizing layers in this system optimize the same thing at different
+scopes -- return per unit of worst-case drawdown, not raw return -- and
+that was never stated as an explicit rule anywhere, just implicit in two
+disconnected calculations. Writing it down once here:
+
+**Why drawdown, not return, is the binding constraint:** recovery from a
+loss is convex, not linear -- -10% needs +11% to break even, -30% needs
++43%, -50% needs +100%, -80% needs +400%. Past roughly -30/-35%, required
+recovery return grows faster than any realistic forward CAGR can deliver
+in a reasonable timeframe. A large enough drawdown doesn't just hurt --
+it can structurally impair the compounding path for years, independent of
+whether the underlying asset's long-run edge was ever intact. That
+convexity is why this system sizes off worst-case drawdown ceilings
+rather than expected-return maximization.
+
+**Two applications of the same rule:**
+1. **Internal base split (Gold 25% / AVGO 55% / LLY 20%):** the
+   Calmar-optimal point in the 231-combination static weight grid
+   (`comparison_results/base_optimizer_grid.csv`) -- #1/231 by Calmar
+   (0.839), only 40th/231 by raw CAGR and 44th/231 by Sharpe. Calmar =
+   CAGR / |MaxDD|, so this split is specifically where adding more AVGO
+   stops being worth the extra drawdown it drags in, even though pure
+   CAGR keeps climbing past it (confirmed by `run_base_optimizer_with_guard.py`:
+   Gold5/AVGO80/LLY15 beats 25/55/20 on both CAGR and Calmar once the
+   guard overlay is added -- 55% is the no-guard Calmar optimum, not the
+   global optimum by any metric once the guard changes the tradeoff).
+2. **External TPV sizing (Reactor Core 83.3% of total portfolio value):**
+   same logic one level up. -25% total-portfolio drawdown tolerance ÷
+   -30.0% conservative worst-case strategy MaxDD (the crash-guard-improved
+   TXN-analog figure, not AVGO's own milder observed -16.8% -- deliberately
+   the harsher number) = 83.3%. See "Rebalance -- DECIDED 2026-07-02" below
+   for the full derivation.
+
+Neither layer asks "what maximizes return"; both ask "what maximizes
+return subject to a drawdown ceiling I can actually survive," just applied
+at different scopes (within Reactor Core, then Reactor Core within total
+net worth).
+
 ## HWM hard stop: live false-positive confirms the PR #68 finding -- resolution deferred to post-HWM-trade (2026-07-16)
 
 The `HARD_STOP_PCT` (2%) question flagged as unreconciled in PR #68 (see
