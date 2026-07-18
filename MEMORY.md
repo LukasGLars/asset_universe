@@ -7,6 +7,54 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO 2026-09-03 earnings: pre-registered pass/fail criteria (2026-07-18)
+
+Set *before* the print, deliberately, so the read isn't reconstructed after
+the fact to fit whatever the stock does that day. Context: a 2026-07-18
+TradingView piece (Erste Group downgrade, "65x earnings, too expensive")
+prompted a full re-walk of AVGO's research trail this session -- selection
+legitimacy (unbiased, systematic screen, rank 11/539), valuation (the 65x
+figure is almost certainly trailing-GAAP, same distortion class as the
+3.23x->2.39x EPS-ratio fix; forward P/E 19.4x / PEG 0.41 is cheap-side of
+real AI/semi peers), sell-side consensus ($513-524 targets vs. ~$370,
+Strong Buy skew), and the flat-since-November price action (reads as
+multiple-compression/rotation, not fundamentals -- no valuation ceiling is
+forcing it). None of that is new evidence -- it's confirmation of the
+existing thesis, not a reason to resize. The one genuinely unresolved
+question underneath all of it is still the growth-disappointment cohort
+finding (HIGH->MID/LOW deceleration case, real cautionary skew, N=12 too
+thin to be conclusive) -- and Sept 3 is the actual test of it, not the
+valuation debate.
+
+**CONSTRUCTIVE (remaining rebalance tranche proceeds as sequenced):**
+- AI revenue actual tracks the guided $56B FY26 pace (not just "beats
+  consensus" -- consensus estimates aren't the guided path).
+- FY27 >$100B guidance reaffirmed or raised.
+- Beat streak continues (5-for-5).
+- Named-contract itemization (Google/Anthropic/OpenAI/Meta, per the real
+  Q2 2026 transcript) deepens or holds -- same names/scope or more.
+- No new material MediaTek/competitive-share commentary from management.
+
+**CONCERNING (re-open the sizing question, don't pre-commit the answer):**
+- AI revenue guidance lowered or FY27 $100B walked back/hedged.
+- Beat streak breaks.
+- Contract itemization goes vaguer or thins (fewer named counterparties,
+  less specific scope than the Q2 2026 print).
+- Management raises competitive-share-loss risk unprompted.
+- This is the live analog to the growth-disappointment cohort's
+  HIGH->MID/LOW pattern -- treat a CONCERNING read as the trigger to
+  actually revisit the base weight, not just note it.
+
+**NEUTRAL (default: hold as sized, no action):** beat/reaffirm on both
+revenue and guidance, contract itemization roughly flat, nothing new on
+competition. This is the base-rate expectation given everything above --
+not a low bar, but not a raise either.
+
+Verdict should be judged against these criteria specifically, not against
+whether the stock price moves that day -- price reaction and fundamental
+verdict can diverge (a CONSTRUCTIVE print can still see a "sell the news"
+reaction if the multiple had already priced it in, and vice versa).
+
 ## Portfolio construction principle: drawdown-tolerance-first sizing (documented 2026-07-17)
 
 Both sizing layers in this system optimize the same thing at different
