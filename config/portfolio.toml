@@ -68,7 +68,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Howmet Aerospace"
 ticker   = "HWM"
-shares   = 11
+shares   = 0
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
