@@ -7,6 +7,17 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## HWM position closed (2026-07-23)
+
+Sold in full: 11 shares @ $286.63 (executed 19:52 local), proceeds $3,153.
+Exit price sits well above both the $271.39 hard stop and the ~$264.99 MA50
+in play at the time -- a clean exit, not a stop-triggered one. Confirmed via
+broker screenshot, not yet reflected in `config/portfolio.toml` as of this
+entry (sheet sync will pick it up on next run).
+
+This is the trade the HWM hard-stop question (see below) was explicitly
+deferred until -- now unblocked, not yet revisited.
+
 ## AVGO 2026-09-03 earnings: pre-registered pass/fail criteria (2026-07-18)
 
 Set *before* the print, deliberately, so the read isn't reconstructed after
