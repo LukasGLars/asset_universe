@@ -96,6 +96,27 @@ def load_prices(ticker: str) -> pd.Series | None:
         return None
 
 
+def rs_20d_ok(closes: np.ndarray, dates: pd.DatetimeIndex, entry_idx: int, spy_ret20: pd.Series) -> bool | None:
+    """Positive 20-trading-day relative strength vs SPY as of entry -- a
+    cheap, price-only proxy for gate 2/3 of the real entry screen (the RS
+    check inside compute_tripwires/screen_tactical). NOT the full gate
+    (extension vs the regime's empirical p67 threshold isn't reconstructed
+    here -- that needs the regime-ranking apparatus, out of scope for this
+    proxy). Returns None if there isn't enough history on either side to
+    compute a comparison."""
+    if entry_idx < 20:
+        return None
+    t_ret = closes[entry_idx] / closes[entry_idx - 20] - 1
+    dt = dates[entry_idx]
+    pos = spy_ret20.index.searchsorted(dt)
+    if pos >= len(spy_ret20) or abs((spy_ret20.index[pos] - dt).days) > 5:
+        return None
+    b_ret = spy_ret20.iloc[pos]
+    if pd.isna(b_ret):
+        return None
+    return bool((t_ret - b_ret) >= 0)
+
+
 def simulate_trade(
     closes: np.ndarray,
     ma50: np.ndarray,
@@ -178,6 +199,32 @@ def run_config(samples: list[tuple[np.ndarray, np.ndarray, int]], n_cutoff: int,
     }
 
 
+def run_phase(label: str, samples: list[tuple[np.ndarray, np.ndarray, int]]) -> list[dict]:
+    rows = []
+    print(f"\n[{label}] Phase 1: hard-stop cutoff N (no trailing stop)")
+    for n_cutoff in N_GRID:
+        rows.append(run_config(samples, n_cutoff, None, None))
+
+    # N=0 (hard stop dropped entirely) is a legitimate candidate, not just a
+    # bracketing baseline to exclude -- an earlier version of this script
+    # wrongly excluded it here, which meant Phase 2's trailing-stop grid got
+    # tested on top of the best NON-zero cutoff even when N=0 actually won
+    # Phase 1. Fixed 2026-07-24: no exclusion, N=0 competes on equal footing.
+    best_n = max(
+        rows,
+        key=lambda r: (r["calmar_like"] if r["calmar_like"] != "" else -999),
+    )["n_cutoff"]
+
+    print(f"[{label}] Phase 2: trailing-peak stop on top of N={best_n} (best Phase 1 cutoff)")
+    for trigger, pct in TRAILING_GRID:
+        rows.append(run_config(samples, best_n, trigger, pct))
+
+    for r in rows:
+        r["population"] = label
+    print(f"[{label}] best N by Calmar-like ratio: {best_n}")
+    return rows
+
+
 def main() -> None:
     print("=" * 72)
     print("Opportunistic sleeve stop-management sensitivity study")
@@ -187,7 +234,14 @@ def main() -> None:
     tickers = load_universe_tickers()
     print(f"\nUniverse: {len(tickers)} tickers")
 
-    samples: list[tuple[np.ndarray, np.ndarray, int]] = []
+    spy = load_prices("SPY")
+    if spy is None:
+        print("ERROR: SPY price data required for the gated population's RS check")
+        return
+    spy_ret20 = spy.pct_change(20)
+
+    samples_blind: list[tuple[np.ndarray, np.ndarray, int]] = []
+    samples_gated: list[tuple[np.ndarray, np.ndarray, int]] = []
     tickers_used = 0
     for t in tickers:
         s = load_prices(t)
@@ -195,32 +249,32 @@ def main() -> None:
             continue
         closes = s.to_numpy()
         ma50 = s.rolling(50).mean().to_numpy()
+        dates = s.index
         n = len(closes)
         entries_this_ticker = 0
         for entry_idx in range(MIN_HISTORY, n - HOLD_DAYS, SAMPLE_STRIDE):
             if np.isnan(ma50[entry_idx]):
                 continue
-            samples.append((closes, ma50, entry_idx))
+            samples_blind.append((closes, ma50, entry_idx))
             entries_this_ticker += 1
+            above_ma50 = closes[entry_idx] > ma50[entry_idx]
+            rs_ok = rs_20d_ok(closes, dates, entry_idx, spy_ret20)
+            if above_ma50 and rs_ok:
+                samples_gated.append((closes, ma50, entry_idx))
         if entries_this_ticker:
             tickers_used += 1
 
     print(f"Tickers with usable history: {tickers_used}")
-    print(f"Total entry samples: {len(samples)}")
+    print(f"Total entry samples (blind, unconditioned): {len(samples_blind)}")
+    print(f"Total entry samples (gated: above MA50 + positive 20d RS vs SPY): {len(samples_gated)}")
+    print("\nNote: 'gated' reconstructs only 2 of the real screen's 4 entry gates")
+    print("(above-MA50, RS-vs-benchmark proxy) from price data alone. The other 2")
+    print("(regime-conditional top-N rank, no-earnings-soon) need the full")
+    print("regime-ranking apparatus / an earnings calendar and are NOT")
+    print("reconstructed here -- this narrows the gap to the real sleeve")
+    print("population, it does not close it.")
 
-    rows = []
-    print("\nPhase 1: hard-stop cutoff N (no trailing stop)")
-    for n_cutoff in N_GRID:
-        rows.append(run_config(samples, n_cutoff, None, None))
-
-    best_n = max(
-        (r for r in rows if r["n_cutoff"] not in (0,)),
-        key=lambda r: (r["calmar_like"] if r["calmar_like"] != "" else -999),
-    )["n_cutoff"]
-
-    print(f"\nPhase 2: trailing-peak stop on top of N={best_n} (best Phase 1 cutoff)")
-    for trigger, pct in TRAILING_GRID:
-        rows.append(run_config(samples, best_n, trigger, pct))
+    rows = run_phase("BLIND", samples_blind) + run_phase("GATED", samples_gated)
 
     df = pd.DataFrame(rows)
     print(f"\n{'='*72}\nRESULTS\n{'='*72}")
@@ -229,7 +283,6 @@ def main() -> None:
     OUT_CSV.parent.mkdir(exist_ok=True)
     df.to_csv(OUT_CSV, index=False)
     print(f"\nSaved: {OUT_CSV}")
-    print(f"\nBest N by Calmar-like ratio (no trailing stop): {best_n}")
 
 
 if __name__ == "__main__":

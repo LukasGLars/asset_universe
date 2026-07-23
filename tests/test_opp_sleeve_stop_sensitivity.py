@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 
 from run_opp_sleeve_stop_sensitivity import (
-    natural_exit_price, run_config, simulate_trade,
+    natural_exit_price, rs_20d_ok, run_config, simulate_trade,
 )
 
 
@@ -105,3 +106,39 @@ def test_run_config_detects_protection():
     result = run_config([(closes, ma50, 0)], n_cutoff=10, trailing_trigger=None, trailing_pct=None)
     assert result["false_stop_pct_of_stopped"] == 0.0
     assert result["protection_pct_of_stopped"] == 1.0
+
+
+def _dates(n: int, start: str = "2020-01-01") -> pd.DatetimeIndex:
+    return pd.date_range(start, periods=n, freq="D")
+
+
+def test_rs_20d_ok_true_when_outperforming_spy():
+    dates = _dates(25)
+    closes = _series([100.0] * 25)
+    closes[4], closes[24] = 100.0, 110.0  # ticker +10% over the trailing 20 days
+    spy_ret20 = pd.Series(0.0, index=dates)  # SPY flat over the same window
+    assert rs_20d_ok(closes, dates, entry_idx=24, spy_ret20=spy_ret20) is True
+
+
+def test_rs_20d_ok_false_when_underperforming_spy():
+    dates = _dates(25)
+    closes = _series([100.0] * 25)
+    closes[4], closes[24] = 100.0, 110.0  # ticker +10%
+    spy_ret20 = pd.Series(0.20, index=dates)  # SPY +20% -- ticker lags
+    assert rs_20d_ok(closes, dates, entry_idx=24, spy_ret20=spy_ret20) is False
+
+
+def test_rs_20d_ok_none_when_insufficient_history():
+    dates = _dates(25)
+    closes = _series([100.0] * 25)
+    spy_ret20 = pd.Series(0.0, index=dates)
+    assert rs_20d_ok(closes, dates, entry_idx=10, spy_ret20=spy_ret20) is None
+
+
+def test_rs_20d_ok_none_when_spy_dates_dont_overlap():
+    dates = _dates(25, start="2020-01-01")
+    closes = _series([100.0] * 25)
+    closes[4], closes[24] = 100.0, 110.0
+    spy_dates = _dates(25, start="2021-01-01")  # no overlap with the ticker's dates
+    spy_ret20 = pd.Series(0.0, index=spy_dates)
+    assert rs_20d_ok(closes, dates, entry_idx=24, spy_ret20=spy_ret20) is None
