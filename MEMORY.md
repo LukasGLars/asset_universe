@@ -7,6 +7,74 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Opp sleeve stop refinement -- IN PROGRESS, paused mid-thread (2026-07-23)
+
+Prompted by the HWM trade (false stop 07-10, clean profitable exit 07-23
+that never needed the hard stop). Built `run_opp_sleeve_stop_sensitivity.py`
++ 9 unit tests (synthetic data) + a temporary diagnostic workflow
+(`opp_sleeve_stop_sensitivity_diagnostic.yml`) to test two refinements
+against real data instead of guessed parameters: a fixed-day cutoff N
+after which the hard stop turns off regardless of MA50 convergence, and a
+separate trailing-peak stop for locking in gains once in profit.
+
+**Real result (502 tickers, 139,473 sampled entries, run 2026-07-23):**
+longer hard-stop duration monotonically WORSENS outcomes at every N tested
+-- median return, win rate, and Calmar-like ratio all get worse from N=0
+to N=30. ~58% of hard-stop triggers were false (price would've closed
+higher by day 30) at every duration, vs ~41% genuine protection. N=0
+(MA50-only, hard stop dropped entirely) beat every time-decay variant AND
+the current always-on design. This flips my prior recommendation (I'd
+argued for keeping a time-decayed version, cautioning against dropping it
+entirely as survivorship-style reasoning) -- the data doesn't support that
+caution.
+
+**Real caveat, not yet resolved:** the sample is UNCONDITIONED -- any S&P
+500 name, any date, not filtered through the sleeve's actual 4 entry gates
+(top-N regime rank, above MA50, not extended, no earnings soon). Real
+sleeve entries are a much better-positioned population (HWM's own entry
+screen showed 80%+ median historical forward return) than "any stock any
+day," which is likely why this sample's absolute returns are weak/negative
+-- unscreened entries have no edge. The DIRECTION (longer hard-stop
+duration = worse) is probably robust since ordinary volatility tripping a
+fixed % level doesn't depend on entry quality, but the magnitude isn't
+representative of real sleeve trades.
+
+**Known bug in the script, not yet fixed:** `main()`'s `best_n` selection
+excludes n_cutoff=0 from consideration before picking which N to layer the
+Phase 2 trailing-stop grid on top of -- meant to exclude the "no cutoff at
+all" baseline from being treated as a real N choice, but since N=0 turned
+out to be the actual winner, Phase 2's trailing-stop numbers were tested
+on top of N=5 (the best excluding zero), not the winning N=0 baseline.
+Those trailing-stop results need re-running against the correct baseline
+before they mean anything.
+
+**Explicit next steps, in order:**
+1. Fix the best_n-excludes-zero bug in `run_opp_sleeve_stop_sensitivity.py`.
+2. Decide: accept the directional finding (drop the hard stop) as
+   sufficient, or re-run gated on actual historical dates that would have
+   cleared all 4 entry-screen gates, for a tighter, sample-matched number
+   first. Leaning toward the gated re-run given how large the
+   unconditioned-vs-real-candidate gap looks (weak/negative median return
+   here vs. 80%+ historically for actual screened candidates).
+3. Re-run the trailing-peak-stop grid on the correct winning baseline.
+4. Implement the validated rule in `run_entry_screen.py`'s `binding_stop()`
+   / `compute_exit_triggers()`, with tests.
+5. Delete `opp_sleeve_stop_sensitivity_diagnostic.yml` once implemented
+   (temporary, per repo convention -- same as `entry_screen_check.yml`'s
+   siblings).
+
+**Other backlog items surfaced but not acted on this session:**
+- Healthchecks.io dead-man's-switch only covers the evening sync slot --
+  morning slot coverage is still an acknowledged, open gap (predates this
+  session).
+- Growth-disappointment cohort study (see AVGO section) needs the SEC's
+  full filer universe including delistings to fix its survivorship-bias
+  gap -- flagged as worth doing, not urgent, still not built.
+- `base_optimizer_with_guard_diagnostic.yml` (the AVGO base-weight
+  diagnostic workflow) was labeled "delete once settled" -- the base-weight
+  question was substantively addressed this session (see AVGO sections
+  below) but the workflow itself hasn't been deleted yet.
+
 ## HWM position closed (2026-07-23)
 
 Sold in full: 11 shares @ $286.63 (executed 19:52 local), proceeds $3,153.
@@ -17,6 +85,28 @@ entry (sheet sync will pick it up on next run).
 
 This is the trade the HWM hard-stop question (see below) was explicitly
 deferred until -- now unblocked, not yet revisited.
+
+**Key learnings, full entry-to-exit:**
+1. Discipline held under a real false positive, and it was the right call.
+   The 2026-07-10 STOPPED trigger fired while RS/regime/MA50-slope/cluster
+   all stayed clean; the operator correctly read it as noise and explicitly
+   refused to change exit rules mid-position. The trade went on to close
+   profitably -- validated, not just principled.
+2. The design flaw is now confirmed, not theoretical: the 2% hard stop was
+   tighter than MA50's own distance from entry (4.3% at the time). A fixed
+   stop set tighter than the trend indicator's natural convergence distance
+   will produce false triggers on ordinary volatility, independent of
+   whether the trend is intact.
+3. The position never needed the hard stop to work -- it closed via a
+   deliberate, profitable exit above both entry and the stop level. The
+   hard stop's entire realized contribution to this trade was one false
+   alarm, zero actual protection used.
+4. This trade is the real precedent behind the AVGO Sept 3 pre-registration
+   approach (see below), even though the connection wasn't drawn explicitly
+   at the time: a real signal event happened, and what worked was checking
+   it against pre-set criteria instead of re-litigating the rule live.
+5. Alerting infrastructure worked correctly -- delivered, confirmed via job
+   logs -- a separate, already-settled question from the trading-logic one.
 
 ## AVGO 2026-09-03 earnings: pre-registered pass/fail criteria (2026-07-18)
 
