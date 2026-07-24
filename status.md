@@ -3,27 +3,28 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     304     767 kr   233,162 kr  21.7%
+  Gold                     304     767 kr   233,162 kr  21.1%
   Silver                     -     509 kr         0 kr   0.0%
-  Eli Lilly                 14  11,557 kr   161,793 kr  15.1%
+  Eli Lilly                 14  11,557 kr   161,793 kr  14.7%
   Walmart                    -   1,056 kr         0 kr   0.0%
   Cameco                     -     871 kr         0 kr   0.0%
   Vertiv                     -   2,963 kr         0 kr   0.0%
-  Broadcom                  80   3,825 kr   305,979 kr  28.5%
+  Broadcom                  80   3,825 kr   305,979 kr  27.7%
   Howmet Aerospace           -   2,798 kr         0 kr   0.0%
-  Spiltan Räntefond          -     manual   371,551 kr  34.6%
-  War Chest                  -     manual     1,959 kr   0.2%
+  Spiltan Räntefond          -     manual   371,551 kr  33.7%
+  War Chest                  -     manual         9 kr   0.0%
+  Reactor Core Cash          -     manual    30,621 kr   2.8%
 --------------------------------------------------------------
-  TPV                                        1,082,958 kr
-    Reactor Core            700,934 kr  (65%)
+  TPV                                        1,083,077 kr
+    Reactor Core            731,555 kr  (68%)
     Home Base               371,551 kr  (34%)
-    War Chest                 1,959 kr  (0%)
+    War Chest                     9 kr  (0%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,082,958 kr
+  Now                     :     1,083,077 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
@@ -31,16 +32,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.4%
   Status                  :  BEHIND  (-5.6% margin)
 
-  Projected @ AWAR        :     8,086,505 kr
-  vs target               :    -4,848,201 kr  (deficit)
+  Projected @ AWAR        :     8,095,951 kr
+  vs target               :    -4,838,755 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,491,500 kr       ~2047
-  Conservative   +15%       6,923,061 kr       ~2041
-  Base           +20%      10,589,997 kr       ~2038
-  Current AWAR   +17%       8,086,505 kr       ~2040
-  Bull           +30%      24,054,937 kr       ~2035
+  Bear           +10%       4,491,840 kr       ~2047
+  Conservative   +15%       6,923,614 kr       ~2041
+  Base           +20%      10,590,880 kr       ~2038
+  Current AWAR   +17%       8,095,951 kr       ~2040
+  Bull           +30%      24,057,065 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -70,13 +71,13 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           21.7%    MID   LOW     +0.7%     +0.7%   65%    49  
+  Gold           21.1%    MID   LOW     +0.7%     +0.7%   65%    49  
   Silver          0.0%    MID   LOW     +1.1%     +1.1%   67%    46  
-  Eli Lilly      15.1%   HIGH  HIGH     -0.2%     -0.2%   46%   149  
+  Eli Lilly      14.7%   HIGH  HIGH     -0.2%     -0.2%   46%   149  
   Walmart         0.0%    LOW   LOW     +0.2%     +0.2%   54%    61  
   Cameco          0.0%    LOW   LOW     +2.0%     +2.0%   67%    82  
   Vertiv          0.0%    LOW   LOW     +2.1%     +2.1%   58%    65  
-  Broadcom       28.5%    MID   LOW     +0.3%     +0.3%   55%    42  
+  Broadcom       27.7%    MID   LOW     +0.3%     +0.3%   55%    42  
 
 ==============================================================
 TACTICAL RULES
@@ -139,9 +140,9 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 43.7%
+    Current wt (of Reactor Core) : 41.8%
     Target wt (current regime)   : 55.0%
-    Gap                          : +11.3%
+    Gap                          : +13.2%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
