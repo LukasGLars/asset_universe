@@ -69,11 +69,12 @@ CAGR = np.exp(MU) - 1                      # geometric mean return (no vol drag)
 DRAG = VOL**2 / 2                          # variance drag on geometric mean
 
 # ── TPV ───────────────────────────────────────────────────────────────────────
-# TPV must always come from the sheet, nothing else -- no hardcoded fallback.
-# Let a fetch failure raise and fail this script loudly rather than silently
-# running on a stale frozen number.
-from asset_universe.portfolio import _fetch_sheet_tpv
-TPV0: float = _fetch_sheet_tpv()
+# TPV = sum of config/portfolio.toml positions (2026-07-24 -- the sheet's
+# separate dedicated TPV cell was found to lag the real broker balance more
+# than the position sum does, once idle cash and War Chest were correctly
+# tracked; the cell is no longer used anywhere in this codebase).
+from asset_universe.portfolio import snapshot
+TPV0: float = snapshot(DATA_DIR)["value_sek"].sum()
 
 # ── Pre-generate Monte Carlo path matrices ────────────────────────────────────
 MONTHS  = YEARS * 12

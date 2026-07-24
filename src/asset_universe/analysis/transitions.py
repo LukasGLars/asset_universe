@@ -420,11 +420,12 @@ def cagr_scenarios(
         + tw["_spiltan"] * SPILTAN_RETURN
     )
 
-    # TPV must always come from the sheet, nothing else -- no hardcoded
-    # fallback. Let a fetch failure raise and fail this loudly rather than
-    # silently running on a stale frozen number.
-    from ..portfolio import _fetch_sheet_tpv
-    tpv = _fetch_sheet_tpv()
+    # TPV = sum of config/portfolio.toml positions (2026-07-24 -- the
+    # sheet's separate dedicated TPV cell was found to lag the real broker
+    # balance more than the position sum does, once idle cash and War
+    # Chest were correctly tracked; no longer used anywhere).
+    from ..portfolio import snapshot
+    tpv = snapshot(data_dir)["value_sek"].sum()
 
     required_cagr = (target_sek / tpv) ** (1 / years_remaining) - 1
 

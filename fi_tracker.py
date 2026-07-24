@@ -29,11 +29,11 @@ except Exception as _e:
     _regime_error = _e
 
 # ── Portfolio snapshot ──────────────────────────────────────────────────────────
-# fi_pace() derives TPV solely from the Google Sheet (no fallback -- see its
-# docstring) and raises if that fetch fails, so it's wrapped the same way
-# current_regime() already is: a sheet outage blanks only the TPV-dependent
-# lines below, not the whole dashboard (guard/signals/earnings sections
-# don't need TPV and must keep working).
+# fi_pace() derives TPV as sum(snapshot().value_sek) and raises if any share
+# position is missing price data (see its docstring), so it's wrapped the
+# same way current_regime() already is: a data outage blanks only the
+# TPV-dependent lines below, not the whole dashboard (guard/signals/earnings
+# sections don't need TPV and must keep working).
 
 snap = portfolio.snapshot(DATA_DIR)
 try:

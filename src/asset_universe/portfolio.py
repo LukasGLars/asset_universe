@@ -7,12 +7,6 @@ FI@50 AWAR vs required CAGR, and live macro trigger states.
 
 from __future__ import annotations
 
-import csv
-import io
-import re
-import time
-import urllib.error
-import urllib.request
 from datetime import date
 from pathlib import Path
 
@@ -23,58 +17,13 @@ from scipy.optimize import brentq
 from . import config
 from .store import reader
 
-_SHEET_ID  = "1pnwGgNGblXw5X4x7CFmngksQZpL1MIbMJnJvZdsJCRs"
-_SHEET_GID = "0"
-
-
-def _fetch_sheet_tpv(retries: int = 3, backoff_seconds: float = 2.0) -> float:
-    """Fetch current portfolio value from Google Sheet GID 0 row 2.
-
-    TPV must always be derived from this sheet, nothing else -- no fallback
-    to summing config/portfolio.toml positions, no hardcoded figure. Retries
-    transient network errors only; a malformed response (HTML instead of
-    CSV, unparseable row) is a content error, not a transient one, and is
-    raised immediately without retrying -- same split sync_sheet.py's
-    fetch_sheet_rows() already makes. Raises on failure rather than
-    returning None, so a caller can't silently treat "fetch failed" the
-    same as "value is None" -- every caller must handle the failure
-    explicitly (see fi_tracker.py's try/except around fi_pace(), the same
-    pattern already used for current_regime())."""
-    url = (f"https://docs.google.com/spreadsheets/d/{_SHEET_ID}"
-           f"/export?format=csv&gid={_SHEET_GID}")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-
-    raw = content_type = None
-    last_exc: Exception | None = None
-    for attempt in range(1, retries + 1):
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                content_type = resp.headers.get("Content-Type", "")
-                raw = resp.read().decode("utf-8-sig")
-            last_exc = None
-            break
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            last_exc = exc
-            if attempt < retries:
-                time.sleep(backoff_seconds)
-                backoff_seconds *= 2
-
-    if last_exc is not None:
-        raise RuntimeError(f"TPV sheet fetch failed after {retries} attempts") from last_exc
-
-    if "text/html" in content_type:
-        raise RuntimeError(
-            "TPV sheet returned HTML -- make sure it is shared as "
-            "'Anyone with the link -> Viewer'."
-        )
-
-    rows = list(csv.reader(io.StringIO(raw)))
-    if len(rows) >= 2 and len(rows[1]) >= 2:
-        digits = re.sub(r"[^\d]", "", rows[1][1])
-        if digits:
-            return float(digits)
-        raise RuntimeError(f"TPV sheet row 2 has no parseable digits: {rows[1]!r}")
-    raise RuntimeError(f"TPV sheet has too few rows/columns for a TPV read: {rows[:2]!r}")
+# TPV is computed as sum(snapshot().value_sek) -- see fi_pace() below.
+# Previously fetched from a dedicated Google Sheet cell (GID 0); dropped
+# 2026-07-24 after broker-screenshot reconciliation showed that cell lags
+# the real balance more than the position sum does, once idle cash and
+# War Chest were correctly tracked in config/portfolio.toml. No code in
+# this repo should reintroduce a sheet-cell TPV fetch -- the position sum
+# is the only source now.
 
 try:
     import tomllib
@@ -241,6 +190,13 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     bar from 24.88% to 22.06% in the 2026-07-02 rebalance sizing exercise,
     the largest single lever found in that analysis, previously never wired
     back into this live tracker).
+
+    TPV = sum(snapshot().value_sek) -- config/portfolio.toml positions,
+    nothing else (2026-07-24, see module docstring/note above). Raises if
+    any share position (shares > 0) has no computable value_sek (missing
+    price/FX data) rather than silently summing a partial, undercounted
+    total -- a missing price should fail loud here, not quietly understate
+    TPV by however much that position was worth.
     """
     if data_dir is None:
         data_dir = config.raw_data_dir()
@@ -248,7 +204,12 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     cfg = _load_portfolio_config()
     fi = cfg["fi"]
 
-    tpv = _fetch_sheet_tpv()
+    snap = snapshot(data_dir)
+    missing = snap[(snap["shares"] > 0) & snap["value_sek"].isna()]
+    if not missing.empty:
+        names = ", ".join(missing["name"])
+        raise RuntimeError(f"TPV sum incomplete -- missing price data for: {names}")
+    tpv = float(snap["value_sek"].sum())
 
     start_date  = pd.Timestamp(fi["start_date"])
     start_value = fi["start_value_sek"]
