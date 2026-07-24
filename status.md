@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   371,551 kr  34.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,085,134 kr
+  TPV                                        1,083,669 kr
     Reactor Core            700,934 kr  (65%)
     Home Base               371,551 kr  (34%)
     War Chest                 1,959 kr  (0%)
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,085,134 kr
+  Now                     :     1,083,669 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +17.1%
+  AWAR (trailing)         :  +16.9%
   Required CAGR           :  +22.4%
-  Status                  :  BEHIND  (-5.3% margin)
+  Status                  :  BEHIND  (-5.5% margin)
 
-  Projected @ AWAR        :     8,300,136 kr
-  vs target               :    -4,634,570 kr  (deficit)
+  Projected @ AWAR        :     8,143,105 kr
+  vs target               :    -4,791,601 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,499,076 kr       ~2047
-  Conservative   +15%       6,936,025 kr       ~2041
-  Base           +20%      10,611,637 kr       ~2038
-  Current AWAR   +17%       8,300,136 kr       ~2040
-  Bull           +30%      24,111,370 kr       ~2035
+  Bear           +10%       4,493,527 kr       ~2047
+  Conservative   +15%       6,926,365 kr       ~2041
+  Base           +20%      10,595,273 kr       ~2038
+  Current AWAR   +17%       8,143,105 kr       ~2040
+  Bull           +30%      24,067,654 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -128,11 +128,11 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
     Current price  : $287.09  (risk to stop: 1,681 kr, 5.67% of sleeve capital)
-    Time exit      : 2026-07-24  (1d left)
+    Time exit      : 2026-07-24  (0d left)
     Binding stop   : $271.39 (HARD)
     Tripwires      : CLEAN
     Tripwire detail : RS +3.3% [OK] | Regime stable [OK] | MA50 $267.14 (slope +9.47) [OK] | Cluster avg +2.3% [OK]
-    Risk           : CLEAN
+    Risk           : TIME-EXIT-DUE
 
 ==============================================================
 NEXT CONTRIBUTION
