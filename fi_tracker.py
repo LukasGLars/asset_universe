@@ -29,10 +29,20 @@ except Exception as _e:
     _regime_error = _e
 
 # ── Portfolio snapshot ──────────────────────────────────────────────────────────
+# fi_pace() derives TPV solely from the Google Sheet (no fallback -- see its
+# docstring) and raises if that fetch fails, so it's wrapped the same way
+# current_regime() already is: a sheet outage blanks only the TPV-dependent
+# lines below, not the whole dashboard (guard/signals/earnings sections
+# don't need TPV and must keep working).
 
 snap = portfolio.snapshot(DATA_DIR)
-fi   = portfolio.fi_pace(DATA_DIR)
-tpv  = fi["tpv_sek"]
+try:
+    fi = portfolio.fi_pace(DATA_DIR)
+    _fi_error = None
+except Exception as _e:
+    fi = None
+    _fi_error = _e
+tpv = fi["tpv_sek"] if fi else None
 
 print("=" * 62)
 print("REACTOR CORE -- PORTFOLIO SNAPSHOT")
@@ -48,12 +58,14 @@ for _, row in snap.iterrows():
     print(f"  {row['name']:<20} {shares_str:>7} {price_str:>10} {value_str:>12} {wt_str:>6}")
 
 print("-" * 62)
-print(f"  {'TPV':<20} {'':>7} {'':>10} {tpv:>12,.0f} kr")
-
-for bucket, label in [("reactor_core", "Reactor Core"), ("home_base", "Home Base"), ("war_chest", "War Chest")]:
-    sub = snap[snap["bucket"] == bucket]["value_sek"].sum()
-    pct = sub / tpv if tpv else 0
-    print(f"    {label:<18} {sub:>12,.0f} kr  ({pct:.0%})")
+if tpv is not None:
+    print(f"  {'TPV':<20} {'':>7} {'':>10} {tpv:>12,.0f} kr")
+    for bucket, label in [("reactor_core", "Reactor Core"), ("home_base", "Home Base"), ("war_chest", "War Chest")]:
+        sub = snap[snap["bucket"] == bucket]["value_sek"].sum()
+        pct = sub / tpv if tpv else 0
+        print(f"    {label:<18} {sub:>12,.0f} kr  ({pct:.0%})")
+else:
+    print(f"  TPV : [unavailable — {_fi_error}]")
 
 # ── FI@50 pace ──────────────────────────────────────────────────────────────────
 
@@ -61,33 +73,36 @@ print(f"\n{'='*62}")
 print("FI@50 PACE TRACKER")
 print(f"{'='*62}")
 
-pace_icon = "ON PACE" if fi["on_pace"] else "BEHIND"
-print(f"  Start  ({fi['start_date']})  :  {fi['start_value_sek']:>12,.0f} kr")
-print(f"  Now                     :  {fi['tpv_sek']:>12,.0f} kr")
-print(f"  Target (FI@50)          :  {fi['target_sek']:>12,.0f} kr")
-print(f"  Years remaining         :  {fi['years_remaining']:.1f}")
-print()
-print(f"  AWAR (trailing)         :  {fi['awar']:>+.1%}")
-print(f"  Required CAGR           :  {fi['required_cagr']:>+.1%}")
-print(f"  Status                  :  {pace_icon}  ({fi['awar'] - fi['required_cagr']:+.1%} margin)")
-print()
-print(f"  Projected @ AWAR        :  {fi['projected_sek']:>12,.0f} kr")
-surplus = fi["surplus_deficit"]
-label = "surplus" if surplus >= 0 else "deficit"
-print(f"  vs target               :  {surplus:>+12,.0f} kr  ({label})")
+if fi:
+    pace_icon = "ON PACE" if fi["on_pace"] else "BEHIND"
+    print(f"  Start  ({fi['start_date']})  :  {fi['start_value_sek']:>12,.0f} kr")
+    print(f"  Now                     :  {fi['tpv_sek']:>12,.0f} kr")
+    print(f"  Target (FI@50)          :  {fi['target_sek']:>12,.0f} kr")
+    print(f"  Years remaining         :  {fi['years_remaining']:.1f}")
+    print()
+    print(f"  AWAR (trailing)         :  {fi['awar']:>+.1%}")
+    print(f"  Required CAGR           :  {fi['required_cagr']:>+.1%}")
+    print(f"  Status                  :  {pace_icon}  ({fi['awar'] - fi['required_cagr']:+.1%} margin)")
+    print()
+    print(f"  Projected @ AWAR        :  {fi['projected_sek']:>12,.0f} kr")
+    surplus = fi["surplus_deficit"]
+    label = "surplus" if surplus >= 0 else "deficit"
+    print(f"  vs target               :  {surplus:>+12,.0f} kr  ({label})")
 
-monthly_contrib = fi["monthly_contribution_sek"]
-print()
-print(f"  {'Scenario':<14} {'CAGR':>6}  {'Projected':>14}  {'FI date':>10}"
-      f"   (incl. {monthly_contrib:,.0f} kr/mo contributions)")
-print(f"  {'-'*72}")
-for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
-                    ("Current AWAR", fi["awar"]), ("Bull", 0.30)]:
-    proj      = portfolio.future_value_with_contributions(tpv, rate, fi["years_remaining"], monthly_contrib)
-    yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib, fi["target_sek"])
-    fi_year   = 2026 + yrs_to_fi
-    fi_str    = f"~{fi_year:.0f}" if fi_year < 2100 else ">2100"
-    print(f"  {label:<14} {rate:>+.0%}  {proj:>14,.0f} kr  {fi_str:>10}")
+    monthly_contrib = fi["monthly_contribution_sek"]
+    print()
+    print(f"  {'Scenario':<14} {'CAGR':>6}  {'Projected':>14}  {'FI date':>10}"
+          f"   (incl. {monthly_contrib:,.0f} kr/mo contributions)")
+    print(f"  {'-'*72}")
+    for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
+                        ("Current AWAR", fi["awar"]), ("Bull", 0.30)]:
+        proj      = portfolio.future_value_with_contributions(tpv, rate, fi["years_remaining"], monthly_contrib)
+        yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib, fi["target_sek"])
+        fi_year   = 2026 + yrs_to_fi
+        fi_str    = f"~{fi_year:.0f}" if fi_year < 2100 else ">2100"
+        print(f"  {label:<14} {rate:>+.0%}  {proj:>14,.0f} kr  {fi_str:>10}")
+else:
+    print(f"  FI@50 Pace : [unavailable — {_fi_error}]")
 
 # ── Macro regime table ──────────────────────────────────────────────────────────
 

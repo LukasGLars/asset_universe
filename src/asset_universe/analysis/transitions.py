@@ -420,11 +420,11 @@ def cagr_scenarios(
         + tw["_spiltan"] * SPILTAN_RETURN
     )
 
-    try:
-        from ..portfolio import _fetch_sheet_tpv
-        tpv = _fetch_sheet_tpv() or 1_101_671
-    except Exception:
-        tpv = 1_101_671
+    # TPV must always come from the sheet, nothing else -- no hardcoded
+    # fallback. Let a fetch failure raise and fail this loudly rather than
+    # silently running on a stale frozen number.
+    from ..portfolio import _fetch_sheet_tpv
+    tpv = _fetch_sheet_tpv()
 
     required_cagr = (target_sek / tpv) ** (1 / years_remaining) - 1
 

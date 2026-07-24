@@ -69,11 +69,11 @@ CAGR = np.exp(MU) - 1                      # geometric mean return (no vol drag)
 DRAG = VOL**2 / 2                          # variance drag on geometric mean
 
 # ── TPV ───────────────────────────────────────────────────────────────────────
-try:
-    from asset_universe.portfolio import _fetch_sheet_tpv
-    TPV0: float = _fetch_sheet_tpv() or 1_106_166
-except Exception:
-    TPV0 = 1_106_166
+# TPV must always come from the sheet, nothing else -- no hardcoded fallback.
+# Let a fetch failure raise and fail this script loudly rather than silently
+# running on a stale frozen number.
+from asset_universe.portfolio import _fetch_sheet_tpv
+TPV0: float = _fetch_sheet_tpv()
 
 # ── Pre-generate Monte Carlo path matrices ────────────────────────────────────
 MONTHS  = YEARS * 12

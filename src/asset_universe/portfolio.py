@@ -10,6 +10,8 @@ from __future__ import annotations
 import csv
 import io
 import re
+import time
+import urllib.error
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -25,22 +27,54 @@ _SHEET_ID  = "1pnwGgNGblXw5X4x7CFmngksQZpL1MIbMJnJvZdsJCRs"
 _SHEET_GID = "0"
 
 
-def _fetch_sheet_tpv() -> float | None:
-    """Fetch current portfolio value from Google Sheet GID 0 row 2."""
-    try:
-        url = (f"https://docs.google.com/spreadsheets/d/{_SHEET_ID}"
-               f"/export?format=csv&gid={_SHEET_GID}")
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            raw = resp.read().decode("utf-8-sig")
-        rows = list(csv.reader(io.StringIO(raw)))
-        # Row index 1: current date + current value
-        if len(rows) >= 2 and len(rows[1]) >= 2:
-            digits = re.sub(r"[^\d]", "", rows[1][1])
-            return float(digits) if digits else None
-    except Exception:
-        pass
-    return None
+def _fetch_sheet_tpv(retries: int = 3, backoff_seconds: float = 2.0) -> float:
+    """Fetch current portfolio value from Google Sheet GID 0 row 2.
+
+    TPV must always be derived from this sheet, nothing else -- no fallback
+    to summing config/portfolio.toml positions, no hardcoded figure. Retries
+    transient network errors only; a malformed response (HTML instead of
+    CSV, unparseable row) is a content error, not a transient one, and is
+    raised immediately without retrying -- same split sync_sheet.py's
+    fetch_sheet_rows() already makes. Raises on failure rather than
+    returning None, so a caller can't silently treat "fetch failed" the
+    same as "value is None" -- every caller must handle the failure
+    explicitly (see fi_tracker.py's try/except around fi_pace(), the same
+    pattern already used for current_regime())."""
+    url = (f"https://docs.google.com/spreadsheets/d/{_SHEET_ID}"
+           f"/export?format=csv&gid={_SHEET_GID}")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+
+    raw = content_type = None
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                content_type = resp.headers.get("Content-Type", "")
+                raw = resp.read().decode("utf-8-sig")
+            last_exc = None
+            break
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            last_exc = exc
+            if attempt < retries:
+                time.sleep(backoff_seconds)
+                backoff_seconds *= 2
+
+    if last_exc is not None:
+        raise RuntimeError(f"TPV sheet fetch failed after {retries} attempts") from last_exc
+
+    if "text/html" in content_type:
+        raise RuntimeError(
+            "TPV sheet returned HTML -- make sure it is shared as "
+            "'Anyone with the link -> Viewer'."
+        )
+
+    rows = list(csv.reader(io.StringIO(raw)))
+    if len(rows) >= 2 and len(rows[1]) >= 2:
+        digits = re.sub(r"[^\d]", "", rows[1][1])
+        if digits:
+            return float(digits)
+        raise RuntimeError(f"TPV sheet row 2 has no parseable digits: {rows[1]!r}")
+    raise RuntimeError(f"TPV sheet has too few rows/columns for a TPV read: {rows[:2]!r}")
 
 try:
     import tomllib
@@ -214,8 +248,7 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     cfg = _load_portfolio_config()
     fi = cfg["fi"]
 
-    sheet_tpv = _fetch_sheet_tpv()
-    tpv = sheet_tpv if sheet_tpv is not None else snapshot(data_dir)["value_sek"].sum()
+    tpv = _fetch_sheet_tpv()
 
     start_date  = pd.Timestamp(fi["start_date"])
     start_value = fi["start_value_sek"]
