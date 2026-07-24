@@ -12,36 +12,36 @@ Position                Shares      Price    Value SEK     Wt
   Broadcom                  80   3,825 kr   305,979 kr  27.7%
   Howmet Aerospace           -   2,798 kr         0 kr   0.0%
   Spiltan Räntefond          -     manual   371,551 kr  33.7%
-  War Chest                  -     manual         9 kr   0.0%
+  War Chest                  -     manual         0 kr   0.0%
   Reactor Core Cash          -     manual    30,621 kr   2.8%
 --------------------------------------------------------------
-  TPV                                        1,080,214 kr
+  TPV                                        1,079,572 kr
     Reactor Core            731,555 kr  (68%)
     Home Base               371,551 kr  (34%)
-    War Chest                     9 kr  (0%)
+    War Chest                     0 kr  (0%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,080,214 kr
+  Now                     :     1,079,572 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
   AWAR (trailing)         :  +16.5%
   Required CAGR           :  +22.4%
-  Status                  :  BEHIND  (-5.9% margin)
+  Status                  :  BEHIND  (-6.0% margin)
 
-  Projected @ AWAR        :     7,871,615 kr
-  vs target               :    -5,063,091 kr  (deficit)
+  Projected @ AWAR        :     7,822,143 kr
+  vs target               :    -5,112,563 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,483,677 kr       ~2047
-  Conservative   +15%       6,910,308 kr       ~2041
-  Base           +20%      10,569,637 kr       ~2038
-  Current AWAR   +17%       7,871,615 kr       ~2040
-  Bull           +30%      24,005,857 kr       ~2035
+  Bear           +10%       4,481,847 kr       ~2047
+  Conservative   +15%       6,907,324 kr       ~2041
+  Base           +20%      10,564,873 kr       ~2038
+  Current AWAR   +16%       7,822,143 kr       ~2040
+  Bull           +30%      23,994,374 kr       ~2035
 
 ==============================================================
 MACRO REGIME
