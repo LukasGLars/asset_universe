@@ -7,6 +7,53 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## TPV made consistently sheet-derived across the framework (2026-07-24)
+
+Operator's explicit rule after a live TPV figure didn't match the position-
+table sum this session: TPV must always come from the config Google Sheet,
+nothing else -- no fallback of any kind. Audit of every TPV reference in
+the codebase found real inconsistencies beyond the one already suspected:
+
+- `fi_pace()` silently fell back to `snapshot(data_dir)["value_sek"].sum()`
+  when the sheet fetch failed -- a materially different, independently-
+  computed number, substituted with zero indication in `status.md` that a
+  different method was used. This is what caused the confusion.
+- `run_terminal_wealth.py` and `analysis/transitions.py` each carried their
+  own hardcoded stale fallback (1,106,166 and 1,101,671 respectively --
+  two different frozen numbers) wrapped in a blanket `except` that would
+  have swallowed the new raise too.
+- `live_tpv.py` and `tpv_calc.py` never touched the sheet at all -- one-off
+  reconciliation scripts computing TPV independently via live/parquet
+  prices with stale hardcoded share counts (WMT 126, CCJ 93, VRT 31,
+  AVGO 21 -- none matching current `portfolio.toml`), one with a
+  hardcoded manual comparison figure baked in. Neither was imported by
+  anything else.
+
+**Fix:** `_fetch_sheet_tpv()` now retries transient network failures
+(mirrors `sync_sheet.py`'s `fetch_sheet_rows()`) but fails fast on content
+errors (HTML response, unparseable row) and raises on final failure
+instead of returning `None` -- no caller can conflate "fetch failed" with
+"value is None" anymore. `fi_pace()`'s fallback removed entirely.
+`run_terminal_wealth.py`/`transitions.py`'s hardcoded fallbacks removed
+(manually-run research scripts -- failing loud on a bad fetch is correct
+there). `live_tpv.py`/`tpv_calc.py` deleted.
+
+`fi_tracker.py` wraps the now-raising `fi_pace()` the same way
+`current_regime()` is already wrapped, so a sheet outage blanks only the
+TPV/FI@50-dependent lines (`"[unavailable — reason]"`, the same
+failure-signature `check_sync_health.py` already watches for and fails the
+Actions run on) -- the rest of the dashboard (guard, signals, earnings
+checkpoints) keeps working regardless.
+
+9 new tests added to `tests/test_fi_pace.py` (previously covered only the
+pure-math helpers, zero coverage of the sheet-fetch/fallback logic).
+Verified both the success and failure paths render correctly via a
+stubbed dry run of `fi_tracker.py` (no live data available locally), then
+**confirmed for real** by manually triggering the actual `sync.yml` daily
+pipeline end-to-end: all steps succeeded including `check_sync_health.py`
+and the healthchecks.io heartbeat, and the resulting `status.md` showed a
+clean sheet-derived TPV (1,082,660 kr) with no `[unavailable]` anywhere.
+
 ## Opp sleeve stop refinement -- analysis complete, awaiting operator decision (2026-07-24)
 
 Prompted by the HWM trade (false stop 07-10, clean profitable exit 07-23
