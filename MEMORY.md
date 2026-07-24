@@ -7,59 +7,70 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
-## Opp sleeve stop refinement -- IN PROGRESS, paused mid-thread (2026-07-23)
+## Opp sleeve stop refinement -- analysis complete, awaiting operator decision (2026-07-24)
 
 Prompted by the HWM trade (false stop 07-10, clean profitable exit 07-23
 that never needed the hard stop). Built `run_opp_sleeve_stop_sensitivity.py`
-+ 9 unit tests (synthetic data) + a temporary diagnostic workflow
++ 13 unit tests (synthetic data) + a temporary diagnostic workflow
 (`opp_sleeve_stop_sensitivity_diagnostic.yml`) to test two refinements
 against real data instead of guessed parameters: a fixed-day cutoff N
 after which the hard stop turns off regardless of MA50 convergence, and a
-separate trailing-peak stop for locking in gains once in profit.
+separate trailing-peak stop for locking in gains once in profit. The
+operator paused here to sleep; this was continued overnight on explicitly
+confirmed low-risk work only (bug fixes, read-only analysis) -- no live
+trading logic touched, per the operator's own boundary.
 
-**Real result (502 tickers, 139,473 sampled entries, run 2026-07-23):**
-longer hard-stop duration monotonically WORSENS outcomes at every N tested
--- median return, win rate, and Calmar-like ratio all get worse from N=0
-to N=30. ~58% of hard-stop triggers were false (price would've closed
-higher by day 30) at every duration, vs ~41% genuine protection. N=0
-(MA50-only, hard stop dropped entirely) beat every time-decay variant AND
-the current always-on design. This flips my prior recommendation (I'd
-argued for keeping a time-decayed version, cautioning against dropping it
-entirely as survivorship-style reasoning) -- the data doesn't support that
-caution.
+**best_n bug fixed (2026-07-24):** `main()`'s `best_n` selection wrongly
+excluded n_cutoff=0 from consideration when choosing which N to layer the
+Phase 2 trailing-stop grid on top of. Since N=0 (hard stop dropped
+entirely) is the actual Phase 1 winner, this meant the trailing-stop
+numbers reported first were tested on the wrong baseline (N=5). Fixed:
+N=0 now competes on equal footing. Re-run confirms the original Phase 1
+numbers were unaffected (same random-seed-free simulation, same result);
+only Phase 2 changes.
 
-**Real caveat, not yet resolved:** the sample is UNCONDITIONED -- any S&P
-500 name, any date, not filtered through the sleeve's actual 4 entry gates
-(top-N regime rank, above MA50, not extended, no earnings soon). Real
-sleeve entries are a much better-positioned population (HWM's own entry
-screen showed 80%+ median historical forward return) than "any stock any
-day," which is likely why this sample's absolute returns are weak/negative
--- unscreened entries have no edge. The DIRECTION (longer hard-stop
-duration = worse) is probably robust since ordinary volatility tripping a
-fixed % level doesn't depend on entry quality, but the magnitude isn't
-representative of real sleeve trades.
+**Corrected result:** with the bug fixed, the best BLIND-population config
+is N=0 (no hard stop) *plus* a trailing-peak stop (5% profit trigger, 5%
+trailing): Calmar-like -0.145, beating plain N=0 (-0.202) and every
+hard-stop variant. So the fuller answer isn't just "drop the hard stop" --
+it's "drop the hard stop, keep MA50, and add a trailing stop once
+meaningfully in profit," which also directly addresses the second half of
+the HWM trade (the profit-protection gap identified when this thread
+started).
 
-**Known bug in the script, not yet fixed:** `main()`'s `best_n` selection
-excludes n_cutoff=0 from consideration before picking which N to layer the
-Phase 2 trailing-stop grid on top of -- meant to exclude the "no cutoff at
-all" baseline from being treated as a real N choice, but since N=0 turned
-out to be the actual winner, Phase 2's trailing-stop numbers were tested
-on top of N=5 (the best excluding zero), not the winning N=0 baseline.
-Those trailing-stop results need re-running against the correct baseline
-before they mean anything.
+**Gated variant added and run (2026-07-24):** filtered entries on the 2 of
+4 real entry gates cheaply reconstructable from price data alone (above
+MA50, positive 20d RS vs SPY) -- 60,385 samples vs. 502 tickers. The
+DIRECTIONAL finding replicates and is even starker: N=0's Calmar-like is
+-0.353 vs. N=30's -0.837 -- longer hard-stop duration still monotonically
+worsens outcomes. **But the gated population's absolute returns are WORSE
+than the blind one** (median -1.32% to -2.16% gated vs. -0.46% to -0.86%
+blind), which is the opposite of what "more realistic filtering" should
+produce if this proxy were actually closer to the real sleeve population.
+Most likely explanation: this 2-gate proxy is missing the real screen's
+gate 3 (extension control -- MA50 distance capped at the regime's
+empirical p67), so "above MA50 + positive RS" alone likely admits a lot of
+already-extended, near-term-pullback-prone names that the real screen
+would explicitly exclude. **Net: treat the gated run as confirming the
+DIRECTION robustly (replicated across two very differently-biased
+samples), not as a trustworthy absolute-return number** -- neither
+population's magnitude should be taken as representative of real sleeve
+trades; the full 4-gate historical reconstruction (regime-conditional
+top-N rank + earnings calendar) remains the only way to get a properly
+representative number, and is still not built.
 
 **Explicit next steps, in order:**
-1. Fix the best_n-excludes-zero bug in `run_opp_sleeve_stop_sensitivity.py`.
-2. Decide: accept the directional finding (drop the hard stop) as
-   sufficient, or re-run gated on actual historical dates that would have
-   cleared all 4 entry-screen gates, for a tighter, sample-matched number
-   first. Leaning toward the gated re-run given how large the
-   unconditioned-vs-real-candidate gap looks (weak/negative median return
-   here vs. 80%+ historically for actual screened candidates).
-3. Re-run the trailing-peak-stop grid on the correct winning baseline.
-4. Implement the validated rule in `run_entry_screen.py`'s `binding_stop()`
-   / `compute_exit_triggers()`, with tests.
-5. Delete `opp_sleeve_stop_sensitivity_diagnostic.yml` once implemented
+1. Operator decision needed: accept the directional finding (drop the
+   hard stop, add a trailing-peak stop once in profit) as sufficient given
+   how robust the direction is across both samples, or invest in the full
+   4-gate historical reconstruction first for a trustworthy magnitude.
+2. Implement the validated rule in `run_entry_screen.py`'s `binding_stop()`
+   / `compute_exit_triggers()`, with tests. **Not done -- deliberately left
+   for the operator, not attempted overnight: this changes live trading
+   behavior for an account that could open a new position while
+   unreachable, which is the operator's call to make, not an autonomous
+   one.**
+3. Delete `opp_sleeve_stop_sensitivity_diagnostic.yml` once implemented
    (temporary, per repo convention -- same as `entry_screen_check.yml`'s
    siblings).
 
