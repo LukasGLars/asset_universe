@@ -91,7 +91,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "war_chest"
-value_sek = 9
+value_sek = 0
 
 [[positions]]
 # Idle/uninvested cash sitting inside the Reactor Core brokerage account

@@ -34,6 +34,7 @@ ASSET_MAP: dict[str, str] = {
     "Howmet":    "Howmet Aerospace",
     "Spiltan":   "Spiltan Räntefond",
     "War Chest": "War Chest",
+    "Cash":      "Reactor Core Cash",
 }
 
 

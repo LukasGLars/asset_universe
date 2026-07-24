@@ -81,3 +81,28 @@ def test_fetch_sheet_rows_does_not_retry_html_content_error(monkeypatch):
     except RuntimeError as exc:
         assert "HTML" in str(exc)
     assert calls["n"] == 1
+
+
+# ── ASSET_MAP / _lookup: sheet asset names -> portfolio.toml names ─────────
+# (2026-07-24 -- "Cash" is a real, named row in the sheet's config tab
+# for Reactor Core's idle cash, previously untracked here and set as a
+# one-off manual value; wired into ASSET_MAP so it auto-syncs like every
+# other position instead of going stale again.)
+
+def test_lookup_maps_cash_to_reactor_core_cash():
+    assert sync_sheet._lookup("Cash") == "Reactor Core Cash"
+
+
+def test_lookup_exact_match_takes_priority_over_prefix_fuzz():
+    """"Cash" is a short, generic key -- confirm an exact sheet cell match
+    resolves directly via the ASSET_MAP dict lookup, not the fuzzier
+    startswith() loop, so it can't accidentally match an unrelated future
+    row that merely starts with or contains "Cash"."""
+    assert sync_sheet._lookup("Cash") == "Reactor Core Cash"
+    assert sync_sheet._lookup("cash") == "Reactor Core Cash"  # case-insensitive
+
+
+def test_lookup_still_maps_existing_assets_after_cash_added():
+    assert sync_sheet._lookup("PPFB.DE") == "Gold"
+    assert sync_sheet._lookup("War Chest") == "War Chest"
+    assert sync_sheet._lookup("Spiltan Räntefond Sverige") == "Spiltan Räntefond"
