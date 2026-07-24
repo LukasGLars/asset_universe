@@ -15,8 +15,8 @@ Position                Shares      Price    Value SEK     Wt
   War Chest                  -     manual         0 kr   0.0%
   Reactor Core Cash          -     manual    30,621 kr   2.8%
 --------------------------------------------------------------
-  TPV                                        1,079,572 kr
-    Reactor Core            731,555 kr  (68%)
+  TPV                                        1,103,106 kr
+    Reactor Core            731,555 kr  (66%)
     Home Base               371,551 kr  (34%)
     War Chest                     0 kr  (0%)
 
@@ -24,24 +24,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,079,572 kr
+  Now                     :     1,103,106 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +16.5%
-  Required CAGR           :  +22.4%
-  Status                  :  BEHIND  (-6.0% margin)
+  AWAR (trailing)         :  +19.0%
+  Required CAGR           :  +22.2%
+  Status                  :  BEHIND  (-3.2% margin)
 
-  Projected @ AWAR        :     7,822,143 kr
-  vs target               :    -5,112,563 kr  (deficit)
+  Projected @ AWAR        :     9,847,262 kr
+  vs target               :    -3,087,444 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,481,847 kr       ~2047
-  Conservative   +15%       6,907,324 kr       ~2041
-  Base           +20%      10,564,873 kr       ~2038
-  Current AWAR   +16%       7,822,143 kr       ~2040
-  Bull           +30%      23,994,374 kr       ~2035
+  Bear           +10%       4,548,944 kr       ~2047
+  Conservative   +15%       7,016,699 kr       ~2041
+  Base           +20%      10,739,494 kr       ~2038
+  Current AWAR   +19%       9,847,262 kr       ~2039
+  Bull           +30%      24,415,312 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -52,14 +52,14 @@ MACRO REGIME
   Nominal 10Y             4.67%   HIGH
   Real Yield             +2.39%   HIGH  ^
   Breakeven               2.28%   MID
-  HY OAS                268 bps   TIGHT
+  HY OAS                277 bps   TIGHT
   IG Credit               1.58%   TIGHT
   Curve 10Y-3M          +76 bps   MID
   Curve 10Y-2Y          +34 bps   LOW
   SE 10Y                  2.78%   MID
   USD                     120.5   STRONG
 
-  HY 20d delta  : -8 bps  (tightening)
+  HY 20d delta  : -1 bps  (flat)
   Confidence    : HIGH
   Data through  : 2026-07-23
 
