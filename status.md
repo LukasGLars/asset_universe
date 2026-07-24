@@ -14,7 +14,7 @@ Position                Shares      Price    Value SEK     Wt
   Spiltan Räntefond          -     manual   371,551 kr  34.6%
   War Chest                  -     manual     1,959 kr   0.2%
 --------------------------------------------------------------
-  TPV                                        1,083,669 kr
+  TPV                                        1,082,660 kr
     Reactor Core            700,934 kr  (65%)
     Home Base               371,551 kr  (34%)
     War Chest                 1,959 kr  (0%)
@@ -23,24 +23,24 @@ Position                Shares      Price    Value SEK     Wt
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,083,669 kr
+  Now                     :     1,082,660 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +16.9%
+  AWAR (trailing)         :  +16.8%
   Required CAGR           :  +22.4%
-  Status                  :  BEHIND  (-5.5% margin)
+  Status                  :  BEHIND  (-5.6% margin)
 
-  Projected @ AWAR        :     8,143,105 kr
-  vs target               :    -4,791,601 kr  (deficit)
+  Projected @ AWAR        :     8,062,896 kr
+  vs target               :    -4,871,810 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,493,527 kr       ~2047
-  Conservative   +15%       6,926,365 kr       ~2041
-  Base           +20%      10,595,273 kr       ~2038
-  Current AWAR   +17%       8,143,105 kr       ~2040
-  Bull           +30%      24,067,654 kr       ~2035
+  Bear           +10%       4,490,651 kr       ~2047
+  Conservative   +15%       6,921,676 kr       ~2041
+  Base           +20%      10,587,786 kr       ~2038
+  Current AWAR   +17%       8,062,896 kr       ~2040
+  Bull           +30%      24,049,607 kr       ~2035
 
 ==============================================================
 MACRO REGIME
