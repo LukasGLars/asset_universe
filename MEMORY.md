@@ -7,6 +7,34 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Reactor Core idle cash now tracked; War Chest stale value fixed (2026-07-24)
+
+Follow-on from the TPV work above: reconciled the pipeline against two
+real broker screenshots (total-value view + Reactor Core per-holding
+view). Result validated the pipeline's share math was already correct --
+AVGO/LLY/Gold each matched the live broker value to within 0.2-0.3%
+(normal EOD-close-vs-intraday drift). The ~30k kr gap between the
+Reactor Core account's real total and the sum of its share positions was
+entirely idle/uninvested cash sitting in the account (broker's "Tillg.
+för köp"), never tracked anywhere since `snapshot()` only sums named
+ticker positions -- confirmed to the kr: broker's implied idle cash
+(30,686) vs. the account's own displayed figure (30,621), 65 kr apart.
+
+Fixed the same way Spiltan/War Chest already are -- a manual no-ticker
+position row, not a code change: `Reactor Core Cash`, 30,621 kr,
+`bucket = "reactor_core"`. Also corrected War Chest's stale manual value
+(1,959 -> 9 kr, confirmed against the same screenshot). Verified
+`sync_sheet.py`'s patcher can't silently revert this: it only updates
+fields for positions matching a name in its sheet `ASSET_MAP`, and
+"Reactor Core Cash" isn't in it -- untouched by automation.
+
+Confirmed live: triggered the real daily sync after the fix. Reactor
+Core's bucket total is now 731,555 kr (700,934 shares + 30,621 cash),
+within 1,795 kr of the broker's real 729,760 kr -- down from a ~30,621 kr
+gap before the fix. This is the figure position-weight targets (LLY/AVGO/
+Gold vs. their 20/55/25% targets, next-kr routing) are computed against,
+so those were previously understating Reactor Core's true size by ~4%.
+
 ## TPV made consistently sheet-derived across the framework (2026-07-24)
 
 Operator's explicit rule after a live TPV figure didn't match the position-
