@@ -91,4 +91,20 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "war_chest"
-value_sek = 1959
+value_sek = 9
+
+[[positions]]
+# Idle/uninvested cash sitting inside the Reactor Core brokerage account
+# itself (broker's "Tillg. för köp") -- real capital allocated to this
+# bucket, but not a share position, so it was invisible to snapshot()'s
+# share-based math until this row existed. Confirmed 2026-07-24 via
+# broker screenshot reconciliation: real share values matched pipeline
+# prices to within normal EOD-vs-intraday drift; the ~30k kr gap between
+# the account's real total and its share-position sum was entirely this.
+name      = "Reactor Core Cash"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "reactor_core"
+value_sek = 30621
