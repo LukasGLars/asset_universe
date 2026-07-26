@@ -5,8 +5,12 @@ Extracts an "actionable signal fingerprint" from a status.md dashboard
 snapshot (AVGO guard state, LLY-stress, joint-stress, silver GSR state,
 opportunistic sleeve status AND risk state (stop breach / time-exit due /
 tripwire -- not just the bare OPEN/CLOSED word, which never changes for
-the life of a trade no matter what the price does), confirmed regime flip,
-AVGO/LLY earnings reminders and reported-quarter changes) and compares
+the life of a trade no matter what the price does), a new ENTER candidate
+appearing while the sleeve stays closed (the daily 4-gate screen reruns
+every day regardless of manual triggering, but nothing used to diff its
+verdict -- only the bare CLOSED word, which never changes either),
+confirmed regime flip, AVGO/LLY earnings reminders and reported-quarter
+changes) and compares
 two snapshots. Used
 by sync.yml to decide whether the daily run is worth an email: silence
 when nothing actionable changed, a one-line summary when something did.
@@ -57,6 +61,7 @@ def extract_fingerprint(text: str) -> dict:
         "sleeve_risk_to_stop": _find(
             r"Opportunistic Sleeve.*?Current price\s*:\s*\S+\s*\(risk to stop:\s*([^)]+)\)", text),
         "sleeve_tripwire_detail": _find(r"Opportunistic Sleeve.*?Tripwire detail\s*:\s*([^\n]+)", text),
+        "sleeve_candidate": _find(r"Opportunistic Sleeve.*?Best candidate\s*:\s*(\S+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -164,6 +169,23 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             )
         blocks.append("\n".join(lines))
         subject_parts.append(f"Sleeve risk -> {curr['sleeve_risk']}")
+
+    # New ENTER candidate while the sleeve stays closed -- distinct from the
+    # sleeve_status block above, which only fires on OPEN/CLOSED transitions
+    # and would otherwise never catch a candidate quietly flipping PASS ->
+    # ENTER in the daily rerun (2026-07-26 gap: the screen already reran
+    # every day, nothing diffed its verdict). Guarded to CLOSED on both
+    # sides so this can't double-fire alongside (or instead of) the
+    # sleeve_status alert on the day the sleeve actually opens/closes.
+    if (prev["sleeve_status"] == "CLOSED" and curr["sleeve_status"] == "CLOSED"
+            and prev["sleeve_candidate"] in ("none", "unknown")
+            and curr["sleeve_candidate"] not in ("none", "unknown")):
+        blocks.append(
+            f"OPPORTUNISTIC SLEEVE CANDIDATE: {curr['sleeve_candidate']} is now ENTER-eligible "
+            f"(sleeve remains closed).\n"
+            f"REVIEW: run `run_entry_screen.py` for the full candidate detail before acting."
+        )
+        subject_parts.append(f"Sleeve candidate -> {curr['sleeve_candidate']}")
 
     if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":
         blocks.append(

@@ -91,6 +91,23 @@ FIXTURE_SLEEVE_TRIPWIRE_DETAILED = FIXTURE_SLEEVE_OPEN_CLEAN.replace(
 )
 
 
+FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE = FIXTURE_BASE.replace(
+    "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
+    "  Opportunistic Sleeve\n"
+    "    Status         : CLOSED (0/1 position)\n"
+    "    Best candidate : none eligible today (either no ENTER survivors, or all "
+    "failed the pre-entry tripwire gate)\n",
+)
+
+FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE = FIXTURE_BASE.replace(
+    "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
+    "  Opportunistic Sleeve\n"
+    "    Status         : CLOSED (0/1 position)\n"
+    "    Best candidate : HWM (Howmet Aerospace)  (ext +1.2%, 21d med +4.1%, div ROBUST, "
+    "pre-entry tripwires PASSED) -- run run_entry_screen.py for full detail\n",
+)
+
+
 def test_extract_fingerprint_parses_known_fields():
     fp = extract_fingerprint(FIXTURE_BASE)
     assert fp["avgo_guard"] == "BASE"
@@ -328,6 +345,50 @@ def test_cli_no_output_when_unchanged(tmp_path):
 def test_cli_reports_actionable_change(tmp_path):
     out = _run_cli(FIXTURE_BASE, FIXTURE_GUARD_FIRED, tmp_path)
     assert "ACTION: Rotate AVGO" in out
+
+
+def test_extract_fingerprint_parses_sleeve_candidate_none():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    assert fp["sleeve_candidate"] == "none"
+
+
+def test_extract_fingerprint_parses_sleeve_candidate_ticker():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
+    assert fp["sleeve_candidate"] == "HWM"
+
+
+def test_sleeve_candidate_fires_when_new_enter_appears_while_closed():
+    prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "Sleeve candidate -> HWM" in subject
+    assert "OPPORTUNISTIC SLEEVE CANDIDATE: HWM is now ENTER-eligible" in body
+    assert "REVIEW" in body
+
+
+def test_sleeve_candidate_does_not_fire_when_still_none():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_sleeve_candidate_does_not_fire_when_ticker_unchanged():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_sleeve_candidate_does_not_double_fire_alongside_status_change():
+    # The day the sleeve actually opens, sleeve_status already alerts --
+    # the candidate-appearance check must stay silent on its own (both
+    # sides must be CLOSED for it to fire).
+    prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_OPEN_CLEAN)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    _, body = result
+    assert "OPPORTUNISTIC SLEEVE CANDIDATE" not in body
+    assert "OPPORTUNISTIC SLEEVE:" in body  # the real status-change alert still fires
 
 
 def test_cli_no_crash_when_prev_file_missing(tmp_path):
