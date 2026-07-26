@@ -59,29 +59,71 @@ def test_risk_to_stop_str_none_when_missing_data():
     assert _risk_to_stop_str({"current_price": None, "binding_stop": 271.39}, 11, 9.73, 29653.19) is None
 
 
-def test_binding_stop_ma50_binds_below_crossover():
-    # entry $720.04, MA50 $708.66 -> hard stop $705.64 < MA50, so MA50 is
-    # the closer/binding stop (hit first as price falls from entry).
-    stop, label = binding_stop(720.04, 708.66)
+def test_binding_stop_ma50_buffered_binds_when_trailing_not_armed():
+    # No unrealized gain yet (peak == entry) -- trailing stop never
+    # considered, only the 5%-buffered MA50 floor.
+    stop, label = binding_stop(720.04, 708.66, peak_price=720.04)
     assert label == "MA50"
-    assert stop == 708.66
+    assert abs(stop - 708.66 * 0.95) < 1e-6
 
 
-def test_binding_stop_hard_stop_binds_above_crossover():
-    # entry $730, MA50 $708.66 -> hard stop $715.40 > MA50, so the hard
-    # stop is now closer to entry and binds first instead.
-    stop, label = binding_stop(730.0, 708.66)
-    assert label == "HARD"
-    assert stop == 715.40
+def test_binding_stop_trailing_binds_once_armed_and_higher_than_ma50():
+    # Peak is 10% above entry (past the 5% trigger); trailing level
+    # (peak * 0.95) sits well above the buffered MA50 floor, so it binds.
+    entry, ma50, peak = 100.0, 90.0, 110.0
+    stop, label = binding_stop(entry, ma50, peak_price=peak)
+    assert label == "TRAILING"
+    assert abs(stop - peak * 0.95) < 1e-6
 
 
-def test_binding_stop_at_exact_crossover():
-    # entry chosen so hard_stop == ma50 exactly (708.66 / 0.98 = 723.1224...)
-    entry = 708.66 / 0.98
-    stop, label = binding_stop(entry, 708.66)
-    assert abs(stop - 708.66) < 1e-6
-    # at the exact crossover either label is defensible; MA50 wins ties
+def test_binding_stop_ma50_still_wins_when_higher_than_armed_trailing():
+    # Trailing is armed (peak 6% above entry) but MA50 has since risen
+    # above the peak (a strong prior uptrend continuing) -- its buffered
+    # level is still the higher (closer) floor even with trailing active.
+    entry, ma50, peak = 100.0, 112.0, 106.0
+    stop, label = binding_stop(entry, ma50, peak_price=peak)
     assert label == "MA50"
+    assert abs(stop - ma50 * 0.95) < 1e-6
+
+
+def test_binding_stop_trailing_not_armed_below_trigger():
+    # Peak only 3% above entry -- below the 5% trigger, trailing must not
+    # be considered even though it would technically be a valid dict entry.
+    entry, ma50, peak = 100.0, 90.0, 103.0
+    stop, label = binding_stop(entry, ma50, peak_price=peak)
+    assert label == "MA50"
+
+
+def _write_parquet_closes(path, dates, closes):
+    pd.DataFrame({"date": dates, "close": closes}).to_parquet(path)
+
+
+def test_peak_since_entry_returns_max_close_from_entry_onward(tmp_path, monkeypatch):
+    from run_entry_screen import _peak_since_entry
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / "x.parquet")
+    dates = pd.date_range("2026-06-01", periods=6, freq="D")
+    _write_parquet_closes(tmp_path / "x.parquet", dates, [90, 100, 105, 98, 112, 108])
+    # entry on day index 1 (2026-06-02, close 100) -- days before entry must
+    # be excluded (90 on day 0 must NOT count even though it's the lowest).
+    peak = _peak_since_entry(tmp_path, "equities", "X", "2026-06-02", entry_price=100.0)
+    assert peak == 112.0
+
+
+def test_peak_since_entry_floors_at_entry_price_when_never_exceeded(tmp_path, monkeypatch):
+    from run_entry_screen import _peak_since_entry
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / "x.parquet")
+    dates = pd.date_range("2026-06-01", periods=4, freq="D")
+    _write_parquet_closes(tmp_path / "x.parquet", dates, [100, 95, 92, 97])
+    peak = _peak_since_entry(tmp_path, "equities", "X", "2026-06-01", entry_price=100.0)
+    assert peak == 100.0
+
+
+def test_peak_since_entry_defaults_to_entry_price_when_file_missing(tmp_path):
+    from run_entry_screen import _peak_since_entry
+    peak = _peak_since_entry(tmp_path, "equities", "NOPE", "2026-06-01", entry_price=42.0)
+    assert peak == 42.0
 
 
 def _candidate_row(ticker, dist, diversity, win_21d, med_21d=0.04):
@@ -188,19 +230,19 @@ def test_select_best_candidate_falls_back_to_win_21d_when_duration_win_missing()
 
 def test_suggested_duration_capped_by_earnings():
     today = dt.date(2026, 6, 30)
-    earn = dt.date(2026, 7, 30)  # 30 calendar days out
-    # min(30 flat, (30 - 3) earnings-buffer) = 27
-    assert suggested_duration_days(earn, today) == 27
+    earn = dt.date(2026, 7, 15)  # 15 calendar days out
+    # min(21 flat, (15 - 3) earnings-buffer) = 12
+    assert suggested_duration_days(earn, today) == 12
 
 
-def test_suggested_duration_flat_30_when_earnings_far_out():
+def test_suggested_duration_flat_21_when_earnings_far_out():
     today = dt.date(2026, 6, 30)
-    earn = dt.date(2026, 9, 1)  # far beyond the flat 30d window
-    assert suggested_duration_days(earn, today) == 30
+    earn = dt.date(2026, 9, 1)  # far beyond the flat 21d window
+    assert suggested_duration_days(earn, today) == 21
 
 
-def test_suggested_duration_no_earnings_date_defaults_flat_30():
-    assert suggested_duration_days(None, dt.date(2026, 6, 30)) == 30
+def test_suggested_duration_no_earnings_date_defaults_flat_21():
+    assert suggested_duration_days(None, dt.date(2026, 6, 30)) == 21
 
 
 def test_suggested_duration_floors_at_one_day():

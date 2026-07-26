@@ -8,16 +8,16 @@
 # Position cap: 1 open position at a time. war-chest capital only.
 # See MEMORY.md "Formalize the opportunistic sleeve" for the full rule set.
 
-open       = true
-ticker     = "HWM"
-category   = "equities"
-entry_date = "2026-06-24"
-entry_price = 276.93
-shares      = 11
-capital_sek = 29653.19
-fx_at_entry = 9.734390258789062
+open       = false
+ticker     = ""
+category   = ""
+entry_date = ""
+entry_price = 0.0
+shares      = 0
+capital_sek = 0.0
+fx_at_entry = 0.0
 
-entry_ry_regime     = "HIGH"
-entry_baa10y_regime = "TIGHT"
+entry_ry_regime     = ""
+entry_baa10y_regime = ""
 
-cluster_peers = ['GEV', 'VRT', 'PWR', 'CMI']
+cluster_peers = []

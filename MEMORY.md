@@ -1603,8 +1603,53 @@ stop + add trailing stop" as sufficient):** drop the hard stop, add the
 validated 5%/5% trailing-peak stop, AND add a 5% buffer to the MA50 stop
 (require close <= ma50 * 0.95, not just close <= ma50, before it binds).
 All three pieces are now validated together on the real gated-entry
-population, not guessed. **Still NOT implemented -- deliberately left for
-the operator**, same boundary as before: this changes live trading
-behavior for an account that could open or hold a position while the
-operator is unreachable. Awaiting explicit go-ahead before touching
-`run_entry_screen.py`'s `binding_stop()` / `compute_exit_triggers()`.
+population, not guessed.
+
+**IMPLEMENTED (2026-07-26), operator go-ahead given explicitly, no open
+position at the time (confirmed with operator before touching anything --
+`config/sleeve_state.toml` was itself found stale here, still showing HWM
+`open=true` three days after the real 07-23 close; corrected via
+`--close`, same bug class as the PR #46 sleeve-state gap).** Also folded
+in the duration finding from earlier the same session: `TIME_EXIT_DAYS`
+30 -> 21 (Calmar peaks ~21d then decays for the winning stop config, and
+30 traced back to the informal HWM precedent, never a backtest).
+
+Changes in `run_entry_screen.py`:
+- `HARD_STOP_PCT` removed. `binding_stop(entry_price, ma50, peak_price)`
+  gained a third argument and now returns `max(buffered_MA50, trailing_if_armed)`
+  instead of `max(hard_stop, ma50)` -- no fixed percentage-of-entry floor
+  at all anymore, matching `ma50_buffer_5pct`'s validated shape (the only
+  config that was positive in every duration/bucket tested).
+- New constants: `MA50_BUFFER_PCT = 0.05`, `TRAILING_TRIGGER_PCT = 0.05`,
+  `TRAILING_PCT = 0.05`.
+- New `_peak_since_entry()` -- highest close from entry_date to today,
+  floored at entry_price, feeding the trailing stop. `compute_exit_triggers()`
+  now returns `ma50_buffered`, `peak_price`, `trailing_stop` (None until
+  armed) alongside the existing `binding_stop`/`binding_label`.
+- Display: "Hard stop" line removed from both the OPEN-position report and
+  the daily `status.md` summary; replaced with "MA50 (buffered)" showing
+  both the raw and buffered level, plus a "Trailing stop" line once armed.
+  `time_exit_binding` and the candidate-table duration caption were
+  hardcoded to "30d"/"3d" text -- fixed to read the actual constants so
+  they can't silently drift from the real values again.
+- `fi_tracker.py` needed no changes -- it only calls
+  `run_entry_screen.sleeve_daily_summary()`, which picks up the new
+  behavior automatically.
+- Tests: rewrote the 3 old `binding_stop()` tests for the new 3-arg
+  signature/shape (MA50-vs-trailing precedence, trailing not armed below
+  trigger), added 3 tests for `_peak_since_entry`, updated 3
+  `suggested_duration_days` tests for `TIME_EXIT_DAYS=21`. Full suite: 257
+  passed (1 pre-existing, unrelated `test_panel.py` volume-field failure,
+  not touched by this change).
+- Deleted all three temporary diagnostic workflows
+  (`opp_sleeve_stop_sensitivity_diagnostic.yml`,
+  `opp_sleeve_combined_sensitivity_diagnostic.yml`,
+  `opp_sleeve_ma50_stop_sensitivity_diagnostic.yml`) per this repo's own
+  stated convention -- their job (get real numbers to decide with) is
+  done; the backtest scripts themselves stay in the repo as the record of
+  how these numbers were derived.
+
+**Not modeled, unchanged from the analysis phase:** re-entry after a
+stop-out. Real drag from the old tight MA50 was probably smaller than the
+backtests showed; this doesn't affect the direction of the fix, only its
+exact magnitude.

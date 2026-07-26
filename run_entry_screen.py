@@ -74,10 +74,29 @@ PORTFOLIO_TOML = ROOT / "config" / "portfolio.toml"
 # Opportunistic sleeve rules (see MEMORY.md "Formalize the opportunistic sleeve"):
 #   - 1 open position at a time
 #   - exit at min(TIME_EXIT_DAYS, days-to-earnings - EARNINGS_BUFFER_DAYS), or
-#     MA50 breach, or HARD_STOP_PCT below entry -- whichever binds first
-TIME_EXIT_DAYS       = 30
+#     a buffered MA50 breach, or a trailing-peak stop once meaningfully in
+#     profit -- whichever binds first (see binding_stop() below)
+#
+# Revised 2026-07-26 (see MEMORY.md "Opp sleeve stop refinement -- compound-
+# exit test finds the real culprit is MA50, not the hard stop"): the prior
+# fixed 2% hard stop and unbuffered MA50 stop are both retired. Validated on
+# the real 4,321-entry gated population (2009-2026, run_sleeve_entry_
+# reconstruction.py): every stop config with an unbuffered MA50 had a
+# NEGATIVE median return at every hold duration, despite the same entries
+# returning +26.5% annualized at 15d held with no exit rule at all -- these
+# entries qualify by NOT being extended (close to their own MA50 by
+# construction), so an unbuffered MA50 gets touched by ordinary noise well
+# before any real breakdown. A 5% MA50 buffer was positive in every
+# duration (15-90d) and every volatility bucket tested. TIME_EXIT_DAYS
+# shortened from 30 to 21: PR #45's raw duration sweep and this same
+# compound-exit study both show the edge is front-loaded (Calmar peaks
+# ~21d, then decays), and 30d traced back to the informal HWM precedent
+# (PR #6), never to a backtest.
+TIME_EXIT_DAYS       = 21
 EARNINGS_BUFFER_DAYS = 3
-HARD_STOP_PCT        = 0.02
+MA50_BUFFER_PCT      = 0.05  # MA50 must be cleared by this margin before it binds
+TRAILING_TRIGGER_PCT = 0.05  # unrealized gain since entry before the trailing stop arms
+TRAILING_PCT         = 0.05  # trailing distance below the peak close, once armed
 DIVERSITY_RANK        = {"ROBUST": 0, "MODERATE": 1, "THIN": 2}
 
 CATEGORY_DIR = {
@@ -227,6 +246,21 @@ def _ma50_stats(data_dir: Path, cat_dir: str, ticker: str) -> dict | None:
     }
 
 
+def _peak_since_entry(data_dir: Path, cat_dir: str, ticker: str, entry_date: str, entry_price: float) -> float:
+    """Highest close from entry_date to the latest available price, floored
+    at entry_price (a position that has never traded above its own entry
+    has no unrealized gain, so its peak is the entry itself). Feeds the
+    trailing-peak stop in binding_stop()."""
+    path = reader.ticker_path(data_dir, cat_dir, ticker)
+    if not path.exists():
+        return entry_price
+    prices = reader.load(path)["close"].dropna().sort_index()
+    since_entry = prices[prices.index >= pd.Timestamp(entry_date)]
+    if since_entry.empty:
+        return entry_price
+    return max(entry_price, float(since_entry.max()))
+
+
 # ── Sleeve state (persisted — the one thing price data alone can't give us:
 #    what price/date a position was actually entered at) ────────────────────
 
@@ -286,15 +320,20 @@ def already_held_tickers(portfolio_path: Path | None = None) -> set[str]:
 
 # ── Exit triggers ────────────────────────────────────────────────────────
 
-def binding_stop(entry_price: float, ma50: float) -> tuple[float, str]:
-    """The binding stop is whichever level is CLOSER to entry (hit first as
-    price falls) -- not the farther one. Below ~entry where hard_stop crosses
-    ma50, MA50 binds; above that crossover, the 2% hard stop takes over and
-    caps risk at ~2% of capital regardless of how extended the entry was."""
-    hard_stop = entry_price * (1 - HARD_STOP_PCT)
-    if ma50 >= hard_stop:
-        return ma50, "MA50"
-    return hard_stop, "HARD"
+def binding_stop(entry_price: float, ma50: float, peak_price: float) -> tuple[float, str]:
+    """The binding stop is whichever level is HIGHER (hit first as price
+    falls): a buffered MA50 floor, or -- once the position has moved
+    TRAILING_TRIGGER_PCT into profit -- a trailing stop below the peak
+    close since entry. There is no fixed hard stop (dropped 2026-07-26): a
+    flat 2% cap was tighter than MA50's own typical distance from entry and
+    produced false triggers on ordinary volatility (the HWM 2026-07-10
+    false stop) for zero realized protection across its one real use.
+    peak_price must be >= entry_price (see _peak_since_entry) so the
+    trailing branch only ever activates in genuine profit."""
+    levels = [(ma50 * (1 - MA50_BUFFER_PCT), "MA50")]
+    if peak_price / entry_price - 1 >= TRAILING_TRIGGER_PCT:
+        levels.append((peak_price * (1 - TRAILING_PCT), "TRAILING"))
+    return max(levels, key=lambda lv: lv[0])
 
 
 def compute_exit_triggers(
@@ -307,25 +346,30 @@ def compute_exit_triggers(
     entry_dt = _datetime.strptime(entry_date, "%Y-%m-%d").date()
     ma = _ma50_stats(data_dir, category, ticker)
     ma50 = ma["ma50"] if ma else None
+    peak_price = _peak_since_entry(data_dir, category, ticker, entry_date, entry_price) if ma else None
 
     earn_date = _next_earnings(ticker)
     earn_time_exit = (earn_date - _timedelta(days=EARNINGS_BUFFER_DAYS)) if earn_date else None
     flat_time_exit = entry_dt + _timedelta(days=TIME_EXIT_DAYS)
     time_exit = min(flat_time_exit, earn_time_exit) if earn_time_exit else flat_time_exit
     time_exit_days = (time_exit - entry_dt).days
-    time_exit_binding = "earnings-3d" if (earn_time_exit and earn_time_exit < flat_time_exit) else "flat 30d"
+    time_exit_binding = (f"earnings-{EARNINGS_BUFFER_DAYS}d" if (earn_time_exit and earn_time_exit < flat_time_exit)
+                          else f"flat {TIME_EXIT_DAYS}d")
 
-    stop_price, stop_label = (binding_stop(entry_price, ma50) if ma50 else (None, "n/a"))
+    stop_price, stop_label = (binding_stop(entry_price, ma50, peak_price) if ma50 else (None, "n/a"))
+    trailing_armed = bool(ma50 and peak_price is not None and peak_price / entry_price - 1 >= TRAILING_TRIGGER_PCT)
 
     return {
         "ma50":              ma50,
-        "hard_stop":         round(entry_price * (1 - HARD_STOP_PCT), 2),
+        "ma50_buffered":     round(ma50 * (1 - MA50_BUFFER_PCT), 2) if ma50 else None,
+        "peak_price":        round(peak_price, 2) if peak_price is not None else None,
+        "trailing_stop":     round(peak_price * (1 - TRAILING_PCT), 2) if trailing_armed else None,
         "binding_stop":      round(stop_price, 2) if stop_price else None,
         "binding_label":     stop_label,
         "time_exit_date":    time_exit,
         "time_exit_days":    time_exit_days,
         # Days remaining FROM TODAY, distinct from time_exit_days above (the
-        # fixed entry-to-exit duration, e.g. always 30 -- that field never
+        # fixed entry-to-exit duration, e.g. always 21 -- that field never
         # changes day to day, so a "Xd left" display built from it would
         # silently show the same number every day regardless of how close
         # the real deadline actually is). This is the one that should be
@@ -635,8 +679,10 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
     print(f"  Exit triggers")
     print(f"    Time exit       : {trig['time_exit_date']}  "
           f"({trig['time_exit_days']}d; bound by {trig['time_exit_binding']})")
-    print(f"    MA50 stop       : ${trig['ma50']:.2f}" if trig["ma50"] else "    MA50 stop       : n/a")
-    print(f"    Hard stop       : ${trig['hard_stop']:.2f}")
+    print(f"    MA50 (buffered) : ${trig['ma50_buffered']:.2f}  (raw MA50 ${trig['ma50']:.2f})"
+          if trig["ma50"] else "    MA50 (buffered) : n/a")
+    if trig["trailing_stop"] is not None:
+        print(f"    Trailing stop   : ${trig['trailing_stop']:.2f}  (peak ${trig['peak_price']:.2f} since entry)")
     print(f"    Binding stop    : ${trig['binding_stop']:.2f}  ({trig['binding_label']})"
           if trig["binding_stop"] else "    Binding stop    : n/a")
     print(f"    Next earnings   : {trig['next_earnings'] if trig['next_earnings'] else 'n/a'}")
@@ -802,7 +848,8 @@ def run_entry_screen(
     print()
     print("-" * 100)
     print("  Selection (least MA50-extension -> ROBUST diversity preferred -> win rate)")
-    print("  Return/win shown at EACH candidate's own suggested duration (min(30d, earnings-3d)),")
+    print(f"  Return/win shown at EACH candidate's own suggested duration "
+          f"(min({TIME_EXIT_DAYS}d, earnings-{EARNINGS_BUFFER_DAYS}d)),")
     print("  computed fresh from regime-matched history -- not a flat 21d proxy. med_252d: robustness check only.")
     print("-" * 100)
     pick = select_best_candidate(out, held, data_dir=data_dir, gate1_candidates=candidates, regime_labels=conditions, benchmark=benchmark)
@@ -905,6 +952,8 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         else:
             print(f"    Current price  : n/a")
         print(f"    Time exit      : {trig['time_exit_date']}  ({trig['time_exit_days_remaining']}d left)")
+        if trig["trailing_stop"] is not None:
+            print(f"    Trailing stop  : ${trig['trailing_stop']:.2f}  (peak ${trig['peak_price']:.2f} since entry)")
         print(f"    Binding stop   : ${trig['binding_stop']:.2f} ({trig['binding_label']})"
               if trig["binding_stop"] else "    Binding stop   : n/a")
         print(f"    Tripwires      : {'CLEAN' if not any_watch else 'FLAGGED -- run run_entry_screen.py for detail'}")
