@@ -1544,3 +1544,67 @@ done)
   tariff shock (no ballast). Conclusion: LLY hedges liquidity/structural
   crashes, not macro/trade-driven risk-off — diversification is real but
   narrower than the "different sector" framing suggests.
+
+## Opp sleeve stop refinement -- compound-exit test finds the real culprit is MA50, not the hard stop (2026-07-26)
+
+Closes the loop the 2026-07-24 entry left open (full 4-gate compound-exit
+simulation, "still not built"). Three scripts, run in sequence, on the real
+declustered 4-gate entry population (4,321 entries, 2009-2026, from
+`run_sleeve_entry_reconstruction.py` / PR #45):
+
+1. **`run_opp_sleeve_combined_sensitivity.py`** (new): tests stop config x
+   hold duration jointly, stratified by realized-20d-vol tercile at entry
+   (prompted by "shouldn't stops be asset-specific?"). Finding: vol
+   *magnitude* matters (high-vol entries stop out more, lose more under
+   every config) but the *ranking* of configs is identical in every
+   bucket -- `trailing_5_5` (hard stop off, 5% trigger/5% trailing) beats
+   `no_hardstop` beats `current_hardstop` everywhere, so one global
+   trailing-stop rule holds up. **Bigger finding, unprompted:** every single
+   config -- including the best one -- had a NEGATIVE median return at
+   every duration/bucket (e.g. trailing_5_5 @ 30d: -1.2% median, calmar
+   -0.37), directly contradicting PR #45's own raw finding that the
+   identical entries return +26.5% annualized at 15d with NO exit rule at
+   all. MA50 was the one stop left unconditionally active in every config
+   tested (matches live `binding_stop() = max(hard_stop_if_active, ma50)`)
+   -- and since gate 3 requires entries to NOT be extended (close to their
+   own MA50 by construction), a plausible read is that ordinary MA50-touch
+   noise, not real breakdowns, was exiting trades right before the recovery
+   the raw hold captures.
+2. **`run_opp_sleeve_ma50_stop_sensitivity.py`** (new): isolates that
+   variable -- hard stop OFF and trailing 5%/5% ON throughout (both already
+   validated), sweeps MA50's grace period (days post-entry before it can
+   bind) and buffer (price must close X% below MA50, not just below it) --
+   independently and combined. **Confirms the hypothesis directly:**
+   `ma50_always_tight` (today's live behavior) reproduces the negative
+   baseline everywhere. Loosening MA50 flips it: `ma50_grace_20d` and
+   `ma50_buffer_3pct` turn positive at short durations (15-30d) but fade
+   back toward zero/negative by 45-90d. **`ma50_buffer_5pct` is positive in
+   EVERY duration (15-90d) and EVERY vol bucket** -- e.g. 30d pooled: median
+   +1.07%, annualized +13.8%, calmar +0.161, still stopping out 45.9% of
+   trades (real protection, not "stop never fires"). `ma50_off` (bracketing
+   case, not a live candidate -- no ongoing downside protection at all) is
+   even stronger (30d pooled: +19.7% annualized, calmar +0.318), confirming
+   MA50-touch was the dominant drag, not a residual one.
+3. Both new scripts + a MA50-focused unit-test file (20 tests total) ran
+   against real data via temporary diagnostic workflows
+   (`opp_sleeve_combined_sensitivity_diagnostic.yml`,
+   `opp_sleeve_ma50_stop_sensitivity_diagnostic.yml`), same discipline as
+   the 2026-07-24 entry.
+
+**Caveat carried forward, still not modeled:** none of these three scripts
+simulate re-entry after a stop-out -- every stop-out is treated as a dead
+trade, while the real sleeve re-screens daily and could rotate into the
+same or a different candidate. Real drag from a tight MA50 is therefore
+probably smaller than shown here; the direction (loosen MA50) is not in
+question, only the exact magnitude.
+
+**Updated recommendation (supersedes the 2026-07-24 entry's "drop hard
+stop + add trailing stop" as sufficient):** drop the hard stop, add the
+validated 5%/5% trailing-peak stop, AND add a 5% buffer to the MA50 stop
+(require close <= ma50 * 0.95, not just close <= ma50, before it binds).
+All three pieces are now validated together on the real gated-entry
+population, not guessed. **Still NOT implemented -- deliberately left for
+the operator**, same boundary as before: this changes live trading
+behavior for an account that could open or hold a position while the
+operator is unreachable. Awaiting explicit go-ahead before touching
+`run_entry_screen.py`'s `binding_stop()` / `compute_exit_triggers()`.
