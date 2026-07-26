@@ -1653,3 +1653,54 @@ Changes in `run_entry_screen.py`:
 stop-out. Real drag from the old tight MA50 was probably smaller than the
 backtests showed; this doesn't affect the direction of the fix, only its
 exact magnitude.
+
+## Opp sleeve entry-filter tightening -- no material improvement found, current 4 gates already do the work (2026-07-26)
+
+Prompted the same day as the stop-logic implementation: the live screen
+found two near-misses (STLD failed only on RS margin, -2.2% vs the
+existing >=0% bar; GM failed on cluster health + a flattening MA50). Built
+`run_opp_sleeve_entry_filter_sensitivity.py` to test whether tightening
+entry further -- beyond the existing 4 gates -- raises the win rate, on
+the real 4,307-entry gated population (2009-2026) at the live 21d
+duration.
+
+**Baseline is already strong**: 57.6% win rate, +1.32% median / +25.6%
+annualized at 21d, n=4307. Tested tightenings, individually and combined:
+
+| config | n | win rate | annualized |
+|---|---|---|---|
+| current baseline | 4307 | 57.6% | +25.6% |
+| RS margin >=2% | 2628 | 57.3% | +25.6% |
+| RS margin >=3% | 2027 | 57.0% | +24.9% |
+| RS margin >=5% | 1238 | 57.9% | +28.5% |
+| MA50 slope top-tercile | 1436 | 58.8% | +26.3% |
+| VIX-calm gate | 2449 | 58.6% | +27.1% |
+| diversity proxy (n_matched) top-tercile | 1441 | 57.0% | +27.2% |
+| combined moderate (RS>=2% + VIX-calm) | 1409 | 57.8% | +25.5% |
+| combined strict (all 4 tightened) | 118 | 53.4% | +7.5% |
+
+**Finding: no individual filter materially beats the baseline.** RS
+margin >=2-3% is flat-to-worse than the existing >=0% bar -- confirms
+STLD's rejection was correct but says a bigger margin isn't a better
+rule. The two closest things to a real (small) improvement are the
+VIX-calm gate (+1pt win rate, +1.5pt annualized, keeps more than half the
+sample) and MA50 slope top-tercile (+1.2pt win rate) -- both modest,
+neither clearly worth the added complexity and reduced trade frequency.
+**Stacking all four tightenings together makes things WORSE, not
+better** (win rate drops to 53.4%, annualized craters to 7.5%, on a
+sample too thin at n=118 to trust anyway) -- a clean example of
+over-filtering/overfitting rather than compounding an edge.
+
+Caveats: diversity is approximated via n_matched (pre-transition
+regime-matched date count), not the live screen's exact ROBUST/MODERATE/
+THIN label -- directional only. Cluster-health tightening (GM's second
+failure reason) was not tested -- point-in-time sector-peer
+reconstruction across thousands of historical entries is out of scope
+for this pass.
+
+**Recommendation: no change.** The existing 4 gates (regime top-N,
+above-MA50, extension+RS, earnings-clear) already capture the real edge;
+none of the tested additions clear the bar for adding complexity to a
+system that's already working. Not implemented, and this one doesn't
+need an operator go-ahead to skip -- there's nothing here worth
+implementing.
