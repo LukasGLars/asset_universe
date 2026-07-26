@@ -1,0 +1,55 @@
+name: opp-sleeve-ma50-stop-sensitivity-diagnostic
+
+# Manual-only, temporary diagnostic: runs run_opp_sleeve_ma50_stop_sensitivity.py
+# -- the direct follow-on to run_opp_sleeve_combined_sensitivity.py's finding
+# that every stop config (hard stop OR MA50-anchored) had a negative median
+# return on the real 4-gate entry population, even though the same entries
+# held with NO exit rule at all return +26.5% annualized at 15 days (PR #45).
+# This isolates MA50's grace period and buffer as the remaining variables,
+# holding the already-validated hard-stop-off + trailing-5%/5% pieces fixed.
+# Needs the real parquet price store across the whole US equities universe,
+# which only exists on the Actions runner. Read-only: no commits, no repo
+# changes. Delete once the MA50 question is settled and any resulting change
+# is implemented (or the answer is "no change").
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run opportunistic sleeve MA50 stop sensitivity study
+        run: python run_opp_sleeve_ma50_stop_sensitivity.py 2>&1 | tee opp_sleeve_ma50_stop_sensitivity_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Write step summary
+        run: cat opp_sleeve_ma50_stop_sensitivity_output.txt >> $GITHUB_STEP_SUMMARY
