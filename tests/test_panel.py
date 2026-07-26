@@ -72,8 +72,12 @@ def test_panel_min_history(data_dir):
 
 def test_panel_field_volume(data_dir):
     p = panel.load_panel(data_dir, "equities", field="volume")
-    # Non-NaN volume values should all be positive
-    assert (p.stack() > 0).all()
+    # Non-NaN volume values should all be positive. pandas 3.0's stack()
+    # no longer drops the NaN cells from this panel's ragged ticker start
+    # dates (and no longer accepts a dropna= argument at all, since its new
+    # implementation never introduces NaN rows itself) -- drop them
+    # explicitly afterward instead so NaN > 0 (False) can't leak in.
+    assert (p.stack().dropna() > 0).all()
 
 
 def test_panel_empty_category(data_dir):
