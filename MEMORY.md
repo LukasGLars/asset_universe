@@ -1733,9 +1733,10 @@ calmar +60% relative. A real, meaningful improvement -- not a marginal
 one, and simpler than what was being tested for (one number changes, not
 a new vol-dependent rule).
 
-**Not implemented -- awaiting operator go-ahead**, same boundary as the
-stop-logic work: this changes live exit behavior. If approved: change
-`TRAILING_PCT` from `0.05` to `0.03` in `run_entry_screen.py` (keep
-`TRAILING_TRIGGER_PCT` at `0.05`), update the 2 unit tests that assert on
-the old 5%/5% pullback level, and delete the temporary diagnostic
-workflow (already removed after this run).
+**IMPLEMENTED (2026-07-27), operator go-ahead given explicitly.**
+`TRAILING_PCT` changed from `0.05` to `0.03` in `run_entry_screen.py`
+(`TRAILING_TRIGGER_PCT` unchanged at `0.05`). Updated the 1 unit test that
+asserted on the old 5%/5% pullback level
+(`test_binding_stop_trailing_binds_once_armed_and_higher_than_ma50`).
+Full suite: 281 passed. Temporary diagnostic workflow already removed
+after the backtest run.

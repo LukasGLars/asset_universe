@@ -69,11 +69,12 @@ def test_binding_stop_ma50_buffered_binds_when_trailing_not_armed():
 
 def test_binding_stop_trailing_binds_once_armed_and_higher_than_ma50():
     # Peak is 10% above entry (past the 5% trigger); trailing level
-    # (peak * 0.95) sits well above the buffered MA50 floor, so it binds.
+    # (peak * 0.97, 3% trailing distance) sits well above the buffered
+    # MA50 floor, so it binds.
     entry, ma50, peak = 100.0, 90.0, 110.0
     stop, label = binding_stop(entry, ma50, peak_price=peak)
     assert label == "TRAILING"
-    assert abs(stop - peak * 0.95) < 1e-6
+    assert abs(stop - peak * 0.97) < 1e-6
 
 
 def test_binding_stop_ma50_still_wins_when_higher_than_armed_trailing():

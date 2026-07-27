@@ -92,11 +92,23 @@ PORTFOLIO_TOML = ROOT / "config" / "portfolio.toml"
 # compound-exit study both show the edge is front-loaded (Calmar peaks
 # ~21d, then decays), and 30d traced back to the informal HWM precedent
 # (PR #6), never to a backtest.
+#
+# Revised 2026-07-27 (see MEMORY.md "Opp sleeve trailing-stop distance --
+# 3% beats the live 5%, no vol-scaling needed"): TRAILING_PCT tightened
+# from 5% to 3%, keeping TRAILING_TRIGGER_PCT at 5%. A 3x3 trigger x
+# trailing_pct grid on the same real 4,321-entry population found (5%
+# trigger, 3% trailing) at or within noise of the best result in EVERY
+# volatility bucket simultaneously -- not a vol-scaled rule, a single
+# global parameter fix. Pooled annualized 27.8% vs the old 5%/5% rule's
+# 19.2%; mid/high-vol Calmar +60-69% relative. Because the trailing stop
+# only arms after a real profit cushion (unchanged trigger), a
+# noise-triggered exit locks in a smaller gain, never a loss -- a
+# different, safer failure mode than the retired unbuffered-MA50 problem.
 TIME_EXIT_DAYS       = 21
 EARNINGS_BUFFER_DAYS = 3
 MA50_BUFFER_PCT      = 0.05  # MA50 must be cleared by this margin before it binds
 TRAILING_TRIGGER_PCT = 0.05  # unrealized gain since entry before the trailing stop arms
-TRAILING_PCT         = 0.05  # trailing distance below the peak close, once armed
+TRAILING_PCT         = 0.03  # trailing distance below the peak close, once armed
 DIVERSITY_RANK        = {"ROBUST": 0, "MODERATE": 1, "THIN": 2}
 
 CATEGORY_DIR = {
