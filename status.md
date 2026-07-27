@@ -28,20 +28,20 @@ FI@50 PACE TRACKER
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +18.1%
+  AWAR (trailing)         :  +17.9%
   Required CAGR           :  +22.3%
-  Status                  :  BEHIND  (-4.2% margin)
+  Status                  :  BEHIND  (-4.4% margin)
 
-  Projected @ AWAR        :     9,067,574 kr
-  vs target               :    -3,867,132 kr  (deficit)
+  Projected @ AWAR        :     8,933,684 kr
+  vs target               :    -4,001,022 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,524,841 kr       ~2047
-  Conservative   +15%       6,977,409 kr       ~2041
-  Base           +20%      10,676,766 kr       ~2038
-  Current AWAR   +18%       9,067,574 kr       ~2039
-  Bull           +30%      24,264,100 kr       ~2035
+  Bear           +10%       4,520,707 kr       ~2047
+  Conservative   +15%       6,968,809 kr       ~2041
+  Base           +20%      10,660,194 kr       ~2038
+  Current AWAR   +18%       8,933,684 kr       ~2039
+  Bull           +30%      24,211,271 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -127,13 +127,8 @@ TACTICAL RULES
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   Opportunistic Sleeve
-    Status         : OPEN -- HWM @ $276.93 (2026-06-24), 11 sh
-    Current price  : $289.26  (risk to stop: 1,913 kr, 6.45% of sleeve capital)
-    Time exit      : 2026-07-24  (0d left)
-    Binding stop   : $271.39 (HARD)
-    Tripwires      : CLEAN
-    Tripwire detail : RS +5.3% [OK] | Regime stable [OK] | MA50 $267.53 (slope +9.56) [OK] | Cluster avg -0.4% [OK]
-    Risk           : TIME-EXIT-DUE
+    Status         : CLOSED (0/1 position)
+    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire gate)
 
 ==============================================================
 NEXT CONTRIBUTION
@@ -176,8 +171,8 @@ Computing capped 252d distributions for 51 candidates ...
   CF        excluded (see EXCLUDE_TICKERS)
   STLD      N=1201  mu= +15.2%  sigma= 31.1%  hist=27yr  [MODERATE]
   FOXA      hist=7yr  (below min 10yr, skipped)
-  CEG       hist=4yr  (below min 10yr, skipped)
   EXV1.DE   no data
+  CEG       hist=4yr  (below min 10yr, skipped)
   CMI       N=1201  mu= +25.6%  sigma= 29.9%  hist=27yr  [MODERATE]
   GM        N= 546  mu=  +8.4%  sigma= 13.3%  hist=16yr  [SINGLE]
   NVDA      N=1201  mu= +25.1%  sigma= 32.5%  hist=27yr  [MODERATE]
