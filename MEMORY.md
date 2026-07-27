@@ -1704,3 +1704,38 @@ none of the tested additions clear the bar for adding complexity to a
 system that's already working. Not implemented, and this one doesn't
 need an operator go-ahead to skip -- there's nothing here worth
 implementing.
+
+## Opp sleeve trailing-stop distance -- 3% beats the live 5%, no vol-scaling needed (2026-07-27)
+
+Follow-on to the entry-filter study: tested whether the trailing stop
+should be volatility-SCALED (different trigger/pct per vol bucket) rather
+than one global rule. Swept a 3x3 grid (trigger x trailing_pct, each in
+{3%, 5%, 8%}) on the same real 4,321-entry population, holding the rest of
+the now-live exit logic fixed (MA50 buffer 5%, no hard stop, 21d
+duration).
+
+**Finding: it's not a vol-scaling question -- it's a single-parameter fix.**
+(trigger=5%, trailing_pct=3%) is at or within noise of the best result in
+EVERY bucket simultaneously:
+
+| bucket | live (5%/5%) calmar | best found | best config |
+|---|---|---|---|
+| pooled | 0.193 | 0.243 | 5%/3% |
+| low_vol | 0.327 | 0.340 | 8%/5% (5%/3% gives 0.339 -- tied) |
+| mid_vol | 0.142 | 0.240 | 5%/3% |
+| high_vol | 0.132 | 0.217 | 8%/3% (5%/3% gives 0.211 -- close) |
+
+Keeping the profit trigger at 5% (unchanged) and tightening the trailing
+distance from 5% to 3% captures nearly all of the available improvement
+everywhere, without any bucket-specific complexity: pooled annualized
+27.8% vs the live rule's 19.2%, mid_vol calmar +69% relative, high_vol
+calmar +60% relative. A real, meaningful improvement -- not a marginal
+one, and simpler than what was being tested for (one number changes, not
+a new vol-dependent rule).
+
+**Not implemented -- awaiting operator go-ahead**, same boundary as the
+stop-logic work: this changes live exit behavior. If approved: change
+`TRAILING_PCT` from `0.05` to `0.03` in `run_entry_screen.py` (keep
+`TRAILING_TRIGGER_PCT` at `0.05`), update the 2 unit tests that assert on
+the old 5%/5% pullback level, and delete the temporary diagnostic
+workflow (already removed after this run).
