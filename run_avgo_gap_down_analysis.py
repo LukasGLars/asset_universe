@@ -1,10 +1,13 @@
 """
 run_avgo_gap_down_analysis.py
 
-Standalone, single-ticker research: how has AVGO behaved after an
-overnight gap-down (open meaningfully below the prior close), and does
-that differ from a random day? Prompted by the operator's interest in
-AVGO's gap-down behavior, separate from the opportunistic-sleeve backlog.
+Standalone, single-ticker research: how has a given ticker behaved after
+an overnight gap-down (open meaningfully below the prior close), and does
+that differ from a random day? Originally built for AVGO (kept as the
+default), then generalized (2026-07-29) to run against any ticker in the
+parquet store -- same "shopping at a discount" question applied to Gold
+(GC_F) or LLY, not just AVGO. Separate from the opportunistic-sleeve
+backlog.
 
 Method:
   1. A "gap-down" is a day whose open is >= threshold% below the PRIOR
@@ -13,19 +16,24 @@ Method:
      point -- you can't retroactively buy at a printed open), at 5/21/63/
      252 trading days out.
   3. Compared against an UNCONDITIONAL baseline (every trading day, same
-     horizons) so "AVGO gains after a gap-down" can be read against
-     "AVGO gains anyway, gap or not" -- the gap-down premium (or
-     discount) is the delta between the two, not the raw number alone.
-  4. Split into two eras (pre/post 2023-01-01) since AVGO's own volatility
-     regime shifted materially around the AI-datacenter narrative --
-     pooling 15+ years risks averaging two different stocks' behavior
-     together. The cutoff is a round, defensible approximation, not a
-     precisely-dated regime-change point.
+     horizons) so "gains after a gap-down" can be read against "gains
+     anyway, gap or not" -- the gap-down premium (or discount) is the
+     delta between the two, not the raw number alone.
+  4. An optional era split (--era-split YYYY-MM-DD) additionally breaks
+     the history in two, for a ticker with a known narrative/volatility-
+     regime shift (e.g. AVGO's own AI-datacenter re-rating around
+     2023-01-01) -- pooling 15+ years risks averaging two different
+     regimes together. Omit it to report full history only, the right
+     default for a ticker without an obvious single-date break (Gold,
+     LLY).
 
 Analysis only -- informational, not a signal wired into any live gate.
 
 Usage:
-    python run_avgo_gap_down_analysis.py
+    python run_avgo_gap_down_analysis.py                              # AVGO, full history
+    python run_avgo_gap_down_analysis.py --era-split 2023-01-01        # AVGO, pre/post split
+    python run_avgo_gap_down_analysis.py --ticker GC_F --category commodities
+    python run_avgo_gap_down_analysis.py --ticker LLY
 """
 from __future__ import annotations
 
@@ -55,7 +63,6 @@ OUT_CSV  = PROJECT_ROOT / "comparison_results" / "avgo_gap_down_analysis.csv"
 
 GAP_THRESHOLDS = [0.02, 0.03, 0.05]
 HORIZONS_DAYS  = [5, 21, 63, 252]
-ERA_SPLIT      = pd.Timestamp("2023-01-01")
 MIN_N_OBS      = 5
 
 
@@ -115,33 +122,49 @@ def run_era(df: pd.DataFrame, era_label: str) -> pd.DataFrame:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Gap-down forward-return analysis for any ticker.")
+    parser.add_argument("--ticker", default=TICKER, help=f"Ticker symbol (default: {TICKER})")
+    parser.add_argument("--category", default=CATEGORY,
+                         help=f"Category directory: equities/commodities/etc. (default: {CATEGORY})")
+    parser.add_argument("--era-split", default=None,
+                         help="Optional YYYY-MM-DD to additionally split into two eras "
+                              "(e.g. a known narrative/volatility-regime shift for this ticker). "
+                              "Omit to report full history only.")
+    args = parser.parse_args()
+
+    ticker, category = args.ticker, args.category
+
     print("=" * 72)
-    print(f"{TICKER}: forward returns after an overnight gap-down")
+    print(f"{ticker}: forward returns after an overnight gap-down")
     print("=" * 72)
 
-    df = load_ohlc(DATA_DIR, CATEGORY, TICKER).reset_index()
+    df = load_ohlc(DATA_DIR, category, ticker).reset_index()
     print(f"\nHistory: {df['date'].min().date()} to {df['date'].max().date()} ({len(df)} sessions)")
 
-    pre  = df[df["date"] < ERA_SPLIT].reset_index(drop=True)
-    post = df[df["date"] >= ERA_SPLIT].reset_index(drop=True)
-    print(f"Era split at {ERA_SPLIT.date()}: pre={len(pre)} sessions, post={len(post)} sessions")
+    frames = [run_era(df, "full history")]
+    if args.era_split:
+        split = pd.Timestamp(args.era_split)
+        pre  = df[df["date"] < split].reset_index(drop=True)
+        post = df[df["date"] >= split].reset_index(drop=True)
+        print(f"Era split at {split.date()}: pre={len(pre)} sessions, post={len(post)} sessions")
+        frames.append(run_era(pre, f"pre-{split.date()}"))
+        frames.append(run_era(post, f"post-{split.date()}"))
 
-    full_df = run_era(df, "full history")
-    pre_df  = run_era(pre, "pre-2023")
-    post_df = run_era(post, "post-2023 (AI era)")
-
-    out = pd.concat([full_df, pre_df, post_df], ignore_index=True)
-    OUT_CSV.parent.mkdir(exist_ok=True)
-    out.to_csv(OUT_CSV, index=False)
-    print(f"\nSaved: {OUT_CSV}\n")
+    out = pd.concat(frames, ignore_index=True)
+    out_csv = OUT_CSV.parent / f"{ticker.replace('.', '_')}_gap_down_analysis.csv"
+    out_csv.parent.mkdir(exist_ok=True)
+    out.to_csv(out_csv, index=False)
+    print(f"\nSaved: {out_csv}\n")
     print(out.to_string(index=False))
     print(
         "\nReading this: compare each 'gap-down >= X%' row to its era's 'baseline (all "
         "days)' row at the SAME horizon -- the gap-down premium/discount is the "
         "difference, not the raw median. n < 5 blanked (too few real events to trust). "
-        "Pre/post-2023 split is an approximation of AVGO's AI-narrative volatility "
-        "shift, not a precisely-dated regime change. Informational only -- not wired "
-        "into any live gate."
+        "An era split (if requested) is an approximation of a known narrative/volatility "
+        "shift for this specific ticker, not a precisely-dated regime change. "
+        "Informational only -- not wired into any live gate."
     )
 
 
