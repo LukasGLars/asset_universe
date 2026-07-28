@@ -1,0 +1,50 @@
+name: avgo-gap-down-analysis-diagnostic
+
+# Manual-only, temporary diagnostic: runs run_avgo_gap_down_analysis.py --
+# AVGO's forward returns after an overnight gap-down vs. an unconditional
+# baseline, split pre/post-2023. Standalone research, not part of the opp
+# sleeve backlog. Needs the real parquet price store, which only exists on
+# the Actions runner. Read-only: no commits, no repo changes. Delete once
+# the question that prompted it is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run AVGO gap-down analysis
+        run: python run_avgo_gap_down_analysis.py 2>&1 | tee avgo_gap_down_analysis_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Write step summary
+        run: cat avgo_gap_down_analysis_output.txt >> $GITHUB_STEP_SUMMARY
