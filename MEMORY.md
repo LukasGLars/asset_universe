@@ -1740,3 +1740,33 @@ asserted on the old 5%/5% pullback level
 (`test_binding_stop_trailing_binds_once_armed_and_higher_than_ma50`).
 Full suite: 281 passed. Temporary diagnostic workflow already removed
 after the backtest run.
+
+## AVGO gap-down forward-return analysis (2026-07-28)
+
+Standalone research (not opp-sleeve related): `run_avgo_gap_down_analysis.py`
+measures AVGO's forward returns after an overnight gap-down (open >=2/3/5%
+below the prior close) vs. an unconditional same-horizon baseline, full
+history (2009-2026, 4268 sessions) and split pre/post-2023.
+
+**Full history: gap-downs are a consistent, monotonic buy signal.** At
+every horizon (21d/63d/252d) and every threshold, gap-down forward returns
+beat the unconditional baseline, and the effect strengthens with gap size:
+21d median +3.1% baseline -> +4.0%/+5.5%/+7.9% at 2/3/5% gaps; 63d +9.7%
+baseline -> +16.7%/+19.2%/+24.8%; win rates climb from ~64% baseline to
+~70-84% depending on threshold/horizon.
+
+**Era split matters.** Pre-2023 shows the same clean monotonic pattern
+(smaller magnitudes). Post-2023 (AI era) the picture is muddier at 21d --
+a 2% gap-down's forward return (+3.3%) is actually slightly BELOW that
+era's baseline (+3.9%), because AVGO's own baseline drift post-2023 is
+extraordinary (252d baseline median +90%, an unusually high bar for any
+subset to clearly beat). The premium reappears at 63d (+27.9% vs +17.7%
+baseline for 2%+ gaps). The 5%+ bucket post-2023 has only 6-8 events --
+too thin to trust on its own.
+
+**Bottom line:** gap-downs have historically resolved favorably almost
+every time (win rates often near 100% at 252d in both eras) -- but "a
+gap-down beats just holding AVGO" is a much cleaner story pre-2023 than in
+the current AI-melt-up regime, where simply holding is already a very high
+bar. Informational only -- not wired into any live gate. Temporary
+diagnostic workflow removed after this run.
