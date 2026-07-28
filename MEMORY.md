@@ -1814,3 +1814,66 @@ off" or "buy every dip regardless of guard state."
 
 Informational only -- not wired into any live gate, no proposal to
 implement. Temporary diagnostic workflow removed after this run.
+
+## Gap-down forward returns: Gold (GC_F) and LLY, same lens as AVGO (2026-07-28)
+
+Ran the now-generalized run_avgo_gap_down_analysis.py against Gold and LLY
+directly, since the user liked the AVGO "shopping at a discount" framing
+and wanted to know if it holds for the other two base holdings. No era
+split requested for either (no known single-date narrative shift like
+AVGO's 2023 AI re-rating).
+
+**Gold (GC_F), full history 2000-08-30 to 2026-07-27 (6,499 sessions):**
+
+| Gap | Horizon | n | Median return | Win rate | Baseline (same horizon) |
+|---|---|---|---|---|---|
+| >=2% | 21d | 43 | +1.16% | 63% | +0.79% |
+| >=2% | 63d | 42 | +3.01% | 60% | +2.74% |
+| >=2% | 252d | 37 | +13.99% | 84% | +11.42% |
+| >=3% | 21d | 15 | +0.06% | 53% | +0.79% |
+| >=3% | 252d | 13 | +16.63% | 92% | +11.42% |
+| >=5% | all | 2 | n too thin, blanked | -- | -- |
+
+Gold's gap-down "discount" is much weaker and noisier than AVGO's. The 2%
+bucket shows a small, believable edge at every horizon. The 3% bucket is
+basically flat to baseline at 21d/63d (no discernible short/medium-term
+edge) and only pulls ahead at 252d, on a thin n=13 -- read that 252d row
+as a low-confidence echo of Gold's long-run uptrend, not a real gap-down
+premium. 5%+ gap-downs are too rare in Gold to say anything (n=2).
+**Bottom line: Gold doesn't reward buying its dips the way AVGO does --
+mostly just look like noise around Gold's baseline drift.**
+
+**LLY, full history 2000-01-03 to 2026-07-27 (6,680 sessions):**
+
+| Gap | Horizon | n | Median return | Win rate | Baseline (same horizon) |
+|---|---|---|---|---|---|
+| >=2% | 5d | 126 | +0.60% | 53% | +0.27% |
+| >=2% | 21d | 126 | +1.74% | 60% | +1.08% |
+| >=2% | 63d | 126 | +4.94% | 64% | +3.21% |
+| >=3% | 5d | 53 | -0.30% | 45% | +0.27% |
+| >=3% | 21d | 53 | +2.27% | 62% | +1.08% |
+| >=3% | 63d | 53 | +5.56% | 70% | +3.21% |
+| >=5% | 5d | 21 | -0.11% | 43% | +0.27% |
+| >=5% | 21d | 21 | +2.27% | 62% | +1.08% |
+| >=5% | 63d | 21 | +6.55% | 71% | +3.21% |
+| >=5% | 252d | 20 | +13.99% | 70% | +12.72% |
+
+LLY shows a distinct **delayed-bounce** pattern, different from both AVGO
+(clean monotonic edge at every horizon) and Gold (weak/noisy everywhere).
+At the 3%+ and 5%+ gap thresholds, the immediate 5-day forward return is
+FLAT TO NEGATIVE and below baseline (win rate drops to 43-45%) -- deeper
+LLY gap-downs tend to keep drifting for the first week, i.e. don't
+necessarily bounce right away, sometimes still falling further. But by
+21d the picture flips to a real, consistent edge over baseline, and by
+63d the edge is clear and win rates climb into the high 60s/70s.
+
+**Bottom line across all three base holdings:** AVGO is the one with a
+genuinely clean "buy the dip" signal at every horizon. LLY has a real edge
+too, but only if you can tolerate the position drifting against you for
+the first week or two before it resolves favorably -- treat any LLY
+gap-down as a slower-developing opportunity, not an immediate bounce.
+Gold's gap-downs carry little to no discernible information beyond its
+ordinary baseline drift -- don't read a Gold gap-down as a buying signal.
+
+Informational only -- not wired into any live gate. Temporary diagnostic
+workflow (gap_down_analysis_diagnostic.yml) removed after this run.
