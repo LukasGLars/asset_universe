@@ -1770,3 +1770,47 @@ gap-down beats just holding AVGO" is a much cleaner story pre-2023 than in
 the current AI-melt-up regime, where simply holding is already a very high
 bar. Informational only -- not wired into any live gate. Temporary
 diagnostic workflow removed after this run.
+
+## AVGO gap-down x 200d Guard state -- counterintuitive result: guard-active gaps bounce HARDER, not softer (2026-07-28)
+
+Direct follow-on: does the 200d Guard's state (reconstructed point-in-time,
+same logic as fi_tracker.py's live guard -- below 200d SMA OR 5d crash ROC
+<=-10%) sharpen the gap-down signal? Hypothesis going in was the opposite
+of what the data shows: expected guard-active gap-downs to be the "real
+breakdown" case and underperform guard-base gap-downs (the "healthy dip"
+case).
+
+**Result is the reverse, consistently, across every threshold and
+horizon** (guard active on 15.7% of all 4,268 sessions -- a real, non-thin
+base rate):
+
+| Gap threshold | Horizon | Guard ACTIVE | Guard base |
+|---|---|---|---|
+| >=2% | 21d | +8.1% (82% win, n=62) | +1.9% (57% win, n=101) |
+| >=2% | 63d | +21.3% (90% win, n=60) | +14.2% (75% win, n=97) |
+| >=3% | 21d | +15.1% (92% win, n=26) | +1.8% (56% win, n=34) |
+| >=5% | 21d | +20.8% (100% win, n=11) | -5.4% (33% win, n=9) |
+
+Gap-downs occurring WHILE the guard is already active (AVGO already below
+its 200d SMA or already in crash-ROC territory) resolved forward *better*
+than gap-downs during an otherwise-healthy uptrend, at every threshold and
+horizon tested -- opposite of the "guard-active = real breakdown, don't
+buy" hypothesis.
+
+**Read carefully -- this does not mean the guard is wrong or should be
+ignored.** Most likely explanation: a gap-down that happens after AVGO is
+already beaten down reads more like capitulation/panic selling near a
+local trough (violent short-term mean reversion), while a gap-down inside
+an otherwise-healthy uptrend is a smaller, more ambiguous stumble with a
+less extreme bounce. The guard's own job is portfolio-level risk
+management across the FULL cycle (validated on Sharpe/MaxDD/Calmar in
+run_avgo_guard.py / run_combined_system.py) -- it is not answering "will
+this specific dip bounce," it's answering "should the portfolio stay
+fully exposed through an extended real drawdown." A high win rate on
+individual dip-buys during an active guard period doesn't offset the tail
+risk the guard exists to cut -- these two questions are compatible, not
+contradictory, and this finding should NOT be read as "turn the guard
+off" or "buy every dip regardless of guard state."
+
+Informational only -- not wired into any live gate, no proposal to
+implement. Temporary diagnostic workflow removed after this run.
