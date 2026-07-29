@@ -2002,3 +2002,66 @@ live-price data). Leaving the "deferred" language above as-is since it's
 the accurate record of what was decided at that point in the analysis --
 this note exists so the next reader doesn't mistake the deferral for the
 final state.
+
+## Opp sleeve edge-type review + PEAD reconstruction: real signal, but binary not magnitude-scaled (2026-07-29)
+
+Follow-on to a broader "what other trade types could this sleeve run"
+review (2026-07-29): of five candidates considered (post-earnings-drift,
+sector-wide capitulation, index-reconstitution drift, calendar
+seasonality, buyback-announcement drift), only the first two are
+buildable with zero new data infrastructure -- the other three need a new
+ingestion pipeline before validation can even start. `run_sleeve_pead_
+reconstruction.py` and `run_sleeve_sector_capitulation_reconstruction.py`
+(both permanent, tested scripts, not temporary diagnostics) test the two
+buildable candidates.
+
+**PEAD (post-earnings drift), first result:** real EPS surprise history
+(yfinance `get_earnings_dates()`) for every ticker that was in the live
+gate-1 top-N list at print time (509 candidates, 163 regime transitions,
+285 unique tickers with earnings history, 2,340 declustered entries),
+bucketed by surprise magnitude, deliberately independent of the existing
+MA50/extension gates (PEAD is momentum-continuation, the existing gates
+are mean-reversion -- stacking them would muddy which mechanism is doing
+the work). Early-stop-rate uses the CURRENT live `binding_stop()`, same
+convention as the execution-drift study above.
+
+| Bucket | n | 21d med. return | 21d win rate | 21d early-stop rate |
+|---|---|---|---|---|
+| miss_or_flat | 493 | -0.16% | 49.4% | **62.8%** |
+| beat_0_2 | 232 | +0.17% | 52.2% | 45.3% |
+| beat_2_5 | 350 | +1.13% | 58.0% | 46.6% |
+| beat_5_10 | 405 | +0.38% | 52.9% | 45.6% |
+| beat_10_plus | 860 | +0.85% | 56.0% | 49.2% |
+
+**Same shape as both studies above it in this file: real signal in
+early-stop-rate, no clean dose-response in return magnitude.** Every
+"beat" bucket clears at a materially lower early-stop-rate (45-49%) than
+a miss (62.8%) -- a large, consistent gap. But among the beat buckets,
+bigger surprise does NOT mean a better outcome the way the textbook PEAD
+story implies: `beat_2_5` (2-5% beat) is as good or better than
+`beat_10_plus` at every duration tested, not worse. Median-return
+differences across beat buckets are otherwise fairly flat/noisy, same
+pattern as the extension-decile and execution-drift findings above.
+
+**Conclusion: if this is ever built, it should be framed as a binary
+miss-vs-beat signal (deprioritize/avoid entries right after a miss), not
+a magnitude-scaled "chase the biggest beats" signal** -- the data doesn't
+support the latter. Report-only: no gate, display flag, or live screen
+change implied by this result. Sector-capitulation reconstruction
+(solo_crash vs. basket_crash) is the next candidate in this same review,
+not yet run as of this entry.
+
+**Side note on running these scripts:** `rank_at_transitions()` (the
+walk-forward gate-1 ranking, shared by this study, the sector-
+capitulation study, and the original extension reconstruction) is the
+actual long pole in a fresh run -- roughly 15-20 minutes on this dataset,
+NOT the earnings-fetch loop it was originally suspected to be, and cost
+per transition grows substantially in later, denser regime periods (more
+candidates have accumulated enough history). It now has an opt-in
+`verbose=True` flag for per-transition progress output. Also: the
+`sys.stdout = io.TextIOWrapper(...)` rewrap present in every script in
+this backlog needs `write_through=True` AND per-call `flush=True` on
+anything meant to be visible during a long run -- `write_through` alone
+only bypasses the text-encoding buffer, not the underlying binary
+buffer's own batching, so a real multi-minute run and a hang were
+indistinguishable from the outside until both fixes landed.
