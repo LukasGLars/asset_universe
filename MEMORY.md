@@ -1991,3 +1991,14 @@ return. Informational only -- no display flag or gate change implemented
 from this finding (explicitly deferred this session). Temporary
 diagnostic (run_opp_sleeve_execution_drift_analysis.py + its workflow)
 removed after this run.
+
+**Update, same session:** superseded by the very next commit (`0045d42`,
+"Add execution-drift filter to opp sleeve candidate selection") -- the
+deferral above stood for less than one commit. `EXECUTION_DRIFT_THRESHOLD
+= 0.009` now filters (not just flags) candidates in `run_entry_screen.py`:
+fetches a live price at selection time, compares to signal close, walks
+to the next-ranked candidate if drift exceeds 0.9% (fails open on missing
+live-price data). Leaving the "deferred" language above as-is since it's
+the accurate record of what was decided at that point in the analysis --
+this note exists so the next reader doesn't mistake the deferral for the
+final state.
