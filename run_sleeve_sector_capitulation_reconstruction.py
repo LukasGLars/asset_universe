@@ -55,8 +55,12 @@ import warnings
 from pathlib import Path
 
 if __name__ == "__main__":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    # write_through=True alone is NOT enough to make output stream live --
+    # see MEMORY.md / run_sleeve_pead_reconstruction.py: it only bypasses
+    # the text-encoding buffer, not the underlying binary buffer's own
+    # batching. Every meaningful print below also needs flush=True.
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", write_through=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace", write_through=True)
 warnings.filterwarnings("ignore")
 
 import pandas as pd
@@ -108,11 +112,14 @@ def find_capitulation_entries(
     for every date check the ticker's own crash state plus how many OTHER
     same-sector top-N peers are also crashing that same date."""
     events: list[dict] = []
+    n_periods = len(selections)
 
     for sel_idx, sel in enumerate(selections):
         start = sel["t_date"]
         end = selections[sel_idx + 1]["t_date"] if sel_idx + 1 < len(selections) else None
         top = sel["top"]
+        print(f"  [{sel_idx + 1}/{n_periods}] period from {start.date()}, {len(top)} tickers "
+              f"({len(_sector_cache)} sector lookups cached so far)...", flush=True)
         if len(top) < 1 + MIN_PEERS_CRASHING:
             continue  # not enough tickers in this period to ever form a basket
 
@@ -143,30 +150,31 @@ def find_capitulation_entries(
 
 
 def main() -> None:
-    print("=" * 72)
-    print("Opportunistic sleeve: sector-wide capitulation reconstruction")
-    print("Report-only -- no gate/display change implied by this run.")
-    print("=" * 72)
+    print("=" * 72, flush=True)
+    print("Opportunistic sleeve: sector-wide capitulation reconstruction", flush=True)
+    print("Report-only -- no gate/display change implied by this run.", flush=True)
+    print("=" * 72, flush=True)
 
-    print("\nBuilding regime labels...")
+    print("\nBuilding regime labels...", flush=True)
     labeled_df, _ = regime_module.build(DATA_DIR)
 
-    print("Loading full candidate universe (same as extension study)...")
+    print("Loading full candidate universe (same as extension study)...", flush=True)
     candidates = recon.load_candidates(DATA_DIR)
-    print(f"Candidates: {len(candidates)}")
+    print(f"Candidates: {len(candidates)}", flush=True)
 
-    print("Detecting regime transitions + walk-forward gate-1 ranking...")
+    print("Detecting regime transitions + walk-forward gate-1 ranking...", flush=True)
     transitions = recon.detect_transitions(labeled_df)
-    selections = recon.rank_at_transitions(transitions, labeled_df, candidates)
-    print(f"Transitions: {len(transitions)}")
+    print(f"Transitions: {len(transitions)}", flush=True)
+    selections = recon.rank_at_transitions(transitions, labeled_df, candidates, verbose=True)
+    print("Gate-1 ranking done.", flush=True)
 
     print(f"Scanning for {CRASH_ROC_WINDOW}d/{CRASH_ROC_THRESHOLD:.0%} crashes "
-          f"among gate-1 candidates, tagging same-sector peer-crash counts...")
+          f"among gate-1 candidates, tagging same-sector peer-crash counts...", flush=True)
     raw_events = find_capitulation_entries(selections, candidates)
-    print(f"Raw crash events: {len(raw_events)}")
+    print(f"Raw crash events: {len(raw_events)}", flush=True)
 
     entries = recon.decluster(raw_events, min_gap_days=DECLUSTER_MIN_GAP)
-    print(f"Declustered (>= {DECLUSTER_MIN_GAP}d apart per ticker): {len(entries)}")
+    print(f"Declustered (>= {DECLUSTER_MIN_GAP}d apart per ticker): {len(entries)}", flush=True)
 
     rows = []
     for label in ("solo_crash", "basket_crash"):
