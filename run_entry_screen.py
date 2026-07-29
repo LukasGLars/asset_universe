@@ -109,6 +109,22 @@ EARNINGS_BUFFER_DAYS = 3
 MA50_BUFFER_PCT      = 0.05  # MA50 must be cleared by this margin before it binds
 TRAILING_TRIGGER_PCT = 0.05  # unrealized gain since entry before the trailing stop arms
 TRAILING_PCT         = 0.03  # trailing distance below the peak close, once armed
+
+# Added 2026-07-29 (see MEMORY.md "Opp sleeve execution-drift analysis --
+# chasing raises stop-out risk, not return"): a candidate that has already
+# moved meaningfully between qualifying (the screen's signal close) and
+# when you can actually execute (a live price fetched at decision time) is
+# riskier to enter, in EITHER direction -- the real 3,644-entry gated
+# population showed early-stop-out rate roughly 2-3x higher at both
+# extremes (51.5% gapped down, 35.6% chased up) than near-zero drift
+# (14.1%), with no compensating gain in expected return. Bucket edges
+# closest to that "sweet spot" sat right around +/-0.9%, hence the
+# threshold below. Filters out (not just flags) an ENTER candidate whose
+# live/current price has drifted beyond this from its signal close --
+# the next-ranked candidate is tried instead, same pattern as the
+# pre-entry tripwire gate. Missing live-price data fails OPEN (doesn't
+# exclude), matching the repo's existing missing-data convention.
+EXECUTION_DRIFT_THRESHOLD = 0.009
 DIVERSITY_RANK        = {"ROBUST": 0, "MODERATE": 1, "THIN": 2}
 
 CATEGORY_DIR = {
@@ -447,6 +463,38 @@ def discover_cluster_peers(
     return peers
 
 
+# ── Execution-drift filter (pre-entry, see EXECUTION_DRIFT_THRESHOLD) ──────
+
+def _live_price(ticker: str) -> float | None:
+    """Best-effort current quote -- premarket, else regular, else postmarket.
+    Returns None on any failure (missing data fails OPEN in the caller,
+    same convention as the rest of this module's live-data lookups)."""
+    import yfinance as yf
+    try:
+        info = yf.Ticker(ticker).info
+        return info.get("preMarketPrice") or info.get("regularMarketPrice") \
+            or info.get("currentPrice") or info.get("postMarketPrice")
+    except Exception:
+        return None
+
+
+def _execution_drift_ok(ticker: str, signal_close: float) -> tuple[bool, float | None]:
+    """True if a live price fetched right now hasn't drifted beyond
+    EXECUTION_DRIFT_THRESHOLD from the close that generated the ENTER
+    signal, in EITHER direction. Missing live-price data or a
+    non-positive signal_close fails OPEN (doesn't exclude the
+    candidate) -- there's nothing to compare against, not evidence of a
+    problem. Returns (ok, drift) so callers can display the actual
+    drift value even when it's within tolerance."""
+    if signal_close is None or signal_close <= 0:
+        return True, None
+    price = _live_price(ticker)
+    if price is None:
+        return True, None
+    drift = price / signal_close - 1
+    return abs(drift) <= EXECUTION_DRIFT_THRESHOLD, drift
+
+
 # ── VIX review at entry (informational -- for you to weigh, not an
 #    automated gate). The post-entry tripwire compares VIX to its own 20d
 #    average, which is a LOCAL baseline -- if VIX has been elevated for a
@@ -613,19 +661,24 @@ def select_best_candidate(
         # Falls back to the static ranking alone rather than crashing.
         result = pool.iloc[0].to_dict()
         result["pretrade_tripwires"] = None
+        result["execution_drift"] = None
         return result
 
     for _, row in pool.iterrows():
         passed, tw = _pretrade_tripwire_check(
             row["ticker"], row["category"], gate1_candidates, held, regime_labels, data_dir, benchmark
         )
-        if passed:
-            result = row.to_dict()
-            result["pretrade_tripwires"] = tw
-            return result
-        # else: disqualified despite ranking well statically -- try the next one
+        if not passed:
+            continue  # disqualified despite ranking well statically -- try the next one
+        drift_ok, drift = _execution_drift_ok(row["ticker"], row.get("price"))
+        if not drift_ok:
+            continue  # already moved too far since qualifying -- try the next one
+        result = row.to_dict()
+        result["pretrade_tripwires"] = tw
+        result["execution_drift"] = drift
+        return result
 
-    return None  # every ranked ENTER candidate failed the pre-entry tripwire gate
+    return None  # every ranked ENTER candidate failed the pre-entry tripwire or execution-drift gate
 
 
 # ── Sleeve status display (position already open) ──────────────────────────
@@ -887,7 +940,8 @@ def run_entry_screen(
                   f"med={dur_med:>7}  win={dur_win:>7}{dur_note}  (252d robustness: {med252:>8}){marker}")
     if pick is None:
         print("  No eligible new candidate (either no ENTER survivors, all already held, fresh-fallback "
-              "path lacks 21d data for ranking, or every ranked candidate FAILED the pre-entry tripwire gate).")
+              "path lacks 21d data for ranking, or every ranked candidate FAILED the pre-entry tripwire "
+              "or execution-drift gate).")
     else:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
@@ -904,6 +958,10 @@ def run_entry_screen(
                   f"vetted as-if-entering-now, not just statically ranked.")
         else:
             print("  Pre-entry tripwire gate: not run (no data_dir -- static ranking only).")
+        drift = pick.get("execution_drift")
+        if drift is not None:
+            print(f"  Execution drift: {drift:+.1%} since signal close (live price vs. ${pick['price']:.2f}) "
+                  f"-- within +/-{EXECUTION_DRIFT_THRESHOLD:.1%} tolerance.")
         try:
             vr = vix_review(data_dir)
             print(f"  VIX review (for you to weigh, not a gate): {vr['now']:.2f}  "
@@ -1026,9 +1084,11 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         dur = int(pick["duration_days"]) if pd.notna(pick["duration_days"]) else 21
         pick_name = asset_name(pick["ticker"])
+        drift = pick.get("execution_drift")
+        drift_note = f", drift {drift:+.1%}" if drift is not None else ""
         print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + "  "
               f"(ext {pick['dist_from_ma50']}, "
-              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED) "
+              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED{drift_note}) "
               f"-- run run_entry_screen.py for full detail")
         try:
             vr = vix_review(data_dir)
@@ -1038,7 +1098,7 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
             pass
     else:
         print(f"    Best candidate : none eligible today (either no ENTER survivors, or all "
-              f"failed the pre-entry tripwire gate)")
+              f"failed the pre-entry tripwire or execution-drift gate)")
 
 
 # ── Position lifecycle (records a manually-executed trade -- no brokerage

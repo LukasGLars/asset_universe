@@ -298,6 +298,85 @@ def test_pretrade_gate_skipped_without_data_dir():
     pick = select_best_candidate(out, held=set())
     assert pick["ticker"] == "A"
     assert pick["pretrade_tripwires"] is None
+    assert pick["execution_drift"] is None
+
+
+# ── Execution-drift filter (see EXECUTION_DRIFT_THRESHOLD in run_entry_
+# screen.py): a candidate that's already moved meaningfully since
+# qualifying is riskier to enter in EITHER direction (real 3,644-entry
+# population: early-stop-out ~2-3x higher at both extremes vs. near-zero
+# drift, no compensating return). Filters out, doesn't just flag.
+
+def test_execution_drift_ok_true_when_signal_close_missing():
+    ok, drift = run_entry_screen._execution_drift_ok("X", None)
+    assert ok is True
+    assert drift is None
+
+
+def test_execution_drift_ok_true_when_live_price_unavailable(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: None)
+    ok, drift = run_entry_screen._execution_drift_ok("X", 100.0)
+    assert ok is True
+    assert drift is None
+
+
+def test_execution_drift_ok_within_threshold(monkeypatch):
+    # +0.5% drift, well inside the 0.9% threshold.
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 100.5)
+    ok, drift = run_entry_screen._execution_drift_ok("X", 100.0)
+    assert ok is True
+    assert abs(drift - 0.005) < 1e-9
+
+
+def test_execution_drift_ok_false_when_chased_up(monkeypatch):
+    # +2% drift -- chasing a move up, beyond the 0.9% threshold.
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 102.0)
+    ok, drift = run_entry_screen._execution_drift_ok("X", 100.0)
+    assert ok is False
+    assert abs(drift - 0.02) < 1e-9
+
+
+def test_execution_drift_ok_false_when_gapped_down(monkeypatch):
+    # -2% drift -- gapped down before execution, beyond the threshold
+    # in the OTHER direction (both extremes are filtered, not just chasing up).
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 98.0)
+    ok, drift = run_entry_screen._execution_drift_ok("X", 100.0)
+    assert ok is False
+    assert abs(drift - (-0.02)) < 1e-9
+
+
+def test_select_best_candidate_skips_candidate_beyond_drift_threshold(monkeypatch):
+    # A ranks best statically and clears the pre-entry tripwire, but has
+    # already drifted +2% since qualifying -- B should be picked instead.
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         _fake_tripwire({"A": True, "B": True}))
+
+    def fake_drift(ticker, signal_close):
+        return (False, 0.02) if ticker == "A" else (True, 0.001)
+    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok", fake_drift)
+
+    out = pd.DataFrame([
+        {**_candidate_row("A", 0.010, "ROBUST", 0.90), "category": "equities", "price": 100.0},
+        {**_candidate_row("B", 0.050, "ROBUST", 0.60), "category": "equities", "price": 50.0},
+    ])
+    pick = select_best_candidate(out, held=set(), data_dir="dummy", gate1_candidates=["A", "B"],
+                                  regime_labels={"ry_regime": "HIGH", "baa10y_regime": "TIGHT"})
+    assert pick["ticker"] == "B"
+    assert pick["execution_drift"] == 0.001
+
+
+def test_select_best_candidate_none_when_all_fail_drift(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         _fake_tripwire({"A": True, "B": True}))
+    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok",
+                         lambda ticker, signal_close: (False, 0.02))
+    out = pd.DataFrame([
+        {**_candidate_row("A", 0.010, "ROBUST", 0.90), "category": "equities", "price": 100.0},
+        {**_candidate_row("B", 0.050, "ROBUST", 0.60), "category": "equities", "price": 50.0},
+    ])
+    pick = select_best_candidate(out, held=set(), data_dir="dummy", gate1_candidates=["A", "B"],
+                                  regime_labels={"ry_regime": "HIGH", "baa10y_regime": "TIGHT"})
+    assert pick is None
 
 
 # ── VIX review: informational, ranks today's level against its full
