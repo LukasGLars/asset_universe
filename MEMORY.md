@@ -2107,3 +2107,53 @@ anything here -- not attempted in this pass.
 
 Report-only: no gate, display flag, or live screen change implied by this
 result.
+
+## Capitulation stop-sensitivity: fixed floors destroy the edge, trailing-only improves it (2026-07-29)
+
+Direct follow-on answering the caveat above: does ANY stop protect
+capital on the real solo_crash/basket_crash population (953 / 299
+entries) without destroying the edge, or does it repeat the sleeve's own
+`HARD_STOP_PCT` history (every threshold tested there got stopped out on
+>50% of trades with negative median return)? Two-phase test at 21d, same
+methodology as `run_opp_sleeve_stop_sensitivity.py`: Phase 1 grids an
+entry-price floor (0.05-0.20, plus `None`/no-floor competing on equal
+footing) with no trailing; Phase 2 adds the live trailing-peak grid
+(trigger/pct in {0.05,0.08}x{0.03,0.05,0.08}) on top of Phase 1's winner.
+
+**Phase 1 -- the risk was real.** A tight floor doesn't just reduce the
+edge, it INVERTS it: solo_crash with a 5% floor swings to median
+**-5.05%**, win rate 42.5% (vs. the raw reconstruction's +1.13% at this
+duration). Every floor tested underperforms no floor at all; Phase 1's
+winner for BOTH buckets was `None` (no floor), converging back to the raw
+reconstruction numbers (solo +1.16%, basket +4.31%) -- this is the same
+failure mode already documented for the live gate's `HARD_STOP_PCT`,
+confirmed here on a different, more extreme (below-MA50) entry
+population.
+
+**Phase 2 -- a trailing-ONLY stop (no floor) is the one config that
+helps rather than hurts.** Arms only once the trade is already in
+profit, so it never clips a live losing/recovering trade the way a floor
+does. Calmar-like (median return / |median drawdown among losers|, the
+tail-risk-aware metric) roughly doubles for solo_crash (0.177 -> 0.321 at
+trigger=0.05/trailing=0.03) and edges past the no-stop baseline for
+basket_crash (0.443 -> 0.481 at trigger=0.08/trailing=0.08, also the best
+win rate found for that bucket at 66-71% across the trailing grid).
+
+**Conclusion: this trade type survives contact with a real exit rule --
+but only the right kind.** A fixed floor (the mechanic the live
+`binding_stop()` uses via its MA50 component) actively destroys the edge
+here and should NOT be reused as-is for a capitulation-style entry. A
+trailing-only stop (no floor, arms only in profit) doesn't just avoid
+destroying the edge -- it modestly improves it on both buckets. If a
+capitulation gate is ever built, this is the specific constraint: no
+entry-price or MA50 floor, trailing stop only. `false_stop_pct_of_stopped`
+stays meaningfully non-zero (40-65%) even for the winning configs -- this
+is a real, imperfect stop, not a free lunch, but a net tail-risk
+improvement over both the floor-based alternative and no stop at all.
+
+Report-only: no gate, display flag, or live screen change implied by this
+result. Remaining open items before this could go live: the concentration
+cap flagged in conversation (no limit yet on how many same-sector basket
+entries could fire simultaneously) and the live-side plumbing to compute
+"how many gate-1 peers are crashing today" (currently only exists in the
+reconstruction's historical walk, not in `run_entry_screen.py`).
