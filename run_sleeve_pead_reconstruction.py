@@ -188,29 +188,30 @@ def early_stop_rate(
 
 
 def main() -> None:
-    print("=" * 72)
-    print("Opportunistic sleeve: post-earnings-drift (PEAD) reconstruction")
-    print("Report-only -- no gate/display change implied by this run.")
-    print("=" * 72)
+    print("=" * 72, flush=True)
+    print("Opportunistic sleeve: post-earnings-drift (PEAD) reconstruction", flush=True)
+    print("Report-only -- no gate/display change implied by this run.", flush=True)
+    print("=" * 72, flush=True)
 
-    print("\nBuilding regime labels...")
+    print("\nBuilding regime labels...", flush=True)
     labeled_df, _ = regime_module.build(DATA_DIR)
 
-    print("Loading full candidate universe (same as extension study)...")
+    print("Loading full candidate universe (same as extension study)...", flush=True)
     candidates = recon.load_candidates(DATA_DIR)
-    print(f"Candidates: {len(candidates)}")
+    print(f"Candidates: {len(candidates)}", flush=True)
 
-    print("Detecting regime transitions + walk-forward gate-1 ranking...")
+    print("Detecting regime transitions + walk-forward gate-1 ranking...", flush=True)
     transitions = recon.detect_transitions(labeled_df)
+    print(f"Transitions: {len(transitions)}", flush=True)
     selections = recon.rank_at_transitions(transitions, labeled_df, candidates)
-    print(f"Transitions: {len(transitions)}")
+    print("Gate-1 ranking done.", flush=True)
 
-    print("Scanning gate-1 candidates' full earnings history for real EPS surprises...")
+    print("Scanning gate-1 candidates' full earnings history for real EPS surprises...", flush=True)
     raw_events = find_pead_entries(selections, candidates)
-    print(f"Raw surprise-bucket events: {len(raw_events)}")
+    print(f"Raw surprise-bucket events: {len(raw_events)}", flush=True)
 
     entries = recon.decluster(raw_events, min_gap_days=DECLUSTER_MIN_GAP)
-    print(f"Declustered (safety net, >= {DECLUSTER_MIN_GAP}d apart per ticker): {len(entries)}")
+    print(f"Declustered (safety net, >= {DECLUSTER_MIN_GAP}d apart per ticker): {len(entries)}", flush=True)
 
     rows = []
     for label, _lo, _hi in SURPRISE_BUCKETS:
