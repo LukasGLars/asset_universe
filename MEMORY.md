@@ -1877,3 +1877,51 @@ ordinary baseline drift -- don't read a Gold gap-down as a buying signal.
 
 Informational only -- not wired into any live gate. Temporary diagnostic
 workflow (gap_down_analysis_diagnostic.yml) removed after this run.
+
+## Opp sleeve extension-decile analysis: no real dose-response beyond the binary gate (2026-07-29)
+
+Follow-on to the "what's the right question about extension" discussion:
+does forward return actually degrade with MA50 extension within the real
+gated-entry population, or is extension just a pass/fail gate with no
+further information once cleared? Reused the exact same walk-forward,
+no-lookahead reconstruction as run_sleeve_entry_reconstruction.py (PR #45)
+-- same population (509 candidates, 152 regime transitions, 34,151 raw
+gate-clearing events, 4,322 declustered entries) -- with the discarded
+`ext` value kept instead of thrown away, bucketed into 10 deciles, at the
+live 21d duration (n=4,310 with valid forward returns):
+
+| Decile | ext range | ext median | n | med_return | win_rate |
+|---|---|---|---|---|---|
+| 1 (least) | 0.0%-0.65% | 0.31% | 431 | +1.29% | 55.5% |
+| 2 | 0.65%-1.31% | 0.97% | 431 | +0.99% | 55.7% |
+| 3 | 1.31%-2.05% | 1.69% | 431 | +1.96% | 62.9% |
+| 4 | 2.05%-2.85% | 2.41% | 431 | +0.83% | 54.5% |
+| 5 | 2.85%-3.69% | 3.27% | 431 | +1.39% | 58.7% |
+| 6 | 3.69%-4.48% | 4.08% | 431 | +1.50% | 58.0% |
+| 7 | 4.48%-5.37% | 4.93% | 431 | +1.32% | 58.9% |
+| 8 | 5.37%-6.43% | 5.88% | 431 | +1.92% | 62.9% |
+| 9 | 6.43%-8.21% | 7.16% | 431 | +0.59% | 52.0% |
+| 10 (most) | 8.21%-24.8% | 9.59% | 431 | +1.35% | 56.8% |
+
+Correlation (decile ext_median vs. decile med_return): **-0.056** --
+essentially zero. No monotonic pattern: decile 3 (modest extension) has
+the best win rate tied with decile 8 (much more extended); decile 9
+(fairly extended) has the worst median return of the whole population;
+decile 1 (least extended -- the selection rule's preferred bucket) sits
+in the *middle* of the pack, not at the top.
+
+**Conclusion: once a candidate already clears the existing binary
+"extension <= regime p67" gate, its exact extension level inside that
+gate carries no further predictive information about 21d forward
+return.** This is consistent with (and extends) the earlier entry-filter
+sensitivity finding this session (tightening the extension/RS thresholds
+found no material improvement) -- both point the same direction: the
+selection rule's "prefer least-extended ROBUST candidate" tiebreaker is
+not wrong, but it is not backed by an actual dose-response curve either.
+It's a defensible, harmless tiebreaker among otherwise-equal candidates,
+not a real edge. No change proposed to run_entry_screen.py's selection
+logic from this finding alone.
+
+Informational only -- not wired into any live gate. Temporary diagnostic
+(run_opp_sleeve_extension_decile_analysis.py + its workflow) removed
+after this run.
