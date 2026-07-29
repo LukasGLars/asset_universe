@@ -171,15 +171,21 @@ def rank_at_transitions(
     transitions: list[tuple[pd.Timestamp, str, str]],
     labeled_df: pd.DataFrame,
     candidates: dict[str, tuple[str, pd.Series]],
+    verbose: bool = False,
 ) -> list[dict]:
     """Walk-forward: at each transition, rank candidates using ONLY
     pre-transition price history and ONLY pre-transition matched regime
     dates. Also freezes the extension-percentile thresholds (p33/p67) each
     ticker will use for the whole subsequent period, from the same
     pre-transition matched dates -- same no-lookahead reasoning as the rank
-    itself."""
+    itself. This is the long pole in every script that calls it (full
+    candidate universe re-ranked at every transition) -- verbose=True
+    prints a per-transition checkpoint so a long run is distinguishable
+    from a hang; default False leaves existing callers' output unchanged."""
     selections: list[dict] = []
-    for t_date, ry_new, baa_new in transitions:
+    for i, (t_date, ry_new, baa_new) in enumerate(transitions, 1):
+        if verbose:
+            print(f"  [{i}/{len(transitions)}] ranking as of {t_date.date()}...", flush=True)
         hist = labeled_df[labeled_df.index < t_date]
         mask = (hist["ry_regime"] == ry_new) & (hist["baa10y_regime"] == baa_new)
         matched = hist.index[mask]

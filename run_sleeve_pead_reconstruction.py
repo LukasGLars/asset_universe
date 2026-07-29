@@ -203,7 +203,7 @@ def main() -> None:
     print("Detecting regime transitions + walk-forward gate-1 ranking...", flush=True)
     transitions = recon.detect_transitions(labeled_df)
     print(f"Transitions: {len(transitions)}", flush=True)
-    selections = recon.rank_at_transitions(transitions, labeled_df, candidates)
+    selections = recon.rank_at_transitions(transitions, labeled_df, candidates, verbose=True)
     print("Gate-1 ranking done.", flush=True)
 
     print("Scanning gate-1 candidates' full earnings history for real EPS surprises...", flush=True)
