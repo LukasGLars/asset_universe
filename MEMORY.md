@@ -1925,3 +1925,69 @@ logic from this finding alone.
 Informational only -- not wired into any live gate. Temporary diagnostic
 (run_opp_sleeve_extension_decile_analysis.py + its workflow) removed
 after this run.
+
+## Opp sleeve execution-drift analysis: chasing raises stop-out risk, not return (2026-07-29)
+
+Follow-on to the extension-decile null result: does the price move
+BETWEEN when a candidate qualifies (screen close) and when you can
+realistically execute (next session's open) predict trade outcome?
+Directly motivated by a live case this session -- STLD qualified off one
+day's close, then gapped further (a post-earnings move) before it could
+be acted on.
+
+Same reconstruction population as PR #45 / the extension-decile study,
+but measuring forward return from the NEXT session's OPEN instead of the
+signal close, bucketed by the gap between the two (same convention as
+run_avgo_gap_down_analysis.py, applied to entry timing). Also computes,
+per bucket, the fraction of entries that would have hit the live
+binding_stop() (buffered MA50 / armed trailing stop) within the first 10
+trading days -- a "quick failure" rate, not just point-return.
+
+**Bug found and fixed along the way:** the backtest's earnings-clear
+gate (gate 4, used by find_gated_entries) was a silent no-op due to TWO
+stacked bugs in run_sleeve_entry_reconstruction.py's _earnings_dates():
+(1) missing `lxml` dependency (get_earnings_dates() needs it for
+pandas.read_html; added to pyproject.toml), and (2) once that was fixed,
+an AttributeError -- `d.tz_localize(None)` was called on plain
+datetime.datetime objects from `.to_pydatetime()`, which only pandas
+Timestamps support (fixed with `.replace(tzinfo=None)`). Both were
+silently caught by the same broad except, so bug #2 was completely
+masked by bug #1 until #1 was fixed -- gate 4 had likely been a no-op
+since PR #45 was written. Added a regression test exercising
+_earnings_dates() directly (previously only ever monkeypatched away).
+With both fixed, raw gate-clearing events dropped from 34,151 to 25,795
+(~25% fewer, consistent with excluding ~21 of every ~91 calendar days
+per quarterly cycle) and the declustered population from 4,322 to 3,644.
+
+**Result, properly gated, 21d duration (n=3,641 with valid drift+return),
+8 buckets by (next session's open / signal close - 1)**:
+
+| Bucket | drift_median | n | med_return | win_rate | early_stop_rate (10d) |
+|---|---|---|---|---|---|
+| 1 (gapped down hardest) | -1.45% | 456 | +1.17% | 55.3% | **51.5%** |
+| 2 | -0.64% | 455 | +1.33% | 55.4% | 25.9% |
+| 3 | -0.29% | 455 | +1.46% | 58.0% | 20.9% |
+| 4 (near-zero, sweet spot) | -0.03% | 455 | +0.68% | 56.9% | **14.1%** |
+| 5 | +0.13% | 455 | +1.20% | 59.1% | 16.5% |
+| 6 | +0.35% | 455 | +1.33% | 57.8% | 20.9% |
+| 7 | +0.64% | 455 | +0.81% | 55.2% | 22.4% |
+| 8 (chased hardest) | +1.33% | 455 | +1.13% | 54.1% | **35.6%** |
+
+Correlation (drift vs. med_return): -0.25. Correlation (drift vs.
+early_stop_rate): -0.39 (linear correlation understates the true shape --
+it's U-shaped, not linear).
+
+**Conclusion: point-estimate return is fairly flat/noisy across buckets
+(no clean edge from being early or late), but early-stop-out risk is
+clearly U-shaped and the pattern is essentially unchanged from the
+pre-fix (earnings-contaminated) run** -- both a same-day gap-down before
+execution AND chasing a move upward roughly double-to-triple the odds of
+a quick stop-out (14-17% at the sweet spot vs. 35-52% at the extremes),
+without a comparable gain in expected return to compensate. This
+validates the practical read: entering close to when a candidate is
+first flagged (neither delayed into a further chase nor arriving after
+it's already reversed) minimizes false-start risk without giving up
+return. Informational only -- no display flag or gate change implemented
+from this finding (explicitly deferred this session). Temporary
+diagnostic (run_opp_sleeve_execution_drift_analysis.py + its workflow)
+removed after this run.
