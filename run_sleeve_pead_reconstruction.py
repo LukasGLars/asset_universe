@@ -123,8 +123,11 @@ def find_pead_entries(
     top-N list on the print date -- this is "would the sleeve have already
     been watching this name," not a market-wide PEAD scan."""
     events: list[dict] = []
-    all_top_tickers = {t for sel in selections for t in sel["top"]}
-    for ticker in all_top_tickers:
+    all_top_tickers = sorted({t for sel in selections for t in sel["top"]})
+    n_tickers = len(all_top_tickers)
+    print(f"  {n_tickers} unique gate-1 tickers to fetch earnings history for...")
+    for i, ticker in enumerate(all_top_tickers, 1):
+        print(f"  [{i}/{n_tickers}] {ticker}", flush=True)
         surprises = _earnings_surprises(ticker)
         if surprises.empty:
             continue
