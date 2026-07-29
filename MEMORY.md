@@ -2065,3 +2065,45 @@ anything meant to be visible during a long run -- `write_through` alone
 only bypasses the text-encoding buffer, not the underlying binary
 buffer's own batching, so a real multi-minute run and a hang were
 indistinguishable from the outside until both fixes landed.
+
+## Sector-capitulation reconstruction: basket-crash beats solo-crash, cleanly (2026-07-29)
+
+Second (and last, given only these two of five reviewed candidates need
+zero new data infra) study from the same edge-type review. Trigger:
+ticker in a 5d/-10% crash (same validated convention as the AVGO/LLY
+guard, not a new threshold) AND in that period's frozen gate-1 top-N
+list. Split into `solo_crash` (no other same-sector gate-1 peer also
+crashing that day) vs. `basket_crash` (>=2 same-sector peers also
+crashing) -- 1,252 declustered entries (953 solo, 299 basket) from 151
+periods, 4,305 raw crash events.
+
+| Bucket | n | 21d return | 21d win rate | 90d return | 90d win rate |
+|---|---|---|---|---|---|
+| solo_crash | 953 | +1.13% | 54.7% | +5.51% | 59.8% |
+| basket_crash | 299 | **+4.41%** | **66.6%** | **+10.22%** | **72.2%** |
+
+**Real, clean, monotonic signal -- unlike PEAD above.** basket_crash beats
+solo_crash at every duration tested, not just one: ~4x the raw return and
++12pp win rate at 21d, still ~2x the return and +12pp win rate at 90d.
+This is the strongest single result across all three studies logged in
+this backlog today (extension-decile, PEAD, this one) -- the other two
+found real signal only in early-stop-rate with flat/noisy returns; this
+one shows a real return/win-rate edge directly.
+
+**Important caveat: the early-stop-rate column (94.1% solo, 98.0%
+basket) is NOT a meaningful comparison here and should not be read as
+"both buckets get stopped out almost immediately, so it doesn't matter."**
+These entries are, by construction, already deep in a 5d/-10% crash --
+price is already well below its own MA50 at entry. The live
+`binding_stop()` (buffered MA50 floor) was calibrated for the EXISTING
+extension gate, whose entries start ABOVE MA50; applied to an entry that
+starts BELOW MA50, it is close to guaranteed to trip within days
+regardless of what happens afterward. The near-saturated 94-98% in both
+buckets is a sign the metric doesn't fit this entry type, not a real
+finding about either bucket. The raw-return numbers above (no stop
+applied) are the trustworthy read for this study; a crash-appropriate
+stop definition would need to be designed before early-stop-rate means
+anything here -- not attempted in this pass.
+
+Report-only: no gate, display flag, or live screen change implied by this
+result.
