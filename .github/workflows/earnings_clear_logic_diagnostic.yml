@@ -1,0 +1,37 @@
+name: earnings-clear-logic-diagnostic
+
+# Manual-only, temporary diagnostic: after adding lxml to pyproject.toml,
+# the execution-drift backtest still produced byte-identical results --
+# checks whether get_earnings_dates() is now succeeding or still failing
+# for a different, silently-caught reason. Delete once answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Check earnings_clear logic
+        run: python -u check_earnings_clear_logic.py 2>&1 | tee earnings_clear_logic_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat earnings_clear_logic_output.txt >> $GITHUB_STEP_SUMMARY
