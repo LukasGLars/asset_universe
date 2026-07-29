@@ -245,7 +245,7 @@ def _earnings_dates(ticker: str) -> np.ndarray:
     try:
         import yfinance as yf
         df = yf.Ticker(ticker).get_earnings_dates(limit=60)
-        dates = np.array(sorted(d.tz_localize(None) if d.tzinfo else d for d in df.index.to_pydatetime()),
+        dates = np.array(sorted(d.replace(tzinfo=None) if d.tzinfo else d for d in df.index.to_pydatetime()),
                           dtype="datetime64[ns]") if df is not None and not df.empty else np.array([], dtype="datetime64[ns]")
     except Exception:
         dates = np.array([], dtype="datetime64[ns]")

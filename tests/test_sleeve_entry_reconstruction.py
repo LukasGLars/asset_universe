@@ -41,6 +41,34 @@ def test_regime_median_return_computes_forward_median():
     assert med > 0  # steadily rising series -> positive forward return
 
 
+def test_earnings_dates_handles_tz_aware_index_from_yfinance(monkeypatch):
+    # Regression test: get_earnings_dates() returns a DataFrame whose
+    # index is tz-aware Timestamps, but .to_pydatetime() converts those
+    # to plain stdlib datetime.datetime objects -- which do NOT have a
+    # .tz_localize() method (that's pandas-Timestamp-only). The original
+    # code called d.tz_localize(None) here, raising an AttributeError
+    # that was silently swallowed by _earnings_dates()'s broad except,
+    # making the earnings-clear gate a permanent no-op. Masked for a long
+    # time by a SEPARATE missing-lxml issue that failed even earlier in
+    # the same try block -- fixing lxml alone did not fix this.
+    idx = pd.DatetimeIndex(
+        ["2024-01-15", "2024-04-15"], tz="America/New_York",
+    )
+    fake_df = pd.DataFrame({"Reported EPS": [1.0, 2.0]}, index=idx)
+
+    class FakeTicker:
+        def get_earnings_dates(self, limit=60):
+            return fake_df
+
+    import yfinance as yf
+    monkeypatch.setattr(yf, "Ticker", lambda t: FakeTicker())
+    recon._earnings_cache.clear()
+
+    dates = recon._earnings_dates("FAKECO")
+    assert len(dates) == 2
+    assert dates[0] == np.datetime64("2024-01-15")
+
+
 def test_earnings_clear_true_when_no_data(monkeypatch):
     monkeypatch.setattr(recon, "_earnings_dates", lambda ticker: np.array([], dtype="datetime64[ns]"))
     assert recon.earnings_clear("ZZZ", pd.Timestamp("2020-01-01")) is True
