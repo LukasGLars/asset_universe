@@ -43,8 +43,13 @@ import warnings
 from pathlib import Path
 
 if __name__ == "__main__":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    # write_through=True: without it, TextIOWrapper defaults to full
+    # buffering whenever stdout isn't a tty (e.g. piped to a log file),
+    # silently defeating `python -u` and every plain print() in this
+    # script -- a long run then looks identical to a hang from the
+    # outside, with no way to tell them apart.
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", write_through=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace", write_through=True)
 warnings.filterwarnings("ignore")
 
 import numpy as np
