@@ -76,6 +76,7 @@ jobs:
         run: |
           python - <<'PYEOF'
           import os
+          import re
 
           curr_real = open("preview_status_curr.md", encoding="utf-8").read()
           signal_type = os.environ["SIGNAL_TYPE"]
@@ -93,31 +94,60 @@ jobs:
               curr = curr_real
 
           elif signal_type == "sleeve_candidate_extension":
-              # prev = today's real "no candidate" text, unmodified (this is
-              # genuinely what a closed sleeve with no ENTER looks like).
-              # curr = the same text with a realistic candidate spliced in --
-              # this part IS synthetic (no live candidate exists to preview
-              # from today's real data), clearly a preview, not a real signal.
-              prev = curr_real
-              curr = curr_real.replace(
-                  "    Best candidate : none eligible today (either no ENTER survivors, or all "
-                  "failed the pre-entry tripwire or execution-drift gate)",
-                  "    Best candidate : HWM (Howmet Aerospace)  $275.43  (ext +1.2%, 21d med +4.1%, div ROBUST)\n"
-                  "    Plan           : buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain\n"
-                  "    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>",
+              # If a REAL candidate already exists today, prefer previewing
+              # THAT (100% real content, not fabricated) by reversing it back
+              # to the "no candidate" state for prev -- a literal string
+              # search for the placeholder text silently no-ops when reality
+              # doesn't match it (the actual bug hit here on 2026-07-30: CI's
+              # live data had a real candidate, hardcoded placeholder search
+              # found nothing, "no actionable change" for both prev==curr).
+              # Falls back to a clearly-labeled synthetic HWM example only
+              # when today's real data genuinely has no candidate to preview.
+              real_block = re.search(
+                  r"    Best candidate : (?!none eligible)[^\n]*\n"
+                  r"    Plan           : [^\n]*\n"
+                  r"    Open           : [^\n]*\n",
+                  curr_real,
               )
+              if real_block:
+                  curr = curr_real
+                  prev = curr_real.replace(
+                      real_block.group(0),
+                      "    Best candidate : none eligible today (either no ENTER survivors, or all "
+                      "failed the pre-entry tripwire or execution-drift gate)\n",
+                  )
+              else:
+                  prev = curr_real
+                  curr = curr_real.replace(
+                      "    Best candidate : none eligible today (either no ENTER survivors, or all "
+                      "failed the pre-entry tripwire or execution-drift gate)",
+                      "    Best candidate : HWM (Howmet Aerospace)  $275.43  (ext +1.2%, 21d med +4.1%, div ROBUST)\n"
+                      "    Plan           : buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain\n"
+                      "    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>",
+                  )
 
           elif signal_type == "sleeve_candidate_basket":
-              prev = curr_real
-              curr = curr_real.replace(
-                  "    Basket-crash   : none eligible today",
-                  "    Basket-crash   : EME (Emerson Electric Co.)  $650.12  (sector Industrials, -14.0% 5d, "
-                  "2 peers crashing)\n"
-                  "    Plan           : buy near $650.12, flat 21d exit, NO stop until +8% gain then trails 8% "
-                  "(no floor before that -- riskier than the extension pathway above)\n"
-                  "    Open           : run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> "
-                  "--entry-type basket_crash",
+              # Same real-first, synthetic-fallback pattern as above.
+              real_block = re.search(
+                  r"    Basket-crash   : (?!none eligible)[^\n]*\n"
+                  r"    Plan           : [^\n]*\n"
+                  r"    Open           : [^\n]*\n",
+                  curr_real,
               )
+              if real_block:
+                  curr = curr_real
+                  prev = curr_real.replace(real_block.group(0), "    Basket-crash   : none eligible today\n")
+              else:
+                  prev = curr_real
+                  curr = curr_real.replace(
+                      "    Basket-crash   : none eligible today",
+                      "    Basket-crash   : EME (Emerson Electric Co.)  $650.12  (sector Industrials, -14.0% 5d, "
+                      "2 peers crashing)\n"
+                      "    Plan           : buy near $650.12, flat 21d exit, NO stop until +8% gain then trails 8% "
+                      "(no floor before that -- riskier than the extension pathway above)\n"
+                      "    Open           : run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> "
+                      "--entry-type basket_crash",
+                  )
 
           else:
               raise SystemExit(f"Unknown signal_type: {signal_type}")
