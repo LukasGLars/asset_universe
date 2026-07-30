@@ -2289,3 +2289,26 @@ against real data (both the extension "none eligible" and basket-crash
 no live candidate existed at verification time to see the populated
 Plan/Open lines fire for real, so that path is covered by tests only,
 not a live confirmation).
+
+**Live send during verification surfaced a real candidate and a real
+gap (2026-07-30):** the extension-pathway preview found a genuine live
+ENTER candidate -- STLD (Steel Dynamics), $252.34, ext +2.0%, 21d med
++2.7%, div ROBUST -- and delivered the real Telegram message
+successfully (`Sleeve candidate -> STLD`, with real Plan/Open lines).
+Confirmed via `avgo_guard` preview run too: the pre-existing pipeline
+was never broken by this session's changes.
+
+**Gap found while reviewing STLD's own recommendation:** its last
+earnings was 2026-07-20 (a small beat, +0.56% surprise), 10 days before
+this recommendation -- and nothing in the live screen checks days-since-
+last-earnings. Gate 4 only looks FORWARD (next earnings within
+hold_days); the execution-drift filter (built 2026-07-29, itself
+motivated by an earlier STLD post-earnings-gap incident) only catches a
+chase happening the SAME day (today's live price vs. today's signal
+close) -- it read -0.1% drift here because STLD's pop had already
+happened and settled over a week earlier, nothing same-day left to
+catch. Two distinct problems, only one of which is covered: chasing a
+live pop (covered by execution-drift) vs. entering into an
+already-priced-in pop from days earlier (not covered by anything).
+**Not built. Backlog, not urgent** -- discussed live, user has not yet
+decided whether to add a days-since-last-earnings gate.
