@@ -2157,3 +2157,78 @@ cap flagged in conversation (no limit yet on how many same-sector basket
 entries could fire simultaneously) and the live-side plumbing to compute
 "how many gate-1 peers are crashing today" (currently only exists in the
 reconstruction's historical walk, not in `run_entry_screen.py`).
+
+## Basket-crash: live, gated behind extension-gate priority (2026-07-30)
+
+Both remaining gaps from the entry above are now closed and wired into
+`run_entry_screen.py` -- basket_crash is a real, live SECONDARY entry
+pathway, not just a reconstruction study. Two design decisions were made
+explicitly in conversation before any code was written, not assumed:
+
+**1. Priority vs. the primary extension-gate pathway: extension-gate wins.**
+basket_crash only fills the sleeve's single slot (position cap is still
+1 -- unchanged) when extension-gate's `select_best_candidate` finds no
+eligible ENTER candidate that day. Reasoning: extension-gate is
+live-validated (real trade, tuned twice on a 4,321-entry population, run
+through the pre-entry tripwire + execution-drift gates); basket_crash is a
+299-entry backtest that has never been live-fired. Giving a thinner-N,
+unproven signal priority over the proven one during exactly the highest-
+stress moments (a sector-wide crash) was judged the wrong default until
+basket_crash earns its own track record.
+
+**2. Concentration cap bounds SELECTION, not capital.** Since the sleeve
+only ever holds one position total, there's no multi-position capital risk
+to cap yet. `cap_basket_crash_concentration()` instead caps the CANDIDATE
+list to 1-per-sector before ranking (deepest crash wins, peer_count
+tie-breaks), so a day where multiple sectors crash together doesn't
+silently bias the pick toward whichever sector has the most crashing
+gate-1 names. A real capital-exposure cap is explicitly deferred, not
+built speculatively for a multi-position design that doesn't exist.
+
+**Shipped in `run_entry_screen.py`:**
+- `basket_crash_candidates()` -- live version of the reconstruction's
+  historical trigger (5d/-10% crash + >=2 same-sector gate-1 peers also
+  crashing), computed on today's data.
+- `cap_basket_crash_concentration()` -- the 1-per-sector selection cap above.
+- `select_best_basket_crash()` -- picks the deepest crash among capped
+  candidates, excluding already-held tickers. Deliberately does NOT reuse
+  `select_best_candidate`'s pre-entry tripwire gate (RS>=0 + rising MA50)
+  -- those requirements are the OPPOSITE of what qualifies a basket-crash
+  candidate.
+- `basket_crash_binding_stop()` -- trailing-only, NO MA50-floor branch, at
+  this entry type's own validated params (trigger=8%, trailing=8% --
+  deliberately different from the extension-gate's 5%/3%, tuned on a
+  different population). `compute_exit_triggers()` now takes an
+  `entry_type` param and branches: basket_crash gets this stop plus a flat
+  21-calendar-day time exit with NO earnings-buffer adjustment (matches
+  exactly what `run_opp_sleeve_capitulation_stop_sensitivity.py`
+  validated -- `DURATION_DAYS=21`, earnings interaction never tested for
+  this entry type).
+- `sleeve_state.toml` gained an `entry_type` field (default `"extension"`,
+  backward compatible with the existing closed state file).
+  `--open TICKER PRICE SHARES CAPITAL --entry-type basket_crash` records
+  which pathway a position came from; `print_sleeve_status` and
+  `sleeve_daily_summary` both display the pathway and use the matching
+  stop/exit rule.
+- Both `run_entry_screen()` (full table) and `sleeve_daily_summary()` (the
+  compact digest `fi_tracker.py` runs daily) print the basket-crash
+  candidates whenever the primary pathway has no pick -- visible every
+  day, not just discoverable on demand.
+
+**Deliberately NOT applied to basket_crash candidates** (flagged in the
+screen output itself, not just here): the earnings-avoidance gate and the
+execution-drift filter. Neither was validated for this entry type by the
+reconstruction studies -- silently reusing an extension-gate-tuned
+threshold on a structurally different population (below-MA50, mid-crash)
+would be exactly the kind of untested assumption this build was trying to
+avoid. Left as an explicit, visible gap rather than guessed at.
+
+18 new tests in `tests/test_entry_screen.py` (trailing-stop arming, the
+concentration cap's sector-cap + tie-break logic, selection excluding
+held tickers, and the live detection function against synthetic same-
+sector crash/no-crash parquet data). Full suite: 329 passing.
+
+**Still open:** basket_crash has no live track record yet -- the extension-
+gate-first priority rule should be revisited once it does. No urgency;
+this is a secondary pathway that only ever activates on days the primary
+one is empty.

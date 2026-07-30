@@ -6,6 +6,8 @@ import run_entry_screen
 from run_entry_screen import (
     binding_stop, select_best_candidate, suggested_duration_days, _vix_stats,
     sleeve_risk_state, _tripwire_detail_line, _risk_to_stop_str,
+    basket_crash_binding_stop,
+    cap_basket_crash_concentration, select_best_basket_crash,
 )
 
 
@@ -415,3 +417,102 @@ def test_vix_stats_trend_flat_within_noise_band():
     vix = _vix_series([15.0] * 20 + [15.2, 15.1, 15.3, 15.0, 14.9, 15.1])
     stats = _vix_stats(vix)
     assert stats["trend"] == "flat"
+
+
+# ── Basket-crash: secondary entry pathway (see MEMORY.md "Sector-
+# capitulation reconstruction" / "Capitulation stop-sensitivity",
+# 2026-07-29). Below-MA50-by-construction entries get their own trailing-
+# only stop (no floor -- a floor destroyed the edge on the real population)
+# and their own 1-per-sector concentration cap ahead of selection.
+
+def test_basket_crash_binding_stop_not_armed_below_trigger():
+    # +5% unrealized gain -- below the 8% trigger, no floor to fall back on.
+    stop, label = basket_crash_binding_stop(100.0, peak_price=105.0)
+    assert stop is None
+    assert "not yet armed" in label
+
+
+def test_basket_crash_binding_stop_trailing_once_armed():
+    stop, label = basket_crash_binding_stop(100.0, peak_price=110.0)  # +10%, past the 8% trigger
+    assert label == "TRAILING"
+    assert abs(stop - 110.0 * 0.92) < 1e-9  # BASKET_TRAILING_PCT = 0.08
+
+
+def _basket_row(ticker, sector, roc, peers):
+    return {"ticker": ticker, "sector": sector, "roc_5d": roc, "peer_count": peers, "category": "equities"}
+
+
+def test_cap_basket_crash_concentration_keeps_deepest_crash_per_sector():
+    rows = [
+        _basket_row("A", "Tech", -0.12, 2),
+        _basket_row("B", "Tech", -0.18, 3),   # deeper crash, same sector -- wins over A
+        _basket_row("C", "Energy", -0.10, 2),
+    ]
+    capped = cap_basket_crash_concentration(rows)
+    assert {r["ticker"] for r in capped} == {"B", "C"}
+
+
+def test_cap_basket_crash_concentration_tie_breaks_on_peer_count():
+    rows = [
+        _basket_row("A", "Tech", -0.15, 2),
+        _basket_row("B", "Tech", -0.15, 4),   # same crash depth, more peers crashing -- wins
+    ]
+    capped = cap_basket_crash_concentration(rows)
+    assert len(capped) == 1 and capped[0]["ticker"] == "B"
+
+
+def test_select_best_basket_crash_picks_deepest_crash():
+    rows = [_basket_row("A", "Tech", -0.11, 2), _basket_row("B", "Energy", -0.19, 2)]
+    assert select_best_basket_crash(rows, held=set())["ticker"] == "B"
+
+
+def test_select_best_basket_crash_excludes_held():
+    rows = [_basket_row("A", "Tech", -0.19, 2), _basket_row("B", "Energy", -0.11, 2)]
+    assert select_best_basket_crash(rows, held={"A"})["ticker"] == "B"
+
+
+def test_select_best_basket_crash_none_when_all_held():
+    assert select_best_basket_crash([_basket_row("A", "Tech", -0.19, 2)], held={"A"}) is None
+
+
+def test_select_best_basket_crash_none_when_empty():
+    assert select_best_basket_crash([], held=set()) is None
+
+
+def _write_close_series(path, closes):
+    dates = pd.date_range("2026-01-01", periods=len(closes), freq="D")
+    pd.DataFrame({"date": dates, "close": closes}).to_parquet(path)
+
+
+def test_basket_crash_candidates_requires_min_peers_crashing(tmp_path, monkeypatch):
+    # Three Technology tickers crash together (2 same-sector peers each --
+    # meets MIN_PEERS_CRASHING=2). One Industrials ticker crashes just as
+    # hard but alone in its sector -- excluded. One Technology ticker is
+    # flat -- excluded, and doesn't count as a "peer crashing" for the others.
+    _write_close_series(tmp_path / "TECH1.parquet", [100, 100, 100, 100, 100, 85, 84, 83, 82, 81])
+    _write_close_series(tmp_path / "TECH2.parquet", [100, 100, 100, 100, 100, 88, 87, 86, 85, 84])
+    _write_close_series(tmp_path / "TECH3.parquet", [100, 100, 100, 100, 100, 87, 86, 85, 84, 83])
+    _write_close_series(tmp_path / "TECH4.parquet", [100, 100, 100, 100, 100, 101, 102, 103, 104, 105])
+    _write_close_series(tmp_path / "IND1.parquet",  [100, 100, 100, 100, 100, 85, 84, 83, 82, 81])
+
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / f"{tkr}.parquet")
+    sectors = {"TECH1": "Technology", "TECH2": "Technology", "TECH3": "Technology",
+               "TECH4": "Technology", "IND1": "Industrials"}
+    monkeypatch.setattr(run_entry_screen, "_sector_of", lambda t: sectors.get(t))
+
+    cat_of = {t: "equities" for t in sectors}
+    rows = run_entry_screen.basket_crash_candidates(list(sectors), cat_of, tmp_path)
+    assert {r["ticker"] for r in rows} == {"TECH1", "TECH2", "TECH3"}
+    for r in rows:
+        assert r["peer_count"] == 2
+        assert r["sector"] == "Technology"
+
+
+def test_basket_crash_candidates_empty_when_nothing_crashing(tmp_path, monkeypatch):
+    _write_close_series(tmp_path / "FLAT.parquet", [100] * 10)
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / f"{tkr}.parquet")
+    monkeypatch.setattr(run_entry_screen, "_sector_of", lambda t: "Technology")
+    rows = run_entry_screen.basket_crash_candidates(["FLAT"], {"FLAT": "equities"}, tmp_path)
+    assert rows == []

@@ -110,6 +110,43 @@ MA50_BUFFER_PCT      = 0.05  # MA50 must be cleared by this margin before it bin
 TRAILING_TRIGGER_PCT = 0.05  # unrealized gain since entry before the trailing stop arms
 TRAILING_PCT         = 0.03  # trailing distance below the peak close, once armed
 
+# Basket-crash: secondary entry pathway (see MEMORY.md "Sector-capitulation
+# reconstruction" + "Capitulation stop-sensitivity", 2026-07-29). A gate-1
+# candidate that is itself in a 5d/-10% crash (same convention as the
+# AVGO/LLY guard -- not a new threshold) AND has >= MIN_PEERS_CRASHING other
+# same-sector gate-1 peers ALSO crashing beat solo idiosyncratic crashes on
+# raw return/win-rate at every duration tested (21d: ~4x return, +12pp win
+# rate; 90d: ~2x return, +12pp win rate). Priority vs. the primary
+# extension-gate pathway: extension-gate wins whenever it has an eligible
+# ENTER candidate (it's live-validated, tuned on a 4,321-entry real
+# population, and enters ABOVE MA50 with momentum confirmed); basket_crash
+# only fills the sleeve's single slot when extension-gate has none -- it is
+# newer, thinner-N (299 entries), never live-fired, and enters BELOW MA50
+# mid-crash, a structurally higher-stress moment to be deploying capital.
+CRASH_ROC_WINDOW    = 5
+CRASH_ROC_THRESHOLD = -0.10
+MIN_PEERS_CRASHING  = 2
+
+# Basket-crash entries start BELOW their own MA50 by construction, so the
+# extension-gate's MA50-floor stop cannot apply to them. Validated on the
+# real reconstruction population (comparison_results/opp_sleeve_
+# capitulation_stop_sensitivity.csv): ANY fixed floor (MA50-based or a flat
+# entry-price percentage) destroyed the edge -- e.g. solo_crash with a 5%
+# floor swings to a MEDIAN LOSS despite being +1.13% unstoppped. Trailing-
+# only, at this entry type's own validated params (deliberately NOT the
+# extension-gate's 5%/3% -- different population, different fit): Calmar-
+# like return improved over a raw unstoppped hold for basket_crash
+# (0.443 -> 0.481) at these exact values.
+BASKET_TRAILING_TRIGGER_PCT = 0.08
+BASKET_TRAILING_PCT         = 0.08
+
+# Neither the earnings-avoidance gate nor the execution-drift filter (both
+# used by the primary extension-gate pathway) has been validated for this
+# entry type -- the reconstruction studies never tested either interaction.
+# Deliberately NOT applied here rather than silently reused on an untested
+# population; see the "not yet validated" note printed alongside any
+# basket-crash candidate.
+
 # Added 2026-07-29 (see MEMORY.md "Opp sleeve execution-drift analysis --
 # chasing raises stop-out risk, not return"): a candidate that has already
 # moved meaningfully between qualifying (the screen's signal close) and
@@ -308,14 +345,19 @@ def _write_sleeve_state(state: dict, path: Path | None = None) -> None:
         "#",
         "# Updated via:",
         "#   python run_entry_screen.py --open TICKER ENTRY_PRICE SHARES CAPITAL_SEK",
+        "#     [--entry-type extension|basket_crash]  (default: extension)",
         "#   python run_entry_screen.py --close",
         "#",
         "# Position cap: 1 open position at a time. war-chest capital only.",
-        '# See MEMORY.md "Formalize the opportunistic sleeve" for the full rule set.',
+        '# See MEMORY.md "Formalize the opportunistic sleeve" for the full rule set,',
+        '# and "Sector-capitulation reconstruction" / "Capitulation stop-sensitivity"',
+        "# for the basket_crash entry_type (different stop, different time exit --",
+        "# see compute_exit_triggers()).",
         "",
         f"open       = {str(bool(state.get('open', False))).lower()}",
         f'ticker     = "{state.get("ticker", "")}"',
         f'category   = "{state.get("category", "")}"',
+        f'entry_type = "{state.get("entry_type", "extension")}"',
         f'entry_date = "{state.get("entry_date", "")}"',
         f"entry_price = {float(state.get('entry_price', 0.0))}",
         f"shares      = {int(state.get('shares', 0))}",
@@ -364,34 +406,62 @@ def binding_stop(entry_price: float, ma50: float, peak_price: float) -> tuple[fl
     return max(levels, key=lambda lv: lv[0])
 
 
+def basket_crash_binding_stop(entry_price: float, peak_price: float) -> tuple[float | None, str]:
+    """Trailing-only stop for basket-crash entries -- deliberately NO MA50
+    floor branch (see BASKET_TRAILING_* above: any fixed floor destroyed
+    the edge on this below-MA50-by-construction population). Returns
+    (None, ...) until the trade is far enough in profit to arm -- there is
+    no floor to fall back on before then, unlike binding_stop()."""
+    if peak_price / entry_price - 1 >= BASKET_TRAILING_TRIGGER_PCT:
+        return peak_price * (1 - BASKET_TRAILING_PCT), "TRAILING"
+    return None, "n/a (not yet armed -- no floor for this entry type)"
+
+
 def compute_exit_triggers(
     entry_price: float,
     entry_date: str,
     ticker: str,
     category: str,
     data_dir: Path,
+    entry_type: str = "extension",
 ) -> dict:
     entry_dt = _datetime.strptime(entry_date, "%Y-%m-%d").date()
     ma = _ma50_stats(data_dir, category, ticker)
     ma50 = ma["ma50"] if ma else None
     peak_price = _peak_since_entry(data_dir, category, ticker, entry_date, entry_price) if ma else None
-
     earn_date = _next_earnings(ticker)
-    earn_time_exit = (earn_date - _timedelta(days=EARNINGS_BUFFER_DAYS)) if earn_date else None
-    flat_time_exit = entry_dt + _timedelta(days=TIME_EXIT_DAYS)
-    time_exit = min(flat_time_exit, earn_time_exit) if earn_time_exit else flat_time_exit
-    time_exit_days = (time_exit - entry_dt).days
-    time_exit_binding = (f"earnings-{EARNINGS_BUFFER_DAYS}d" if (earn_time_exit and earn_time_exit < flat_time_exit)
-                          else f"flat {TIME_EXIT_DAYS}d")
 
-    stop_price, stop_label = (binding_stop(entry_price, ma50, peak_price) if ma50 else (None, "n/a"))
-    trailing_armed = bool(ma50 and peak_price is not None and peak_price / entry_price - 1 >= TRAILING_TRIGGER_PCT)
+    if entry_type == "basket_crash":
+        # Flat 21-calendar-day exit, NO earnings-buffer adjustment -- matches
+        # exactly what run_opp_sleeve_capitulation_stop_sensitivity.py
+        # validated (DURATION_DAYS=21, earnings interaction never tested for
+        # this entry type). next_earnings is still shown below for context.
+        time_exit = entry_dt + _timedelta(days=21)
+        time_exit_binding = "flat 21d (basket-crash -- no earnings-buffer validated for this entry type)"
+    else:
+        earn_time_exit = (earn_date - _timedelta(days=EARNINGS_BUFFER_DAYS)) if earn_date else None
+        flat_time_exit = entry_dt + _timedelta(days=TIME_EXIT_DAYS)
+        time_exit = min(flat_time_exit, earn_time_exit) if earn_time_exit else flat_time_exit
+        time_exit_binding = (f"earnings-{EARNINGS_BUFFER_DAYS}d" if (earn_time_exit and earn_time_exit < flat_time_exit)
+                              else f"flat {TIME_EXIT_DAYS}d")
+    time_exit_days = (time_exit - entry_dt).days
+
+    if entry_type == "basket_crash":
+        stop_price, stop_label = (basket_crash_binding_stop(entry_price, peak_price) if peak_price is not None else (None, "n/a"))
+        trailing_armed = bool(peak_price is not None and peak_price / entry_price - 1 >= BASKET_TRAILING_TRIGGER_PCT)
+        trailing_stop = round(peak_price * (1 - BASKET_TRAILING_PCT), 2) if trailing_armed else None
+        ma50_buffered = None  # no MA50 floor for this entry type -- see basket_crash_binding_stop
+    else:
+        stop_price, stop_label = (binding_stop(entry_price, ma50, peak_price) if ma50 else (None, "n/a"))
+        trailing_armed = bool(ma50 and peak_price is not None and peak_price / entry_price - 1 >= TRAILING_TRIGGER_PCT)
+        trailing_stop = round(peak_price * (1 - TRAILING_PCT), 2) if trailing_armed else None
+        ma50_buffered = round(ma50 * (1 - MA50_BUFFER_PCT), 2) if ma50 else None
 
     return {
         "ma50":              ma50,
-        "ma50_buffered":     round(ma50 * (1 - MA50_BUFFER_PCT), 2) if ma50 else None,
+        "ma50_buffered":     ma50_buffered,
         "peak_price":        round(peak_price, 2) if peak_price is not None else None,
-        "trailing_stop":     round(peak_price * (1 - TRAILING_PCT), 2) if trailing_armed else None,
+        "trailing_stop":     trailing_stop,
         "binding_stop":      round(stop_price, 2) if stop_price else None,
         "binding_label":     stop_label,
         "time_exit_date":    time_exit,
@@ -461,6 +531,99 @@ def discover_cluster_peers(
         if len(peers) >= max_peers:
             break
     return peers
+
+
+# ── Basket-crash: live detection + concentration cap (secondary pathway,
+#    see MIN_PEERS_CRASHING / BASKET_TRAILING_* above) ─────────────────────
+
+_sector_cache: dict[str, str | None] = {}
+
+
+def _sector_of(ticker: str) -> str | None:
+    """Cached sector lookup -- separate cache from discover_cluster_peers
+    (which is called once per trade entry, not worth sharing a cache for),
+    since this runs across the full gate-1 candidate list every screen run."""
+    if ticker in _sector_cache:
+        return _sector_cache[ticker]
+    try:
+        import yfinance as yf
+        sector = yf.Ticker(ticker).info.get("sector")
+    except Exception:
+        sector = None
+    _sector_cache[ticker] = sector
+    return sector
+
+
+def basket_crash_candidates(
+    gate1_candidates: list[str], cat_of: dict[str, str], data_dir: Path,
+    min_peers: int = MIN_PEERS_CRASHING,
+) -> list[dict]:
+    """Live version of run_sleeve_sector_capitulation_reconstruction.py's
+    historical trigger: which of TODAY's gate-1 candidates are themselves in
+    a 5d/-10% crash AND have >= min_peers other same-sector gate-1 peers
+    ALSO crashing today. Returns one dict per qualifying ticker (ticker,
+    sector, roc_5d, peer_count, category) -- uncapped; see
+    cap_basket_crash_concentration for the 1-per-sector selection cap."""
+    rocs: dict[str, float] = {}
+    for t in gate1_candidates:
+        path = reader.ticker_path(data_dir, cat_of.get(t, "equities"), t)
+        if not path.exists():
+            continue
+        prices = reader.load(path)["close"].dropna().sort_index()
+        if len(prices) <= CRASH_ROC_WINDOW:
+            continue
+        rocs[t] = float(prices.iloc[-1] / prices.iloc[-1 - CRASH_ROC_WINDOW] - 1)
+
+    crashing = {t: roc for t, roc in rocs.items() if roc <= CRASH_ROC_THRESHOLD}
+    if not crashing:
+        return []
+
+    sector_of = {t: _sector_of(t) for t in crashing}
+    rows = []
+    for t, roc in crashing.items():
+        sector = sector_of.get(t)
+        if sector is None:
+            continue
+        peer_count = sum(1 for other, s in sector_of.items() if other != t and s == sector)
+        if peer_count >= min_peers:
+            rows.append({
+                "ticker": t, "sector": sector, "roc_5d": roc,
+                "peer_count": peer_count, "category": cat_of.get(t, "equities"),
+            })
+    return rows
+
+
+def cap_basket_crash_concentration(rows: list[dict]) -> list[dict]:
+    """1-per-sector cap on today's basket-crash candidates, applied before
+    selection. This is a SELECTION-bias guard, not a capital-exposure cap --
+    the sleeve only ever holds one position total (see position cap in
+    open_position), so there is no multi-position concentration risk to
+    bound yet. Without this, a day where multiple sectors crash together
+    could silently steer the pick toward whichever sector happens to have
+    the most crashing gate-1 names. Within a sector, keeps the deepest
+    crash (most negative roc_5d), tie-broken by peer_count -- the same
+    "stronger capitulation signal wins" rationale the reconstruction's
+    basket_crash bucket validated against solo_crash."""
+    best_by_sector: dict[str, dict] = {}
+    for row in rows:
+        sector = row["sector"]
+        current = best_by_sector.get(sector)
+        if current is None or (row["roc_5d"], -row["peer_count"]) < (current["roc_5d"], -current["peer_count"]):
+            best_by_sector[sector] = row
+    return list(best_by_sector.values())
+
+
+def select_best_basket_crash(rows: list[dict], held: set[str]) -> dict | None:
+    """Pick among post-cap basket-crash candidates -- deepest crash first
+    (same criterion the concentration cap uses per-sector), excluding
+    already-held tickers. Deliberately does NOT reuse select_best_candidate's
+    pre-entry tripwire gate: that gate requires RS >= 0 and a rising MA50,
+    both the OPPOSITE of what qualifies a basket-crash candidate in the
+    first place."""
+    pool = [r for r in rows if r["ticker"] not in held]
+    if not pool:
+        return None
+    return min(pool, key=lambda r: (r["roc_5d"], -r["peer_count"]))
 
 
 # ── Execution-drift filter (pre-entry, see EXECUTION_DRIFT_THRESHOLD) ──────
@@ -725,7 +888,8 @@ def _tripwire_detail_line(tw: dict) -> str:
 
 def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> None:
     ticker, category = state["ticker"], state["category"]
-    trig = compute_exit_triggers(state["entry_price"], state["entry_date"], ticker, category, data_dir)
+    entry_type = state.get("entry_type", "extension")
+    trig = compute_exit_triggers(state["entry_price"], state["entry_date"], ticker, category, data_dir, entry_type=entry_type)
     tw = compute_tripwires(state, data_dir, benchmark)
 
     held = "Yes" if ticker in already_held_tickers() else "No"
@@ -735,6 +899,9 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
     name = asset_name(ticker)
     print(f"  Status          : OPEN (1/1 position -- new entries blocked)")
     print(f"  Ticker          : {ticker}" + (f"  ({name})" if name else ""))
+    print(f"  Entry pathway   : {entry_type}" + (
+        "  (below-MA50 crash entry -- trailing-only stop, no floor; flat 21d exit)"
+        if entry_type == "basket_crash" else "  (MA50 + trailing stop; earnings-aware time exit)"))
     print(f"  Already held?   : {held} ({state['shares']} shares from this entry)")
     print(f"  Entered         : {state['entry_date']}")
     print(f"  Entry price     : ${state['entry_price']:.2f}  "
@@ -745,17 +912,21 @@ def print_sleeve_status(state: dict, data_dir: Path, benchmark: str = "SPY") -> 
     print(f"    Time exit       : {trig['time_exit_date']}  "
           f"({trig['time_exit_days']}d; bound by {trig['time_exit_binding']})")
     print(f"    MA50 (buffered) : ${trig['ma50_buffered']:.2f}  (raw MA50 ${trig['ma50']:.2f})"
-          if trig["ma50"] else "    MA50 (buffered) : n/a")
+          if trig["ma50_buffered"] else "    MA50 (buffered) : n/a (no MA50 floor for this entry type)"
+          if entry_type == "basket_crash" else "    MA50 (buffered) : n/a")
     if trig["trailing_stop"] is not None:
         print(f"    Trailing stop   : ${trig['trailing_stop']:.2f}  (peak ${trig['peak_price']:.2f} since entry)")
     print(f"    Binding stop    : ${trig['binding_stop']:.2f}  ({trig['binding_label']})"
-          if trig["binding_stop"] else "    Binding stop    : n/a")
+          if trig["binding_stop"] else f"    Binding stop    : {trig['binding_label']}")
     print(f"    Next earnings   : {trig['next_earnings'] if trig['next_earnings'] else 'n/a'}")
     risk_str = _risk_to_stop_str(trig, state["shares"], state["fx_at_entry"], state["capital_sek"])
     if risk_str:
         print(f"    Current price   : ${trig['current_price']:.2f}  (risk to binding stop: {risk_str})")
     print()
-    print(f"  Post-entry tripwires")
+    print(f"  Post-entry tripwires" + (
+        "  (RS/MA50-slope WATCH is EXPECTED for a crash entry -- these check for"
+        " above-MA50/positive-RS behavior this entry type doesn't have by construction)"
+        if entry_type == "basket_crash" else ""))
     rs_flag = "OK" if tw["rs_ok"] else "WATCH"
     if tw["rs_20d"] is not None:
         print(f"    RS vs {benchmark} (20d)   : {tw['rs_20d']:+.1%}  [{rs_flag}]")
@@ -973,6 +1144,39 @@ def run_entry_screen(
         print(f"    python run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
     print("=" * 100)
 
+    if pick is None:
+        print()
+        print("-" * 100)
+        print("  BASKET-CRASH CANDIDATES (secondary pathway -- only considered because there is no")
+        print("  extension-gate ENTER survivor today; see MEMORY.md 'Sector-capitulation reconstruction'")
+        print("  and 'Capitulation stop-sensitivity', 2026-07-29). Below-MA50 by construction -- different")
+        print("  stop (trailing-only, no floor, 8%/8%) and different time exit (flat 21d, no earnings")
+        print("  buffer) than the extension pathway above. NOT run through the earnings gate or")
+        print("  execution-drift filter -- neither is validated for this entry type; left out rather")
+        print("  than silently applied. 1-per-sector concentration cap already applied below.")
+        print("-" * 100)
+        raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
+        capped_basket = cap_basket_crash_concentration(raw_basket)
+        if capped_basket:
+            for row in sorted(capped_basket, key=lambda r: r["roc_5d"]):
+                held_flag = "  [already held]" if row["ticker"] in held else ""
+                print(f"    {row['ticker']:<8} sector={row['sector']:<28} 5d_roc={row['roc_5d']:+.1%}  "
+                      f"peers_crashing={row['peer_count']}{held_flag}")
+        basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
+        if basket_pick is None:
+            reason = "no candidate in a 5d/-10% crash with >=2 same-sector gate-1 peers also crashing" \
+                     if not raw_basket else "all qualifying candidates already held"
+            print(f"  No eligible basket-crash candidate today ({reason}).")
+        else:
+            b_name = asset_name(basket_pick["ticker"])
+            print(f"\n  Best candidate: {basket_pick['ticker']}" + (f"  ({b_name})" if b_name else "") + "  "
+                  f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
+                  f"peers_crashing={basket_pick['peer_count']})")
+            print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
+            print(f"    python run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
+                  f"<capital_sek> --entry-type basket_crash")
+        print("=" * 100)
+
     return out
 
 
@@ -1008,13 +1212,14 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
     state = load_sleeve_state()
 
     if state.get("open"):
+        entry_type = state.get("entry_type", "extension")
         trig = compute_exit_triggers(state["entry_price"], state["entry_date"],
-                                      state["ticker"], state["category"], data_dir)
+                                      state["ticker"], state["category"], data_dir, entry_type=entry_type)
         tw = compute_tripwires(state, data_dir, benchmark)
         any_watch = (not tw["rs_ok"]) or tw["regime_changed"] or tw["cluster_breakdown"] or not tw["ma50_rising"]
         risk = sleeve_risk_state(trig, any_watch)
         print(f"    Status         : OPEN -- {state['ticker']} @ ${state['entry_price']:.2f} "
-              f"({state['entry_date']}), {state['shares']} sh")
+              f"({state['entry_date']}), {state['shares']} sh, entry_type={entry_type}")
         if trig["current_price"]:
             risk_str = _risk_to_stop_str(trig, state["shares"], state["fx_at_entry"], state["capital_sek"])
             print(f"    Current price  : ${trig['current_price']:.2f}"
@@ -1100,12 +1305,27 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         print(f"    Best candidate : none eligible today (either no ENTER survivors, or all "
               f"failed the pre-entry tripwire or execution-drift gate)")
 
+    if pick is None:
+        raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
+        capped_basket = cap_basket_crash_concentration(raw_basket)
+        basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
+        if basket_pick is not None:
+            b_name = asset_name(basket_pick["ticker"])
+            print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + "  "
+                  f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
+                  f"peers_crashing={basket_pick['peer_count']}) -- secondary pathway, run "
+                  f"run_entry_screen.py for full detail")
+        else:
+            print(f"    Basket-crash   : none eligible today")
+
 
 # ── Position lifecycle (records a manually-executed trade -- no brokerage
 #    integration, this is decision-support/record-keeping only) ────────────
 
 def open_position(ticker: str, entry_price: float, shares: int, capital_sek: float,
-                   data_dir: Path | None = None) -> None:
+                   data_dir: Path | None = None, entry_type: str = "extension") -> None:
+    if entry_type not in ("extension", "basket_crash"):
+        raise SystemExit(f"Unknown --entry-type {entry_type!r} -- must be 'extension' or 'basket_crash'.")
     if data_dir is None:
         data_dir = config.raw_data_dir()
 
@@ -1127,7 +1347,7 @@ def open_position(ticker: str, entry_price: float, shares: int, capital_sek: flo
     fx = float(reader.load(reader.ticker_path(data_dir, "fx", "USDSEK=X"))["close"].dropna().iloc[-1])
 
     state = {
-        "open": True, "ticker": ticker, "category": category,
+        "open": True, "ticker": ticker, "category": category, "entry_type": entry_type,
         "entry_date": str(_date.today()), "entry_price": entry_price,
         "shares": shares, "capital_sek": capital_sek, "fx_at_entry": fx,
         "entry_ry_regime": conditions["ry_regime"], "entry_baa10y_regime": conditions["baa10y_regime"],
@@ -1135,7 +1355,7 @@ def open_position(ticker: str, entry_price: float, shares: int, capital_sek: flo
     }
     _write_sleeve_state(state)
     print(f"Sleeve opened: {ticker} @ ${entry_price:.2f}, {shares} shares, {capital_sek:,.0f} kr, "
-          f"regime {conditions['ry_regime']}/{conditions['baa10y_regime']}, peers {peers}")
+          f"entry_type={entry_type}, regime {conditions['ry_regime']}/{conditions['baa10y_regime']}, peers {peers}")
 
 
 def close_position() -> None:
@@ -1156,6 +1376,9 @@ if __name__ == "__main__":
     parser.add_argument("--as-of", default=None, help="Label only — for documenting a retroactive replay (see --data-dir)")
     parser.add_argument("--open", nargs=4, metavar=("TICKER", "ENTRY_PRICE", "SHARES", "CAPITAL_SEK"),
                          help="Record a manually-executed entry and open the sleeve (position cap: 1)")
+    parser.add_argument("--entry-type", choices=["extension", "basket_crash"], default="extension",
+                         help="Which pathway this --open entry came from (default: extension). "
+                              "Governs the stop/time-exit rule used for the position -- see compute_exit_triggers().")
     parser.add_argument("--close", action="store_true", help="Record a manual exit and close the sleeve")
     args = parser.parse_args()
 
@@ -1165,7 +1388,7 @@ if __name__ == "__main__":
         close_position()
     elif args.open:
         tkr, price, shares, capital = args.open
-        open_position(tkr, float(price), int(shares), float(capital), data_dir=data_dir)
+        open_position(tkr, float(price), int(shares), float(capital), data_dir=data_dir, entry_type=args.entry_type)
     else:
         run_entry_screen(
             top_n=args.top_n,
