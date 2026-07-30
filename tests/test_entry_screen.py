@@ -485,10 +485,10 @@ def test_select_best_basket_crash_none_when_empty():
 # same drift check select_best_candidate uses, tries the next-ranked
 # candidate instead of the one that's drifted too far.)
 
-def test_select_best_basket_crash_skips_candidate_beyond_drift_threshold(monkeypatch):
+def test_select_best_basket_crash_skips_candidate_beyond_drift_band(monkeypatch):
     def fake_drift(ticker, signal_close):
         return (False, 0.24) if ticker == "A" else (True, 0.005)
-    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok", fake_drift)
+    monkeypatch.setattr(run_entry_screen, "_basket_drift_ok", fake_drift)
     rows = [
         _basket_row("A", "Tech", -0.19, 3),      # deepest crash, ranks first, but drifted +24%
         _basket_row("B", "Energy", -0.11, 2),
@@ -499,7 +499,7 @@ def test_select_best_basket_crash_skips_candidate_beyond_drift_threshold(monkeyp
 
 
 def test_select_best_basket_crash_none_when_all_fail_drift(monkeypatch):
-    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok", lambda ticker, signal_close: (False, 0.24))
+    monkeypatch.setattr(run_entry_screen, "_basket_drift_ok", lambda ticker, signal_close: (False, 0.24))
     rows = [_basket_row("A", "Tech", -0.19, 3), _basket_row("B", "Energy", -0.11, 2)]
     assert select_best_basket_crash(rows, held=set()) is None
 
@@ -512,6 +512,60 @@ def test_select_best_basket_crash_missing_price_fails_open(monkeypatch):
     pick = select_best_basket_crash(rows, held=set())
     assert pick["ticker"] == "A"
     assert pick["execution_drift"] is None
+
+
+# ── _basket_drift_ok: asymmetric band, NOT the extension gate's symmetric
+# +/-0.9% (see BASKET_DRIFT_DOWN_LIMIT/BASKET_DRIFT_UP_LIMIT -- grounded in
+# the live SNDK case + the basket_crash-specific bucket study + the
+# broader 670-event gap-up study, all 2026-07-30).
+
+def test_basket_drift_ok_true_within_band(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 103.0)
+    ok, drift = run_entry_screen._basket_drift_ok("X", 100.0)  # +3%, within -2.5%..+8%
+    assert ok is True
+    assert abs(drift - 0.03) < 1e-9
+
+
+def test_basket_drift_ok_false_beyond_upside_cap(monkeypatch):
+    # SNDK's own case: +24% is far beyond the +8% cap.
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 124.0)
+    ok, drift = run_entry_screen._basket_drift_ok("SNDK", 100.0)
+    assert ok is False
+    assert abs(drift - 0.24) < 1e-9
+
+
+def test_basket_drift_ok_true_just_inside_upside_cap(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 107.5)
+    ok, drift = run_entry_screen._basket_drift_ok("X", 100.0)  # +7.5%, just under the +8% cap
+    assert ok is True
+
+
+def test_basket_drift_ok_false_beyond_downside_limit(monkeypatch):
+    # Still falling further -- crash hasn't bottomed, the empirically worse case.
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 96.0)
+    ok, drift = run_entry_screen._basket_drift_ok("X", 100.0)  # -4%, beyond -2.5%
+    assert ok is False
+    assert abs(drift - (-0.04)) < 1e-9
+
+
+def test_basket_drift_ok_true_small_down_move(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: 99.0)
+    ok, drift = run_entry_screen._basket_drift_ok("X", 100.0)  # -1%, within -2.5%..+8%
+    assert ok is True
+    assert abs(drift - (-0.01)) < 1e-9
+
+
+def test_basket_drift_ok_true_when_signal_close_missing():
+    ok, drift = run_entry_screen._basket_drift_ok("X", None)
+    assert ok is True
+    assert drift is None
+
+
+def test_basket_drift_ok_true_when_live_price_unavailable(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: None)
+    ok, drift = run_entry_screen._basket_drift_ok("X", 100.0)
+    assert ok is True
+    assert drift is None
 
 
 def _write_close_series(path, closes):

@@ -144,10 +144,42 @@ BASKET_TRAILING_PCT         = 0.08
 # the reconstruction studies never tested that interaction. Deliberately
 # NOT applied here rather than silently reused on an untested population;
 # see the "not yet validated" note printed alongside any basket-crash
-# candidate. The execution-drift filter WAS added 2026-07-30 (see
-# select_best_basket_crash) after a live case showed exactly why -- the
-# same threshold reused from the extension gate, unvalidated for this
-# population but strictly better than no check at all.
+# candidate.
+
+# Execution-drift band for basket_crash, ASYMMETRIC by design (added
+# 2026-07-30, replacing an initial same-day fix that just reused the
+# extension gate's symmetric +/-0.9% -- see MEMORY.md "Basket-crash
+# execution-drift: asymmetric band replaces the reused symmetric
+# threshold"). Two rounds of research on the live SNDK case (signal close
+# $1015.89, reversed +24.2% by the next session) drove this:
+#
+# 1. On the real 299-entry basket_crash population (drift range only
+#    -12.5% to +7.7% -- SNDK's magnitude never occurred in this specific
+#    population), bucketing by (next-session-open / signal-close - 1)
+#    found a real asymmetry, not the extension gate's symmetric U-shape:
+#    still-falling entries got WORSE (early-stop 26.7% in the most
+#    negative bucket vs 11.7% in a mild-down bucket -- the crash hadn't
+#    bottomed yet), while gap-UP entries did NOT get worse -- the biggest
+#    up-drift bucket (median +3.17%) had the BEST return and win rate of
+#    all five. Conceptually: this is a reversal bet, so a gap up before
+#    execution is often the bounce confirming itself, not overextension.
+# 2. But that population had almost no data near SNDK's actual size. A
+#    SEPARATE, much bigger study (670 overnight gap-ups of 15-30%+,
+#    general market, not basket_crash-gated) found the picture changes at
+#    that magnitude: median return stays roughly flat/coin-flip (~0-1.6%
+#    across bands), but with a brutal fat tail (MS -64%, TRGP -57%, WFC
+#    -36%...) that the live no-floor trailing stop mostly does NOT catch
+#    -- most of the worst losses were "held to 21d exit," never stopped,
+#    because the trailing stop only arms after ANOTHER +8% gain that
+#    frequently never comes.
+#
+# Net design: tight on the downside (matches the basket_crash-specific
+# risk), permissive up to the actual tested ceiling on the upside (+7.7%
+# rounded to 8%), hard-capped beyond that -- genuinely untested territory
+# for this population, where the general-market data shows real,
+# unprotected tail risk. NOT the extension gate's symmetric threshold.
+BASKET_DRIFT_DOWN_LIMIT = -0.025  # reject if price fell >2.5% since signal close
+BASKET_DRIFT_UP_LIMIT   = 0.08    # reject if price rose >8% since signal close
 
 # Added 2026-07-29 (see MEMORY.md "Opp sleeve execution-drift analysis --
 # chasing raises stop-out risk, not return"): a candidate that has already
@@ -619,6 +651,23 @@ def cap_basket_crash_concentration(rows: list[dict]) -> list[dict]:
     return list(best_by_sector.values())
 
 
+def _basket_drift_ok(ticker: str, signal_close: float | None) -> tuple[bool, float | None]:
+    """Basket-crash's own asymmetric drift band (see BASKET_DRIFT_DOWN_LIMIT
+    / BASKET_DRIFT_UP_LIMIT above) -- NOT the extension gate's symmetric
+    +/-0.9%. Rejects a candidate that's still falling meaningfully (thesis
+    unconfirmed) or has already run up beyond what's been tested for this
+    population (genuinely unknown risk, not assumed-safe). Same
+    fails-OPEN convention as _execution_drift_ok: missing data doesn't
+    exclude the candidate, there's nothing to compare against."""
+    if signal_close is None or signal_close <= 0:
+        return True, None
+    price = _live_price(ticker)
+    if price is None:
+        return True, None
+    drift = price / signal_close - 1
+    return (BASKET_DRIFT_DOWN_LIMIT <= drift <= BASKET_DRIFT_UP_LIMIT), drift
+
+
 def select_best_basket_crash(rows: list[dict], held: set[str]) -> dict | None:
     """Pick among post-cap basket-crash candidates -- deepest crash first
     (same criterion the concentration cap uses per-sector), excluding
@@ -627,26 +676,19 @@ def select_best_basket_crash(rows: list[dict], held: set[str]) -> dict | None:
     both the OPPOSITE of what qualifies a basket-crash candidate in the
     first place.
 
-    DOES apply the execution-drift filter (added 2026-07-30 after a live
-    case: SNDK's signal close was $1015.89, but by the next session it had
-    already reversed +24% to $1261.80 -- live confirmation of exactly the
-    risk this filter exists for, at a scale far beyond the extension-gate
-    population it was originally tuned on. Reusing the SAME
-    EXECUTION_DRIFT_THRESHOLD (0.9%) here is a conservative, NOT a
-    validated, choice for this population -- crash-type entries are
-    inherently more volatile than the extension gate's near-MA50 entries,
-    so this may end up filtering most or all basket-crash candidates in
-    practice. That would itself be useful information (worth a future
-    backtest pass on what threshold actually fits this population), not a
-    bug -- the alternative (no check at all) is what let SNDK through."""
+    Applies _basket_drift_ok() -- this entry type's own asymmetric drift
+    band, not the extension gate's symmetric threshold (see
+    BASKET_DRIFT_DOWN_LIMIT / BASKET_DRIFT_UP_LIMIT above for the research
+    this is grounded in: a live SNDK case, a basket_crash-specific bucket
+    study, and a broader 670-event gap-up study)."""
     pool = sorted(
         (r for r in rows if r["ticker"] not in held),
         key=lambda r: (r["roc_5d"], -r["peer_count"]),
     )
     for row in pool:
-        drift_ok, drift = _execution_drift_ok(row["ticker"], row.get("price"))
+        drift_ok, drift = _basket_drift_ok(row["ticker"], row.get("price"))
         if not drift_ok:
-            continue  # already moved too far since qualifying -- try the next one
+            continue  # fell further or ran up beyond the validated band -- try the next one
         result = dict(row)
         result["execution_drift"] = drift
         return result
@@ -1186,11 +1228,11 @@ def run_entry_screen(
     print("  stop-sensitivity', 2026-07-29). Below-MA50 by construction -- different stop (trailing-only,")
     print("  no floor, 8%/8%) and different time exit (flat 21d, no earnings buffer) than the extension")
     print("  pathway. NOT run through the earnings gate -- not validated for this entry type, left out")
-    print("  rather than silently applied. DOES run the execution-drift filter (added 2026-07-30 after")
-    print("  a live SNDK case reversed +24% in one session) -- same threshold as the extension gate,")
-    print("  unvalidated for this population but better than no check. 1-per-sector concentration cap")
-    print("  already applied below. Extension pathway is still the preferred pick if both exist -- it's")
-    print("  live-validated, this one is backtest-only.")
+    print(f"  rather than silently applied. DOES run its own asymmetric drift band ({BASKET_DRIFT_DOWN_LIMIT:+.1%}")
+    print(f"  to {BASKET_DRIFT_UP_LIMIT:+.1%} since signal close) -- tight on further downside, capped on the")
+    print("  upside at the actual tested ceiling for this population, NOT the extension gate's symmetric")
+    print("  threshold. 1-per-sector concentration cap already applied below. Extension pathway is still")
+    print("  the preferred pick if both exist -- it's live-validated, this one is backtest-only.")
     print("-" * 100)
     raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
     capped_basket = cap_basket_crash_concentration(raw_basket)

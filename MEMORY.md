@@ -2402,3 +2402,104 @@ reason text now distinguishes "every candidate already drifted beyond
 tolerance" from the other reasons (none crashing, all held). 3 new
 tests (skip-and-try-next, none-when-all-fail, missing-price fails
 open). Full suite: 339 passing.
+
+## Basket-crash execution-drift: asymmetric band replaces the reused symmetric threshold (2026-07-30)
+
+Follow-on research after shipping the symmetric ±0.9% reuse above --
+two studies, in order, both aimed at answering "is the extension gate's
+threshold actually the right shape for basket_crash, or just a
+convenient stopgap?"
+
+**Study 1 -- basket_crash-specific drift buckets (n=299, the real
+declustered population, drift = next-session-open/signal-close - 1,
+5 quantile buckets, simulated with the live trailing-only 8%/8% stop):**
+
+| Bucket | drift (median) | med_return | win_rate | early_stop_10d |
+|---|---|---|---|---|
+| 1 (deep gap-down) | -2.76% | +3.80% | 63.3% | **26.7%** (worst) |
+| 2 (slight gap-down) | -0.67% | +4.04% | 66.7% | **11.7%** (best) |
+| 3 (near-zero) | +0.22% | +0.55% | 52.5% | 13.6% |
+| 4 (slight gap-up) | +1.64% | +1.72% | 58.3% | 15.0% |
+| 5 (big gap-up) | +3.17% | **+4.43%** | **70.0%** | 15.0% |
+
+**No U-shape** (unlike the extension gate's own execution-drift study,
+which found near-zero drift was the sweet spot). Instead: real
+asymmetry. Deep gap-**down** is clearly worse (crash hasn't bottomed --
+the reversal thesis isn't confirmed yet). Gap-**up** does NOT get
+punished -- the biggest up-drift bucket has the best return and win
+rate of all five. Conceptually coherent: basket_crash is a reversal
+bet, so a gap up before execution is often the bounce validating
+itself in real time, not overextension the way it is for the extension
+gate's continuation bet.
+
+**Caveat immediately surfaced: this population had almost no data near
+SNDK's actual size.** Max drift observed in all 299 entries: +7.7% up,
+-12.5% down. SNDK moved +24.2%. The "gap-up isn't punished" finding is
+real within the tested range, but doesn't by itself justify leaving the
+upside completely unfiltered at SNDK's magnitude.
+
+**Study 2 -- broader gap-up study, NOT basket_crash-gated (n=670
+overnight gap-ups of 15%+, full universe, skips the expensive
+walk-forward ranking entirely since it isn't gate-1-conditioned --
+runs in under a minute instead of ~20):**
+
+| Gap band | n | med_return | win_rate |
+|---|---|---|---|
+| 15-20% | 433 | +0.45% | 52.7% |
+| 20-30% (SNDK's band) | 179 | +1.59% | 54.2% |
+| >=30% | 58 | +0.04% | 50.0% |
+
+Median outcome is a roughly flat coin-flip across all bands -- no clear
+degradation as gap size grows. **But the median hides a brutal tail**:
+within SNDK's own band, real losses of -64% (MS 2008), -57% (TRGP
+2020), -55% (HBAN 2009), -54% (CCL 2020), -46% (BAC 2008) sit alongside
+huge winners (+184% AIG 2009, +97% SW 2009). **Most of those worst
+losses were "held to 21d exit" -- never stopped** -- the trailing-only
+stop only arms after ANOTHER +8% gain, which frequently never comes
+after an already-large gap, so the exact protection basket_crash relies
+on is close to absent in this specific scenario. Bonus finding: SNDK
+itself had an earlier +20.8% gap on 2026-01-30 that resolved essentially
+flat (-0.2%) over 21 days -- direct single-ticker precedent, though n=1.
+
+**Conclusion and design:** replaced the symmetric ±0.9% (reused from the
+extension gate, shipped as an explicit stopgap) with an asymmetric band
+grounded in both studies:
+- `BASKET_DRIFT_DOWN_LIMIT = -0.025` (-2.5%) -- matches where Study 1's
+  early-stop-rate clearly worsens (roughly the 25th percentile of
+  observed negative drifts, close to bucket 1's -2.76% median).
+- `BASKET_DRIFT_UP_LIMIT = 0.08` (+8%) -- the actual tested ceiling in
+  Study 1 (max observed +7.7%, rounded up slightly for headroom).
+  Beyond this is genuinely untested for basket_crash specifically, and
+  Study 2 shows real, largely-unprotected tail risk starts well before
+  SNDK's own +24.2% -- capping here, not at SNDK's size, is the
+  defensible line given what's actually been validated.
+
+**This does NOT solve the SNDK problem on its own** -- SNDK's own drift
+was +24.2%, so the NEW cap (+8%) does reject it, unlike the old
+symmetric filter reused verbatim would have (it also rejected it, since
+0.9% << 24.2%, so both old and new filters happen to reject SNDK
+specifically -- the shape difference matters for candidates in the
++1-8% range, which the old filter wrongly rejected and the new one
+correctly allows).
+
+Shipped: `_basket_drift_ok()` (new, asymmetric-band-specific, distinct
+from `_execution_drift_ok()` which the extension gate keeps using
+unchanged). `select_best_basket_crash()` switched from
+`_execution_drift_ok` to `_basket_drift_ok`. Print text in
+`run_entry_screen()` updated to describe the actual band instead of
+"same threshold as the extension gate." 9 tests (band boundaries in
+both directions, missing-data fails open, skip-and-try-next). Full
+suite: 346 passing.
+
+**Scripts added** (both report-only, no gate/threshold change implied by
+running them): `run_opp_sleeve_basket_execution_drift_analysis.py`
+(Study 1 -- also saves raw per-entry rows to `comparison_results/
+opp_sleeve_basket_execution_drift_entries.csv` for tail drilldowns
+without re-running the ~15-20min pipeline) and
+`run_gap_up_forward_return_analysis.py` (Study 2 -- general-universe gap
+scan, no walk-forward step needed, runs in under a minute).
+
+**Still open:** the -2.5% / +8% band is grounded in real data but not
+precision-tuned (bucket medians, not exact breakpoints -- Study 1's
+population is thin, ~60 entries/bucket). Revisit if/when basket_crash
+accumulates its own live track record.
