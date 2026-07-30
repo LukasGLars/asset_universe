@@ -126,6 +126,26 @@ FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE = FIXTURE_BASE.replace(
     "--entry-type basket_crash\n",
 )
 
+# Both real at once -- reachable since 2026-07-30 (basket-crash visibility no
+# longer suppressed just because extension has a pick). The two Plan/Open
+# pairs must stay correctly attributed to their own candidate.
+FIXTURE_SLEEVE_CLOSED_WITH_BOTH_CANDIDATES = FIXTURE_BASE.replace(
+    "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
+    "  Opportunistic Sleeve\n"
+    "    Status         : CLOSED (0/1 position)\n"
+    "    Best candidate : HWM (Howmet Aerospace)  $275.43  (ext +1.2%, 21d med +4.1%, div ROBUST)\n"
+    "    Plan           : buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain\n"
+    "    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>\n"
+    "    Basket-crash   : EME (Emerson Electric Co.)  $650.12  (sector Industrials, -14.0% 5d, "
+    "2 peers crashing)\n"
+    "    Plan           : buy near $650.12, flat 21d exit, NO stop until +8% gain then trails 8% "
+    "(no floor before that -- riskier than the extension pathway)\n"
+    "    Open           : run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> "
+    "--entry-type basket_crash\n"
+    "    NOTE           : extension pathway also has a candidate today (HWM) -- that one is "
+    "preferred (live-validated); this is shown for awareness.\n",
+)
+
 
 def test_extract_fingerprint_parses_known_fields():
     fp = extract_fingerprint(FIXTURE_BASE)
@@ -383,8 +403,13 @@ def test_extract_fingerprint_parses_basket_candidate_ticker():
     fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE)
     assert fp["sleeve_candidate"] == "none"
     assert fp["sleeve_basket_candidate"] == "EME"
-    assert "flat 21d exit" in fp["sleeve_plan"]
-    assert "--entry-type basket_crash" in fp["sleeve_open_cmd"]
+    # basket-crash's own scoped fields, not the extension's -- these are
+    # separate now that both can appear together (see MEMORY.md
+    # "Basket-crash visibility decoupled from extension-gate priority").
+    assert "flat 21d exit" in fp["sleeve_basket_plan"]
+    assert "--entry-type basket_crash" in fp["sleeve_basket_open_cmd"]
+    assert fp["sleeve_plan"] == "unknown"
+    assert fp["sleeve_open_cmd"] == "unknown"
 
 
 def test_sleeve_candidate_fires_when_new_enter_appears_while_closed():
@@ -449,15 +474,45 @@ def test_basket_candidate_does_not_fire_when_ticker_unchanged():
 
 
 def test_basket_candidate_and_extension_candidate_are_independent():
-    # Extension candidate appearing must not also claim a basket-crash
-    # alert fired (and vice versa) -- they're separate fields, separate
-    # blocks, only one is ever populated with a real ticker on a given day.
+    # Extension candidate appearing alone must not also claim a basket-crash
+    # alert fired -- separate fields, separate blocks.
     prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
     curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
     result = build_actionable_message(prev, curr)
     assert result is not None
     _, body = result
     assert "BASKET-CRASH CANDIDATE" not in body
+
+
+def test_both_candidates_can_appear_together_with_correctly_scoped_plan_open():
+    # Since 2026-07-30, basket-crash visibility is no longer suppressed just
+    # because extension also has a pick -- both can be real on the same day.
+    # Each alert must quote its OWN Plan/Open, not the other candidate's.
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BOTH_CANDIDATES)
+    assert fp["sleeve_candidate"] == "HWM"
+    assert fp["sleeve_basket_candidate"] == "EME"
+    assert "hold ~21d" in fp["sleeve_plan"]
+    assert "--open HWM" in fp["sleeve_open_cmd"]
+    assert "flat 21d exit" in fp["sleeve_basket_plan"]
+    assert "--open EME" in fp["sleeve_basket_open_cmd"]
+    assert "EME" not in fp["sleeve_plan"] and "EME" not in fp["sleeve_open_cmd"]
+    assert "HWM" not in fp["sleeve_basket_plan"] and "HWM" not in fp["sleeve_basket_open_cmd"]
+
+
+def test_both_candidates_fire_both_alerts_with_correct_content():
+    prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BOTH_CANDIDATES)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "Sleeve candidate -> HWM" in subject
+    assert "Sleeve basket-crash candidate -> EME" in subject
+    assert "OPPORTUNISTIC SLEEVE CANDIDATE: HWM is now ENTER-eligible" in body
+    assert "OPPORTUNISTIC SLEEVE BASKET-CRASH CANDIDATE: EME is now eligible" in body
+    assert "Plan: buy near $275.43, hold ~21d" in body
+    assert "Open: run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>" in body
+    assert "Plan: buy near $650.12, flat 21d exit" in body
+    assert "Open: run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> --entry-type basket_crash" in body
 
 
 def test_cli_no_crash_when_prev_file_missing(tmp_path):

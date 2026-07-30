@@ -1148,38 +1148,49 @@ def run_entry_screen(
         print(f"    python run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
     print("=" * 100)
 
-    if pick is None:
-        print()
-        print("-" * 100)
-        print("  BASKET-CRASH CANDIDATES (secondary pathway -- only considered because there is no")
-        print("  extension-gate ENTER survivor today; see MEMORY.md 'Sector-capitulation reconstruction'")
-        print("  and 'Capitulation stop-sensitivity', 2026-07-29). Below-MA50 by construction -- different")
-        print("  stop (trailing-only, no floor, 8%/8%) and different time exit (flat 21d, no earnings")
-        print("  buffer) than the extension pathway above. NOT run through the earnings gate or")
-        print("  execution-drift filter -- neither is validated for this entry type; left out rather")
-        print("  than silently applied. 1-per-sector concentration cap already applied below.")
-        print("-" * 100)
-        raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
-        capped_basket = cap_basket_crash_concentration(raw_basket)
-        if capped_basket:
-            for row in sorted(capped_basket, key=lambda r: r["roc_5d"]):
-                held_flag = "  [already held]" if row["ticker"] in held else ""
-                print(f"    {row['ticker']:<8} sector={row['sector']:<28} 5d_roc={row['roc_5d']:+.1%}  "
-                      f"peers_crashing={row['peer_count']}{held_flag}")
-        basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
-        if basket_pick is None:
-            reason = "no candidate in a 5d/-10% crash with >=2 same-sector gate-1 peers also crashing" \
-                     if not raw_basket else "all qualifying candidates already held"
-            print(f"  No eligible basket-crash candidate today ({reason}).")
-        else:
-            b_name = asset_name(basket_pick["ticker"])
-            print(f"\n  Best candidate: {basket_pick['ticker']}" + (f"  ({b_name})" if b_name else "") + "  "
-                  f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
-                  f"peers_crashing={basket_pick['peer_count']})")
-            print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
-            print(f"    python run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
-                  f"<capital_sek> --entry-type basket_crash")
-        print("=" * 100)
+    # Always shown, independent of whether the extension pathway above found
+    # a candidate -- see MEMORY.md "Basket-crash visibility decoupled from
+    # extension-gate priority" (2026-07-30). Priority still applies to WHICH
+    # one is labeled the recommendation if you can only act on one (extension
+    # is live-validated, basket_crash is backtest-only) -- but computing and
+    # displaying basket_crash is no longer suppressed just because extension
+    # also has a pick; nothing is committed until you actually run --open,
+    # so there's no reason to hide it.
+    print()
+    print("-" * 100)
+    print("  BASKET-CRASH CANDIDATES (secondary pathway -- shown regardless of the extension-gate")
+    print("  result above; see MEMORY.md 'Sector-capitulation reconstruction' and 'Capitulation")
+    print("  stop-sensitivity', 2026-07-29). Below-MA50 by construction -- different stop (trailing-only,")
+    print("  no floor, 8%/8%) and different time exit (flat 21d, no earnings buffer) than the extension")
+    print("  pathway. NOT run through the earnings gate or execution-drift filter -- neither is validated")
+    print("  for this entry type; left out rather than silently applied. 1-per-sector concentration cap")
+    print("  already applied below. Extension pathway is still the preferred pick if both exist -- it's")
+    print("  live-validated, this one is backtest-only.")
+    print("-" * 100)
+    raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
+    capped_basket = cap_basket_crash_concentration(raw_basket)
+    if capped_basket:
+        for row in sorted(capped_basket, key=lambda r: r["roc_5d"]):
+            held_flag = "  [already held]" if row["ticker"] in held else ""
+            print(f"    {row['ticker']:<8} sector={row['sector']:<28} 5d_roc={row['roc_5d']:+.1%}  "
+                  f"peers_crashing={row['peer_count']}{held_flag}")
+    basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
+    if basket_pick is None:
+        reason = "no candidate in a 5d/-10% crash with >=2 same-sector gate-1 peers also crashing" \
+                 if not raw_basket else "all qualifying candidates already held"
+        print(f"  No eligible basket-crash candidate today ({reason}).")
+    else:
+        b_name = asset_name(basket_pick["ticker"])
+        print(f"\n  Best candidate: {basket_pick['ticker']}" + (f"  ({b_name})" if b_name else "") + "  "
+              f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
+              f"peers_crashing={basket_pick['peer_count']})")
+        if pick is not None:
+            print(f"  NOTE: extension pathway also has a candidate today ({pick['ticker']}) -- "
+                  f"that one is the preferred pick (live-validated); this is shown for awareness.")
+        print("  Not an auto-buy. Confirm capital (war chest only) before executing manually, then run:")
+        print(f"    python run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
+              f"<capital_sek> --entry-type basket_crash")
+    print("=" * 100)
 
     return out
 
@@ -1315,23 +1326,30 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         print(f"    Best candidate : none eligible today (either no ENTER survivors, or all "
               f"failed the pre-entry tripwire or execution-drift gate)")
 
-    if pick is None:
-        raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
-        capped_basket = cap_basket_crash_concentration(raw_basket)
-        basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
-        if basket_pick is not None:
-            b_name = asset_name(basket_pick["ticker"])
-            b_price = f"${basket_pick['price']:.2f}" if basket_pick.get("price") is not None else "n/a"
-            print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + f"  {b_price}  "
-                  f"(sector {basket_pick['sector']}, {basket_pick['roc_5d']:+.1%} 5d, "
-                  f"{basket_pick['peer_count']} peers crashing)")
-            print(f"    Plan           : buy near {b_price}, flat 21d exit, "
-                  f"NO stop until +{BASKET_TRAILING_TRIGGER_PCT:.0%} gain then trails {BASKET_TRAILING_PCT:.0%} "
-                  f"(no floor before that -- riskier than the extension pathway above)")
-            print(f"    Open           : run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
-                  f"<capital_sek> --entry-type basket_crash")
-        else:
-            print(f"    Basket-crash   : none eligible today")
+    # Always computed/shown, independent of whether the extension pathway
+    # above found a candidate -- decoupled 2026-07-30 (see MEMORY.md
+    # "Basket-crash visibility decoupled from extension-gate priority").
+    # Nothing is committed until --open actually runs, so there's no reason
+    # to hide this just because extension also has a pick that day.
+    raw_basket = basket_crash_candidates(candidates, cat_of, data_dir)
+    capped_basket = cap_basket_crash_concentration(raw_basket)
+    basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
+    if basket_pick is not None:
+        b_name = asset_name(basket_pick["ticker"])
+        b_price = f"${basket_pick['price']:.2f}" if basket_pick.get("price") is not None else "n/a"
+        print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + f"  {b_price}  "
+              f"(sector {basket_pick['sector']}, {basket_pick['roc_5d']:+.1%} 5d, "
+              f"{basket_pick['peer_count']} peers crashing)")
+        print(f"    Plan           : buy near {b_price}, flat 21d exit, "
+              f"NO stop until +{BASKET_TRAILING_TRIGGER_PCT:.0%} gain then trails {BASKET_TRAILING_PCT:.0%} "
+              f"(no floor before that -- riskier than the extension pathway)")
+        print(f"    Open           : run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
+              f"<capital_sek> --entry-type basket_crash")
+        if pick is not None:
+            print(f"    NOTE           : extension pathway also has a candidate today ({pick['ticker']}) -- "
+                  f"that one is preferred (live-validated); this is shown for awareness.")
+    else:
+        print(f"    Basket-crash   : none eligible today")
 
 
 # ── Position lifecycle (records a manually-executed trade -- no brokerage

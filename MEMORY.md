@@ -2312,3 +2312,48 @@ live pop (covered by execution-drift) vs. entering into an
 already-priced-in pop from days earlier (not covered by anything).
 **Not built. Backlog, not urgent** -- discussed live, user has not yet
 decided whether to add a days-since-last-earnings gate.
+
+## Basket-crash visibility decoupled from extension-gate priority (2026-07-30)
+
+Follow-on design change, live-discussed the same day: basket_crash was
+previously only computed/displayed when the extension pathway had NO
+pick (`if pick is None:` gated the whole block in both `run_entry_
+screen()` and `sleeve_daily_summary()`). User's objection: the sleeve
+being CLOSED (no position, no capital committed) means there's no real
+reason to hide basket_crash info just because extension also found
+something that day -- suppression only made sense as a stand-in for "no
+free slot," but a candidate existing isn't the same as a slot being
+used. The two are now decoupled:
+
+- **Priority still applies to which one is labeled the preferred pick**
+  if both exist and you can only act on one -- extension is
+  live-validated (real trade, tuned on 4,321 entries), basket_crash is
+  backtest-only (299 entries, never fired). Rationale unchanged from
+  the original priority decision earlier this session.
+- **Suppression is gone.** basket_crash is now always computed and
+  shown whenever the sleeve is CLOSED, regardless of whether extension
+  also has a pick. If both exist, each is shown with its own Plan/Open,
+  and a NOTE line cross-references the other ("extension pathway also
+  has a candidate today -- that one is preferred").
+- Blocking still applies while the sleeve is OPEN (an actual position,
+  not just a candidate) -- unchanged, that's the real 1-position-cap
+  constraint, not something this decoupling touches.
+
+**Real bug caught while implementing this:** `check_signal_changes.py`'s
+`sleeve_plan`/`sleeve_open_cmd` fields used a single generic regex
+(first "Plan:" in the section) -- fine when only one candidate could
+ever exist, but wrong once both can appear together: the basket-crash
+alert would have quoted the EXTENSION's Plan/Open instead of its own.
+Fixed by scoping each field to its own candidate label (`Best
+candidate` vs `Basket-crash`) via a lookahead-anchored regex, and
+splitting into `sleeve_plan`/`sleeve_open_cmd` (extension) vs
+`sleeve_basket_plan`/`sleeve_basket_open_cmd` (basket) -- verified with
+a new fixture (`FIXTURE_SLEEVE_CLOSED_WITH_BOTH_CANDIDATES`) asserting
+neither field leaks the other's ticker.
+
+2 new tests added for the both-real-at-once case (fingerprint scoping +
+dual-alert firing with correct content). Full suite: 336 passing.
+Verified live via `sleeve_daily_summary()` -- see next session's status
+check for whether both a real extension AND real basket-crash candidate
+were observed simultaneously (unlikely on any given day, but the code
+path is now real and tested either way).
