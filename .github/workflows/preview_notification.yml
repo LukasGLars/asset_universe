@@ -67,6 +67,9 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
 
+      - name: Show the real sleeve section (debug -- diagnoses splice mismatches)
+        run: sed -n '/Opportunistic Sleeve/,/^$/p' preview_status_curr.md
+
       - name: Build fake prev/curr snapshots (local only, simulates the selected signal)
         env:
           SIGNAL_TYPE: ${{ github.event.inputs.signal_type || 'avgo_guard' }}
