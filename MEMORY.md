@@ -2503,3 +2503,38 @@ scan, no walk-forward step needed, runs in under a minute).
 precision-tuned (bucket medians, not exact breakpoints -- Study 1's
 population is thin, ~60 entries/bucket). Revisit if/when basket_crash
 accumulates its own live track record.
+
+## Session close: basket_crash is LIVE (2026-07-30, PR #85 merged as ea9118f)
+
+Everything above in this session (live plumbing, concentration cap,
+trailing-only stop, Telegram wiring, visibility decoupling,
+execution-drift protection, the asymmetric drift band) is merged to
+`master` and running for real -- not a proposal, not staged in an open
+PR anymore. The next scheduled `sync.yml` run (weekdays ~08:00/22:30
+CEST) executes it automatically: no manual trigger needed. Full test
+suite passing on master (346).
+
+**Quick orientation for picking this up cold:**
+- basket_crash is a *secondary* signal -- fires alongside or instead of
+  the existing extension-gate pathway, never replaces it. Extension is
+  still labeled preferred when both exist (live-validated vs.
+  backtest-only).
+- Position cap is still 1 total across both pathways -- nothing here
+  changes that. Opening a basket_crash position uses `--open TICKER
+  PRICE SHARES CAPITAL --entry-type basket_crash`.
+- The edge: 299 real historical basket-crash entries (peer-confirmed
+  sector capitulation) beat 953 solo idiosyncratic crashes cleanly at
+  every duration tested (21d +4.41% vs +1.13%, 66.6% vs 54.7% win rate).
+  Backtest-only -- no live trade has happened on this pathway yet.
+
+**Real open items, not blockers, worth revisiting when there's time or
+once basket_crash has its own live track record:**
+1. Days-since-last-earnings gate -- still not built (see "STLD ...
+   days-since-earnings gap" entry above). Nothing checks whether a
+   candidate's setup was caused by a recent earnings print.
+2. The -2.5%/+8% drift band is data-grounded but not precision-tuned
+   (thin population, bucket medians not exact breakpoints).
+3. No live basket_crash trade has fired yet -- first real one is worth
+   a close look end-to-end (does the Telegram message read clearly in
+   practice, does the trailing-only stop behave as expected) before
+   trusting the mechanism blindly.
