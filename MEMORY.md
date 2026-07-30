@@ -2157,3 +2157,349 @@ cap flagged in conversation (no limit yet on how many same-sector basket
 entries could fire simultaneously) and the live-side plumbing to compute
 "how many gate-1 peers are crashing today" (currently only exists in the
 reconstruction's historical walk, not in `run_entry_screen.py`).
+
+## Basket-crash: live, gated behind extension-gate priority (2026-07-30)
+
+Both remaining gaps from the entry above are now closed and wired into
+`run_entry_screen.py` -- basket_crash is a real, live SECONDARY entry
+pathway, not just a reconstruction study. Two design decisions were made
+explicitly in conversation before any code was written, not assumed:
+
+**1. Priority vs. the primary extension-gate pathway: extension-gate wins.**
+basket_crash only fills the sleeve's single slot (position cap is still
+1 -- unchanged) when extension-gate's `select_best_candidate` finds no
+eligible ENTER candidate that day. Reasoning: extension-gate is
+live-validated (real trade, tuned twice on a 4,321-entry population, run
+through the pre-entry tripwire + execution-drift gates); basket_crash is a
+299-entry backtest that has never been live-fired. Giving a thinner-N,
+unproven signal priority over the proven one during exactly the highest-
+stress moments (a sector-wide crash) was judged the wrong default until
+basket_crash earns its own track record.
+
+**2. Concentration cap bounds SELECTION, not capital.** Since the sleeve
+only ever holds one position total, there's no multi-position capital risk
+to cap yet. `cap_basket_crash_concentration()` instead caps the CANDIDATE
+list to 1-per-sector before ranking (deepest crash wins, peer_count
+tie-breaks), so a day where multiple sectors crash together doesn't
+silently bias the pick toward whichever sector has the most crashing
+gate-1 names. A real capital-exposure cap is explicitly deferred, not
+built speculatively for a multi-position design that doesn't exist.
+
+**Shipped in `run_entry_screen.py`:**
+- `basket_crash_candidates()` -- live version of the reconstruction's
+  historical trigger (5d/-10% crash + >=2 same-sector gate-1 peers also
+  crashing), computed on today's data.
+- `cap_basket_crash_concentration()` -- the 1-per-sector selection cap above.
+- `select_best_basket_crash()` -- picks the deepest crash among capped
+  candidates, excluding already-held tickers. Deliberately does NOT reuse
+  `select_best_candidate`'s pre-entry tripwire gate (RS>=0 + rising MA50)
+  -- those requirements are the OPPOSITE of what qualifies a basket-crash
+  candidate.
+- `basket_crash_binding_stop()` -- trailing-only, NO MA50-floor branch, at
+  this entry type's own validated params (trigger=8%, trailing=8% --
+  deliberately different from the extension-gate's 5%/3%, tuned on a
+  different population). `compute_exit_triggers()` now takes an
+  `entry_type` param and branches: basket_crash gets this stop plus a flat
+  21-calendar-day time exit with NO earnings-buffer adjustment (matches
+  exactly what `run_opp_sleeve_capitulation_stop_sensitivity.py`
+  validated -- `DURATION_DAYS=21`, earnings interaction never tested for
+  this entry type).
+- `sleeve_state.toml` gained an `entry_type` field (default `"extension"`,
+  backward compatible with the existing closed state file).
+  `--open TICKER PRICE SHARES CAPITAL --entry-type basket_crash` records
+  which pathway a position came from; `print_sleeve_status` and
+  `sleeve_daily_summary` both display the pathway and use the matching
+  stop/exit rule.
+- Both `run_entry_screen()` (full table) and `sleeve_daily_summary()` (the
+  compact digest `fi_tracker.py` runs daily) print the basket-crash
+  candidates whenever the primary pathway has no pick -- visible every
+  day, not just discoverable on demand.
+
+**Deliberately NOT applied to basket_crash candidates** (flagged in the
+screen output itself, not just here): the earnings-avoidance gate and the
+execution-drift filter. Neither was validated for this entry type by the
+reconstruction studies -- silently reusing an extension-gate-tuned
+threshold on a structurally different population (below-MA50, mid-crash)
+would be exactly the kind of untested assumption this build was trying to
+avoid. Left as an explicit, visible gap rather than guessed at.
+
+18 new tests in `tests/test_entry_screen.py` (trailing-stop arming, the
+concentration cap's sector-cap + tie-break logic, selection excluding
+held tickers, and the live detection function against synthetic same-
+sector crash/no-crash parquet data). Full suite: 329 passing.
+
+**Still open:** basket_crash has no live track record yet -- the extension-
+gate-first priority rule should be revisited once it does. No urgency;
+this is a secondary pathway that only ever activates on days the primary
+one is empty.
+
+## Sleeve alert clarity: self-contained Plan/Open lines, basket-crash now wired into Telegram (2026-07-30)
+
+Two follow-on gaps found and closed while reviewing the basket_crash build
+above -- both surfaced by walking through what the user actually receives
+on their phone, not just what prints to a terminal they may not be at.
+
+**Gap 1: basket_crash candidates never reached Telegram at all.**
+`check_signal_changes.py` diffs `status.md` by regex to decide whether to
+push a notification. Its only sleeve-candidate watch was
+`Best candidate\s*:\s*(\S+)` -- the extension-gate field. The new
+`Basket-crash` line added above was invisible to it: a real, live
+basket_crash candidate would sit silently in `status.md`, visible only on
+a manual check, with no push ever firing. Fixed: added a
+`sleeve_basket_candidate` field (same regex pattern, new label) and a
+matching alert block in `build_actionable_message()`, guarded the same
+way as the existing candidate-appearance check (both sides CLOSED, prev
+none/unknown -> curr a real ticker).
+
+**Gap 2: even the alerts that DID fire told the user to go run the
+screen instead of saying what to do.** The existing message was
+`"...is now ENTER-eligible... REVIEW: run run_entry_screen.py for the
+full candidate detail before acting"` -- useless if the user can't get to
+a terminal before the signal moves. Fixed by making `sleeve_daily_summary()`
+itself (the function that generates `status.md`, which both the screen
+output AND the Telegram alert are sourced from) print two new lines
+whenever a candidate exists:
+
+```
+Plan : buy near $<price>, hold ~<N>d, stop = MA50-5% then trails 3% once +5% gain
+Open : run_entry_screen.py --open <TICKER> <fill_price> <shares> <capital_sek>
+```
+
+(basket_crash gets its own Plan line reflecting its different mechanics --
+flat 21d exit, no floor until +8% gain then trails 8%.) `check_signal_
+changes.py` then quotes these two lines VERBATIM into the Telegram body
+rather than re-deriving the plan text itself -- single source of truth,
+matching the pattern the AVGO-guard/silver alerts already use (pulling
+the live Action-line text instead of restating it), so the phone message
+can never drift from what the dashboard actually computed.
+
+**Design constraint carried forward:** the alert must be actionable on
+its own -- ticker, price, entry logic, exact stop/exit mechanic, and the
+literal command to run, with no dependency on being at a keyboard when it
+arrives. Apply this same bar to any future sleeve alert type.
+
+Shipped: `basket_crash_candidates()` rows now carry `price` (last close).
+`sleeve_daily_summary()`'s CLOSED branch prints `Plan`/`Open` for both
+pathways. `check_signal_changes.py` gained the `sleeve_basket_candidate`
+watch plus `sleeve_plan`/`sleeve_open_cmd` capture, and a new
+"BASKET-CRASH CANDIDATE" alert block. 12 new/updated tests in
+`tests/test_signal_changes.py`. Full suite: 334 passing. Verified live
+against real data (both the extension "none eligible" and basket-crash
+"none eligible" fallback paths render correctly with no exceptions --
+no live candidate existed at verification time to see the populated
+Plan/Open lines fire for real, so that path is covered by tests only,
+not a live confirmation).
+
+**Live send during verification surfaced a real candidate and a real
+gap (2026-07-30):** the extension-pathway preview found a genuine live
+ENTER candidate -- STLD (Steel Dynamics), $252.34, ext +2.0%, 21d med
++2.7%, div ROBUST -- and delivered the real Telegram message
+successfully (`Sleeve candidate -> STLD`, with real Plan/Open lines).
+Confirmed via `avgo_guard` preview run too: the pre-existing pipeline
+was never broken by this session's changes.
+
+**Gap found while reviewing STLD's own recommendation:** its last
+earnings was 2026-07-20 (a small beat, +0.56% surprise), 10 days before
+this recommendation -- and nothing in the live screen checks days-since-
+last-earnings. Gate 4 only looks FORWARD (next earnings within
+hold_days); the execution-drift filter (built 2026-07-29, itself
+motivated by an earlier STLD post-earnings-gap incident) only catches a
+chase happening the SAME day (today's live price vs. today's signal
+close) -- it read -0.1% drift here because STLD's pop had already
+happened and settled over a week earlier, nothing same-day left to
+catch. Two distinct problems, only one of which is covered: chasing a
+live pop (covered by execution-drift) vs. entering into an
+already-priced-in pop from days earlier (not covered by anything).
+**Not built. Backlog, not urgent** -- discussed live, user has not yet
+decided whether to add a days-since-last-earnings gate.
+
+## Basket-crash visibility decoupled from extension-gate priority (2026-07-30)
+
+Follow-on design change, live-discussed the same day: basket_crash was
+previously only computed/displayed when the extension pathway had NO
+pick (`if pick is None:` gated the whole block in both `run_entry_
+screen()` and `sleeve_daily_summary()`). User's objection: the sleeve
+being CLOSED (no position, no capital committed) means there's no real
+reason to hide basket_crash info just because extension also found
+something that day -- suppression only made sense as a stand-in for "no
+free slot," but a candidate existing isn't the same as a slot being
+used. The two are now decoupled:
+
+- **Priority still applies to which one is labeled the preferred pick**
+  if both exist and you can only act on one -- extension is
+  live-validated (real trade, tuned on 4,321 entries), basket_crash is
+  backtest-only (299 entries, never fired). Rationale unchanged from
+  the original priority decision earlier this session.
+- **Suppression is gone.** basket_crash is now always computed and
+  shown whenever the sleeve is CLOSED, regardless of whether extension
+  also has a pick. If both exist, each is shown with its own Plan/Open,
+  and a NOTE line cross-references the other ("extension pathway also
+  has a candidate today -- that one is preferred").
+- Blocking still applies while the sleeve is OPEN (an actual position,
+  not just a candidate) -- unchanged, that's the real 1-position-cap
+  constraint, not something this decoupling touches.
+
+**Real bug caught while implementing this:** `check_signal_changes.py`'s
+`sleeve_plan`/`sleeve_open_cmd` fields used a single generic regex
+(first "Plan:" in the section) -- fine when only one candidate could
+ever exist, but wrong once both can appear together: the basket-crash
+alert would have quoted the EXTENSION's Plan/Open instead of its own.
+Fixed by scoping each field to its own candidate label (`Best
+candidate` vs `Basket-crash`) via a lookahead-anchored regex, and
+splitting into `sleeve_plan`/`sleeve_open_cmd` (extension) vs
+`sleeve_basket_plan`/`sleeve_basket_open_cmd` (basket) -- verified with
+a new fixture (`FIXTURE_SLEEVE_CLOSED_WITH_BOTH_CANDIDATES`) asserting
+neither field leaks the other's ticker.
+
+2 new tests added for the both-real-at-once case (fingerprint scoping +
+dual-alert firing with correct content). Full suite: 336 passing.
+Verified live via `sleeve_daily_summary()` -- see next session's status
+check for whether both a real extension AND real basket-crash candidate
+were observed simultaneously (unlikely on any given day, but the code
+path is now real and tested either way).
+
+**That prediction resolved same-day: both fired together for real.**
+Live check found extension pick STLD alongside a real basket-crash
+candidate, **SNDK (Sandisk Corporation)**, $1015.89, Technology, -36.5%
+over 5 trading days, 2 peers also crashing -- the decoupled display
+worked exactly as designed.
+
+## Execution-drift filter added to basket_crash (2026-07-30)
+
+Same live SNDK case immediately exposed a real gap: by the NEXT session
+its price had already reversed **+24.2%** (signal close $1015.89 ->
+live $1261.80, intraday high $1272.53) -- a violent one-day bounce off
+the crash bottom the signal was built on. basket_crash had deliberately
+never run the execution-drift filter (flagged as "not validated for
+this population" when the pathway was first built) -- this is live
+proof of exactly the risk that filter exists to catch, at a scale (24%)
+dwarfing the extension gate's own 0.9% threshold.
+
+**Fix:** `select_best_basket_crash()` now applies the SAME
+`_execution_drift_ok()` / `EXECUTION_DRIFT_THRESHOLD` (0.9%) used by
+the extension gate -- walks the ranked pool (deepest crash first, same
+as before) and skips any candidate that's drifted beyond tolerance
+since its signal close, trying the next-ranked one instead. Missing
+live-price data still fails OPEN (doesn't exclude), same convention as
+the extension gate.
+
+**Explicitly NOT claiming this threshold is right for this population**
+-- 0.9% was tuned on the extension gate's near-MA50, momentum-confirmed
+entries, not on crash-type entries that are inherently far more
+volatile by construction (a stock in a 5d/-10%+ move can easily swing
+harder intraday than a calm extension candidate). Reusing it here is a
+conservative stopgap, not a validated fit -- it may end up filtering
+most or all basket_crash candidates in practice, which would itself be
+useful signal (worth a future backtest pass on what threshold actually
+suits this population), not evidence of a bug. The alternative -- no
+check at all -- is what let SNDK through in the first place.
+
+Shipped: `select_best_basket_crash()` returns `execution_drift` in the
+result dict now (mirrors `select_best_candidate`'s pattern). Both
+`run_entry_screen()` and `sleeve_daily_summary()` display drift on the
+basket-crash pick's summary line, and the "no eligible candidate"
+reason text now distinguishes "every candidate already drifted beyond
+tolerance" from the other reasons (none crashing, all held). 3 new
+tests (skip-and-try-next, none-when-all-fail, missing-price fails
+open). Full suite: 339 passing.
+
+## Basket-crash execution-drift: asymmetric band replaces the reused symmetric threshold (2026-07-30)
+
+Follow-on research after shipping the symmetric ±0.9% reuse above --
+two studies, in order, both aimed at answering "is the extension gate's
+threshold actually the right shape for basket_crash, or just a
+convenient stopgap?"
+
+**Study 1 -- basket_crash-specific drift buckets (n=299, the real
+declustered population, drift = next-session-open/signal-close - 1,
+5 quantile buckets, simulated with the live trailing-only 8%/8% stop):**
+
+| Bucket | drift (median) | med_return | win_rate | early_stop_10d |
+|---|---|---|---|---|
+| 1 (deep gap-down) | -2.76% | +3.80% | 63.3% | **26.7%** (worst) |
+| 2 (slight gap-down) | -0.67% | +4.04% | 66.7% | **11.7%** (best) |
+| 3 (near-zero) | +0.22% | +0.55% | 52.5% | 13.6% |
+| 4 (slight gap-up) | +1.64% | +1.72% | 58.3% | 15.0% |
+| 5 (big gap-up) | +3.17% | **+4.43%** | **70.0%** | 15.0% |
+
+**No U-shape** (unlike the extension gate's own execution-drift study,
+which found near-zero drift was the sweet spot). Instead: real
+asymmetry. Deep gap-**down** is clearly worse (crash hasn't bottomed --
+the reversal thesis isn't confirmed yet). Gap-**up** does NOT get
+punished -- the biggest up-drift bucket has the best return and win
+rate of all five. Conceptually coherent: basket_crash is a reversal
+bet, so a gap up before execution is often the bounce validating
+itself in real time, not overextension the way it is for the extension
+gate's continuation bet.
+
+**Caveat immediately surfaced: this population had almost no data near
+SNDK's actual size.** Max drift observed in all 299 entries: +7.7% up,
+-12.5% down. SNDK moved +24.2%. The "gap-up isn't punished" finding is
+real within the tested range, but doesn't by itself justify leaving the
+upside completely unfiltered at SNDK's magnitude.
+
+**Study 2 -- broader gap-up study, NOT basket_crash-gated (n=670
+overnight gap-ups of 15%+, full universe, skips the expensive
+walk-forward ranking entirely since it isn't gate-1-conditioned --
+runs in under a minute instead of ~20):**
+
+| Gap band | n | med_return | win_rate |
+|---|---|---|---|
+| 15-20% | 433 | +0.45% | 52.7% |
+| 20-30% (SNDK's band) | 179 | +1.59% | 54.2% |
+| >=30% | 58 | +0.04% | 50.0% |
+
+Median outcome is a roughly flat coin-flip across all bands -- no clear
+degradation as gap size grows. **But the median hides a brutal tail**:
+within SNDK's own band, real losses of -64% (MS 2008), -57% (TRGP
+2020), -55% (HBAN 2009), -54% (CCL 2020), -46% (BAC 2008) sit alongside
+huge winners (+184% AIG 2009, +97% SW 2009). **Most of those worst
+losses were "held to 21d exit" -- never stopped** -- the trailing-only
+stop only arms after ANOTHER +8% gain, which frequently never comes
+after an already-large gap, so the exact protection basket_crash relies
+on is close to absent in this specific scenario. Bonus finding: SNDK
+itself had an earlier +20.8% gap on 2026-01-30 that resolved essentially
+flat (-0.2%) over 21 days -- direct single-ticker precedent, though n=1.
+
+**Conclusion and design:** replaced the symmetric ±0.9% (reused from the
+extension gate, shipped as an explicit stopgap) with an asymmetric band
+grounded in both studies:
+- `BASKET_DRIFT_DOWN_LIMIT = -0.025` (-2.5%) -- matches where Study 1's
+  early-stop-rate clearly worsens (roughly the 25th percentile of
+  observed negative drifts, close to bucket 1's -2.76% median).
+- `BASKET_DRIFT_UP_LIMIT = 0.08` (+8%) -- the actual tested ceiling in
+  Study 1 (max observed +7.7%, rounded up slightly for headroom).
+  Beyond this is genuinely untested for basket_crash specifically, and
+  Study 2 shows real, largely-unprotected tail risk starts well before
+  SNDK's own +24.2% -- capping here, not at SNDK's size, is the
+  defensible line given what's actually been validated.
+
+**This does NOT solve the SNDK problem on its own** -- SNDK's own drift
+was +24.2%, so the NEW cap (+8%) does reject it, unlike the old
+symmetric filter reused verbatim would have (it also rejected it, since
+0.9% << 24.2%, so both old and new filters happen to reject SNDK
+specifically -- the shape difference matters for candidates in the
++1-8% range, which the old filter wrongly rejected and the new one
+correctly allows).
+
+Shipped: `_basket_drift_ok()` (new, asymmetric-band-specific, distinct
+from `_execution_drift_ok()` which the extension gate keeps using
+unchanged). `select_best_basket_crash()` switched from
+`_execution_drift_ok` to `_basket_drift_ok`. Print text in
+`run_entry_screen()` updated to describe the actual band instead of
+"same threshold as the extension gate." 9 tests (band boundaries in
+both directions, missing-data fails open, skip-and-try-next). Full
+suite: 346 passing.
+
+**Scripts added** (both report-only, no gate/threshold change implied by
+running them): `run_opp_sleeve_basket_execution_drift_analysis.py`
+(Study 1 -- also saves raw per-entry rows to `comparison_results/
+opp_sleeve_basket_execution_drift_entries.csv` for tail drilldowns
+without re-running the ~15-20min pipeline) and
+`run_gap_up_forward_return_analysis.py` (Study 2 -- general-universe gap
+scan, no walk-forward step needed, runs in under a minute).
+
+**Still open:** the -2.5% / +8% band is grounded in real data but not
+precision-tuned (bucket medians, not exact breakpoints -- Study 1's
+population is thin, ~60 entries/bucket). Revisit if/when basket_crash
+accumulates its own live track record.

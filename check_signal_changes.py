@@ -62,6 +62,23 @@ def extract_fingerprint(text: str) -> dict:
             r"Opportunistic Sleeve.*?Current price\s*:\s*\S+\s*\(risk to stop:\s*([^)]+)\)", text),
         "sleeve_tripwire_detail": _find(r"Opportunistic Sleeve.*?Tripwire detail\s*:\s*([^\n]+)", text),
         "sleeve_candidate": _find(r"Opportunistic Sleeve.*?Best candidate\s*:\s*(\S+)", text),
+        "sleeve_basket_candidate": _find(r"Opportunistic Sleeve.*?Basket-crash\s*:\s*(\S+)", text),
+        # Scoped to each candidate's OWN Plan/Open lines (not just "the first
+        # Plan: in the section") -- both can now appear together since
+        # basket-crash visibility was decoupled from extension-gate priority
+        # (see MEMORY.md "Basket-crash visibility decoupled from extension-
+        # gate priority", 2026-07-30), so a single generic capture would grab
+        # the extension's Plan/Open even when building the basket-crash
+        # alert. The negative lookahead skips the "none eligible" case,
+        # which has no following Plan/Open lines to match anyway.
+        "sleeve_plan": _find(
+            r"Best candidate\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:\s*([^\n]+)", text),
+        "sleeve_open_cmd": _find(
+            r"Best candidate\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:[^\n]*\n\s*Open\s*:\s*([^\n]+)", text),
+        "sleeve_basket_plan": _find(
+            r"Basket-crash\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:\s*([^\n]+)", text),
+        "sleeve_basket_open_cmd": _find(
+            r"Basket-crash\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:[^\n]*\n\s*Open\s*:\s*([^\n]+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -177,15 +194,40 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # every day, nothing diffed its verdict). Guarded to CLOSED on both
     # sides so this can't double-fire alongside (or instead of) the
     # sleeve_status alert on the day the sleeve actually opens/closes.
+    # Self-contained on purpose (see MEMORY.md "Sleeve alert clarity",
+    # 2026-07-30): quotes the exact Plan/Open lines fi_tracker.py already
+    # computed and printed, rather than telling the user to go run the
+    # screen themselves -- they may not be able to before the signal moves.
     if (prev["sleeve_status"] == "CLOSED" and curr["sleeve_status"] == "CLOSED"
             and prev["sleeve_candidate"] in ("none", "unknown")
             and curr["sleeve_candidate"] not in ("none", "unknown")):
-        blocks.append(
-            f"OPPORTUNISTIC SLEEVE CANDIDATE: {curr['sleeve_candidate']} is now ENTER-eligible "
-            f"(sleeve remains closed).\n"
-            f"REVIEW: run `run_entry_screen.py` for the full candidate detail before acting."
-        )
+        lines = [f"OPPORTUNISTIC SLEEVE CANDIDATE: {curr['sleeve_candidate']} is now ENTER-eligible "
+                 f"(sleeve remains closed)."]
+        if curr["sleeve_plan"] != "unknown":
+            lines.append(f"Plan: {curr['sleeve_plan']}")
+        if curr["sleeve_open_cmd"] != "unknown":
+            lines.append(f"Open: {curr['sleeve_open_cmd']}")
+        blocks.append("\n".join(lines))
         subject_parts.append(f"Sleeve candidate -> {curr['sleeve_candidate']}")
+
+    # Same pattern, for the basket-crash secondary pathway. Shown
+    # independently of the extension-gate candidate above -- both can now
+    # appear the same day (see MEMORY.md "Basket-crash visibility decoupled
+    # from extension-gate priority", 2026-07-30) -- so this uses its OWN
+    # scoped Plan/Open fields, not the extension's. Explicitly labeled
+    # "secondary" / "backtest-only" so it isn't mistaken for equal-confidence
+    # with the extension pathway when both fire together.
+    if (prev["sleeve_status"] == "CLOSED" and curr["sleeve_status"] == "CLOSED"
+            and prev["sleeve_basket_candidate"] in ("none", "unknown")
+            and curr["sleeve_basket_candidate"] not in ("none", "unknown")):
+        lines = [f"OPPORTUNISTIC SLEEVE BASKET-CRASH CANDIDATE: {curr['sleeve_basket_candidate']} "
+                 f"is now eligible (secondary pathway, backtest-only -- sleeve remains closed)."]
+        if curr["sleeve_basket_plan"] != "unknown":
+            lines.append(f"Plan: {curr['sleeve_basket_plan']}")
+        if curr["sleeve_basket_open_cmd"] != "unknown":
+            lines.append(f"Open: {curr['sleeve_basket_open_cmd']}")
+        blocks.append("\n".join(lines))
+        subject_parts.append(f"Sleeve basket-crash candidate -> {curr['sleeve_basket_candidate']}")
 
     if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":
         blocks.append(

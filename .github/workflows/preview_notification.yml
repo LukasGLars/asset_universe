@@ -11,9 +11,27 @@ name: preview-signal-notification
 #
 # Originally added 2026-07-02 for the email pipeline review; kept as a
 # standing review tool since it's proven useful more than once.
+#
+# 2026-07-30: added signal_type input (sleeve_candidate_extension /
+# sleeve_candidate_basket) to preview the new self-contained Plan/Open
+# sleeve alerts. Checkout switched from a hardcoded `ref: master` to the
+# triggering ref -- needed so this can preview code still in an open PR
+# (like the basket-crash build itself) rather than only what's already on
+# master. Dispatching with no ref override still resolves to the repo's
+# default branch (master), so ordinary manual runs are unaffected.
 
 on:
   workflow_dispatch:
+    inputs:
+      signal_type:
+        description: 'Which signal to simulate'
+        required: true
+        default: avgo_guard
+        type: choice
+        options:
+          - avgo_guard
+          - sleeve_candidate_extension
+          - sleeve_candidate_basket
 
 permissions:
   contents: read
@@ -23,8 +41,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: master
 
       - uses: actions/setup-python@v5
         with:
@@ -51,18 +67,93 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
 
-      - name: Build a fake "previous" snapshot (local only, simulates a real AVGO guard flip)
+      - name: Show the real sleeve section (debug -- diagnoses splice mismatches)
+        run: sed -n '/Opportunistic Sleeve/,/^$/p' preview_status_curr.md
+
+      - name: Build fake prev/curr snapshots (local only, simulates the selected signal)
+        env:
+          SIGNAL_TYPE: ${{ github.event.inputs.signal_type || 'avgo_guard' }}
         run: |
           python - <<'PYEOF'
-          text = open("preview_status_curr.md", encoding="utf-8").read()
-          fake_prev = text.replace(
-              "Signal         : BASE  (trigger: none)",
-              "Signal         : DEFENSIVE  (trigger: CRASH)",
-          ).replace(
-              "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
-              "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
-          )
-          open("preview_status_prev.md", "w", encoding="utf-8").write(fake_prev)
+          import os
+          import re
+
+          curr_real = open("preview_status_curr.md", encoding="utf-8").read()
+          signal_type = os.environ["SIGNAL_TYPE"]
+
+          if signal_type == "avgo_guard":
+              # Flips curr -> prev (simulates guard just having been active,
+              # regardless of today's real state -- see module docstring).
+              prev = curr_real.replace(
+                  "Signal         : BASE  (trigger: none)",
+                  "Signal         : DEFENSIVE  (trigger: CRASH)",
+              ).replace(
+                  "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
+                  "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
+              )
+              curr = curr_real
+
+          elif signal_type == "sleeve_candidate_extension":
+              # If a REAL candidate already exists today, prefer previewing
+              # THAT (100% real content, not fabricated) by reversing it back
+              # to the "no candidate" state for prev -- a literal string
+              # search for the placeholder text silently no-ops when reality
+              # doesn't match it (the actual bug hit here on 2026-07-30: CI's
+              # live data had a real candidate, hardcoded placeholder search
+              # found nothing, "no actionable change" for both prev==curr).
+              # Falls back to a clearly-labeled synthetic HWM example only
+              # when today's real data genuinely has no candidate to preview.
+              real_block = re.search(
+                  r"    Best candidate : (?!none eligible)[^\n]*\n"
+                  r"    Plan           : [^\n]*\n"
+                  r"    Open           : [^\n]*\n",
+                  curr_real,
+              )
+              if real_block:
+                  curr = curr_real
+                  prev = curr_real.replace(
+                      real_block.group(0),
+                      "    Best candidate : none eligible today (either no ENTER survivors, or all "
+                      "failed the pre-entry tripwire or execution-drift gate)\n",
+                  )
+              else:
+                  prev = curr_real
+                  curr = curr_real.replace(
+                      "    Best candidate : none eligible today (either no ENTER survivors, or all "
+                      "failed the pre-entry tripwire or execution-drift gate)",
+                      "    Best candidate : HWM (Howmet Aerospace)  $275.43  (ext +1.2%, 21d med +4.1%, div ROBUST)\n"
+                      "    Plan           : buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain\n"
+                      "    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>",
+                  )
+
+          elif signal_type == "sleeve_candidate_basket":
+              # Same real-first, synthetic-fallback pattern as above.
+              real_block = re.search(
+                  r"    Basket-crash   : (?!none eligible)[^\n]*\n"
+                  r"    Plan           : [^\n]*\n"
+                  r"    Open           : [^\n]*\n",
+                  curr_real,
+              )
+              if real_block:
+                  curr = curr_real
+                  prev = curr_real.replace(real_block.group(0), "    Basket-crash   : none eligible today\n")
+              else:
+                  prev = curr_real
+                  curr = curr_real.replace(
+                      "    Basket-crash   : none eligible today",
+                      "    Basket-crash   : EME (Emerson Electric Co.)  $650.12  (sector Industrials, -14.0% 5d, "
+                      "2 peers crashing)\n"
+                      "    Plan           : buy near $650.12, flat 21d exit, NO stop until +8% gain then trails 8% "
+                      "(no floor before that -- riskier than the extension pathway above)\n"
+                      "    Open           : run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> "
+                      "--entry-type basket_crash",
+                  )
+
+          else:
+              raise SystemExit(f"Unknown signal_type: {signal_type}")
+
+          open("preview_status_prev.md", "w", encoding="utf-8").write(prev)
+          open("preview_status_curr.md", "w", encoding="utf-8").write(curr)
           PYEOF
 
       - name: Show what will be sent (visible in this log for review)
