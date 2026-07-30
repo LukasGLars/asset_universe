@@ -2232,3 +2232,60 @@ sector crash/no-crash parquet data). Full suite: 329 passing.
 gate-first priority rule should be revisited once it does. No urgency;
 this is a secondary pathway that only ever activates on days the primary
 one is empty.
+
+## Sleeve alert clarity: self-contained Plan/Open lines, basket-crash now wired into Telegram (2026-07-30)
+
+Two follow-on gaps found and closed while reviewing the basket_crash build
+above -- both surfaced by walking through what the user actually receives
+on their phone, not just what prints to a terminal they may not be at.
+
+**Gap 1: basket_crash candidates never reached Telegram at all.**
+`check_signal_changes.py` diffs `status.md` by regex to decide whether to
+push a notification. Its only sleeve-candidate watch was
+`Best candidate\s*:\s*(\S+)` -- the extension-gate field. The new
+`Basket-crash` line added above was invisible to it: a real, live
+basket_crash candidate would sit silently in `status.md`, visible only on
+a manual check, with no push ever firing. Fixed: added a
+`sleeve_basket_candidate` field (same regex pattern, new label) and a
+matching alert block in `build_actionable_message()`, guarded the same
+way as the existing candidate-appearance check (both sides CLOSED, prev
+none/unknown -> curr a real ticker).
+
+**Gap 2: even the alerts that DID fire told the user to go run the
+screen instead of saying what to do.** The existing message was
+`"...is now ENTER-eligible... REVIEW: run run_entry_screen.py for the
+full candidate detail before acting"` -- useless if the user can't get to
+a terminal before the signal moves. Fixed by making `sleeve_daily_summary()`
+itself (the function that generates `status.md`, which both the screen
+output AND the Telegram alert are sourced from) print two new lines
+whenever a candidate exists:
+
+```
+Plan : buy near $<price>, hold ~<N>d, stop = MA50-5% then trails 3% once +5% gain
+Open : run_entry_screen.py --open <TICKER> <fill_price> <shares> <capital_sek>
+```
+
+(basket_crash gets its own Plan line reflecting its different mechanics --
+flat 21d exit, no floor until +8% gain then trails 8%.) `check_signal_
+changes.py` then quotes these two lines VERBATIM into the Telegram body
+rather than re-deriving the plan text itself -- single source of truth,
+matching the pattern the AVGO-guard/silver alerts already use (pulling
+the live Action-line text instead of restating it), so the phone message
+can never drift from what the dashboard actually computed.
+
+**Design constraint carried forward:** the alert must be actionable on
+its own -- ticker, price, entry logic, exact stop/exit mechanic, and the
+literal command to run, with no dependency on being at a keyboard when it
+arrives. Apply this same bar to any future sleeve alert type.
+
+Shipped: `basket_crash_candidates()` rows now carry `price` (last close).
+`sleeve_daily_summary()`'s CLOSED branch prints `Plan`/`Open` for both
+pathways. `check_signal_changes.py` gained the `sleeve_basket_candidate`
+watch plus `sleeve_plan`/`sleeve_open_cmd` capture, and a new
+"BASKET-CRASH CANDIDATE" alert block. 12 new/updated tests in
+`tests/test_signal_changes.py`. Full suite: 334 passing. Verified live
+against real data (both the extension "none eligible" and basket-crash
+"none eligible" fallback paths render correctly with no exceptions --
+no live candidate existed at verification time to see the populated
+Plan/Open lines fire for real, so that path is covered by tests only,
+not a live confirmation).

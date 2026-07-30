@@ -96,15 +96,34 @@ FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE = FIXTURE_BASE.replace(
     "  Opportunistic Sleeve\n"
     "    Status         : CLOSED (0/1 position)\n"
     "    Best candidate : none eligible today (either no ENTER survivors, or all "
-    "failed the pre-entry tripwire gate)\n",
+    "failed the pre-entry tripwire gate)\n"
+    "    Basket-crash   : none eligible today\n",
 )
 
+# Plan/Open lines are what the Telegram alert now quotes verbatim (see
+# MEMORY.md "Sleeve alert clarity", 2026-07-30) -- self-contained enough to
+# act on without running the screen.
 FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE = FIXTURE_BASE.replace(
     "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
     "  Opportunistic Sleeve\n"
     "    Status         : CLOSED (0/1 position)\n"
-    "    Best candidate : HWM (Howmet Aerospace)  (ext +1.2%, 21d med +4.1%, div ROBUST, "
-    "pre-entry tripwires PASSED) -- run run_entry_screen.py for full detail\n",
+    "    Best candidate : HWM (Howmet Aerospace)  $275.43  (ext +1.2%, 21d med +4.1%, div ROBUST)\n"
+    "    Plan           : buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain\n"
+    "    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>\n",
+)
+
+FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE = FIXTURE_BASE.replace(
+    "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n",
+    "  Opportunistic Sleeve\n"
+    "    Status         : CLOSED (0/1 position)\n"
+    "    Best candidate : none eligible today (either no ENTER survivors, or all "
+    "failed the pre-entry tripwire gate)\n"
+    "    Basket-crash   : EME (Emerson Electric Co.)  $650.12  (sector Industrials, -14.0% 5d, "
+    "2 peers crashing)\n"
+    "    Plan           : buy near $650.12, flat 21d exit, NO stop until +8% gain then trails 8% "
+    "(no floor before that -- riskier than the extension pathway above)\n"
+    "    Open           : run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> "
+    "--entry-type basket_crash\n",
 )
 
 
@@ -350,14 +369,28 @@ def test_cli_reports_actionable_change(tmp_path):
 def test_extract_fingerprint_parses_sleeve_candidate_none():
     fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
     assert fp["sleeve_candidate"] == "none"
+    assert fp["sleeve_basket_candidate"] == "none"
 
 
 def test_extract_fingerprint_parses_sleeve_candidate_ticker():
     fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
     assert fp["sleeve_candidate"] == "HWM"
+    assert fp["sleeve_plan"] == "buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain"
+    assert fp["sleeve_open_cmd"] == "run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>"
+
+
+def test_extract_fingerprint_parses_basket_candidate_ticker():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE)
+    assert fp["sleeve_candidate"] == "none"
+    assert fp["sleeve_basket_candidate"] == "EME"
+    assert "flat 21d exit" in fp["sleeve_plan"]
+    assert "--entry-type basket_crash" in fp["sleeve_open_cmd"]
 
 
 def test_sleeve_candidate_fires_when_new_enter_appears_while_closed():
+    # The alert must be self-contained (Plan + Open quoted verbatim) rather
+    # than telling the user to go run the screen -- see MEMORY.md "Sleeve
+    # alert clarity", 2026-07-30.
     prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
     curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
     result = build_actionable_message(prev, curr)
@@ -365,7 +398,8 @@ def test_sleeve_candidate_fires_when_new_enter_appears_while_closed():
     subject, body = result
     assert "Sleeve candidate -> HWM" in subject
     assert "OPPORTUNISTIC SLEEVE CANDIDATE: HWM is now ENTER-eligible" in body
-    assert "REVIEW" in body
+    assert "Plan: buy near $275.43, hold ~21d, stop = MA50-5% then trails 3% once +5% gain" in body
+    assert "Open: run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>" in body
 
 
 def test_sleeve_candidate_does_not_fire_when_still_none():
@@ -389,6 +423,41 @@ def test_sleeve_candidate_does_not_double_fire_alongside_status_change():
     _, body = result
     assert "OPPORTUNISTIC SLEEVE CANDIDATE" not in body
     assert "OPPORTUNISTIC SLEEVE:" in body  # the real status-change alert still fires
+
+
+def test_basket_candidate_fires_when_it_appears_while_closed():
+    prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "Sleeve basket-crash candidate -> EME" in subject
+    assert "OPPORTUNISTIC SLEEVE BASKET-CRASH CANDIDATE: EME is now eligible" in body
+    assert "secondary pathway" in body
+    assert "Plan: buy near $650.12, flat 21d exit, NO stop until +8% gain" in body
+    assert "Open: run_entry_screen.py --open EME <fill_price> <shares> <capital_sek> --entry-type basket_crash" in body
+
+
+def test_basket_candidate_does_not_fire_when_still_none():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_basket_candidate_does_not_fire_when_ticker_unchanged():
+    fp = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_BASKET_CANDIDATE)
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_basket_candidate_and_extension_candidate_are_independent():
+    # Extension candidate appearing must not also claim a basket-crash
+    # alert fired (and vice versa) -- they're separate fields, separate
+    # blocks, only one is ever populated with a real ticker on a given day.
+    prev = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_NO_CANDIDATE)
+    curr = extract_fingerprint(FIXTURE_SLEEVE_CLOSED_WITH_CANDIDATE)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    _, body = result
+    assert "BASKET-CRASH CANDIDATE" not in body
 
 
 def test_cli_no_crash_when_prev_file_missing(tmp_path):

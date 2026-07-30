@@ -562,9 +562,12 @@ def basket_crash_candidates(
     historical trigger: which of TODAY's gate-1 candidates are themselves in
     a 5d/-10% crash AND have >= min_peers other same-sector gate-1 peers
     ALSO crashing today. Returns one dict per qualifying ticker (ticker,
-    sector, roc_5d, peer_count, category) -- uncapped; see
-    cap_basket_crash_concentration for the 1-per-sector selection cap."""
+    sector, roc_5d, peer_count, category, price -- the last close, so a
+    candidate can be acted on directly from a message without a live
+    lookup) -- uncapped; see cap_basket_crash_concentration for the
+    1-per-sector selection cap."""
     rocs: dict[str, float] = {}
+    last_price: dict[str, float] = {}
     for t in gate1_candidates:
         path = reader.ticker_path(data_dir, cat_of.get(t, "equities"), t)
         if not path.exists():
@@ -573,6 +576,7 @@ def basket_crash_candidates(
         if len(prices) <= CRASH_ROC_WINDOW:
             continue
         rocs[t] = float(prices.iloc[-1] / prices.iloc[-1 - CRASH_ROC_WINDOW] - 1)
+        last_price[t] = float(prices.iloc[-1])
 
     crashing = {t: roc for t, roc in rocs.items() if roc <= CRASH_ROC_THRESHOLD}
     if not crashing:
@@ -587,7 +591,7 @@ def basket_crash_candidates(
         peer_count = sum(1 for other, s in sector_of.items() if other != t and s == sector)
         if peer_count >= min_peers:
             rows.append({
-                "ticker": t, "sector": sector, "roc_5d": roc,
+                "ticker": t, "sector": sector, "roc_5d": roc, "price": last_price[t],
                 "peer_count": peer_count, "category": cat_of.get(t, "equities"),
             })
     return rows
@@ -1291,10 +1295,16 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         pick_name = asset_name(pick["ticker"])
         drift = pick.get("execution_drift")
         drift_note = f", drift {drift:+.1%}" if drift is not None else ""
-        print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + "  "
-              f"(ext {pick['dist_from_ma50']}, "
-              f"{dur}d med {pick_med:+.1%}, div {pick['diversity']}, pre-entry tripwires PASSED{drift_note}) "
-              f"-- run run_entry_screen.py for full detail")
+        price_str = f"${pick['price']:.2f}" if pd.notna(pick.get("price")) else "n/a"
+        # Kept short and self-contained on purpose (see MEMORY.md "Sleeve
+        # alert clarity", 2026-07-30) -- this exact text is what ends up in
+        # the Telegram push via check_signal_changes.py, and the user may
+        # not be able to run the full screen before needing to act on it.
+        print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + f"  {price_str}  "
+              f"(ext {pick['dist_from_ma50']}, {dur}d med {pick_med:+.1%}, div {pick['diversity']}{drift_note})")
+        print(f"    Plan           : buy near {price_str}, hold ~{dur}d, "
+              f"stop = MA50-{MA50_BUFFER_PCT:.0%} then trails {TRAILING_PCT:.0%} once +{TRAILING_TRIGGER_PCT:.0%} gain")
+        print(f"    Open           : run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
         try:
             vr = vix_review(data_dir)
             print(f"    VIX review     : {vr['now']:.2f}  ({vr['percentile']:.0%} percentile, "
@@ -1311,10 +1321,15 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
         if basket_pick is not None:
             b_name = asset_name(basket_pick["ticker"])
-            print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + "  "
-                  f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
-                  f"peers_crashing={basket_pick['peer_count']}) -- secondary pathway, run "
-                  f"run_entry_screen.py for full detail")
+            b_price = f"${basket_pick['price']:.2f}" if basket_pick.get("price") is not None else "n/a"
+            print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + f"  {b_price}  "
+                  f"(sector {basket_pick['sector']}, {basket_pick['roc_5d']:+.1%} 5d, "
+                  f"{basket_pick['peer_count']} peers crashing)")
+            print(f"    Plan           : buy near {b_price}, flat 21d exit, "
+                  f"NO stop until +{BASKET_TRAILING_TRIGGER_PCT:.0%} gain then trails {BASKET_TRAILING_PCT:.0%} "
+                  f"(no floor before that -- riskier than the extension pathway above)")
+            print(f"    Open           : run_entry_screen.py --open {basket_pick['ticker']} <fill_price> <shares> "
+                  f"<capital_sek> --entry-type basket_crash")
         else:
             print(f"    Basket-crash   : none eligible today")
 
