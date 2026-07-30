@@ -140,12 +140,14 @@ MIN_PEERS_CRASHING  = 2
 BASKET_TRAILING_TRIGGER_PCT = 0.08
 BASKET_TRAILING_PCT         = 0.08
 
-# Neither the earnings-avoidance gate nor the execution-drift filter (both
-# used by the primary extension-gate pathway) has been validated for this
-# entry type -- the reconstruction studies never tested either interaction.
-# Deliberately NOT applied here rather than silently reused on an untested
-# population; see the "not yet validated" note printed alongside any
-# basket-crash candidate.
+# The earnings-avoidance gate has NOT been validated for this entry type --
+# the reconstruction studies never tested that interaction. Deliberately
+# NOT applied here rather than silently reused on an untested population;
+# see the "not yet validated" note printed alongside any basket-crash
+# candidate. The execution-drift filter WAS added 2026-07-30 (see
+# select_best_basket_crash) after a live case showed exactly why -- the
+# same threshold reused from the extension gate, unvalidated for this
+# population but strictly better than no check at all.
 
 # Added 2026-07-29 (see MEMORY.md "Opp sleeve execution-drift analysis --
 # chasing raises stop-out risk, not return"): a candidate that has already
@@ -623,11 +625,32 @@ def select_best_basket_crash(rows: list[dict], held: set[str]) -> dict | None:
     already-held tickers. Deliberately does NOT reuse select_best_candidate's
     pre-entry tripwire gate: that gate requires RS >= 0 and a rising MA50,
     both the OPPOSITE of what qualifies a basket-crash candidate in the
-    first place."""
-    pool = [r for r in rows if r["ticker"] not in held]
-    if not pool:
-        return None
-    return min(pool, key=lambda r: (r["roc_5d"], -r["peer_count"]))
+    first place.
+
+    DOES apply the execution-drift filter (added 2026-07-30 after a live
+    case: SNDK's signal close was $1015.89, but by the next session it had
+    already reversed +24% to $1261.80 -- live confirmation of exactly the
+    risk this filter exists for, at a scale far beyond the extension-gate
+    population it was originally tuned on. Reusing the SAME
+    EXECUTION_DRIFT_THRESHOLD (0.9%) here is a conservative, NOT a
+    validated, choice for this population -- crash-type entries are
+    inherently more volatile than the extension gate's near-MA50 entries,
+    so this may end up filtering most or all basket-crash candidates in
+    practice. That would itself be useful information (worth a future
+    backtest pass on what threshold actually fits this population), not a
+    bug -- the alternative (no check at all) is what let SNDK through."""
+    pool = sorted(
+        (r for r in rows if r["ticker"] not in held),
+        key=lambda r: (r["roc_5d"], -r["peer_count"]),
+    )
+    for row in pool:
+        drift_ok, drift = _execution_drift_ok(row["ticker"], row.get("price"))
+        if not drift_ok:
+            continue  # already moved too far since qualifying -- try the next one
+        result = dict(row)
+        result["execution_drift"] = drift
+        return result
+    return None  # every ranked candidate failed the execution-drift gate
 
 
 # ── Execution-drift filter (pre-entry, see EXECUTION_DRIFT_THRESHOLD) ──────
@@ -1162,8 +1185,10 @@ def run_entry_screen(
     print("  result above; see MEMORY.md 'Sector-capitulation reconstruction' and 'Capitulation")
     print("  stop-sensitivity', 2026-07-29). Below-MA50 by construction -- different stop (trailing-only,")
     print("  no floor, 8%/8%) and different time exit (flat 21d, no earnings buffer) than the extension")
-    print("  pathway. NOT run through the earnings gate or execution-drift filter -- neither is validated")
-    print("  for this entry type; left out rather than silently applied. 1-per-sector concentration cap")
+    print("  pathway. NOT run through the earnings gate -- not validated for this entry type, left out")
+    print("  rather than silently applied. DOES run the execution-drift filter (added 2026-07-30 after")
+    print("  a live SNDK case reversed +24% in one session) -- same threshold as the extension gate,")
+    print("  unvalidated for this population but better than no check. 1-per-sector concentration cap")
     print("  already applied below. Extension pathway is still the preferred pick if both exist -- it's")
     print("  live-validated, this one is backtest-only.")
     print("-" * 100)
@@ -1176,14 +1201,20 @@ def run_entry_screen(
                   f"peers_crashing={row['peer_count']}{held_flag}")
     basket_pick = select_best_basket_crash(capped_basket, held) if capped_basket else None
     if basket_pick is None:
-        reason = "no candidate in a 5d/-10% crash with >=2 same-sector gate-1 peers also crashing" \
-                 if not raw_basket else "all qualifying candidates already held"
+        if not raw_basket:
+            reason = "no candidate in a 5d/-10% crash with >=2 same-sector gate-1 peers also crashing"
+        elif all(r["ticker"] in held for r in capped_basket):
+            reason = "all qualifying candidates already held"
+        else:
+            reason = "every candidate already drifted beyond the execution-drift tolerance since signal close"
         print(f"  No eligible basket-crash candidate today ({reason}).")
     else:
         b_name = asset_name(basket_pick["ticker"])
+        drift = basket_pick.get("execution_drift")
+        drift_note = f", drift {drift:+.1%}" if drift is not None else ""
         print(f"\n  Best candidate: {basket_pick['ticker']}" + (f"  ({b_name})" if b_name else "") + "  "
               f"(sector={basket_pick['sector']}, 5d_roc={basket_pick['roc_5d']:+.1%}, "
-              f"peers_crashing={basket_pick['peer_count']})")
+              f"peers_crashing={basket_pick['peer_count']}{drift_note})")
         if pick is not None:
             print(f"  NOTE: extension pathway also has a candidate today ({pick['ticker']}) -- "
                   f"that one is the preferred pick (live-validated); this is shown for awareness.")
@@ -1337,9 +1368,11 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
     if basket_pick is not None:
         b_name = asset_name(basket_pick["ticker"])
         b_price = f"${basket_pick['price']:.2f}" if basket_pick.get("price") is not None else "n/a"
+        b_drift = basket_pick.get("execution_drift")
+        b_drift_note = f", drift {b_drift:+.1%}" if b_drift is not None else ""
         print(f"    Basket-crash   : {basket_pick['ticker']}" + (f" ({b_name})" if b_name else "") + f"  {b_price}  "
               f"(sector {basket_pick['sector']}, {basket_pick['roc_5d']:+.1%} 5d, "
-              f"{basket_pick['peer_count']} peers crashing)")
+              f"{basket_pick['peer_count']} peers crashing{b_drift_note})")
         print(f"    Plan           : buy near {b_price}, flat 21d exit, "
               f"NO stop until +{BASKET_TRAILING_TRIGGER_PCT:.0%} gain then trails {BASKET_TRAILING_PCT:.0%} "
               f"(no floor before that -- riskier than the extension pathway)")

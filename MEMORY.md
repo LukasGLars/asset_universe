@@ -2357,3 +2357,48 @@ Verified live via `sleeve_daily_summary()` -- see next session's status
 check for whether both a real extension AND real basket-crash candidate
 were observed simultaneously (unlikely on any given day, but the code
 path is now real and tested either way).
+
+**That prediction resolved same-day: both fired together for real.**
+Live check found extension pick STLD alongside a real basket-crash
+candidate, **SNDK (Sandisk Corporation)**, $1015.89, Technology, -36.5%
+over 5 trading days, 2 peers also crashing -- the decoupled display
+worked exactly as designed.
+
+## Execution-drift filter added to basket_crash (2026-07-30)
+
+Same live SNDK case immediately exposed a real gap: by the NEXT session
+its price had already reversed **+24.2%** (signal close $1015.89 ->
+live $1261.80, intraday high $1272.53) -- a violent one-day bounce off
+the crash bottom the signal was built on. basket_crash had deliberately
+never run the execution-drift filter (flagged as "not validated for
+this population" when the pathway was first built) -- this is live
+proof of exactly the risk that filter exists to catch, at a scale (24%)
+dwarfing the extension gate's own 0.9% threshold.
+
+**Fix:** `select_best_basket_crash()` now applies the SAME
+`_execution_drift_ok()` / `EXECUTION_DRIFT_THRESHOLD` (0.9%) used by
+the extension gate -- walks the ranked pool (deepest crash first, same
+as before) and skips any candidate that's drifted beyond tolerance
+since its signal close, trying the next-ranked one instead. Missing
+live-price data still fails OPEN (doesn't exclude), same convention as
+the extension gate.
+
+**Explicitly NOT claiming this threshold is right for this population**
+-- 0.9% was tuned on the extension gate's near-MA50, momentum-confirmed
+entries, not on crash-type entries that are inherently far more
+volatile by construction (a stock in a 5d/-10%+ move can easily swing
+harder intraday than a calm extension candidate). Reusing it here is a
+conservative stopgap, not a validated fit -- it may end up filtering
+most or all basket_crash candidates in practice, which would itself be
+useful signal (worth a future backtest pass on what threshold actually
+suits this population), not evidence of a bug. The alternative -- no
+check at all -- is what let SNDK through in the first place.
+
+Shipped: `select_best_basket_crash()` returns `execution_drift` in the
+result dict now (mirrors `select_best_candidate`'s pattern). Both
+`run_entry_screen()` and `sleeve_daily_summary()` display drift on the
+basket-crash pick's summary line, and the "no eligible candidate"
+reason text now distinguishes "every candidate already drifted beyond
+tolerance" from the other reasons (none crashing, all held). 3 new
+tests (skip-and-try-next, none-when-all-fail, missing-price fails
+open). Full suite: 339 passing.

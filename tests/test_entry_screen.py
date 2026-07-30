@@ -479,6 +479,41 @@ def test_select_best_basket_crash_none_when_empty():
     assert select_best_basket_crash([], held=set()) is None
 
 
+# ── Basket-crash execution-drift filter (added 2026-07-30 after a live
+# case: SNDK's signal close was $1015.89, but had already reversed +24% to
+# $1261.80 by the next session -- select_best_basket_crash now applies the
+# same drift check select_best_candidate uses, tries the next-ranked
+# candidate instead of the one that's drifted too far.)
+
+def test_select_best_basket_crash_skips_candidate_beyond_drift_threshold(monkeypatch):
+    def fake_drift(ticker, signal_close):
+        return (False, 0.24) if ticker == "A" else (True, 0.005)
+    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok", fake_drift)
+    rows = [
+        _basket_row("A", "Tech", -0.19, 3),      # deepest crash, ranks first, but drifted +24%
+        _basket_row("B", "Energy", -0.11, 2),
+    ]
+    pick = select_best_basket_crash(rows, held=set())
+    assert pick["ticker"] == "B"
+    assert pick["execution_drift"] == 0.005
+
+
+def test_select_best_basket_crash_none_when_all_fail_drift(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_execution_drift_ok", lambda ticker, signal_close: (False, 0.24))
+    rows = [_basket_row("A", "Tech", -0.19, 3), _basket_row("B", "Energy", -0.11, 2)]
+    assert select_best_basket_crash(rows, held=set()) is None
+
+
+def test_select_best_basket_crash_missing_price_fails_open(monkeypatch):
+    # No live-price data available (network failure etc.) -- doesn't exclude
+    # the candidate, same convention as the extension gate's drift filter.
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda ticker: None)
+    rows = [_basket_row("A", "Tech", -0.19, 3)]  # no "price" key -- signal_close is None
+    pick = select_best_basket_crash(rows, held=set())
+    assert pick["ticker"] == "A"
+    assert pick["execution_drift"] is None
+
+
 def _write_close_series(path, closes):
     dates = pd.date_range("2026-01-01", periods=len(closes), freq="D")
     pd.DataFrame({"date": dates, "close": closes}).to_parquet(path)
