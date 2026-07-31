@@ -2538,3 +2538,21 @@ once basket_crash has its own live track record:**
    a close look end-to-end (does the Telegram message read clearly in
    practice, does the trailing-only stop behave as expected) before
    trusting the mechanism blindly.
+
+## LLY earnings-day reaction is noise, not signal (2026-07-31)
+
+One-off diagnostic on LLY's own real historical earnings dates (99
+events, 2000-2026, real Surprise(%) from `_earnings_surprises()`):
+
+| | Pre-5d run-up | Earnings reaction | Post-21d drift |
+|---|---|---|---|
+| All (n=99) | +0.0% (49% win) | +0.1% (51% win) | +0.4% (52% win) |
+| Beats (n=74) | +0.3% (57% win) | +0.1% (51% win) | +0.2% (50% win) |
+| Misses (n=25) | -1.4% (28% win) | -0.4% (48% win) | +2.1% (56% win) |
+
+Median reaction is ~0% with a coin-flip win rate in both directions --
+no exploitable pre-earnings run-up or post-earnings drift for LLY
+specifically. The "misses drift up more" line (+2.1%) rests on 25
+events and reads as post-dip mean-reversion, not a real edge.
+Informational only -- doesn't touch any live gate. Diagnostic script,
+test, and workflow deleted after logging this.
