@@ -2574,3 +2574,21 @@ losers, and use their actual means. For STLD (n=1390, HIGH/TIGHT regime,
 **real expectancy +2.27%**. Genuinely positive, just not derivable from
 median + win rate alone. Diagnostic script/test/workflow deleted after
 logging this; not wired into any live gate (informational check only).
+
+## STLD conditional-median check: mean-based expectancy is not outlier-driven (2026-07-31)
+
+Follow-up to the STLD real-expectancy finding (+2.27% mean-based). Checked
+whether that mean was inflated by a few outlier winners by comparing against
+medians computed WITHIN the winners/losers groups (same 1390-sample
+regime-matched history, HIGH/TIGHT, 21d):
+
+|          | Mean  | Median | Max    |
+|----------|-------|--------|--------|
+| Win (n=841)  | +8.2% | +6.9%  | +32.1% |
+| Loss (n=549) | -6.7% | -5.8%  | -21.8% |
+
+Median-based expectancy: +1.87%, only 0.40% below the mean-based +2.27%.
+Small gap -> the edge is a genuinely typical effect across the sample, not
+an artifact of a handful of huge winners. Diagnostic script/test/workflow
+deleted after logging this; informational only, not wired into any live
+gate.
