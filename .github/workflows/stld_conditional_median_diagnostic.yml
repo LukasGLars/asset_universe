@@ -1,0 +1,51 @@
+name: stld-conditional-median-diagnostic
+
+# Manual-only, temporary diagnostic: follow-up to the STLD real-expectancy
+# check -- compares mean-based expectancy against median-based expectancy
+# (medians computed within the winners/losers groups separately) to check
+# whether the +2.27% mean-based edge is outlier-driven. Needs the real
+# parquet price store, only available on the Actions runner. Read-only:
+# no commits, no repo changes. Delete once the question is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run STLD conditional-median analysis
+        run: python -u run_stld_conditional_median_analysis.py 2>&1 | tee stld_median_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat stld_median_output.txt >> $GITHUB_STEP_SUMMARY
