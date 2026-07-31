@@ -30,18 +30,18 @@ FI@50 PACE TRACKER
 
   AWAR (trailing)         :  +16.5%
   Required CAGR           :  +22.4%
-  Status                  :  BEHIND  (-5.9% margin)
+  Status                  :  BEHIND  (-6.0% margin)
 
-  Projected @ AWAR        :     7,859,029 kr
-  vs target               :    -5,075,677 kr  (deficit)
+  Projected @ AWAR        :     7,823,823 kr
+  vs target               :    -5,110,883 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,482,976 kr       ~2047
-  Conservative   +15%       6,905,490 kr       ~2041
-  Base           +20%      10,556,330 kr       ~2038
-  Current AWAR   +17%       7,859,029 kr       ~2040
-  Bull           +30%      23,948,349 kr       ~2035
+  Bear           +10%       4,481,609 kr       ~2047
+  Conservative   +15%       6,902,650 kr       ~2041
+  Base           +20%      10,550,863 kr       ~2038
+  Current AWAR   +16%       7,823,823 kr       ~2040
+  Bull           +30%      23,930,954 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -103,7 +103,7 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
-    Forward EPS (+1yr est.)    : $19.51
+    Forward EPS (+1yr est.)    : $19.49
     Fwd/Trail ratio (normalized): 2.40x  (peer range 1.17-1.41x; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $29.44B (implied YoY +84.5%)
