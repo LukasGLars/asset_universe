@@ -1375,6 +1375,7 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
     print(f"    Status         : CLOSED (0/1 position)")
     if pick is not None:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
+        pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
         dur = int(pick["duration_days"]) if pd.notna(pick["duration_days"]) else 21
         pick_name = asset_name(pick["ticker"])
         drift = pick.get("execution_drift")
@@ -1384,8 +1385,11 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         # alert clarity", 2026-07-30) -- this exact text is what ends up in
         # the Telegram push via check_signal_changes.py, and the user may
         # not be able to run the full screen before needing to act on it.
+        # win rate added 2026-07-31: median-gain alone can't be judged against
+        # stop risk without it (see MEMORY.md).
+        win_note = f", win {pick_win:.0%}" if pd.notna(pick_win) else ""
         print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + f"  {price_str}  "
-              f"(ext {pick['dist_from_ma50']}, {dur}d med {pick_med:+.1%}, div {pick['diversity']}{drift_note})")
+              f"(ext {pick['dist_from_ma50']}, {dur}d med {pick_med:+.1%}{win_note}, div {pick['diversity']}{drift_note})")
         print(f"    Plan           : buy near {price_str}, hold ~{dur}d, "
               f"stop = MA50-{MA50_BUFFER_PCT:.0%} then trails {TRAILING_PCT:.0%} once +{TRAILING_TRIGGER_PCT:.0%} gain")
         print(f"    Open           : run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")
