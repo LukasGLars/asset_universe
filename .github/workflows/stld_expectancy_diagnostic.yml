@@ -1,0 +1,50 @@
+name: stld-expectancy-diagnostic
+
+# Manual-only, temporary diagnostic: real expectancy (mean win / mean loss,
+# not just median-of-everything and win rate) for STLD's live opp-sleeve
+# candidacy. Needs the real parquet price store, only available on the
+# Actions runner. Read-only: no commits, no repo changes. Delete once the
+# question that prompted it is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run STLD expectancy analysis
+        run: python -u run_stld_expectancy_analysis.py 2>&1 | tee stld_expectancy_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat stld_expectancy_output.txt >> $GITHUB_STEP_SUMMARY
