@@ -2556,3 +2556,21 @@ specifically. The "misses drift up more" line (+2.1%) rests on 25
 events and reads as post-dip mean-reversion, not a real edge.
 Informational only -- doesn't touch any live gate. Diagnostic script,
 test, and workflow deleted after logging this.
+
+## median x win_rate - stop_distance x loss_rate is not a valid expectancy formula (2026-07-31)
+
+Caught mid-conversation: eyeballing an opp-sleeve candidate's expectancy as
+`win_rate * median_return - loss_rate * stop_distance` is wrong, because
+median_return is the median of the WHOLE distribution (wins and losses
+together), not the average size of winning trades, and stop_distance isn't
+the average losing trade either. Naive formula for STLD's live candidacy
+gave -1.05% (looked like negative expectancy).
+
+Real fix: split the same regime-matched historical return distribution
+run_entry_screen.py already builds (duration_matched_return's raw `rets`,
+previously discarded after computing median/win-rate) into winners and
+losers, and use their actual means. For STLD (n=1390, HIGH/TIGHT regime,
+21d duration): win rate 60.5%, mean win +8.2%, mean loss -6.7% ->
+**real expectancy +2.27%**. Genuinely positive, just not derivable from
+median + win rate alone. Diagnostic script/test/workflow deleted after
+logging this; not wired into any live gate (informational check only).
