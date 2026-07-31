@@ -2592,3 +2592,15 @@ Small gap -> the edge is a genuinely typical effect across the sample, not
 an artifact of a handful of huge winners. Diagnostic script/test/workflow
 deleted after logging this; informational only, not wired into any live
 gate.
+
+**Backlogged, not built:** a downside-specific outlier check. The mean
+vs. median comparison above tests both tails together; the more useful
+version would isolate the LOSS side and re-run it against the actual
+stop-adjusted loss (the live binding_stop mechanism cuts a trade around
+-6.8% from entry, well inside the raw historical max loss of -21.8%),
+not the raw fixed-21d-window loss used here. Point being: upside skew is
+usually fine (or even the point, for a trailing-stop "let winners run"
+design) -- it's specifically hidden downside tail risk that would be
+worth flagging, and that requires reconstructing the stop-adjusted loss
+distribution rather than reusing the raw one. Worth a proper look when
+there's time; not urgent, no live gate depends on it.
