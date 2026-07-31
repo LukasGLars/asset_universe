@@ -818,19 +818,25 @@ def suggested_duration_days(earn_date, today: _date | None = None) -> int:
 def duration_matched_return(
     ticker: str, category: str, matched: pd.DatetimeIndex,
     calendar_days: int, data_dir: Path,
-) -> tuple[float | None, float | None, int]:
-    """Median return + win rate at calendar_days out, computed fresh from
-    the regime-matched historical dates. Returns (median, win_rate, n)."""
+) -> tuple[float | None, float | None, float | None, int]:
+    """Median return + win rate + mean-based expectancy at calendar_days out,
+    computed fresh from the regime-matched historical dates. Returns
+    (median, win_rate, ave, n). ave is win_rate*mean_win + loss_rate*mean_loss
+    -- the real probability-weighted average outcome, not derivable from
+    median/win_rate alone (see MEMORY.md "median x win_rate - stop_distance
+    x loss_rate is not a valid expectancy formula", 2026-07-31)."""
     path = reader.ticker_path(data_dir, category, ticker)
     if not path.exists():
-        return None, None, 0
+        return None, None, None, 0
     prices = reader.load(path)["close"].dropna().sort_index()
     trading_days = max(1, round(calendar_days * 252 / 365.25))
     rets = [r for dt in matched if (r := _uncapped_forward_return(prices, dt, trading_days)) is not None]
     if len(rets) < MIN_N_OBS:
-        return None, None, len(rets)
+        return None, None, None, len(rets)
     s = pd.Series(rets)
-    return float(s.median()), float((s > 0).mean()), len(rets)
+    win_rate = float((s > 0).mean())
+    ave = float(s.mean())  # == win_rate*mean(wins) + (1-win_rate)*mean(losses), same number either way
+    return float(s.median()), win_rate, ave, len(rets)
 
 
 # ── Pre-entry tripwire gate: the recommendation must earn it, not just the
@@ -1098,10 +1104,10 @@ def run_entry_screen(
 
         # Exact duration-matched return -- only worth computing for ENTER
         # survivors (that's the pool select_best_candidate ranks over).
-        dur_days = dur_med = dur_win = dur_n = None
+        dur_days = dur_med = dur_win = dur_ave = dur_n = None
         if verdict == "ENTER":
             dur_days = suggested_duration_days(earn_date, today)
-            dur_med, dur_win, dur_n = duration_matched_return(
+            dur_med, dur_win, dur_ave, dur_n = duration_matched_return(
                 t, cat_of.get(t, "equities"), matched, dur_days, data_dir
             )
 
@@ -1126,6 +1132,7 @@ def run_entry_screen(
             "duration_days": dur_days,
             "duration_med":  dur_med,
             "duration_win":  dur_win,
+            "duration_ave":  dur_ave,
             "duration_n":    dur_n,
             "med_252d":      info.get("med_252d"),
         }
@@ -1168,16 +1175,18 @@ def run_entry_screen(
             if pd.notna(r["duration_med"]):
                 dur_med = f"{r['duration_med']:+.1%}"
                 dur_win = f"{r['duration_win']:.1%}"
+                dur_ave = f"{r['duration_ave']:+.1%}" if pd.notna(r.get("duration_ave")) else "n/a"
                 dur_note = f" (n={int(r['duration_n'])})"
             else:
                 dur_med, dur_win = f"{r['med_21d']:+.1%}" if pd.notna(r["med_21d"]) else "n/a", \
                                    f"{r['win_21d']:.1%}" if pd.notna(r["win_21d"]) else "n/a"
+                dur_ave = "n/a"  # no ave_21d fallback column -- only computed on the duration-matched path
                 dur_note = " (fallback: 21d fixed, too few obs at exact duration)"
             med252 = f"{r['med_252d']:+.1%}" if pd.notna(r["med_252d"]) else "n/a"
             div = r["diversity"] if pd.notna(r["diversity"]) else "n/a"
             marker = " <- selected" if pick is not None and r["ticker"] == pick["ticker"] else ""
             print(f"    {r['ticker']:<8} ext={r['dist_from_ma50']:>7}  div={div:<9}  duration={dur:<4}  "
-                  f"med={dur_med:>7}  win={dur_win:>7}{dur_note}  (252d robustness: {med252:>8}){marker}")
+                  f"med={dur_med:>7}  ave={dur_ave:>7}  win={dur_win:>7}{dur_note}  (252d robustness: {med252:>8}){marker}")
     if pick is None:
         print("  No eligible new candidate (either no ENTER survivors, all already held, fresh-fallback "
               "path lacks 21d data for ranking, or every ranked candidate FAILED the pre-entry tripwire "
@@ -1185,11 +1194,13 @@ def run_entry_screen(
     else:
         pick_med = pick["duration_med"] if pd.notna(pick["duration_med"]) else pick["med_21d"]
         pick_win = pick["duration_win"] if pd.notna(pick["duration_win"]) else pick["win_21d"]
+        pick_ave = pick.get("duration_ave")
         pick_name = asset_name(pick["ticker"])
+        pick_ave_note = f", ave {pick_ave:+.1%}" if pd.notna(pick_ave) else ""
         print(f"\n  Best candidate: {pick['ticker']}" + (f"  ({pick_name})" if pick_name else "") + "  "
               f"(entry ${pick['price']:.2f}, MA50 ${pick['ma50']:.2f}, ext {pick['dist_from_ma50']}, "
               f"suggested duration {int(pick['duration_days'])}d, "
-              f"med {pick_med:+.1%}, win {pick_win:.1%}, diversity {pick['diversity']})")
+              f"med {pick_med:+.1%}{pick_ave_note}, win {pick_win:.1%}, diversity {pick['diversity']})")
         pt = pick.get("pretrade_tripwires")
         if pt is not None:
             print(f"  Pre-entry tripwire gate: PASSED (RS {pt['rs_20d']:+.1%}, "
@@ -1353,11 +1364,11 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         gate2_pass = bool(ma and ma["above_ma50"])
         verdict = "ENTER" if (gate2_pass and t in survivor_set) else "PASS"
 
-        dur_days = dur_med = dur_win = None
+        dur_days = dur_med = dur_win = dur_ave = None
         if verdict == "ENTER":
             earn_date = _next_earnings(t)
             dur_days = suggested_duration_days(earn_date, today)
-            dur_med, dur_win, _ = duration_matched_return(t, cat_of.get(t, "equities"), matched, dur_days, data_dir)
+            dur_med, dur_win, dur_ave, _ = duration_matched_return(t, cat_of.get(t, "equities"), matched, dur_days, data_dir)
 
         rows.append({
             "ticker": t, "verdict": verdict, "category": cat_of.get(t, "equities"),
@@ -1365,7 +1376,7 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
             "dist_from_ma50": f"{ma['dist_pct']:+.1%}" if ma else "n/a",
             "price": ma["price"] if ma else None, "ma50": ma["ma50"] if ma else None,
             "diversity": info.get("diversity"), "med_21d": info.get("med_21d"), "win_21d": info.get("win_21d"),
-            "duration_days": dur_days, "duration_med": dur_med, "duration_win": dur_win,
+            "duration_days": dur_days, "duration_med": dur_med, "duration_win": dur_win, "duration_ave": dur_ave,
         })
     out = pd.DataFrame(rows)
     pick = (select_best_candidate(out, held, data_dir=data_dir, gate1_candidates=candidates,
@@ -1387,9 +1398,15 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
         # not be able to run the full screen before needing to act on it.
         # win rate added 2026-07-31: median-gain alone can't be judged against
         # stop risk without it (see MEMORY.md).
-        win_note = f", win {pick_win:.0%}" if pd.notna(pick_win) else ""
+        # ave (mean-based expectancy) added 2026-07-31: median x win_rate isn't
+        # a valid expectancy formula -- this is the real probability-weighted
+        # average outcome (see MEMORY.md).
+        pick_ave = pick.get("duration_ave")
+        ave_note = f", ave {pick_ave:+.1%}" if pd.notna(pick_ave) else ""
+        win_note = f", win {pick_win:.1%}" if pd.notna(pick_win) else ""
         print(f"    Best candidate : {pick['ticker']}" + (f" ({pick_name})" if pick_name else "") + f"  {price_str}  "
-              f"(ext {pick['dist_from_ma50']}, {dur}d med {pick_med:+.1%}{win_note}, div {pick['diversity']}{drift_note})")
+              f"(ext {pick['dist_from_ma50']}, {dur}d med {pick_med:+.1%}{ave_note}{win_note}, "
+              f"div {pick['diversity']}{drift_note})")
         print(f"    Plan           : buy near {price_str}, hold ~{dur}d, "
               f"stop = MA50-{MA50_BUFFER_PCT:.0%} then trails {TRAILING_PCT:.0%} once +{TRAILING_TRIGGER_PCT:.0%} gain")
         print(f"    Open           : run_entry_screen.py --open {pick['ticker']} <fill_price> <shares> <capital_sek>")

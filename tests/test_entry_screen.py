@@ -129,6 +129,47 @@ def test_peak_since_entry_defaults_to_entry_price_when_file_missing(tmp_path):
     assert peak == 42.0
 
 
+def test_duration_matched_return_computes_mean_based_ave_not_derivable_from_median(tmp_path, monkeypatch):
+    # 10 matched dates (exactly MIN_N_OBS): 6 winners at +10%, 4 losers at -5%,
+    # each measured over a 2-trading-day forward window. Anchors spaced 4
+    # apart so each anchor's own price (100) never collides with another
+    # anchor's forward-window target.
+    from run_entry_screen import duration_matched_return
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / "x.parquet")
+    dates = pd.date_range("2026-01-01", periods=40, freq="D")
+    closes = [100.0] * 40
+    win_anchors = [0, 4, 8, 12, 16, 20]
+    loss_anchors = [24, 28, 32, 36]
+    for a in win_anchors:
+        closes[a + 2] = 110.0
+    for a in loss_anchors:
+        closes[a + 2] = 95.0
+    _write_parquet_closes(tmp_path / "x.parquet", dates, closes)
+
+    matched = dates[win_anchors + loss_anchors]
+    calendar_days = 2 * 365.25 / 252  # forces the internal trading-day window to exactly 2
+    median, win_rate, ave, n = duration_matched_return("X", "equities", matched, calendar_days, tmp_path)
+
+    assert n == 10
+    assert win_rate == 0.6
+    assert abs(median - 0.10) < 1e-9          # both middle values are +10% winners
+    assert abs(ave - 0.04) < 1e-9              # 0.6*10% + 0.4*-5% = 4% -- NOT derivable from median (10%) and win_rate alone
+    assert ave != median                       # the exact gap this fix exists to surface
+
+
+def test_duration_matched_return_none_when_below_min_n_obs(tmp_path, monkeypatch):
+    from run_entry_screen import duration_matched_return
+    monkeypatch.setattr(run_entry_screen.reader, "ticker_path",
+                         lambda data_dir, cat, tkr: tmp_path / "x.parquet")
+    dates = pd.date_range("2026-01-01", periods=10, freq="D")
+    _write_parquet_closes(tmp_path / "x.parquet", dates, [100.0] * 10)
+    matched = dates[[0, 2]]  # only 2 matched dates, below MIN_N_OBS=10
+    median, win_rate, ave, n = duration_matched_return("X", "equities", matched, 2, tmp_path)
+    assert (median, win_rate, ave) == (None, None, None)
+    assert n == 2
+
+
 def _candidate_row(ticker, dist, diversity, win_21d, med_21d=0.04):
     return {
         "ticker": ticker, "verdict": "ENTER", "dist_num": dist,
