@@ -28,7 +28,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Eli Lilly"
 ticker   = "LLY"
-shares   = 14
+shares   = 16
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -82,7 +82,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "home_base"
-value_sek = 371551
+value_sek = 349819
 
 [[positions]]
 name      = "War Chest"
@@ -107,4 +107,4 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 787
+value_sek = 821
