@@ -2604,3 +2604,35 @@ design) -- it's specifically hidden downside tail risk that would be
 worth flagging, and that requires reconstructing the stop-adjusted loss
 distribution rather than reusing the raw one. Worth a proper look when
 there's time; not urgent, no live gate depends on it.
+
+## Backlogged: decompose the AVGO crash-ROC trigger's false-alarm rate (2026-08-03)
+
+Operator's skepticism, worth a real answer rather than trend-following
+philosophy alone: the crash trigger (5d ROC <=-10%, see fi_tracker.py)
+doesn't trim AVGO on a fire -- it flips the target straight to 0%
+("Rotate AVGO -> Gold+LLY"), the same severity as a slow 200d SMA
+breakdown. If that trigger frequently fires on transient, sector-wide
+panics that then rebound, the system could be selling AVGO at close to
+the worst possible moment -- the same kind of setup basket_crash exists
+to buy *into* on other tickers.
+
+Related, already answered but not the same question: "AVGO gap-down x
+200d Guard state" (2026-07-28, above) found guard-active gap-downs
+bounce HARDER than guard-base ones, and reasoned this isn't a
+contradiction because the guard optimizes full-cycle tail risk
+(Sharpe/MaxDD/Calmar), not individual dip-bounce timing. That finding is
+about guard STATE broadly; it doesn't decompose the crash-ROC trigger
+specifically, and doesn't answer false-alarm rate vs. true-positive
+rate -- only that guard-active dips as a whole tend to bounce.
+
+What's still missing: for every historical date the crash-ROC trigger
+would have fired, split into "kept falling further" vs. "rebounded
+within N days" and report the split, plus the cost of the false alarms
+in isolation (not just the net aggregate return the 20-cell parameter
+grid already validated). The grid confirms the trigger wins in
+aggregate; it doesn't say whether that's from rescuing the portfolio
+from a couple of real disasters while eating frequent, costly whipsaws,
+or from being right most of the time. Those are very different risk
+profiles wearing the same headline number. Not urgent -- the guard is
+live and already validated in aggregate -- but worth a proper look
+before fully trusting the crash-ROC leg specifically.
