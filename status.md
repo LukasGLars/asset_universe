@@ -198,10 +198,10 @@ Computing capped 252d distributions for 51 candidates ...
   DELL      hist=10yr  (below min 10yr, skipped)
   4GLD.DE   no data
   TSLA      N= 546  mu=  +7.4%  sigma= 16.4%  hist=16yr  [SINGLE]
-  AAPL      N=1201  mu= +20.7%  sigma= 29.1%  hist=27yr  [MODERATE]
+  ETR       N=1201  mu= +13.2%  sigma= 19.1%  hist=27yr  [MODERATE]
   GC_F      N=1201  mu=  +9.2%  sigma= 11.3%  hist=26yr  [MODERATE]
 
-Cross-sectional prior mu : +19.3%  (shrinkage target)
+Cross-sectional prior mu : +19.1%  (shrinkage target)
 Shrinkage lambda         : 100  (asset needs N>>100 to be fully trusted)
 
 Optimizing (50 restarts, 30 candidates) ...
@@ -211,20 +211,20 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
 ========================================================================
   Universe       : top 50 screen candidates + GC_F
   Matched dates  : 1405  MODERATE
-  Shrinkage      : lambda=100  prior=+19.3%
+  Shrinkage      : lambda=100  prior=+19.1%
 
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
   -----------------------------------------------------------------
-  BKNG        33.2%    +35.3%    +34.1%    47.1%   1201    27yr  MODERATE
-  GRMN        24.6%    +30.2%    +29.3%    32.6%   1201    26yr  MODERATE
-  LITE        14.9%    +39.8%    +31.1%    54.3%    546    11yr    SINGLE
-  DECK        12.2%    +31.4%    +30.5%    55.2%   1201    27yr  MODERATE
-  AVGO         5.5%    +33.4%    +27.4%    35.6%    546    17yr    SINGLE
-  GC_F         5.0%     +9.2%    +10.0%    11.3%   1201    26yr  MODERATE  [gold]
-  FSLR         4.5%    +29.1%    +28.0%    53.6%    784    20yr  MODERATE
+  BKNG        33.4%    +35.3%    +34.1%    47.1%   1201    27yr  MODERATE
+  GRMN        24.9%    +30.2%    +29.3%    32.6%   1201    26yr  MODERATE
+  LITE        14.7%    +39.8%    +31.0%    54.3%    546    11yr    SINGLE
+  DECK        12.3%    +31.4%    +30.4%    55.2%   1201    27yr  MODERATE
+  AVGO         5.1%    +33.4%    +27.3%    35.6%    546    17yr    SINGLE
+  GC_F         5.0%     +9.2%     +9.9%    11.3%   1201    26yr  MODERATE  [gold]
+  FSLR         4.6%    +29.1%    +28.0%    53.6%    784    20yr  MODERATE
 
   Active positions   : 7  (weight >= 1%)
-  Equal-weight g(w)  : +19.5%  (benchmark)
+  Equal-weight g(w)  : +19.2%  (benchmark)
   Optimized g(w)     : +28.0%
 
 
