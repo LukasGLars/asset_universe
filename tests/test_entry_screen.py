@@ -8,6 +8,7 @@ from run_entry_screen import (
     sleeve_risk_state, _tripwire_detail_line, _risk_to_stop_str,
     basket_crash_binding_stop,
     cap_basket_crash_concentration, select_best_basket_crash,
+    post_fill_warnings,
 )
 
 
@@ -646,3 +647,75 @@ def test_basket_crash_candidates_empty_when_nothing_crashing(tmp_path, monkeypat
     monkeypatch.setattr(run_entry_screen, "_sector_of", lambda t: "Technology")
     rows = run_entry_screen.basket_crash_candidates(["FLAT"], {"FLAT": "equities"}, tmp_path)
     assert rows == []
+
+
+def test_post_fill_warnings_clean_when_everything_still_passes(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 252.0, "ma50": 248.0, "above_ma50": True, "dist_pct": 0.016})
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         lambda *a, **k: (True, _tw()))
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 252.30)
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 251.26, "extension", ["STLD"], {}, None)
+    assert warnings == []
+
+
+def test_post_fill_warnings_flags_price_now_below_ma50(monkeypatch):
+    # live/current price sits just below MA50 but still within drift
+    # tolerance of the fill -- isolates the MA50 flag from the drift flag.
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 246.0, "ma50": 248.0, "above_ma50": False, "dist_pct": -0.008})
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         lambda *a, **k: (True, _tw()))
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 246.0)
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 247.9, "extension", ["STLD"], {}, None)
+    assert len(warnings) == 1
+    assert "BELOW its MA50" in warnings[0]
+
+
+def test_post_fill_warnings_flags_failed_tripwire_for_extension_entries(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 252.0, "ma50": 248.0, "above_ma50": True, "dist_pct": 0.016})
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         lambda *a, **k: (False, _tw(rs_ok=False, ma50_rising=False)))
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 252.0)
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 251.26, "extension", ["STLD"], {}, None)
+    assert len(warnings) == 1
+    assert "tripwire would FAIL" in warnings[0]
+
+
+def test_post_fill_warnings_skips_tripwire_check_for_basket_crash_entries(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 252.0, "ma50": 248.0, "above_ma50": True, "dist_pct": 0.016})
+    def _boom(*a, **k):
+        raise AssertionError("pretrade tripwire check should not run for basket_crash entries")
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check", _boom)
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 252.0)
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 251.26, "basket_crash", ["STLD"], {}, None)
+    assert warnings == []
+
+
+def test_post_fill_warnings_flags_price_moved_beyond_drift_tolerance_since_fill(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 246.0, "ma50": 240.0, "above_ma50": True, "dist_pct": 0.025})
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         lambda *a, **k: (True, _tw()))
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 246.0)  # -2.1% vs the 251.26 fill
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 251.26, "extension", ["STLD"], {}, None)
+    assert len(warnings) == 1
+    assert "moved" in warnings[0] and "drift tolerance" in warnings[0]
+
+
+def test_post_fill_warnings_combines_multiple_flags(monkeypatch):
+    monkeypatch.setattr(run_entry_screen, "_ma50_stats",
+                         lambda data_dir, cat, tkr: {"price": 246.0, "ma50": 248.0, "above_ma50": False, "dist_pct": -0.008})
+    monkeypatch.setattr(run_entry_screen, "_pretrade_tripwire_check",
+                         lambda *a, **k: (False, _tw(rs_ok=False)))
+    monkeypatch.setattr(run_entry_screen, "_live_price", lambda tkr: 246.0)
+    monkeypatch.setattr(run_entry_screen, "already_held_tickers", lambda: set())
+    warnings = post_fill_warnings("STLD", "equities", 251.26, "extension", ["STLD"], {}, None)
+    assert len(warnings) == 3

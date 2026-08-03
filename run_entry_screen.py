@@ -1451,6 +1451,41 @@ def sleeve_daily_summary(data_dir: Path | None = None, top_n: int = 30, benchmar
 # ── Position lifecycle (records a manually-executed trade -- no brokerage
 #    integration, this is decision-support/record-keeping only) ────────────
 
+# Post-fill sanity check (2026-08-03): the screen that qualified a ticker
+# goes stale the moment it's run -- nothing re-verifies it between "screen
+# says ENTER" and "you actually place the order". This doesn't block
+# recording the fill (the trade already happened), it just loudly flags
+# if a fresh screen right now would say no, so a stale entry is never
+# silently treated as still-validated. See MEMORY.md "I had to check
+# manually" (2026-08-03).
+def post_fill_warnings(
+    ticker: str, category: str, entry_price: float, entry_type: str,
+    candidates: list[str], conditions: dict, data_dir: Path,
+) -> list[str]:
+    warnings_found = []
+    ma = _ma50_stats(data_dir, category, ticker)
+    if ma is not None and not ma["above_ma50"]:
+        warnings_found.append(f"price is now BELOW its MA50 ({ma['dist_pct']:+.1%}) -- gate 2 would fail right now")
+    if entry_type == "extension":
+        passed, tw = _pretrade_tripwire_check(ticker, category, candidates, already_held_tickers(),
+                                               conditions, data_dir)
+        if not passed:
+            warnings_found.append(
+                f"pre-entry tripwire would FAIL right now (RS {tw['rs_20d']:+.1%}, "
+                f"cluster {'ok' if not tw['cluster_breakdown'] else 'BREAKDOWN'}, "
+                f"MA50 slope {'rising' if tw['ma50_rising'] else 'FALLING'})"
+            )
+    live_price = _live_price(ticker)
+    if live_price is not None and entry_price > 0:
+        post_fill_drift = live_price / entry_price - 1
+        if abs(post_fill_drift) > EXECUTION_DRIFT_THRESHOLD:
+            warnings_found.append(
+                f"price has moved {post_fill_drift:+.1%} vs your fill since -- "
+                f"beyond the +/-{EXECUTION_DRIFT_THRESHOLD:.1%} drift tolerance"
+            )
+    return warnings_found
+
+
 def open_position(ticker: str, entry_price: float, shares: int, capital_sek: float,
                    data_dir: Path | None = None, entry_type: str = "extension") -> None:
     if entry_type not in ("extension", "basket_crash"):
@@ -1485,6 +1520,15 @@ def open_position(ticker: str, entry_price: float, shares: int, capital_sek: flo
     _write_sleeve_state(state)
     print(f"Sleeve opened: {ticker} @ ${entry_price:.2f}, {shares} shares, {capital_sek:,.0f} kr, "
           f"entry_type={entry_type}, regime {conditions['ry_regime']}/{conditions['baa10y_regime']}, peers {peers}")
+
+    warnings_found = post_fill_warnings(ticker, category, entry_price, entry_type, candidates, conditions, data_dir)
+    if warnings_found:
+        print("\n  ** POST-FILL WARNING: a fresh screen right now would NOT re-validate this entry **")
+        for w in warnings_found:
+            print(f"    - {w}")
+        print("  Position is recorded as-is (already executed) -- this is informational, not reversible.")
+    else:
+        print("  Post-fill check: still passes a fresh screen right now.")
 
 
 def close_position() -> None:
