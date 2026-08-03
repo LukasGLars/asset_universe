@@ -28,20 +28,20 @@ FI@50 PACE TRACKER
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  11.0
 
-  AWAR (trailing)         :  +16.0%
+  AWAR (trailing)         :  +15.9%
   Required CAGR           :  +22.5%
-  Status                  :  BEHIND  (-6.5% margin)
+  Status                  :  BEHIND  (-6.6% margin)
 
-  Projected @ AWAR        :     7,489,172 kr
-  vs target               :    -5,445,534 kr  (deficit)
+  Projected @ AWAR        :     7,392,882 kr
+  vs target               :    -5,541,824 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,468,672 kr       ~2047
-  Conservative   +15%       6,881,579 kr       ~2041
-  Base           +20%      10,517,251 kr       ~2038
-  Current AWAR   +16%       7,489,172 kr       ~2040
-  Bull           +30%      23,850,052 kr       ~2035
+  Bear           +10%       4,464,581 kr       ~2047
+  Conservative   +15%       6,873,090 kr       ~2041
+  Base           +20%      10,500,917 kr       ~2038
+  Current AWAR   +16%       7,392,882 kr       ~2041
+  Bull           +30%      23,798,115 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -116,7 +116,7 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.55 vs $6.79  (+25.9% surprise)
     TTM EPS (non-GAAP actual)  : $29.42
-    Forward EPS (+1yr est.)    : $45.06
+    Forward EPS (+1yr est.)    : $45.08
     Fwd/Trail ratio (normalized): 1.53x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
     Revenue (latest qtr, actual): $19.80B  (TTM YoY: +47.4%)
     Next-qtr revenue consensus : $20.69B (implied YoY +33.0%)
