@@ -32,16 +32,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.5%
   Status                  :  BEHIND  (-6.6% margin)
 
-  Projected @ AWAR        :     7,450,819 kr
-  vs target               :    -5,483,887 kr  (deficit)
+  Projected @ AWAR        :     7,418,925 kr
+  vs target               :    -5,515,781 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,466,909 kr       ~2047
-  Conservative   +15%       6,876,879 kr       ~2041
-  Base           +20%      10,506,960 kr       ~2038
-  Current AWAR   +16%       7,450,819 kr       ~2041
-  Bull           +30%      23,812,649 kr       ~2035
+  Bear           +10%       4,465,545 kr       ~2047
+  Conservative   +15%       6,874,050 kr       ~2041
+  Base           +20%      10,501,518 kr       ~2038
+  Current AWAR   +16%       7,418,925 kr       ~2041
+  Bull           +30%      23,795,351 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -128,7 +128,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : STLD (Steel Dynamics, Inc.)  $258.38  (ext +3.8%, 21d med +2.7%, ave +2.3%, win 60.6%, div ROBUST, drift -0.0%)
+    Best candidate : STLD (Steel Dynamics, Inc.)  $258.38  (ext +3.8%, 21d med +2.7%, ave +2.3%, win 60.6%, div ROBUST, drift +0.6%)
     Plan           : buy near $258.38, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open STLD <fill_price> <shares> <capital_sek>
     VIX review     : 15.86  (37% percentile, falling) -- for review, not a gate
