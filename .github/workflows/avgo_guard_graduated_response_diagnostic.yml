@@ -1,0 +1,55 @@
+name: avgo-guard-graduated-response-diagnostic
+
+# Manual-only, temporary diagnostic: models a graduated response for the
+# AVGO crash-ROC guard on basket-confirmed (sector-wide) crashes instead
+# of today's full 0%-target flip, and validates it on Sharpe/MaxDD/Calmar
+# against the current binary guard -- same rigor as the original guard
+# validation (run_crash_guard_validation.py). Follow-up to MEMORY.md's
+# "AVGO crash-ROC guard: basket crashes bounce HARDER than solo" finding
+# (2026-08-04). Needs the real parquet price store plus live yfinance
+# history for semiconductor peers -- only available on the Actions
+# runner. Read-only: no commits, no repo changes. Delete once the
+# question that prompted it is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run AVGO guard graduated-response backtest
+        run: python -u run_avgo_guard_graduated_response.py 2>&1 | tee avgo_graduated_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat avgo_graduated_output.txt >> $GITHUB_STEP_SUMMARY
