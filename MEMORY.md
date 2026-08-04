@@ -2680,3 +2680,41 @@ backtest a graduated response against the existing binary one on
 Sharpe/MaxDD/Calmar before touching the live guard. Not built --
 informational only, diagnostic script/test/workflow deleted after
 logging this.
+
+## AVGO guard resolved: graduated response for basket crashes does NOT beat the current full flip (2026-08-04)
+
+Direct resolution of the backlogged item and the basket-crash-bounce
+finding above. Built a graduated-response backtest: basket-confirmed
+crash-ROC triggers get a partial rotation (AVGO weight interpolated
+between full exposure and 0% by a rotation_fraction), MA-breach and solo
+crash-ROC triggers unchanged (full flip). Grid over rotation_fraction,
+Sharpe/MaxDD/Calmar, AVGO's full history (2009-2026), same rigor as the
+original guard validation:
+
+| rotation_fraction | CAGR  | MaxDD | Sharpe | Calmar |
+|---|---|---|---|---|
+| 0.00 (ignore basket trigger) | +37.3% | -16.8% | 1.697 | 2.219 |
+| 0.25 | +37.3% | -16.8% | 1.703 | 2.216 |
+| 0.50 | +38.2% | -16.8% | 1.747 | 2.273 |
+| 0.75 | +39.2% | -16.8% | 1.788 | 2.329 |
+| 1.00 (current, full flip)   | **+40.3%** | -16.8% | **1.835** | **2.399** |
+
+**The current full-flip response wins outright on every metric.** MaxDD is
+IDENTICAL across every fraction -- AVGO's worst historical drawdown is
+unrelated to these basket-crash-ROC events, so softening the response
+buys zero tail-risk benefit while giving up CAGR/Sharpe/Calmar
+monotonically as the rotation fraction decreases.
+
+This does not contradict the per-event finding above (basket crashes
+bounce harder/more reliably on a 21d/63d point-return basis) -- it
+resolves at a different level. The per-event view only looks at where
+price ends up after N days; this portfolio simulation captures realized
+volatility DURING the crash window itself (compounding, not just
+endpoint). Staying partially exposed through a choppy sector-wide crash
+costs more in volatility drag than the eventual bounce recovers.
+
+**Resolved -- no change to the live guard.** Diagnostic script/test/
+workflow deleted after logging this. If revisited later, the per-event
+bounce evidence is real but insufficient on its own; any future guard
+change needs to clear this same portfolio-level bar, not just the
+event-level one.
