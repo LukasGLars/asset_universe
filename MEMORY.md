@@ -2718,3 +2718,32 @@ workflow deleted after logging this. If revisited later, the per-event
 bounce evidence is real but insufficient on its own; any future guard
 change needs to clear this same portfolio-level bar, not just the
 event-level one.
+
+## War chest SUSPENDED (not retired) -- target updated to Reactor Core 83.3% / Home Base 16.7% (2026-08-04)
+
+Operator's call: the war chest / opp sleeve concept stays (it's a real,
+validated, positive-expectancy mechanism -- see the STLD expectancy work
+above), but the war chest is SUSPENDED for now, not permanently retired.
+Its target allocation is reassigned while suspended.
+
+**Updated target (supersedes "Rebalance -- DECIDED 2026-07-02" above
+for the bucket split only -- the 83.3% Reactor Core figure and its
+derivation are unchanged):**
+
+  Reactor Core 83.3% / Home Base 16.7% / War Chest 0% (suspended)
+
+The freed 4.5% goes ENTIRELY to Home Base, not split with Reactor Core.
+Reason: 83.3% is not a preference, it's a hard ceiling --
+`-25% max portfolio drawdown tolerance / -30% Reactor Core worst-case
+MaxDD (crash-guard-improved TXN analog) = 83.3%`, derived assuming
+everything outside Reactor Core has ~0% drawdown risk. Reactor Core is
+already at the maximum weight that tolerance allows; raising it further
+(via a split) would exceed the -25% portfolio drawdown ceiling the
+83.3% figure exists to enforce. Home Base (Spiltan Räntefond, low-vol)
+is the bucket the ceiling assumes absorbs everything Reactor Core can't
+safely hold, so it's the only correct destination for the freed capital.
+
+Not enforced by any live code (no script reads the bucket-level target
+split -- it's a planning reference only, checked manually against
+`status.md`'s TPV breakdown). If the war chest is un-suspended later,
+revert to Reactor Core 83.3% / War Chest 4.5% / Home Base 12.2%.
