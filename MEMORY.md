@@ -2636,3 +2636,47 @@ or from being right most of the time. Those are very different risk
 profiles wearing the same headline number. Not urgent -- the guard is
 live and already validated in aggregate -- but worth a proper look
 before fully trusting the crash-ROC leg specifically.
+
+## AVGO crash-ROC guard: basket (sector-wide) crashes bounce HARDER than solo ones (2026-08-04)
+
+Direct follow-up to the backlogged crash-ROC false-alarm item (2026-08-03)
+and the operator's unease about the guard flipping AVGO to 0% during a
+sector-wide crash -- exactly the scenario basket_crash exists to buy into
+on other tickers. Reconstructed all 25 historical dates AVGO's own
+crash-ROC trigger (5d ROC <=-10%, same threshold as the live guard) would
+have fired, declustered, split into solo (AVGO alone) vs. basket (>=2 of
+12 real semiconductor peers -- NVDA/AMD/INTC/TXN/QCOM/MU/AMAT/LRCX/KLAC/
+ADI/MRVL/ON -- also in a 5d/-10% crash the same date):
+
+**18 of 25 events (72%) were basket, not solo** -- the sector-wide
+scenario is the majority case, not an edge case.
+
+| | 21d | 63d |
+|---|---|---|
+| Solo (n=7)    | +1.1% median, 57% win | +11.2% median, 86% win |
+| Basket (n=18) | +4.8% median, 72% win | +12.9% median, 94% win |
+
+Basket crashes bounce harder AND more reliably than solo crashes at both
+horizons -- consistent with (and now more specific than) the earlier
+"AVGO gap-down x 200d Guard state" finding (2026-07-28, guard-active gaps
+bounce harder generally). This is exactly the case the guard's full
+"Rotate AVGO -> Gold+LLY (0% AVGO)" response is theoretically most
+defensive about, and empirically it's the case with the best, most
+reliable rebound.
+
+**Same caveat as the 2026-07-28 finding still applies -- do NOT read
+this as "turn the guard off" or "ignore basket crashes":** the guard's
+job is capping tail risk across the FULL cycle (validated separately on
+Sharpe/MaxDD/Calmar), not predicting individual bounces. A high bounce
+rate doesn't offset the value of the rare real-disaster case the guard
+exists to cut.
+
+**What this DOES support, worth a real proposal before building:** the
+guard currently treats solo and basket crashes identically (same full
+0%-target flip). Given basket crashes empirically bounce better, a
+softened response specifically for basket-confirmed triggers (e.g.
+partial rotation instead of full 0%) is worth modeling properly --
+backtest a graduated response against the existing binary one on
+Sharpe/MaxDD/Calmar before touching the live guard. Not built --
+informational only, diagnostic script/test/workflow deleted after
+logging this.
