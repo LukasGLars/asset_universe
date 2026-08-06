@@ -32,16 +32,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.2%
   Status                  :  BEHIND  (-2.6% margin)
 
-  Projected @ AWAR        :    10,448,339 kr
-  vs target               :    -2,486,367 kr  (deficit)
+  Projected @ AWAR        :    10,393,654 kr
+  vs target               :    -2,541,052 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,568,766 kr       ~2047
-  Conservative   +15%       7,041,454 kr       ~2041
-  Base           +20%      10,767,481 kr       ~2038
-  Current AWAR   +20%      10,448,339 kr       ~2038
-  Bull           +30%      24,430,583 kr       ~2035
+  Bear           +10%       4,567,376 kr       ~2047
+  Conservative   +15%       7,038,562 kr       ~2041
+  Base           +20%      10,761,909 kr       ~2038
+  Current AWAR   +20%      10,393,654 kr       ~2038
+  Bull           +30%      24,412,841 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -121,7 +121,7 @@ TACTICAL RULES
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
     Next-qtr revenue consensus : $21.67B (implied YoY +23.1%)
     Next earnings  : 2026-08-05
-    Reminder       : DUE
+    Reminder       : not_due
     Latest quarter : 2026-06-30
     Beat streak    : 4
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
