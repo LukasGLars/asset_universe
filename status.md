@@ -116,10 +116,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $45.08
-    Fwd/Trail ratio (normalized): 1.43x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
+    Forward EPS (+1yr est.)    : $46.18
+    Fwd/Trail ratio (normalized): 1.47x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $21.67B (implied YoY +23.1%)
+    Next-qtr revenue consensus : $22.10B (implied YoY +25.6%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
