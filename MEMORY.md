@@ -2747,3 +2747,29 @@ Not enforced by any live code (no script reads the bucket-level target
 split -- it's a planning reference only, checked manually against
 `status.md`'s TPV breakdown). If the war chest is un-suspended later,
 revert to Reactor Core 83.3% / War Chest 4.5% / Home Base 12.2%.
+
+## Midterm-election pattern shows up in all 3 core holdings (2026-08-07)
+
+Checked whether the well-known US midterm-election-year pattern (weak
+run-up, strong post-election rally) shows up in AVGO/LLY/Gold
+specifically, not just the broad index. Real historical US midterm
+election dates (2002, 2006, 2010, 2014, 2018, 2022 -- 2026-11-03 is
+next, ~3 months out as of this entry). Convention: idx = first trading
+day on/after the election.
+
+| | post_21d | post_63d | post_252d | n |
+|---|---|---|---|---|
+| AVGO | +14.1% med, 100% win | +23.1% med, 100% win | +44.6% med, 100% win | 4 (IPO 2009, only 4 midterms available) |
+| LLY  | +4.7% med, 67% win  | +3.8% med, 67% win   | +13.8% med, 83% win  | 6 |
+| Gold | +2.5% med, 100% win | +7.7% med, 83% win   | +19.6% med, 83% win  | 6 |
+
+All three show a genuinely positive post-midterm drift. Caveat: n=4-6
+per asset -- real pattern, thin sample, not heavily powered (this is
+descriptive, not backtest-grade validation like the AVGO gap-down or
+opp-sleeve studies). Notable: **Gold's midterm-election signal is
+cleaner and stronger than its own gap-down signal** (which was
+weak/noisy, 2026-07-28 entry above) -- if Gold needs a tactical timing
+signal at all, this looks like a better candidate than gap-down.
+
+Informational only -- not wired into any live gate. Diagnostic script,
+test, and workflow deleted after logging this.
