@@ -1,0 +1,51 @@
+name: midterm-election-diagnostic
+
+# Manual-only, temporary diagnostic: does the well-known US midterm-
+# election-year market pattern show up in AVGO/LLY/Gold specifically?
+# Real historical US midterm election dates only. Needs the real
+# parquet price store -- only available on the Actions runner.
+# Read-only: no commits, no repo changes. Delete once the question
+# that prompted it is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run midterm election analysis
+        run: python -u run_midterm_election_analysis.py 2>&1 | tee midterm_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat midterm_output.txt >> $GITHUB_STEP_SUMMARY
