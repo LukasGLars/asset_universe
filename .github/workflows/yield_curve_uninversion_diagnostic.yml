@@ -1,0 +1,52 @@
+name: yield-curve-uninversion-diagnostic
+
+# Manual-only, temporary diagnostic: exact dates T10Y2Y and T10Y3M went
+# from inverted (negative) to uninverted (positive) in this cycle, plus
+# whether either has re-inverted since -- to assess recession-imminence
+# given the pattern that uninversion, not inversion, has historically
+# preceded recession onset. Needs the real FRED-sourced macro parquet
+# store -- only available on the Actions runner. Read-only: no commits,
+# no repo changes. Delete once the question that prompted it is answered.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Ensure local data is fresh (auto-refreshes if stale)
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+      - name: Run yield curve uninversion check
+        run: python -u run_yield_curve_uninversion_check.py 2>&1 | tee yield_curve_output.txt
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+
+      - name: Write step summary
+        run: cat yield_curve_output.txt >> $GITHUB_STEP_SUMMARY
