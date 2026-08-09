@@ -2773,3 +2773,24 @@ signal at all, this looks like a better candidate than gap-down.
 
 Informational only -- not wired into any live gate. Diagnostic script,
 test, and workflow deleted after logging this.
+
+## Yield curve uninversion dates confirmed from real FRED data (2026-08-09)
+
+Operator asked when T10Y2Y/T10Y3M uninverted (recession-timing context
+-- historically uninversion, not inversion, has preceded recession
+onset as the Fed cuts short rates faster than long rates fall). My
+from-memory guess was wrong (esp. T10Y3M, off by ~10 months) -- pulled
+real dates from the tracked FRED series instead:
+
+- **T10Y2Y**: durably uninverted 2024-09-06 (some noisy flipping right
+  at the crossing in late Aug/early Sept 2024 before holding). Current
+  +0.46, no re-inversion in 702 days as of 2026-08-07.
+- **T10Y3M**: durably uninverted 2025-10-17 (also choppy through most
+  of 2025 before holding). Current +0.78, no re-inversion in 296 days.
+
+T10Y3M is the curve the NY Fed's own recession-probability model uses;
+~10 months past its uninversion is squarely inside the historical
+6-18-month window recessions have tended to start in. T10Y2Y's 23
+months since uninversion is longer than typical without a recession
+yet. Informational only -- not wired into any live gate. Diagnostic
+script/test/workflow deleted after logging this.
