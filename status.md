@@ -26,22 +26,22 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,131,894 kr
   Target (FI@50)          :    12,934,706 kr
-  Years remaining         :  11.0
+  Years remaining         :  10.9
 
-  AWAR (trailing)         :  +21.2%
+  AWAR (trailing)         :  +21.0%
   Required CAGR           :  +22.1%
-  Status                  :  BEHIND  (-0.9% margin)
+  Status                  :  BEHIND  (-1.1% margin)
 
-  Projected @ AWAR        :    11,990,054 kr
-  vs target               :      -944,652 kr  (deficit)
+  Projected @ AWAR        :    11,790,752 kr
+  vs target               :    -1,143,954 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,611,368 kr       ~2047
-  Conservative   +15%       7,109,520 kr       ~2041
-  Base           +20%      10,874,050 kr       ~2038
-  Current AWAR   +21%      11,990,054 kr       ~2037
-  Bull           +30%      24,677,993 kr       ~2035
+  Bear           +10%       4,607,166 kr       ~2047
+  Conservative   +15%       7,100,769 kr       ~2041
+  Base           +20%      10,857,182 kr       ~2038
+  Current AWAR   +21%      11,790,752 kr       ~2037
+  Bull           +30%      24,624,273 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -116,10 +116,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $46.18
-    Fwd/Trail ratio (normalized): 1.47x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
+    Forward EPS (+1yr est.)    : $46.46
+    Fwd/Trail ratio (normalized): 1.48x  (baseline established 2026-07-06; in line with peer range 1.17-1.41x)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.10B (implied YoY +25.6%)
+    Next-qtr revenue consensus : $22.16B (implied YoY +25.9%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
@@ -128,7 +128,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : HWM (Howmet Aerospace Inc.)  $281.88  (ext +3.6%, 21d med +2.4%, ave +3.6%, win 64.6%, div THIN, drift -0.0%)
+    Best candidate : HWM (Howmet Aerospace Inc.)  $281.88  (ext +3.6%, 21d med +2.4%, ave +3.6%, win 64.6%, div THIN, drift +0.5%)
     Plan           : buy near $281.88, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>
     VIX review     : 14.90  (31% percentile, falling) -- for review, not a gate
