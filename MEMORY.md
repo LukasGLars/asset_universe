@@ -2794,3 +2794,32 @@ T10Y3M is the curve the NY Fed's own recession-probability model uses;
 months since uninversion is longer than typical without a recession
 yet. Informational only -- not wired into any live gate. Diagnostic
 script/test/workflow deleted after logging this.
+
+## Remaining AVGO tranche (~100k kr): deployment plan decided (2026-08-10)
+
+Last ~100k kr of the AVGO rebalance (funded by prior WMT/CCJ/VRT/HWM
+proceeds) split into two tranches instead of one lump-sum entry, each
+tied to a signal already validated this session rather than a guess:
+
+- **Half on a real gap-down**, if/when AVGO prints an actual -10%/5d
+  crash-ROC move before the midterm window below -- same trigger class
+  the crash guard itself watches (`CRASH_ROC_WINDOW=5`,
+  `CRASH_ROC_THRESHOLD=-0.10`), not a minor pullback. A 2026-08-07
+  1.22% close-to-close pullback (AVGO $427.76, +8.3% above 50MA,
+  +16.7% above 200SMA, 5d ROC +9.9%) was explicitly evaluated and
+  rejected as this trigger -- noise, nowhere close to -10%/5d, guard
+  state BASE throughout.
+- **Remainder deployed after 2026-11-03** (the next US midterm
+  election), per this session's midterm-election seasonality finding
+  (AVGO post-election window showed a positive pattern, n=4-6,
+  descriptive not backtest-grade -- see "Midterm-election pattern"
+  above).
+- If neither the gap-down trigger fires nor the midterm date is
+  reached, evaluated opportunity cost vs. the lump-sum-now alternative
+  at ~400k current AVGO size and concluded the split plan's
+  risk-adjusted expected value still wins -- bottom line reaffirmed
+  this session, no new backtest built for this specific comparison
+  (reasoned from existing validated pieces, not a fresh script).
+
+Not wired into any code/automation -- this is an operator capital-
+deployment decision, tracked here for continuity, not a live gate.
