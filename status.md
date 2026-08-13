@@ -30,18 +30,18 @@ FI@50 PACE TRACKER
 
   AWAR (trailing)         :  +21.7%
   Required CAGR           :  +22.0%
-  Status                  :  BEHIND  (-0.3% margin)
+  Status                  :  BEHIND  (-0.4% margin)
 
-  Projected @ AWAR        :    12,627,231 kr
-  vs target               :      -307,475 kr  (deficit)
+  Projected @ AWAR        :    12,555,522 kr
+  vs target               :      -379,184 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,629,200 kr       ~2047
-  Conservative   +15%       7,135,328 kr       ~2041
-  Base           +20%      10,910,290 kr       ~2038
-  Current AWAR   +22%      12,627,231 kr       ~2037
-  Bull           +30%      24,742,972 kr       ~2035
+  Bear           +10%       4,627,794 kr       ~2047
+  Conservative   +15%       7,132,400 kr       ~2041
+  Base           +20%      10,904,646 kr       ~2038
+  Current AWAR   +22%      12,555,522 kr       ~2037
+  Bull           +30%      24,725,006 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -198,8 +198,8 @@ Computing capped 252d distributions for 51 candidates ...
   APH       N=1278  mu= +16.7%  sigma= 24.3%  hist=27yr  [ROBUST]
   ISRG      N=1278  mu= +17.5%  sigma= 33.6%  hist=26yr  [ROBUST]
   CRWD      hist=7yr  (below min 10yr, skipped)
-  4GLD.DE   no data
   SYF       N= 630  mu= +11.4%  sigma= 17.7%  hist=12yr  [SINGLE]
+  4GLD.DE   no data
   AAPL      N=1278  mu= +19.4%  sigma= 28.6%  hist=27yr  [ROBUST]
   ETR       N=1278  mu= +13.3%  sigma= 18.4%  hist=27yr  [ROBUST]
   GC_F      N=1278  mu=  +9.8%  sigma= 11.4%  hist=26yr  [ROBUST]
