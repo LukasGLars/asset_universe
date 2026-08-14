@@ -7,6 +7,71 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Peer valuation snapshot script built -- fills the unrecoverable P/E/PEG gap from 2026-07-06 (2026-08-14)
+
+The 2026-07-06 AI/semi peer valuation session (see the two sections below on
+`eps_ratio.py`'s history) recorded peer fwd/trail EPS ratios but never the
+peer forward P/E or PEG numbers behind its own conclusions ("only NVDA/QCOM
+have a lower forward P/E, only MU has a lower PEG") -- those numbers were
+never written down and are gone, six weeks stale even if they had been.
+`run_peer_valuation.py` replaces the prose with a reproducible, on-demand
+snapshot: same 9-ticker AI/semi set (MU, AMD, AVGO, NVDA, MRVL, TSM, ASML,
+ANET, QCOM), same normalized non-GAAP EPS sourcing `fi_tracker.py` already
+uses (`earnings_history`/`eps_trend`, reuses `normalized_eps_ratio` from
+`eps_ratio.py` -- never `info["trailingEps"]`/`forwardEps`, which mix GAAP
+conventions and caused the original 3.22x bug), now with price, forward P/E,
+and a PEG added.
+
+**PEG basis caveat, worth remembering:** this script's PEG is built on the
+same 1-year forward growth estimate as the ratio above it, not the
+conventional 5-year estimate real PEG ratios (and yfinance's own `pegRatio`
+field, deliberately not fetched here) use. That's exactly why the 0.41 PEG
+recorded on 2026-07-06 never reconciled with its own 19.4x forward P/E
+(19.4 / 139% = 0.14, not 0.41) -- the two numbers were never on the same
+basis. Labeled `PEG(1y)` everywhere in the output specifically so it can't
+be silently compared against a 5-year PEG from elsewhere again.
+
+**2026-08-14 snapshot, for reference (will drift -- rerun for anything
+current):**
+
+| Ticker | Price | Fwd/Trail | Impl. growth | Fwd P/E | PEG(1y) |
+|---|---|---|---|---|---|
+| MU | $949.83 | 3.43x | +243% | 6.13x | 0.03 |
+| AMD | $483.01 | 2.68x | +168% | 31.24x | 0.19 |
+| **AVGO** | **$417.82** | **2.40x** | **+140%** | **21.39x** | **0.15** |
+| NVDA | $225.30 | 2.21x | +121% | 17.48x | 0.14 |
+| MRVL | $222.18 | 2.06x | +106% | 35.59x | 0.34 |
+| ASML | $1,847.90 | 1.87x | +87% | 35.93x | 0.41 |
+| TSM | $430.49 | 1.57x | +57% | 19.78x | 0.35 |
+| ANET | $203.62 | 1.49x | +49% | 39.46x | 0.80 |
+| QCOM | $164.79 | 0.90x | -10% | 16.05x | n/a (negative growth) |
+
+AVGO rank: **3 of 9** on growth ratio, **5 of 9** on forward P/E, **3 of 9**
+on PEG(1y) -- confirms the "mid-pack, not an outlier" framing from
+2026-07-06 still holds, now with the price dimension actually attached
+instead of asserted from memory.
+
+**Also fixed, same commit:** two stale strings still citing the retired
+"quality peer set" (AAPL/TDG/ANET, 1.17-1.41x) that 2026-07-06 itself had
+already concluded was a peer-selection artifact (those companies share none
+of AVGO's AI-capex growth profile) -- `eps_ratio.py`'s module docstring and
+`fi_tracker.py`'s AVGO checkpoint line (the one that lands in `status.md`
+daily). Both now cite the real AI/semi peer set and AVGO's mid-pack
+standing. LLY's checkpoint line carried the same stale range too ("in line
+with peer range 1.17-1.41x") -- dropped rather than fixed, since an
+LLY-appropriate peer set (pharma, not AI/semi) is out of scope here and
+citing the wrong set is worse than citing none.
+
+Standalone research script, no `status.md`/`sync.yml` wiring, no alert --
+per the existing 2026-07-06 decision to keep P/E and PEG a periodic manual
+exercise, not a daily gate (they barely move day-to-day except through
+price, which the AVGO guard already tracks). Derive/format layer is pure
+and unit-tested without network (`tests/test_peer_valuation.py`, 9 tests --
+derivation math, negative-growth PEG suppression, zero/negative-TTM and
+partial-quarter n/a handling, ranking with ties). Live-verified against
+real yfinance data (both the standalone script and `fi_tracker.py` end-to-
+end) before committing, not just the synthetic tests.
+
 ## Reactor Core idle cash now tracked; War Chest stale value fixed (2026-07-24)
 
 Follow-on from the TPV work above: reconciled the pipeline against two

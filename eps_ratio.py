@@ -12,11 +12,15 @@ Found 2026-07-06: AVGO's naive ratio was reported as 3.22x (GAAP trailing
 $6.02 vs non-GAAP forward $19.40) -- largely an artifact of VMware-
 acquisition amortization depressing the GAAP side. Properly normalized
 (non-GAAP TTM actual vs non-GAAP +1yr estimate, both from yfinance's
-`earnings_history`/`eps_trend`), the real ratio is 2.39x -- still the
-highest in its peer set (1.17-1.41x for AAPL/TDG/ANET), just a smaller
-outlier than the mismatched comparison implied. LLY barely moved (1.58x
-naive vs 1.51x normalized) since it doesn't carry a comparable GAAP/non-GAAP
-gap.
+`earnings_history`/`eps_trend`), the real ratio is 2.39x. The original
+"outlier" framing against a 1.17-1.41x range (AAPL/TDG/ANET) was itself a
+peer-selection artifact -- those companies don't share AVGO's AI-capex
+growth story. Against real AI/semi peers (MU/AMD/NVDA/MRVL/TSM/ASML/ANET/
+QCOM), re-checked 2026-08-14, AVGO is mid-pack: below MU/AMD, in line with
+NVDA/MRVL, above TSM/ASML/ANET/QCOM -- see `run_peer_valuation.py` for the
+reproducible, price-aware version of this comparison (adds forward P/E and
+a 1-year PEG, not just the ratio). LLY barely moved (1.58x naive vs 1.51x
+normalized) since it doesn't carry a comparable GAAP/non-GAAP gap.
 """
 from __future__ import annotations
 

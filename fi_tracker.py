@@ -377,9 +377,10 @@ except Exception as _e:
 # consensus) mixes conventions -- for AVGO specifically, VMware-acquisition
 # amortization depresses the GAAP side, which inflated the ratio to 3.22x.
 # Normalized (non-GAAP TTM actual vs non-GAAP +1yr estimate, both from
-# earnings_history/eps_trend), the real ratio is ~2.39x -- still the highest
-# in its peer set (1.17-1.41x for AAPL/TDG/ANET), just a smaller outlier than
-# the mismatched comparison implied. See eps_ratio.py.
+# earnings_history/eps_trend), the real ratio is ~2.39x. The original
+# "outlier" framing against 1.17-1.41x (AAPL/TDG/ANET) was itself a
+# peer-selection artifact -- against real AI/semi peers, AVGO is mid-pack,
+# not an outlier. See eps_ratio.py and run_peer_valuation.py.
 try:
     import datetime
     import yfinance as yf
@@ -455,8 +456,8 @@ try:
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_av_ttm):.2f}" if _av_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_av_fwd_1y:.2f}" if _av_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _eps_ratio:
-        print(f"    Fwd/Trail ratio (normalized): {_eps_ratio:.2f}x  (peer range 1.17-1.41x; "
-              f"corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)")
+        print(f"    Fwd/Trail ratio (normalized): {_eps_ratio:.2f}x  (mid-pack vs. real AI/semi "
+              f"peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)")
     if _av_rev_latest:
         _av_rev_growth_str = f"  (TTM YoY: {_av_rev_growth:+.1%})" if _av_rev_growth is not None else ""
         print(f"    Revenue (latest qtr, actual): ${_av_rev_latest/1e9:.2f}B{_av_rev_growth_str}")
@@ -539,8 +540,7 @@ try:
     print(f"    TTM EPS (non-GAAP actual)  : ${sum(_lly_ttm):.2f}" if _lly_ttm else "    TTM EPS (non-GAAP actual)  : n/a")
     print(f"    Forward EPS (+1yr est.)    : ${_lly_fwd_1y:.2f}" if _lly_fwd_1y else "    Forward EPS (+1yr est.)    : n/a")
     if _lly_ratio:
-        print(f"    Fwd/Trail ratio (normalized): {_lly_ratio:.2f}x  (baseline established 2026-07-06; "
-              f"in line with peer range 1.17-1.41x)")
+        print(f"    Fwd/Trail ratio (normalized): {_lly_ratio:.2f}x  (baseline established 2026-07-06)")
     if _lly_rev_latest:
         _lly_rev_growth_str = f"  (TTM YoY: {_lly_rev_growth:+.1%})" if _lly_rev_growth is not None else ""
         print(f"    Revenue (latest qtr, actual): ${_lly_rev_latest/1e9:.2f}B{_lly_rev_growth_str}")
