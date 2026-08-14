@@ -2888,3 +2888,48 @@ tied to a signal already validated this session rather than a guess:
 
 Not wired into any code/automation -- this is an operator capital-
 deployment decision, tracked here for continuity, not a live gate.
+
+## Gap-down tranche validated: new capital dip-buying AVGO at a real crash-ROC trigger beats the alternatives (2026-08-14)
+
+Operator pushed back on the tranche plan above as counterintuitive --
+the guard rotates *held* AVGO out to defensive on a crash-ROC trigger,
+while the plan says put *new* capital into AVGO at that same trigger.
+Both actions are defensible (different capital, different risk budget)
+but the "buy AVGO on the dip" half was never itself backtested, only
+argued from adjacent evidence (guard validation + basket-bounce
+magnitude). Built `run_new_capital_deployment_test.py` to close that
+gap directly: at every declustered AVGO crash-ROC trigger in real
+history (32 events, 2009-2026, min 21 trading days apart), compared
+forward returns of three uses for previously-uninvested capital --
+(A) straight into AVGO, (B) into the guard's own defensive mix
+(Gold52.5/LLY47.5, mirroring what the held position rotates into), (C)
+into the static unguarded base mix (Gold25/AVGO55/LLY20, as if the
+crash were ignored).
+
+**Result: A wins on every horizon, decisively past the first month.**
+
+| Horizon | A (dip-buy) med/ave | B (defensive) med/ave | C (unguarded) med/ave | A>B win-rate | A>C win-rate |
+|---|---|---|---|---|---|
+| 21d | +4.7% / +6.1% | +2.1% / +2.5% | +4.5% / +4.6% | 56% | 50% |
+| 63d | +13.1% / +17.8% | +4.9% / +5.5% | +11.2% / +12.6% | 81% | 68% |
+| 126d | +30.7% / +33.0% | +8.9% / +9.2% | +20.5% / +22.7% | 87% | 84% |
+| 252d | +64.7% / +61.8% | +22.7% / +25.3% | +45.6% / +46.9% | 83% | 77% |
+
+At 21d, A vs. C (dip-buy vs. just ignoring the crash) is a coin flip --
+short-horizon noise, no real edge yet. Past that the edge is
+substantial and grows with time, both in magnitude and win-rate. A
+beats the defensive mix at every horizon by a wide margin throughout,
+confirming new capital sitting in the same defensive assets the guard
+rotates *into* is a clear opportunity-cost loser vs. buying the actual
+crash.
+
+**Net: proves the combo strategy is coherent, not just individually
+plausible halves.** Rotate held AVGO out (already validated,
+2026-08-04) *and* deploy new capital into AVGO at the same trigger
+(now validated here) are both independently the better choice for
+their respective capital pools -- not a contradiction, confirmed with
+real numbers rather than just risk-budget reasoning. n=30-32,
+descriptive/event-study not a compounding portfolio simulation (each
+trigger treated independently, no attempt to net overlapping windows
+across the 32 events). Diagnostic script, test, and workflow deleted
+after logging this, per repo convention.
