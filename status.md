@@ -28,20 +28,20 @@ FI@50 PACE TRACKER
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  10.9
 
-  AWAR (trailing)         :  +21.3%
+  AWAR (trailing)         :  +21.2%
   Required CAGR           :  +22.1%
-  Status                  :  BEHIND  (-0.8% margin)
+  Status                  :  BEHIND  (-0.9% margin)
 
-  Projected @ AWAR        :    12,116,464 kr
-  vs target               :      -818,242 kr  (deficit)
+  Projected @ AWAR        :    12,049,231 kr
+  vs target               :      -885,475 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,616,644 kr       ~2047
-  Conservative   +15%       7,114,268 kr       ~2041
-  Base           +20%      10,875,765 kr       ~2038
-  Current AWAR   +21%      12,116,464 kr       ~2037
-  Bull           +30%      24,655,689 kr       ~2035
+  Bear           +10%       4,615,241 kr       ~2047
+  Conservative   +15%       7,111,348 kr       ~2041
+  Base           +20%      10,870,139 kr       ~2038
+  Current AWAR   +21%      12,049,231 kr       ~2037
+  Bull           +30%      24,637,786 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -53,7 +53,7 @@ MACRO REGIME
   Real Yield             +2.42%   HIGH  ^
   Breakeven               2.24%   MID
   HY OAS                271 bps   TIGHT
-  IG Credit               1.62%   TIGHT
+  IG Credit               1.66%   TIGHT
   Curve 10Y-3M          +76 bps   MID
   Curve 10Y-2Y          +48 bps   MID
   SE 10Y                   nan%   --
@@ -184,8 +184,8 @@ Computing capped 252d distributions for 51 candidates ...
   WDC       N=1278  mu= +22.1%  sigma= 39.0%  hist=27yr  [ROBUST]
   NVDA      N=1278  mu= +23.3%  sigma= 32.3%  hist=27yr  [ROBUST]
   GS        N=1278  mu= +12.4%  sigma= 23.4%  hist=27yr  [ROBUST]
-  RL        N=1278  mu= +14.7%  sigma= 26.2%  hist=27yr  [ROBUST]
   PHAG.L    no data
+  RL        N=1278  mu= +14.7%  sigma= 26.2%  hist=27yr  [ROBUST]
   CIEN      N=1278  mu= +22.1%  sigma= 28.2%  hist=27yr  [ROBUST]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   FOX       hist=7yr  (below min 10yr, skipped)
@@ -199,9 +199,9 @@ Computing capped 252d distributions for 51 candidates ...
   ISRG      N=1278  mu= +17.5%  sigma= 33.6%  hist=26yr  [ROBUST]
   FTNT      N= 630  mu=  -8.8%  sigma= 10.3%  hist=17yr  [SINGLE]
   SYF       N= 630  mu= +11.4%  sigma= 17.7%  hist=12yr  [SINGLE]
-  4GLD.DE   no data
   AAPL      N=1278  mu= +19.4%  sigma= 28.6%  hist=27yr  [ROBUST]
   CRWD      hist=7yr  (below min 10yr, skipped)
+  4GLD.DE   no data
   GC_F      N=1278  mu=  +9.8%  sigma= 11.4%  hist=26yr  [ROBUST]
 
 Cross-sectional prior mu : +18.4%  (shrinkage target)
