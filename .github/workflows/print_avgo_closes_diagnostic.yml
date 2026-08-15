@@ -1,0 +1,38 @@
+name: print-avgo-closes-diagnostic
+
+# Manual-only, read-only: prints AVGO's last 10 closes and the exact price
+# threshold that would trigger the crash-ROC guard on the next close.
+# Temporary -- delete after use, same convention as this repo's other
+# one-off diagnostics.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+      - name: Install dependencies
+        run: pip install -e .
+      - name: Ensure local data is fresh
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Print recent AVGO closes
+        run: python print_recent_avgo_closes.py
