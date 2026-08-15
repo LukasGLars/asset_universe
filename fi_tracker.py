@@ -351,10 +351,22 @@ try:
     _lly_stress = (not _lly_ma_ok) or (_lly_roc <= CRASH_ROC_THRESHOLD)
     _joint      = _guard_active and _lly_stress
 
+    # Gap-down tranche reminder (2026-08-14, MEMORY.md "Gap-down tranche
+    # validated"): only on the CRASH trigger specifically (not a plain MA
+    # breach) -- that's the trigger class the tranche plan is tied to.
+    # No state tracking exists for whether the tranche was already spent --
+    # this note reappears on every future CRASH trigger regardless. Operator
+    # must track deployment status manually.
+    _tranche_note = (
+        " | If the gap-down tranche (50k into AVGO) hasn't been deployed "
+        "yet, deploy it now -- see MEMORY.md 'Gap-down tranche validated'."
+        if _trigger == "CRASH" else ""
+    )
+
     if _joint:
-        _avgo_action = "JOINT STRESS -> full flight to Gold (Gold 100%, AVGO 0%, LLY 0%)"
+        _avgo_action = f"JOINT STRESS -> full flight to Gold (Gold 100%, AVGO 0%, LLY 0%){_tranche_note}"
     elif _guard_active:
-        _avgo_action = "Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)"
+        _avgo_action = f"Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%){_tranche_note}"
     else:
         _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
 
