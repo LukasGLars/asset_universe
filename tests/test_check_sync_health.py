@@ -17,7 +17,7 @@ TACTICAL RULES
     Signal         : INACTIVE
     Action         : No action -- hold base
 
-  AVGO 200d Guard
+  AVGO Trend Diagnostic
     Signal         : BASE
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
