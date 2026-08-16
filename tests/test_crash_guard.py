@@ -34,7 +34,11 @@ def test_fast_crash_triggers_guard_before_ma_cross():
     uptrend = [100.0 * (1.003 ** i) for i in range(n_up)]
     last_price = uptrend[-1]
     crash = [last_price * (1 - pct) for pct in [0.0, 0.03, 0.06, 0.09, 0.10, 0.12]]
-    avgo = _series(uptrend + crash)
+    # One trailing bar: signals carry a one-day execution lag (they are derived
+    # from a close, so they can only act on the next bar), which means the
+    # breach on the final crash bar surfaces here. Without it there is nowhere
+    # for the signal to land. See run_combined_system.apply_execution_lag().
+    avgo = _series(uptrend + crash + [crash[-1]])
     gold, silver = _flat_gold_silver(len(avgo))
     lly = _flat_lly(len(avgo))
     common = avgo.index

@@ -56,6 +56,7 @@ GSR_PEAK_WINDOW, GSR_PEAK_FALL = 60, 0.05
 TC = 0.0010
 AVGO_MA, LLY_MA = 200, 200
 CRASH_WINDOW, CRASH_THRESH = 5, -0.10  # same validated params as the AVGO guard, reused for LLY
+EXECUTION_LAG_DAYS = 1  # signals come from closes; earliest trade is the next bar
 
 ESC_WEIGHTS = [0.60, 0.70, 0.80, 0.90, 1.00]
 WINDOWS = [3, 5, 10, 15]
@@ -135,6 +136,16 @@ def build_common_and_signals(x_series, gold, lly_series, silver, start,
                   | (l_r.pct_change(lly_window) <= lly_thresh)).fillna(False)
 
     states = compute_gsr_states(gold, silver, common)
+
+    # Execution lag -- all three signals are derived from closing prices, so
+    # the position can only change on the NEXT bar. See
+    # run_combined_system.apply_execution_lag() for why this matters.
+    guard      = guard.shift(EXECUTION_LAG_DAYS).fillna(False).astype(bool)
+    lly_stress = lly_stress.shift(EXECUTION_LAG_DAYS).fillna(False).astype(bool)
+    # states is a plain list consumed by integer index downstream -- shift it
+    # in place rather than converting to a Series, which would break states[i].
+    states     = ["INACTIVE"] * EXECUTION_LAG_DAYS + states[:-EXECUTION_LAG_DAYS]
+
     return common, x_r, l_r, guard, lly_stress, states
 
 

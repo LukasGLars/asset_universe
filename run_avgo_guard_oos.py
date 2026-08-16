@@ -43,6 +43,7 @@ AVGO_W  = 0.55
 LLY_W   = 0.20
 TC      = 0.0010
 MA      = 200
+EXECUTION_LAG_DAYS = 1  # signals come from closes; earliest trade is the next bar
 
 AVGO_IPO  = pd.Timestamp("2009-08-06")
 OOS_START = pd.Timestamp("2020-01-01")
@@ -89,7 +90,9 @@ def build_guard_returns(
     Returns daily portfolio returns and a list of signal events.
     """
     sma      = avgo_p.rolling(MA).mean()
-    in_base  = avgo_p >= sma
+    # Shifted: signal comes from a close, so the trade lands the next bar.
+    # See run_combined_system.apply_execution_lag() for the measured impact.
+    in_base  = (avgo_p >= sma).shift(EXECUTION_LAG_DAYS, fill_value=True)
 
     port_ret   = pd.Series(0.0, index=gold_r.index)
     prev_state = None
@@ -135,7 +138,7 @@ def single_asset_guard(prices: pd.Series, label: str) -> None:
     """Apply 200d MA guard: when asset < 200d MA, hold cash (0% return)."""
     r    = prices.pct_change().fillna(0)
     sma  = prices.rolling(MA).mean()
-    hold = prices >= sma
+    hold = (prices >= sma).shift(EXECUTION_LAG_DAYS, fill_value=True)
 
     guarded = r.copy()
     for i in range(len(r)):

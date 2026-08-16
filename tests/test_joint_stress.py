@@ -25,13 +25,24 @@ def _steady_uptrend(n, daily=0.0005, start_price=100.0):
     return _series([start_price * (1 + daily) ** i for i in range(n)])
 
 
+def _hold(values):
+    """Append one trailing bar repeating the last price.
+
+    build_signals() applies a one-day execution lag -- a signal derived from a
+    close can only act on the NEXT bar -- so a fixture that ends on its
+    triggering bar leaves the signal nowhere to surface. The extra bar is what
+    `signals.iloc[-1]` then reads. See run_combined_system.apply_execution_lag().
+    """
+    return values + [values[-1]]
+
+
 def test_joint_requires_both_avgo_guard_and_lly_stress():
     # AVGO crashes fast; LLY stays in a steady uptrend the whole time --
     # guard should fire, lly_stress should not, joint should not.
     n_up = 250
     avgo_up = [100.0 * (1.003 ** i) for i in range(n_up)]
     avgo_crash = [avgo_up[-1] * (1 - pct) for pct in [0.0, 0.05, 0.10, 0.12]]
-    avgo = _series(avgo_up + avgo_crash)
+    avgo = _series(_hold(avgo_up + avgo_crash))
     lly = _steady_uptrend(len(avgo), daily=0.001, start_price=500.0)
     gold, silver = _flat_gold_silver(len(avgo))
     common = avgo.index
@@ -49,9 +60,9 @@ def test_joint_fires_when_both_stressed_simultaneously():
     n_up = 250
     up = [100.0 * (1.003 ** i) for i in range(n_up)]
     crash = [up[-1] * (1 - pct) for pct in [0.0, 0.05, 0.10, 0.12]]
-    avgo = _series(up + crash)
-    lly = _series([500.0 * (v / up[0]) for v in up] +
-                  [500.0 * up[-1] / up[0] * (1 - pct) for pct in [0.0, 0.06, 0.11, 0.13]])
+    avgo = _series(_hold(up + crash))
+    lly = _series(_hold([500.0 * (v / up[0]) for v in up] +
+                  [500.0 * up[-1] / up[0] * (1 - pct) for pct in [0.0, 0.06, 0.11, 0.13]]))
     gold, silver = _flat_gold_silver(len(avgo))
     common = avgo.index
 
@@ -70,7 +81,7 @@ def test_lly_stress_alone_without_avgo_guard_is_not_joint():
     n_up = 250
     lly_up = [500.0 * (1.003 ** i) for i in range(n_up)]
     lly_crash = [lly_up[-1] * (1 - pct) for pct in [0.0, 0.05, 0.10, 0.12]]
-    lly = _series(lly_up + lly_crash)
+    lly = _series(_hold(lly_up + lly_crash))
     avgo = _steady_uptrend(len(lly), daily=0.001, start_price=100.0)
     gold, silver = _flat_gold_silver(len(avgo))
     common = avgo.index

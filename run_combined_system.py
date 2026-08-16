@@ -86,6 +86,14 @@ OOS_START        = pd.Timestamp("2020-01-01")
 CRASH_ROC_WINDOW    = 5
 CRASH_ROC_THRESHOLD = -0.10
 
+# Bars between a signal being observable and the position actually changing.
+# Signals come from closing prices, so the earliest any trade can happen is
+# the next session -- 1 is the most generous *honest* value, not a
+# conservative padding. Added 2026-08-16 after every guard backtest was found
+# to be trading on the same close that generated its signal; see
+# apply_execution_lag() for the measured impact.
+EXECUTION_LAG_DAYS = 1
+
 # Joint-stress escalation (2026-07-02): the guard alone assumes LLY is a
 # reliable diversifier whenever AVGO is stressed, but that correlation is
 # regime-dependent -- it holds in liquidity crashes (COVID) and breaks down
@@ -223,7 +231,7 @@ def build_signals(
 
         silver_states.append(state)
 
-    return pd.DataFrame({
+    signals = pd.DataFrame({
         "guard":        guard.values,
         "guard_ma":     guard_ma.values,
         "guard_crash":  guard_crash.values,
@@ -231,6 +239,44 @@ def build_signals(
         "joint":        joint.values,
         "silver_state": silver_states,
     }, index=common)
+
+    return apply_execution_lag(signals)
+
+
+def apply_execution_lag(signals: pd.DataFrame) -> pd.DataFrame:
+    """Shift every signal forward by EXECUTION_LAG_DAYS bars.
+
+    Every signal in build_signals() is derived from a CLOSING price, so the
+    earliest a position can actually change is the NEXT session -- you cannot
+    observe a close and trade at that same close. Without this lag the
+    simulation buys and sells at the very print that generates the signal.
+
+    This is not a cosmetic correction. Measured 2026-08-16 on AVGO's real
+    history: mean AVGO return on the 99 days the guard flips defensive is
+    -3.46%, and on the day after it is +0.01%. Same-day accounting therefore
+    credited the strategy with roughly 651 percentage points of raw AVGO
+    return that no one could have traded, and it was the entire source of the
+    guard's apparent edge (Calmar 2.99 same-day vs 0.49 lagged, against 1.06
+    for the unguarded base). See MEMORY.md, 2026-08-16.
+
+    Kept as a separate, named function so the assumption is explicit and
+    directly testable rather than buried in a `.shift()` call.
+    """
+    lagged = signals.shift(EXECUTION_LAG_DAYS)
+
+    # Restore dtypes: shifting introduces NaN in the first row(s). Default to
+    # the non-acting state -- no guard, no stress, silver inactive -- since on
+    # day one there is no prior close to have acted on.
+    # `.eq(True)` rather than `.fillna(False).astype(bool)`: shifting promotes
+    # a bool column to object with NaN in the gap, and bool(nan) is True --
+    # which would silently turn a missing signal into an ACTIVE guard. eq()
+    # maps NaN to False and restores real bool dtype in one step, with no
+    # object-downcasting FutureWarning.
+    for col in ("guard", "guard_ma", "guard_crash", "lly_stress", "joint"):
+        lagged[col] = lagged[col].eq(True)
+    lagged["silver_state"] = lagged["silver_state"].fillna("INACTIVE")
+
+    return lagged
 
 
 def run_strategy(
