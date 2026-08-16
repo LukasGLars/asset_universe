@@ -68,6 +68,39 @@ Unguarded, the honest range is **48%** (TXN analog 2000-2026 incl. dot-com+GFC,
 72.9%. 83.3% sits above even the optimistic bound and should not be pursued
 without re-deriving it.
 
+## OPEN: PR #90 -- disconnect guard from routing + base to 25/40/35 (2026-08-16)
+
+**Not merged.** Two commits, reviewable separately.
+
+**Commit 1 fixes a real bug PR #89 left behind.** #89 retired the guard's
+alerting but left it wired into next-contribution routing: `fi_tracker.py`
+still read `WEIGHTS[(_guard_active, _silver_state)]` with a `JOINT_WEIGHTS`
+override, and still gated AVGO on `not _guard_active` / LLY on
+`not _lly_stress`. A close below the 200d SMA would therefore have silently
+retargeted AVGO to 0%, redirected every future contribution to Gold+LLY, and
+closed the AVGO gate -- **with no Telegram, because #89 had just removed it.**
+Strictly worse than pre-retirement behaviour. Routing now always selects the
+base row and applies no gates.
+
+**Commit 2 moves the base to Gold 25 / AVGO 40 / LLY 35** (the 2026-08-16
+decision, below). CAGR 32.6% -> 30.6%, MaxDD -30.5% -> -23.5%, Calmar 1.068
+-> 1.31. Silver T1/T2 mechanism unchanged (+12%/+17% from AVGO), landing at
+AVGO 28%/23%. Guard-active rows re-derived from the new base (0.45/0/0.55) so
+backtests still compare like with like.
+
+**Live effect, verified against the real dashboard:** next contribution now
+routes to LLY (22.3% vs 35% target) instead of AVGO (which is 6.8pp OVER its
+new target). 370 tests pass.
+
+**Caveat to carry forward: PR #88's headline figures were computed at the OLD
+25/55/20 base.** Still valid as evidence the guard fails; no longer a
+description of the portfolio. Rerun `run_combined_system.py` to get
+guarded-vs-unguarded numbers at the current base.
+
+`portfolio.toml` untouched -- share counts and cash flow from the operator's
+Google Sheet via `sync_sheet.py`. Once the trades execute and the sheet is
+updated, the sync reconciles actual weights against these new targets.
+
 ## AVGO GUARD RETIRED -- LIVE (2026-08-16, PR #89, merged 5e217d6)
 
 Operator decision, executed. The guard no longer produces a rotation
