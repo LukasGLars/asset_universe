@@ -68,6 +68,62 @@ Unguarded, the honest range is **48%** (TXN analog 2000-2026 incl. dot-com+GFC,
 72.9%. 83.3% sits above even the optimistic bound and should not be pursued
 without re-deriving it.
 
+## AVGO GUARD RETIRED -- LIVE (2026-08-16, PR #89, merged 5e217d6)
+
+Operator decision, executed. The guard no longer produces a rotation
+instruction or an alert. **AVGO now has NO mechanical downside protection of
+any kind.**
+
+**Retired as an instruction, kept as a diagnostic.** The `AVGO 200d Guard`
+block in `fi_tracker.py` is renamed `AVGO Trend Diagnostic` and still prints
+price vs 200d SMA, 5d ROC, LLY stress and joint stress -- honest context, no
+action attached. Kept because the 5d/-10% computation is still load-bearing
+for the gap-down tranche, which rests on `run_avgo_gap_down_analysis.py`
+(methodologically clean -- forward returns from an event date, no execution
+assumption to get wrong).
+
+**The asymmetry is the whole finding: the 5d/-10% trigger is a usable BUY
+signal and was never a usable SELL signal.**
+
+| Event | Before | Now |
+|---|---|---|
+| 200d SMA breach | Telegram "Rotate AVGO -> Gold+LLY" | **silent** |
+| MA breach clearing | Telegram "Hold base" | **silent** |
+| Joint stress flip | Telegram "full flight to Gold" | **silent** |
+| 5d ROC <= -10% | Telegram rotate | **Telegram: deploy gap-down tranche** |
+
+**Silver GSR untouched** -- survives the lag fix, still beats base (Calmar
+1.143 vs 1.068). Sleeve, earnings and regime alerts untouched.
+
+**Two parser breaks this change introduced and nearly shipped -- the lesson
+matters more than the bug.** The `status.md` section header and its
+`Signal :` label are a *parsing contract* between `fi_tracker.py`,
+`check_signal_changes.py` and `check_sync_health.py`:
+1. Renaming the header silently degraded `avgo_guard`/`avgo_trigger`/
+   `avgo_action` to `"unknown"` and would have failed the health check's
+   `REQUIRED_SECTIONS` on every run.
+2. Rewording the ROC line to "gap-down buy **trigger**: -10%" put a SECOND
+   `trigger:` inside the block; the `avgo_trigger` regex is non-greedy from
+   the header, matched that first, and parsed the trigger as `"-10%"` --
+   which would have made the surviving gap-down alert unreachable.
+
+**All 368 tests passed while both were broken**, because the fixtures still
+carried the old wording. Only running the real dashboard caught it. Both now
+pinned by tests (`test_avgo_trigger_regex_not_captured_by_an_earlier_trigger_word`,
+`test_live_dashboard_labels_are_parseable`) and every fixture realigned with
+real output. **Rule going forward: after any change to `status.md` wording,
+run `fi_tracker.py` for real and re-parse it -- fixture-only tests cannot
+catch format drift.**
+
+First post-merge run verified silent (old committed `status.md` parses as
+`unknown`, and the `"unknown" not in (...)` guard suppresses a spurious
+alert). 370 tests pass on master.
+
+**NEXT, and now the biggest real gap: the broker-side protective stop at
+Avanza** (already logged as HIGHEST PRIORITY below). It is the only
+protection that survives the operator being unreachable, and there is now
+nothing else.
+
 ## Execution-lag fix SHIPPED (2026-08-16, PR #88, merged a657bf2)
 
 The lookahead bug documented below is now fixed in every backtest.
