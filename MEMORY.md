@@ -7,6 +7,141 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## CRITICAL: the AVGO 200d guard's entire validated edge is lookahead bias (2026-08-16)
+
+**Nothing has been changed in the repo or in live logic. This is a finding
+awaiting an operator decision.** Session was triggered by AVGO's -5.94% drop on
+Friday 2026-08-14 (VMware vCenter exploit + a BofA note on ~$370B of AI vehicle
+debt + profit-taking into the 09-02 print -- none of it touching the ASIC thesis).
+
+**The bug.** Every guard backtest reads the signal from day *i*'s close and
+applies it to day *i*'s return. `run_avgo_guard.py:103` (`state = in_base[date]`,
+derived from `close[i]`) feeds `:112` (`AVGO_W * avgo_r.iloc[i]`, the return *of*
+day i). There is no `shift(1)` anywhere in any guard script. The position is
+chosen using a closing price that cannot be known until after the move happened.
+
+**Evidence it is material, not cosmetic:**
+- Mean AVGO return on the 99 guard-exit days: **-3.46%**. On the day *after*:
+  **+0.01%**. Re-entry mirror: +3.15% same day, **-0.43%** next day. The signal
+  has no predictive content that survives one night.
+- Flip-day timing alone hands the backtest ~651 percentage points of raw AVGO
+  return across the history.
+- Gold25/AVGO55/LLY20, 2009-2026, 10bps: same-day fill gives CAGR 45.0% / MaxDD
+  -15.0% / Calmar 2.99 -- which reproduces this file's own published 44.0% /
+  -14.9% / 2.957, confirming the method was matched before being changed.
+  **Next-day fill gives 19.1% / -39.1% / Calmar 0.49**, versus the unguarded base
+  at 32.5% / -30.5% / 1.06. The guard makes the portfolio strictly worse.
+- Four execution models tested: same-day close, next-day close, next-day open
+  (real OHLC), and intraday resting stops with hysteresis. **All fail.** Best
+  stop variant reaches Calmar 0.46 vs 0.86 buy-and-hold, and Calmar improves
+  monotonically as turnover falls (0.31 -> 0.46 as trades drop 312 -> 66),
+  converging on buy-and-hold. The optimal dose of this guard is zero.
+
+**Scope -- same `signals[...].iloc[i]` -> `rets[...].iloc[i]` pattern:**
+`run_avgo_guard.py`, `run_avgo_guard_oos.py` (so the "OOS Calmar 2.658 vs base
+1.434" figure is void), `run_combined_system.py` (the headline +44.0% / 2.957),
+`run_joint_stress_validation.py`, `run_base_optimizer_with_guard.py` (so the
+"Gold5/AVGO80/LLY15 beats 25/55/20" conclusion is void -- and note it pointed
+toward *more* concentration).
+
+**NOT affected -- these stand:** `run_base_optimizer.py` (static weights, no
+timing signal) so the 25/55/20 derivation is clean; `run_avgo_gap_down_analysis.py`
+and the sleeve entry reconstructions, which measure forward returns from an event
+date. Useful asymmetry to remember: **the dip-buying research is methodologically
+sound, the trend-following exit research is not.**
+
+**The live daily calculation is correct.** `fi_tracker.py` reads the latest close
+and tells the operator to act, which they do next day. Nothing is miscomputing.
+What is void is the evidence that acting on it helps.
+
+**Closes the backlogged 2026-08-03 crash-ROC false-alarm item.** 30 declustered
+crash-ROC fires 2009-2026: **26 rebounded** without falling a further 10%
+(87% false-alarm rate). Only four were real breakdowns -- 2011-08, 2020-02
+(COVID, -38.7% further), 2025-02, 2025-03. Full guard fires ~6x/year across 104
+episodes, **86% lasting <=10 trading days**; median AVGO return while sitting out
+is +0.0%.
+
+**Knock-on to sizing.** The Reactor Core 83.3%-of-TPV target was derived as -25%
+tolerance / -30.0% MaxDD, where -30.0% was the *guard-improved* TXN-analog figure.
+Unguarded, the honest range is **48%** (TXN analog 2000-2026 incl. dot-com+GFC,
+-52.3%) to **82%** (AVGO's own gentler -30.5%). Actual weight on 2026-08-16 was
+72.9%. 83.3% sits above even the optimistic bound and should not be pursued
+without re-deriving it.
+
+## Portfolio construction research -- 4th asset / AVGO split (2026-08-16)
+
+Follow-on from the above, since with no working guard the risk control is the mix
+and the sizing. **Research only, nothing executed, no config changed.**
+
+Method, deliberately anti-fitting (two overfitted answers were produced and caught
+earlier the same session): stability filter applied *before* optimisation --
+candidates needed >8% CAGR in *both* halves of 2009-2026 and correlation <0.45
+with AVGO *during AVGO's own drawdowns* (conditional, not unconditional). 436
+assets with continuous history -> 143 survivors. Slot candidates share their slot
+**equally**, so weight-fitting is structurally impossible. Ranked on worst
+sub-period Calmar, never full-sample. Four sub-periods, not one split.
+
+**LLY at 35% is strongly validated: rank 1 of 4,991.** Tested against every 1-, 2-
+and 3-name alternative for its slot; nothing beat it and all top-15 combinations
+contained it. This also supersedes any concern from LLY's 375/539 universe-screen
+rank -- that screen is a regime-conditional momentum lens with only 154 matched
+days for LLY, low information for a holding never selected on momentum.
+
+**AVGO at 40% ranks only 16 of 595 for its slot.** The pairs that beat it mostly
+keep AVGO and split the slot. Candidate portfolios, 2009-2026:
+
+| Mix | CAGR | MaxDD | Calmar A / B | worst 1-name -50% shock |
+|---|---|---|---|---|
+| LIVE Gold25/AVGO55/LLY20 | 32.6% | -30.5% | 1.60 / 1.27 | -27.5% |
+| Gold25/AVGO40/LLY35 | 30.6% | -23.5% | 1.72 / 1.65 | -20.0% |
+| Gold25/AVGO20/AMZN20/LLY35 | 28.2% | -18.0% | **1.83 / 1.83** | -17.5% |
+
+Ordering identical in all four sub-periods -- not a split artifact. The -50%
+single-name shock test is deliberately outside any backtest, since price history
+cannot contain an FDA rejection, patent cliff or fraud.
+
+**The AMZN hedge -- and a correction worth keeping.** Structural case: AWS is the
+only major hyperscaler *absent* from Broadcom's named custom-silicon customer list,
+because it already in-housed via Annapurna Labs (2015, Trainium/Inferentia). AVGO
+and AMZN sit on opposite sides of "can hyperscalers do this themselves?".
+**However, the hypothesis that GOOGL would be the purer hedge was tested and is
+wrong** -- GOOGL correlates *more* with AVGO in AVGO's drawdowns (0.57) than AMZN
+does (0.50); MSFT 0.57, META 0.47. Alphabet *is* the AI-capex trade, so its
+in-housing offset is invisible on a drawdown view. Amazon's retail half -- which
+looks like hedge dilution -- is exactly what decorrelates it. **Thesis purity and
+drawdown protection are opposites here.** Durable finding: splitting AVGO helps
+regardless of partner (every candidate beats no-hedge on worst-period Calmar,
+1.24-1.54 vs 1.12).
+
+**Stress case (TXN substituted for AVGO, 2000-2026):** LIVE 12.5% / -52.3%,
+AVGO40 13.6% / -42.6%, SPLIT 17.3% / -42.0%. AMZN barely helps here -- it fell
+~95% in the dot-com bust. It hedges AI-capex/in-housing concentration, **not** a
+broad tech collapse. Under this belief 10% Home Base is not viable for any mix
+(~60% Reactor Core would be required).
+
+**Operator decisions still open at session end:**
+1. **Which drawdown to size against** -- -30.5% (AVGO's own) or -52.3% (TXN
+   analog originally adopted precisely because AVGO never saw a dot-com bust).
+   This single input decides the Home Base question and nothing else can settle it.
+2. **Home Base floor.** Operator wants cash held for behavioural reasons
+   ("mental health"), was exploring 10-15%. At 10% the live mix breaches the -25%
+   tolerance even optimistically.
+3. **Whether to retire the guard or attempt re-validation.** No PR opened.
+4. **Rotation timing.** Operator correctly rejected an incoherent staging plan
+   (building AVGO to 40% when the destination is 20% = paying spread twice).
+   Corrected sequencing: **AVGO only ever moves down**; deploy cash into LLY/AMZN
+   only, cut AVGO after the 09-02 print. Unmodelled at session end: return profile
+   of rotating now vs post-09-02 vs post-11-03, priced against AVGO's earnings gap
+   risk (worst historical overnight gaps -14.9% / -14.7% / -12.8%; at ~378k that
+   is ~-51k kr) -- and **the existing post-midterm AVGO tranche plan is
+   incompatible with cutting AVGO to 20%; one of the two has to go.**
+
+**Unchanged and still valid:** the 2026-09-02 pre-registered earnings criteria
+(fundamental, unaffected by any of the above), the AVGO thesis itself ($73B
+committed backlog, named customers 5->6 with OpenAI added, $56B FY26 / >$100B FY27),
+and valuation (post-drop forward P/E 20.1x, 2nd cheapest of 9 AI/semi peers on
+PEG(1y)).
+
 ## Peer valuation snapshot script built -- fills the unrecoverable P/E/PEG gap from 2026-07-06 (2026-08-14)
 
 The 2026-07-06 AI/semi peer valuation session (see the two sections below on
