@@ -39,6 +39,7 @@ GOLD_W  = 0.25
 AVGO_W  = 0.55
 LLY_W   = 0.20
 TC      = 0.0010   # 10bps per transition (entry + exit = 2x)
+EXECUTION_LAG_DAYS = 1  # signals come from closes; earliest trade is the next bar
 
 AVGO_IPO = pd.Timestamp("2009-08-06")
 
@@ -91,7 +92,13 @@ def run_guard(
     sma = avgo_price.rolling(ma_window).mean()
 
     # Signal: True = AVGO above SMA (hold base), False = AVGO below SMA (defensive)
-    in_base = avgo_price >= sma
+    #
+    # Shifted by EXECUTION_LAG_DAYS: the signal is derived from a CLOSING
+    # price, so the earliest the position can change is the next session.
+    # Without the shift this trades at the very close that generates the
+    # signal -- worth -3.46% on the average exit day, which is where the
+    # guard's entire apparent edge came from. See MEMORY.md 2026-08-16.
+    in_base = (avgo_price >= sma).shift(EXECUTION_LAG_DAYS, fill_value=True)
 
     port_ret   = pd.Series(0.0, index=gold_r.index)
     prev_state = None   # True=base, False=defensive
