@@ -68,6 +68,95 @@ Unguarded, the honest range is **48%** (TXN analog 2000-2026 incl. dot-com+GFC,
 72.9%. 83.3% sits above even the optimistic bound and should not be pursued
 without re-deriving it.
 
+## DECIDED 2026-08-16: base stays 3-asset, Gold 25 / AVGO 40 / LLY 35
+
+Operator's call at session end. **Not executed -- this is the agreed target, the
+trade list is below and nothing has been placed.**
+
+**Change from the old base:** AVGO 55 -> 40, LLY 20 -> 35, Gold 25 unchanged.
+Justified by the slot research below (LLY rank 1/4991 for its slot; AVGO 55%
+had the worst Calmar in all four sub-periods and the worst single-name shock
+exposure).
+
+**A 4th asset was tested extensively and rejected.** AMZN was the best candidate
+on risk-adjusted metrics but:
+- It is **not a hedge**. Beta to an equal-weighted AI-semi basket *during that
+  basket's drawdowns* is **0.53** -- identical to QQQ (0.54) and higher than SPY
+  (0.42). It falls with AVGO in exactly the scenario it was meant to protect
+  against. Its lower *correlation* (0.60 vs SPY 0.82) means idiosyncratic
+  variance, not lower AI sensitivity.
+- It costs roughly a third of terminal wealth in the AVGO-works scenario
+  (36.4M vs 53.1M on a 1M kr / 14.2yr basis).
+- It would require selling ~179k kr of AVGO into the 2026-09-02 print.
+- Gold (beta 0.05) and LLY (0.23) already provide the diversification; they beat
+  every large-cap tech name tested by a wide margin.
+
+**AMZN's remaining case is as a RETURN thesis** (application layer of the AI
+buildout, diversified earnings base), not a risk one -- to be built from
+contributions and the post-election tranche if conviction accumulates, never
+funded by an AVGO sale.
+
+**Execution sequencing (agreed, not done):** AVGO only ever moves *down* -- never
+buy AVGO up toward a weight it is meant to fall below. Deploy Home Base cash into
+LLY only. Do not touch AVGO before the 2026-09-02 print. Note LLY and AMZN both
+report 2026-10-29, so building both to target before that date concentrates event
+risk on one day.
+
+**Still open and blocking the sizing:** which drawdown to size Reactor Core
+against, -30.5% (AVGO's own history) or -52.3% (TXN analog incl. dot-com+GFC).
+
+## Hedging research: you cannot buy the AI thesis and decorrelation in the same security (2026-08-16)
+
+Three separate angles were tested for a 4th-asset hedge against AVGO's customer-
+concentration risk. All three converged on the same conclusion, which is the
+durable finding here:
+
+**Beta / correlation to an equal-weighted AI-semi basket (NVDA/AVGO/AMD/MRVL/MU/
+AMAT/LRCX/KLAC), measured only during that basket's >=10% drawdowns, 2012-2026:**
+
+| | beta | corr | | | beta | corr |
+|---|---|---|---|---|---|---|
+| SPY | 0.42 | 0.82 | | WMT | 0.16 | 0.30 |
+| QQQ | 0.54 | 0.88 | | KR | 0.06 | 0.09 |
+| AMZN | 0.53 | 0.60 | | LLY | 0.23 | 0.33 |
+| MSFT | 0.51 | 0.69 | | GC_F | 0.05 | 0.13 |
+| GOOGL | 0.48 | 0.63 | | | | |
+
+1. **Tech-adjacent (AMZN/GOOGL/MSFT):** all ~0.5 beta. No AI-capex protection.
+   The GOOGL hypothesis (Broadcom's anchor customer *and* its most advanced
+   in-houser, so it should capture what AVGO loses) was **tested and is wrong** --
+   GOOGL correlates *more* with AVGO in drawdowns (0.57) than AMZN (0.50).
+   Alphabet *is* the AI-capex trade; the in-housing offset is invisible on a
+   drawdown view.
+2. **Energy/power** (the data-centre-demand thesis): fails at both ends. The
+   AI-power names carry AMZN-like betas (PWR 0.54, ETN 0.55, NRG 0.49, TRGP 0.53)
+   because the market already re-rated them as AI plays. The genuinely low-beta
+   regulated utilities (AEE/XEL/AEP/ATO, beta 0.11-0.16) barely improve portfolio
+   drawdown (-19 to -20.5% vs -23.5% unhedged) while giving up 6+pp CAGR, and
+   several score *worse than no hedge*. Likely because utilities are bond proxies
+   -- decorrelated from AI but correlated to real yields, which the portfolio
+   already carries via gold. Factor substitution, not diversification.
+3. **Staples** (KR/WMT): the only genuine low-beta option with acceptable return.
+   Best portfolio metrics of anything tested (KR worst-sub-period Calmar 1.70 vs
+   AMZN 1.54 vs no-hedge 1.12).
+
+**But even staples fail the compounding test, which is why nothing was added.**
+1M kr, 2012-2026: no-hedge 53.1M vs WMT20 26.8M (**-50%**). In the real stress case
+(TXN proxy 2000-2026, incl. dot-com + GFC) WMT only breaks even on terminal wealth
+(+5%) -- what it actually buys is a worst *year* of -13.2% instead of -28.0%, and
+11pp less MaxDD. **So the staples hedge is insurance that never makes you richer;
+the premium is about half the upside.** Worth paying only if a -28% year would
+cause capitulation.
+
+**Generalisable lesson, seen three times in one session** (GOOGL, AMZN, AI-power):
+anything that visibly benefits from the AI buildout has already been priced as an
+AI asset and moves like one. Thesis purity and drawdown protection are opposites.
+
+**Methodology note worth reusing:** measure correlation/beta *conditional on the
+risk asset's own drawdowns*, never unconditionally -- unconditional correlation
+hides exactly the co-movement that matters. And benchmark any candidate hedge
+against SPY/QQQ: if its beta isn't below the index's, it is not a hedge.
+
 ## Portfolio construction research -- 4th asset / AVGO split (2026-08-16)
 
 Follow-on from the above, since with no working guard the risk control is the mix
