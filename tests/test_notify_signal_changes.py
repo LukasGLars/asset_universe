@@ -3,8 +3,8 @@ from unittest.mock import patch
 import notify_signal_changes as nsc
 
 BASE = """
-  AVGO 200d Guard
-    Signal         : BASE  (trigger: none)
+  AVGO Trend Diagnostic
+    Signal         : BASE  (trigger: none)  -- informational, no rotation
     LLY stress     : inactive
     Joint stress   : inactive
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
@@ -19,11 +19,15 @@ BASE = """
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 """
 
+# Guard retired as a rotation rule 2026-08-16 (PR #88); the CRASH leg
+# survives as the gap-down BUY trigger, which is what still alerts.
 CHANGED = BASE.replace(
-    "Signal         : BASE  (trigger: none)", "Signal         : DEFENSIVE  (trigger: CRASH)"
+    "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation"
 ).replace(
     "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
-    "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
+    "Action         : No rotation. But the 5d/-10% gap-down trigger has fired: "
+    "if the gap-down tranche (50k into AVGO) hasn't been deployed yet, this is "
+    "that signal -- see MEMORY.md 'Gap-down tranche validated'.",
 )
 
 
@@ -43,8 +47,10 @@ def test_build_change_email_leads_with_action(tmp_path):
     result = nsc.build_change_email(str(prev), str(curr))
     assert result is not None
     subject, body = result
-    assert "AVGO guard" in subject
-    assert "ACTION: Rotate AVGO -> Gold+LLY" in body
+    assert "gap-down" in subject.lower()
+    assert "ACTION:" in body
+    assert "gap-down tranche" in body
+    assert "Rotate AVGO" not in body
 
 
 def test_build_change_email_none_when_prev_missing(tmp_path):
@@ -73,8 +79,9 @@ def test_main_does_not_send_when_unchanged(tmp_path):
 
 def test_main_sends_telegram_with_action_when_changed():
     with patch.object(nsc, "build_change_email",
-                       return_value=("Asset Universe: AVGO guard -> DEFENSIVE",
-                                     "AVGO GUARD: BASE -> DEFENSIVE\nACTION: Rotate AVGO -> Gold+LLY")), \
+                       return_value=("Asset Universe: AVGO gap-down trigger",
+                                     "AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
+                                     "ACTION: deploy the gap-down tranche")), \
          patch.object(nsc, "send_telegram") as mock_send:
         import sys
         old_argv = sys.argv
@@ -85,7 +92,7 @@ def test_main_sends_telegram_with_action_when_changed():
             sys.argv = old_argv
         mock_send.assert_called_once()
         subject, body = mock_send.call_args[0]
-        assert "AVGO guard" in subject
+        assert "gap-down" in subject.lower()
         assert "ACTION:" in body
         assert code == 0
 
@@ -132,7 +139,7 @@ def test_main_does_not_raise_but_escalates_when_all_channels_fail(monkeypatch):
     monkeypatch.delenv("EMAIL_ADDRESS", raising=False)
     monkeypatch.delenv("EMAIL_PASSWORD", raising=False)
     with patch.object(nsc, "build_change_email",
-                       return_value=("Asset Universe: AVGO guard -> DEFENSIVE", "ACTION: Rotate AVGO")), \
+                       return_value=("Asset Universe: AVGO gap-down trigger", "ACTION: deploy the gap-down tranche")), \
          patch.object(nsc, "send_telegram", side_effect=RuntimeError("telegram api error")), \
          patch.object(nsc.time, "sleep"):
         import sys

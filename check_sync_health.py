@@ -53,7 +53,7 @@ GRACE_PERIOD = dt.timedelta(hours=3)
 
 REQUIRED_SECTIONS = [
     "Silver GSR Tactical",
-    "AVGO 200d Guard",
+    "AVGO Trend Diagnostic",
     "AVGO Earnings Checkpoint",
     "LLY Earnings Checkpoint",
 ]

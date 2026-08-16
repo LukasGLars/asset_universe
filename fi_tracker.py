@@ -352,37 +352,55 @@ try:
     _joint      = _guard_active and _lly_stress
 
     # Gap-down tranche reminder (2026-08-14, MEMORY.md "Gap-down tranche
-    # validated"): only on the CRASH trigger specifically (not a plain MA
-    # breach) -- that's the trigger class the tranche plan is tied to.
-    # No state tracking exists for whether the tranche was already spent --
-    # this note reappears on every future CRASH trigger regardless. Operator
-    # must track deployment status manually.
-    _tranche_note = (
-        " | If the gap-down tranche (50k into AVGO) hasn't been deployed "
-        "yet, deploy it now -- see MEMORY.md 'Gap-down tranche validated'."
-        if _trigger == "CRASH" else ""
-    )
+    # validated"): fires only on the CRASH trigger, not a plain MA breach --
+    # that's the trigger class the tranche plan is tied to. No state tracking
+    # exists for whether the tranche was already spent, so this reappears on
+    # every future CRASH trigger regardless; track deployment manually.
+    #
+    # RETIRED 2026-08-16 as a rotation rule. The guard never had a realizable
+    # edge: every backtest that validated it traded on the same close that
+    # generated the signal (fixed in PR #88). Corrected, it roughly halves
+    # CAGR and DEEPENS max drawdown -- base 32.6%/-30.5%/Calmar 1.068 vs
+    # guarded 18.4%/-42.1%/0.438, and all 12 cells of the parameter grid lose
+    # to holding the base. The crash-ROC leg fired 30 times since 2009 and 26
+    # of those rebounded without falling a further 10% (87% false alarm).
+    #
+    # The block below is kept as a DIAGNOSTIC, not an instruction, for two
+    # reasons: the readings themselves (price vs 200d SMA, 5d ROC) are honest
+    # and useful context, and the 5d/-10% computation is still load-bearing
+    # for the gap-down tranche plan -- which rests on the gap-down forward-
+    # return study, methodologically clean because it measures forward returns
+    # from an event date with no execution assumption to get wrong.
+    #
+    # The asymmetry is the whole finding: this trigger is a usable BUY signal
+    # and was never a usable SELL signal. Do not reinstate the rotation
+    # without clearing the same lagged-execution bar PR #88 established.
+    _avgo_action = "No action -- guard retired as a rotation rule (see PR #88); reading is diagnostic only"
+    if _trigger == "CRASH":
+        _avgo_action = (
+            "No rotation. But the 5d/-10% gap-down trigger has fired: if the "
+            "gap-down tranche (50k into AVGO) hasn't been deployed yet, this "
+            "is that signal -- see MEMORY.md 'Gap-down tranche validated'."
+        )
 
-    if _joint:
-        _avgo_action = f"JOINT STRESS -> full flight to Gold (Gold 100%, AVGO 0%, LLY 0%){_tranche_note}"
-    elif _guard_active:
-        _avgo_action = f"Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%){_tranche_note}"
-    else:
-        _avgo_action = "Hold base (Gold 25%, AVGO 55%, LLY 20%)"
-
-    print(f"\n  AVGO 200d Guard")
+    print(f"\n  AVGO Trend Diagnostic  [guard RETIRED as a rotation rule -- PR #88]")
     print(f"    AVGO now       : ${_av_now:.2f}  (as of {_av_date})")
     print(f"    200d SMA       : ${_sma200:.2f}  ({_gap_pct:+.1%} gap)")
-    print(f"    {CRASH_ROC_WINDOW}d ROC         : {_roc_now:+.1%}  (crash threshold: {CRASH_ROC_THRESHOLD:.0%})")
-    print(f"    Signal         : {_avgo_signal}  (trigger: {_trigger})")
+    # NOTE: the two lines below are parsed by check_signal_changes.py. Keep the
+    # "Signal :" label and keep the word "trigger:" appearing exactly ONCE in
+    # this block -- the ROC line deliberately says "buy level", not "buy
+    # trigger", because a second "trigger:" is matched first by the
+    # avgo_trigger regex and silently captures the wrong value.
+    print(f"    {CRASH_ROC_WINDOW}d ROC         : {_roc_now:+.1%}  (gap-down buy level: {CRASH_ROC_THRESHOLD:.0%})")
+    print(f"    Signal         : {_avgo_signal}  (trigger: {_trigger})  -- informational, no rotation")
     print(f"    LLY stress     : {'ACTIVE' if _lly_stress else 'inactive'}  "
           f"(${_lly_now:.2f} vs 200d SMA ${_lly_sma:.2f}, {CRASH_ROC_WINDOW}d ROC {_lly_roc:+.1%})")
     print(f"    Joint stress   : {'ACTIVE' if _joint else 'inactive'}  "
-          f"(guard AND LLY stress both active)")
+          f"-- retired alongside the guard, shown for continuity only")
     print(f"    Action         : {_avgo_action}")
 
 except Exception as _e:
-    print(f"\n  AVGO 200d Guard : [unavailable — {_e}]")
+    print(f"\n  AVGO Trend Diagnostic : [unavailable — {_e}]")
 
 # ── AVGO earnings checkpoint (manual — guard is price-lagging, this is not) ─────
 # Fixed 2026-07-06: yfinance's raw trailingEps (GAAP) vs forwardEps (non-GAAP

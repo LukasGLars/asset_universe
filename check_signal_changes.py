@@ -47,9 +47,9 @@ def _find(pattern: str, text: str, default: str = "unknown") -> str:
 
 def extract_fingerprint(text: str) -> dict:
     return {
-        "avgo_guard": _find(r"AVGO 200d Guard.*?Signal\s*:\s*(\S+)", text),
-        "avgo_trigger": _find(r"AVGO 200d Guard.*?trigger:\s*(\S+)\)", text),
-        "avgo_action": _find(r"AVGO 200d Guard.*?Action\s*:\s*([^\n]+)", text),
+        "avgo_guard": _find(r"AVGO Trend Diagnostic.*?Signal\s*:\s*(\S+)", text),
+        "avgo_trigger": _find(r"AVGO Trend Diagnostic.*?trigger:\s*(\S+)\)", text),
+        "avgo_action": _find(r"AVGO Trend Diagnostic.*?Action\s*:\s*([^\n]+)", text),
         "lly_stress": _find(r"LLY stress\s*:\s*(\S+)", text),
         "joint_stress": _find(r"Joint stress\s*:\s*(\S+)", text),
         "silver_signal": _find(r"Silver GSR Tactical.*?Signal\s*:\s*(\S+)", text),
@@ -98,8 +98,8 @@ def extract_fingerprint(text: str) -> dict:
 
 
 LABELS = {
-    "avgo_guard": "AVGO guard",
-    "avgo_trigger": "AVGO guard trigger",
+    "avgo_guard": "AVGO trend state",
+    "avgo_trigger": "AVGO trend trigger",
     "lly_stress": "LLY stress",
     "joint_stress": "Joint stress",
     "silver_signal": "Silver GSR",
@@ -120,26 +120,26 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     blocks: list[str] = []
     subject_parts: list[str] = []
 
-    avgo_changed = (prev["avgo_guard"] != curr["avgo_guard"]
-                     or prev["avgo_trigger"] != curr["avgo_trigger"]
-                     or prev["joint_stress"] != curr["joint_stress"])
-    if avgo_changed and "unknown" not in (prev["avgo_guard"], curr["avgo_guard"]):
+    # AVGO guard RETIRED as a rotation rule 2026-08-16 -- it no longer
+    # produces an actionable alert. A trend-state flip on its own is not a
+    # trade: corrected for execution lag the guard halves CAGR and deepens
+    # drawdown, and its crash leg is an 87% false alarm (PR #88).
+    #
+    # The ONE case still worth a push is the crash trigger, which survives as
+    # a BUY signal for the gap-down tranche -- that rests on the gap-down
+    # forward-return study, which has no execution assumption to get wrong.
+    # A plain MA breach, an MA-breach clearing, or a joint-stress flip are all
+    # silent now.
+    avgo_changed = False
+    if (prev["avgo_trigger"] != curr["avgo_trigger"]
+            and curr["avgo_trigger"] == "CRASH"
+            and "unknown" not in (prev["avgo_trigger"], curr["avgo_trigger"])):
+        avgo_changed = True
         blocks.append(
-            f"AVGO GUARD: {prev['avgo_guard']} -> {curr['avgo_guard']}"
-            f" (trigger: {curr['avgo_trigger']}, joint stress: {curr['joint_stress']})\n"
+            f"AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
             f"ACTION: {curr['avgo_action']}"
         )
-        subject_parts.append(f"AVGO guard -> {curr['avgo_guard']}")
-
-    # LLY stress can flip on its own without the AVGO guard also firing --
-    # informational only in that case, no trade follows from it alone.
-    if (prev["lly_stress"] != curr["lly_stress"] and not avgo_changed
-            and "unknown" not in (prev["lly_stress"], curr["lly_stress"])):
-        blocks.append(
-            f"LLY STRESS (informational, no AVGO guard change): "
-            f"{prev['lly_stress']} -> {curr['lly_stress']}\n"
-            f"No action -- only matters if the AVGO guard fires too."
-        )
+        subject_parts.append("AVGO gap-down trigger")
 
     if prev["silver_signal"] != curr["silver_signal"] and "unknown" not in (prev["silver_signal"], curr["silver_signal"]):
         blocks.append(

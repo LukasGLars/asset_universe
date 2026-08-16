@@ -5,13 +5,13 @@ from pathlib import Path
 from check_signal_changes import build_actionable_message, extract_fingerprint
 
 FIXTURE_BASE = """
-  AVGO 200d Guard
+  AVGO Trend Diagnostic
     AVGO now       : $377.75  (as of 2026-06-30)
     200d SMA       : $360.14  (+4.9% gap)
-    5d ROC         : -0.6%  (crash threshold: -10%)
-    Signal         : BASE  (trigger: none)
+    5d ROC         : -0.6%  (gap-down buy level: -10%)
+    Signal         : BASE  (trigger: none)  -- informational, no rotation
     LLY stress     : inactive  ($1199.43 vs 200d SMA $978.00, 5d ROC +8.3%)
-    Joint stress   : inactive  (guard AND LLY stress both active)
+    Joint stress   : inactive  -- retired alongside the guard, shown for continuity only
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
   Silver GSR Tactical
@@ -45,11 +45,21 @@ FIXTURE_BASE = """
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 """
 
-FIXTURE_GUARD_FIRED = FIXTURE_BASE.replace(
-    "Signal         : BASE  (trigger: none)", "Signal         : DEFENSIVE  (trigger: CRASH)"
+# Guard retired as a rotation rule 2026-08-16 (PR #88). The CRASH trigger
+# survives as a gap-down BUY signal -- that rests on the gap-down forward-
+# return study, which has no execution assumption to get wrong.
+FIXTURE_GAP_DOWN_FIRED = FIXTURE_BASE.replace(
+    "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation"
 ).replace(
     "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
-    "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
+    "Action         : No rotation. But the 5d/-10% gap-down trigger has fired: "
+    "if the gap-down tranche (50k into AVGO) hasn't been deployed yet, this is "
+    "that signal -- see MEMORY.md 'Gap-down tranche validated'.",
+)
+
+# A plain 200d-SMA breach with no crash: silent since the retirement.
+FIXTURE_MA_BREACH_ONLY = FIXTURE_BASE.replace(
+    "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: MA)  -- informational, no rotation"
 )
 
 FIXTURE_REGIME_FLIP = FIXTURE_BASE + "\n  REGIME CHANGE ALERT -- 2026-07-05\n"
@@ -184,18 +194,30 @@ def test_no_message_when_unchanged():
     assert build_actionable_message(fp, fp) is None
 
 
-def test_message_leads_with_action_not_just_state_change():
+def test_gap_down_trigger_still_alerts_and_leads_with_action():
     prev = extract_fingerprint(FIXTURE_BASE)
-    curr = extract_fingerprint(FIXTURE_GUARD_FIRED)
+    curr = extract_fingerprint(FIXTURE_GAP_DOWN_FIRED)
     result = build_actionable_message(prev, curr)
     assert result is not None
     subject, body = result
 
-    assert "AVGO guard -> DEFENSIVE" in subject
-    assert "BASE -> DEFENSIVE" in body
+    assert "gap-down" in subject.lower()
     # The whole point: the exact instruction must be present, not just the
     # raw state transition.
-    assert "ACTION: Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)" in body
+    assert "ACTION:" in body
+    assert "gap-down tranche" in body
+    # And it must NOT tell the operator to rotate -- that rule is retired.
+    assert "Rotate AVGO" not in body
+
+
+def test_plain_ma_breach_is_silent_since_guard_retirement():
+    """A 200d-SMA breach with no crash used to trigger a full rotation alert.
+    Retired 2026-08-16: corrected for execution lag the guard halves CAGR and
+    deepens drawdown, so a trend-state flip is not a trade and must not page
+    the operator."""
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_MA_BREACH_ONLY)
+    assert build_actionable_message(prev, curr) is None
 
 
 def test_extract_fingerprint_parses_open_sleeve_risk_fields():
@@ -277,15 +299,15 @@ def test_sleeve_risk_unchanged_produces_no_message():
     assert build_actionable_message(fp, fp) is None
 
 
-def test_lly_stress_alone_is_informational_not_actioned():
+def test_lly_stress_alone_is_silent_since_guard_retirement():
+    """LLY stress only ever mattered as the escalation leg of the AVGO guard
+    (joint stress). With the guard retired there is no rule it can escalate,
+    so it no longer generates a message at all -- previously it produced an
+    explicitly informational 'no action' block."""
     prev = extract_fingerprint(FIXTURE_BASE)
     changed = FIXTURE_BASE.replace("LLY stress     : inactive", "LLY stress     : ACTIVE")
     curr = extract_fingerprint(changed)
-    result = build_actionable_message(prev, curr)
-    assert result is not None
-    _, body = result
-    assert "informational" in body.lower()
-    assert "No action" in body
+    assert build_actionable_message(prev, curr) is None
 
 
 def test_avgo_earnings_reminder_fires_once_on_transition():
@@ -382,8 +404,9 @@ def test_cli_no_output_when_unchanged(tmp_path):
 
 
 def test_cli_reports_actionable_change(tmp_path):
-    out = _run_cli(FIXTURE_BASE, FIXTURE_GUARD_FIRED, tmp_path)
-    assert "ACTION: Rotate AVGO" in out
+    out = _run_cli(FIXTURE_BASE, FIXTURE_GAP_DOWN_FIRED, tmp_path)
+    assert "ACTION:" in out
+    assert "gap-down tranche" in out
 
 
 def test_extract_fingerprint_parses_sleeve_candidate_none():
@@ -525,3 +548,34 @@ def test_cli_no_crash_when_prev_file_missing(tmp_path):
     )
     assert result.returncode == 0
     assert result.stdout.strip() == ""
+
+
+def test_avgo_trigger_regex_not_captured_by_an_earlier_trigger_word():
+    """Regression, 2026-08-16. The avgo_trigger regex is non-greedy from the
+    section header, so the FIRST 'trigger:' inside the block wins. A wording
+    change that put 'gap-down buy trigger: -10%' on the ROC line silently made
+    avgo_trigger parse as '-10%' instead of the real trigger, which in turn
+    made the gap-down alert unreachable. Caught only by running the real
+    dashboard -- the fixtures at the time still carried the old wording.
+
+    Any line above 'Signal :' in this block must therefore avoid the literal
+    'trigger:'. This pins that."""
+    hostile = FIXTURE_BASE.replace(
+        "5d ROC         : -0.6%  (gap-down buy level: -10%)",
+        "5d ROC         : -0.6%  (gap-down buy trigger: -10%)",
+    )
+    assert extract_fingerprint(hostile)["avgo_trigger"] == "-10%", (
+        "fixture no longer reproduces the hazard -- rewrite this test"
+    )
+    # The real format must not hit it.
+    assert extract_fingerprint(FIXTURE_BASE)["avgo_trigger"] == "none"
+
+
+def test_live_dashboard_labels_are_parseable():
+    """The section header and the 'Signal :' label are a parsing contract
+    between fi_tracker.py and this module. Renaming either silently degrades
+    every AVGO field to 'unknown' -- which is how the retirement change broke
+    the gap-down alert before it was caught."""
+    fp = extract_fingerprint(FIXTURE_BASE)
+    for key in ("avgo_guard", "avgo_trigger", "avgo_action"):
+        assert fp[key] != "unknown", f"{key} did not parse -- label contract broken"

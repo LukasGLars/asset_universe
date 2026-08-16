@@ -27,13 +27,13 @@ from check_signal_changes import build_actionable_message, extract_fingerprint
 from notify_signal_changes import send_telegram
 
 BASE = """
-  AVGO 200d Guard
+  AVGO Trend Diagnostic
     AVGO now       : $377.75  (as of 2026-06-30)
     200d SMA       : $360.14  (+4.9% gap)
-    5d ROC         : -0.6%  (crash threshold: -10%)
-    Signal         : BASE  (trigger: none)
+    5d ROC         : -0.6%  (gap-down buy level: -10%)
+    Signal         : BASE  (trigger: none)  -- informational, no rotation
     LLY stress     : inactive  ($1199.43 vs 200d SMA $978.00, 5d ROC +8.3%)
-    Joint stress   : inactive  (guard AND LLY stress both active)
+    Joint stress   : inactive  -- retired alongside the guard, shown for continuity only
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
   Silver GSR Tactical
@@ -63,7 +63,7 @@ BASE = """
 
 SCENARIOS = [
     ("AVGO guard flip", BASE.replace(
-        "Signal         : BASE  (trigger: none)", "Signal         : DEFENSIVE  (trigger: CRASH)"
+        "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation"
     ).replace(
         "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
         "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
