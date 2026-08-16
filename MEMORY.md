@@ -68,6 +68,50 @@ Unguarded, the honest range is **48%** (TXN analog 2000-2026 incl. dot-com+GFC,
 72.9%. 83.3% sits above even the optimistic bound and should not be pursued
 without re-deriving it.
 
+## Execution-lag fix SHIPPED (2026-08-16, PR #88, merged a657bf2)
+
+The lookahead bug documented below is now fixed in every backtest.
+`build_signals()` routes through a new `apply_execution_lag()`
+(`EXECUTION_LAG_DAYS = 1`) shifting guard/guard_ma/guard_crash/lly_stress/
+joint/silver_state by one bar; `run_avgo_guard.py`, `run_avgo_guard_oos.py`
+and `run_joint_stress_validation.py` patched at their own signal-construction
+points; `run_base_optimizer_with_guard.py` inherits it via `rcs.build_signals`.
+
+**Gotcha the fix had to handle:** shifting a bool column promotes it to object
+with NaN, and `bool(nan)` is **True** -- a missing signal would have become an
+ACTIVE guard. Uses `.eq(True)`, not `.fillna(False).astype(bool)`. Pinned by a
+test.
+
+**Honest results, Gold25/AVGO55/LLY20, 2009-08-06 to 2026-08-14:**
+
+| Strategy | CAGR | MaxDD | Calmar |
+|---|---|---|---|
+| A: Static base | **+32.6%** | **-30.5%** | **1.068** |
+| B: Base + guard | +18.4% | -42.1% | 0.438 |
+| C: Base + silver | +31.3% | -27.4% | **1.143** |
+| D: Base + guard + silver | +18.0% | -42.1% | 0.428 |
+| E: + joint-stress | +16.6% | -44.8% | 0.371 |
+
+The guard roughly halves CAGR **and deepens MaxDD** (-30.5% -> -42.1%). All 12
+cells of the MA-window x defensive-mode grid now lose to the unguarded base;
+`run_avgo_guard.py` prints its own `Verdict: NO IMPROVEMENT`. Base wins 16 of
+18 years.
+
+**Nuance worth keeping -- the guard is not uniformly bad.** IS 2009-2019 it is
+destroyed (Calmar 0.257 vs base 1.545); OOS 2020-2026 it genuinely helps
+(1.925 vs 1.440). Classic trend-following: pays for whipsaw in grinding
+markets, earns it back in crash regimes. Over the full period it loses
+decisively, but "it never works" would be wrong.
+
+**The Silver GSR tactical SURVIVES the fix** and still beats base (Calmar
+1.143 vs 1.068). Only the guard fails. Do not retire silver alongside it.
+
+**STILL LIVE AND UNCHANGED:** `fi_tracker.py`'s guard block still computes and
+still alerts. That was always correct as a *calculation* (latest close ->
+next-day action); what is void is the evidence that acting helps. **Retiring
+or replacing the live guard is an open operator decision, deliberately not
+made in PR #88.** 367 tests pass.
+
 ## DECIDED 2026-08-16: base stays 3-asset, Gold 25 / AVGO 40 / LLY 35
 
 Operator's call at session end. **Not executed -- this is the agreed target, the
