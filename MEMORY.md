@@ -7,6 +7,55 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO customer diversification candidates: peer 10-Ks pulled, NVDA/MRVL fail, AMD is the one live candidate (2026-08-17)
+
+Follow-on to the concentration finding directly below. Question: does splitting
+AVGO's slot with an AI-semi peer that has a genuinely different customer base
+reduce idiosyncratic (single-hyperscaler-loss) risk? Pulled real 10-K
+customer-concentration disclosures for the full peer set (same method as the
+AVGO pull), not reasoned from correlation/beta alone.
+
+| Ticker | Top customer(s), 3yr trend | Broader concentration |
+|---|---|---|
+| AVGO | 21%->28%->**32%** (one customer, rising) | top 5 ~=40%, flat |
+| NVDA | 13%->12%->**22%+14%** (two customers, rising sharply) | top-2 direct 36%, plus unnamed indirect customers >=10% each on top |
+| MRVL | 13%->14% direct **+ 24%->34%->37%** distributor (both rising) | **top 10 customers = 82% of revenue** |
+| ANET | two customers, 16%/26% (roughly flat, 35-42% combined) | |
+| QCOM | three customers, 21%/20%/13% (one declining, one flat, one rising) | ~=54% combined |
+| **AMD** | **none >=10%** currently | genuinely the least concentrated |
+| MU | 17% one customer, rising off a near-zero base | lowest absolute level |
+
+**NVDA and MRVL -- the two obvious candidates -- fail outright.** NVDA's own
+concentration just jumped sharply (FY24 13% -> FY26 22%+14%) and is trending
+the same direction as AVGO's. MRVL is far worse: 82% of revenue sits in its
+top 10 customers -- swapping into it would concentrate the portfolio *more*,
+not less. Confirms the qualitative suspicion from the earlier "MRVL's largest
+customer is reportedly Amazon" framing, now with real filed numbers.
+
+**AMD is the one candidate that actually clears the test.** No customer >=10%
+of revenue, confirmed. Its revenue mix (client/gaming CPU + datacenter GPU +
+embedded) is also structurally different from a pure AI-capex play -- a
+genuinely different economic driver, not just a different counterparty inside
+the same driver, which is a stronger diversification story than "different
+hyperscaler."
+
+**What AMD does not fix:** systemic AI-cycle risk. AMD is itself one of the 8
+constituents used to define the "AI-semi basket" in the 2026-08-16 hedging
+research -- in a sector-wide AI drawdown it sells off with AVGO regardless of
+customer mix. Only addresses the narrow idiosyncratic layer (a single
+hyperscaler pulling back from AVGO specifically), not the common case (a
+sector-wide selloff). Also weaker thesis fit on this framework's own terms
+(AVGO's case rests on contracted multi-year backlog visibility; AMD competes
+for GPU share in a more open, less contracted market) and currently more
+expensive (fwd P/E ~33x vs AVGO's ~20x, per the peer valuation snapshot
+above) -- diversification here has a real, unquantified cost, same shape as
+the AMZN dilution finding.
+
+**Not yet quantified -- the natural next step if pursued:** a proper
+worst-1-name-shock / Calmar-by-subperiod test for an AVGO/AMD split, same
+methodology as the 2026-08-16 4th-asset research. Not built this session --
+qualitative case only, flagged as the open follow-up.
+
 ## AVGO customer concentration: real 10-K numbers pulled, trend is rising not falling (2026-08-17)
 
 Question was which single number resolves the customer-concentration risk in the
