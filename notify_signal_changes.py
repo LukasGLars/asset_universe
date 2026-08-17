@@ -50,7 +50,11 @@ import urllib.request
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from check_signal_changes import build_actionable_message, extract_fingerprint
+from check_signal_changes import (
+    build_actionable_message,
+    build_rebalance_snapshot_message,
+    extract_fingerprint,
+)
 
 TELEGRAM_RETRIES = 2
 RETRY_DELAY_SECONDS = 2
@@ -146,6 +150,37 @@ def main() -> int:
         except Exception as e:
             print(f"Test Telegram send failed: {e}", file=sys.stderr)
         return 0
+
+    # On-demand resend of whatever is CURRENTLY out of band in the AVGO
+    # Rebalance Check, bypassing the diff -- see
+    # build_rebalance_snapshot_message()'s docstring for why the diff-based
+    # alert structurally cannot announce a condition that predates it (e.g.
+    # the day this feature ships, or any time state was out of band before
+    # the operator started watching). This IS real actionable content if
+    # anything is out of band, so it uses the same retry+fallback path as a
+    # genuine diff-triggered alert, not the single-attempt test path above.
+    if os.environ.get("FORCE_SEND_REBALANCE") == "true":
+        try:
+            with open(sys.argv[2], "r", encoding="utf-8", errors="replace") as f:
+                curr_text = f.read()
+        except FileNotFoundError:
+            print(f"Cannot force-send: {sys.argv[2]} not found.", file=sys.stderr)
+            return 1
+
+        result = build_rebalance_snapshot_message(curr_text)
+        if not result:
+            print("FORCE_SEND_REBALANCE set, but nothing is currently out of band -- no message sent.")
+            return 0
+
+        subject, body = result
+        try:
+            send_with_retry_and_fallback(subject, body)
+            print(f"Rebalance snapshot delivered -- subject: {subject}\n{body}")
+            return 0
+        except Exception as e:
+            print(f"Rebalance snapshot delivery FAILED on all channels: {e}", file=sys.stderr)
+            print(f"Undelivered message was:\n{subject}\n{body}", file=sys.stderr)
+            return 1
 
     result = build_change_email(sys.argv[1], sys.argv[2])
     if not result:
