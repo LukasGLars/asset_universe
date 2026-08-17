@@ -605,7 +605,7 @@ except Exception as _e:
 # excluded by design, it has its own GSR trigger and its own funding
 # mechanism, not new contributions (see MEMORY.md backlog).
 try:
-    from run_combined_system import WEIGHTS, JOINT_WEIGHTS
+    from run_combined_system import WEIGHTS
     from next_contribution import next_contribution_target
 
     _rc_total = snap[snap["bucket"] == "reactor_core"]["value_sek"].sum()
@@ -625,9 +625,22 @@ try:
     _silver_state = ("T2" if _silver_signal == "T2 ACTIVE"
                       else "T1" if _silver_signal == "T1 ACTIVE"
                       else "INACTIVE")
-    _target_weights = JOINT_WEIGHTS[_silver_state] if _joint else WEIGHTS[(_guard_active, _silver_state)]
 
-    _next_allowed = {"GC_F": True, "AVGO": not _guard_active, "LLY": not _lly_stress}
+    # Guard RETIRED as a rotation rule (PR #89) -- routing must never consult
+    # it. Previously this read WEIGHTS[(_guard_active, ...)] with a
+    # JOINT_WEIGHTS override, so a 200d breach silently redirected every
+    # future contribution away from AVGO (target 0%, gate closed) -- and after
+    # #89 removed the alert, it would have done so with nothing telling the
+    # operator. Always the base row now.
+    #
+    # WEIGHTS keeps its guard dimension because run_combined_system.py's
+    # backtests still need it to reproduce PR #88's honest comparison; the
+    # live dashboard simply never selects the guard-active rows.
+    _target_weights = WEIGHTS[(False, _silver_state)]
+
+    # No gates. The guard-driven AVGO gate and the LLY-stress gate both existed
+    # only to serve the guard / joint-stress escalation, which are retired.
+    _next_allowed = {"GC_F": True, "AVGO": True, "LLY": True}
 
     _next_ticker, _next_detail = next_contribution_target(_current_weights, _target_weights, _next_allowed)
     _next_name = {"GC_F": "Gold", "AVGO": "Broadcom (AVGO)", "LLY": "Eli Lilly (LLY)"}[_next_ticker]

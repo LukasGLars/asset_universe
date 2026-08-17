@@ -112,13 +112,32 @@ EXECUTION_LAG_DAYS = 1
 LLY_MA = 200
 
 # ── Weight table ──────────────────────────────────────────────────────────────
+# Base moved from Gold25/AVGO55/LLY20 to Gold25/AVGO40/LLY35 on 2026-08-16.
+# Rationale (see MEMORY.md, "DECIDED 2026-08-16"): with the guard retired the
+# mix IS the risk control, and AVGO at 55% had the worst Calmar in all four
+# sub-periods tested plus the worst single-name shock exposure -- a -50% AVGO
+# move alone cost ~25% of TPV. LLY at 35% ranked 1 of 4,991 alternatives for
+# its slot, tested with equal-weight splits so no weight-fitting was possible.
+# Result: CAGR 32.6% -> 30.6%, MaxDD -30.5% -> -23.5%, Calmar 1.068 -> 1.31.
+#
+# Silver T1/T2 still funded from AVGO, same mechanism as before (+12% / +17%).
+# The guard-active rows are RETIRED for live use (fi_tracker.py never selects
+# them, see PR #89) and kept only so the backtests in this module can still
+# reproduce PR #88's honest guarded-vs-unguarded comparison.
 WEIGHTS: dict[tuple[bool, str], dict[str, float]] = {
-    (False, "INACTIVE"): {"GC_F": 0.250, "AVGO": 0.550, "LLY": 0.200, "SI_F": 0.000},
-    (False, "T1"):       {"GC_F": 0.250, "AVGO": 0.430, "LLY": 0.200, "SI_F": 0.120},
-    (False, "T2"):       {"GC_F": 0.250, "AVGO": 0.380, "LLY": 0.200, "SI_F": 0.170},
-    (True,  "INACTIVE"): {"GC_F": 0.525, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.000},
-    (True,  "T1"):       {"GC_F": 0.405, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.120},
-    (True,  "T2"):       {"GC_F": 0.355, "AVGO": 0.000, "LLY": 0.475, "SI_F": 0.170},
+    (False, "INACTIVE"): {"GC_F": 0.250, "AVGO": 0.400, "LLY": 0.350, "SI_F": 0.000},
+    (False, "T1"):       {"GC_F": 0.250, "AVGO": 0.280, "LLY": 0.350, "SI_F": 0.120},
+    (False, "T2"):       {"GC_F": 0.250, "AVGO": 0.230, "LLY": 0.350, "SI_F": 0.170},
+    # Guard-active rows follow the base: AVGO's weight splits evenly into Gold
+    # and LLY (0.25 + 0.40/2 = 0.45, 0.35 + 0.40/2 = 0.55), silver funded from
+    # Gold. Re-derived from the new base so a guarded-vs-unguarded backtest
+    # still compares like with like; the previous 0.525/0.475 rows were the
+    # same construction applied to the old 55% AVGO. Note PR #88's published
+    # figures were computed at the OLD 25/55/20 base -- rerun to compare at
+    # the current one.
+    (True,  "INACTIVE"): {"GC_F": 0.450, "AVGO": 0.000, "LLY": 0.550, "SI_F": 0.000},
+    (True,  "T1"):       {"GC_F": 0.330, "AVGO": 0.000, "LLY": 0.550, "SI_F": 0.120},
+    (True,  "T2"):       {"GC_F": 0.280, "AVGO": 0.000, "LLY": 0.550, "SI_F": 0.170},
 }
 
 # Joint-stress override: guard active AND LLY independently stressed -> full

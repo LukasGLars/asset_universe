@@ -5,8 +5,10 @@ from run_base_optimizer_with_guard import build_weight_tables
 def test_build_weight_tables_reproduces_live_strategy_exactly():
     """The whole point of this generalization is that it must be provably
     faithful to the hand-built, already-validated WEIGHTS/JOINT_WEIGHTS
-    tables at the live 25/55/20 split -- not just "close enough"."""
-    weights, joint_weights = build_weight_tables(0.25, 0.55, 0.20)
+    tables at the LIVE split -- not just "close enough". Live split moved
+    25/55/20 -> 25/40/35 on 2026-08-16; keep this call in step with
+    rcs.WEIGHTS[(False, "INACTIVE")] or the check stops meaning anything."""
+    weights, joint_weights = build_weight_tables(0.25, 0.40, 0.35)
 
     for key, expected in rcs.WEIGHTS.items():
         got = weights[key]
