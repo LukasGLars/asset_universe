@@ -28,7 +28,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Eli Lilly"
 ticker   = "LLY"
-shares   = 24
+shares   = 31
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -107,4 +107,4 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 115243
+value_sek = 35830
