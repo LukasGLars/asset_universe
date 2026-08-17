@@ -7,7 +7,73 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO risk management: full split-candidate sweep closed out, vol-targeting is the one real result (2026-08-17)
+
+Follow-on to the two entries directly below (concentration pull, AMD framed
+as "live candidate" -- **that framing is now superseded**, see next
+paragraph). Extended the same rigor -- real 10-K concentration where
+relevant, backtest on the DECIDED Gold25/AVGO40/LLY35 base, then a REAL
+2000-2026 stress test (TXN proxies AVGO pre-IPO; the split partner's OWN
+real history is used, no proxy, wherever it has one) -- to every remaining
+split candidate, plus two mechanical (non-asset) alternatives.
+
+**Split-candidate results, all vs LIVE Gold25/AVGO40/LLY35 (CAGR 30.15%,
+MaxDD -23.41% normal / -50.2% stress):**
+
+| Candidate | Concentration | Normal CAGR/MaxDD | Stress MaxDD | Verdict |
+|---|---|---|---|---|
+| NVDA | fails -- rising sharply (13%->22%+14%) | not tested further | -- | reject |
+| MRVL | fails -- top 10 = 82% of revenue | not tested further | -- | reject |
+| INTC | no better than AVGO (43% top-3) + weak thesis | not tested | -- | reject |
+| TSM | worse aggregate (top-10 78%, rising) + geopolitical tail | not tested | -- | reject |
+| IBM | passes (no customer >=10%) | CAGR 23.47%, MaxDD -22.11% | not tested | reject -- huge CAGR cost, ~zero AI thesis fit |
+| ADBE | passes cleanly (10-K: literally none >=10%) | CAGR 24.98%, MaxDD -18.30% | -46.3% (better) | real trade-off, doesn't reverse, but costs ~33% of 12yr terminal wealth in the no-crash case |
+| AMZN | passes (diversified retail/AWS base; doesn't buy from AVGO -- in-housed via Annapurna Labs 2015) | CAGR 27.76%, MaxDD -17.74% | **-42.0% (best of anything tested)** | best trade-off found -- smaller CAGR cost than ADBE (-18.7% vs -36.3% no-crash terminal wealth) for better stress protection. Still a trade-off, not a dominant win. |
+| **AMD** | passes cleanly (no customer >=10%) | **CAGR 31.49%, MaxDD -20.98% (beats LIVE on both, normal-period)** | **-55.5% (WORSE than LIVE's -50.2%)** | **REJECT -- reverses under real stress.** AMD's near-bankruptcy history (dot-com bust, pre-2015) is invisible in the 2009-2026 backtest window; the "dominant win" is a modeling artifact of starting the clock after AMD's worst years. |
+| MU | passes reasonably (17%, low) | CAGR 30.65%, MaxDD -22.80% (marginal calm-window win) | **-57.7% (worst of anything tested)** | REJECT -- same AMD trap, sharper. Commodity DRAM/NAND pricing cycle adds real crash risk the calm window hides. |
+
+**Pattern, stated once so it doesn't need re-deriving:** every AI-semi/hyperscaler-adjacent candidate that's genuinely thesis-exposed correlates too much in the scenario that matters (or, for AMD/MU, looks fine until you actually test that scenario). Every candidate that's genuinely diversified (IBM, and to a lesser extent ADBE) costs real terminal wealth with no offsetting edge. **No single stock threaded both needles.** This is expected, not a research gap -- the market prices AI-capex beta into anything that would otherwise "contribute to performance."
+
+**Mechanical alternatives tested instead (position-sizing, not asset selection):**
+
+1. **Volatility-targeting on AVGO -- the one real result of this whole thread.**
+   Weight scaled to AVGO's own trailing 21d realized vol vs its long-run
+   average (lagged t-1->t, so it does NOT repeat the retired guard's
+   lookahead bug), clipped to [0.3x, 1.3x] base weight, freed/added weight
+   moves to/from Gold+LLY proportionally (5:7).
+   - Normal (2009-2026): CAGR 30.15%->**30.79%**, MaxDD -23.41%->**-21.60%**, Calmar 1.288->1.426.
+   - Stress (2000-2026, TXN proxy): CAGR 13.43%->**13.93%**, MaxDD -50.23%->**-44.20%**, Calmar 0.267->0.315.
+   **Improves both CAGR and MaxDD, in both regimes, no reversal** -- the only
+   candidate in this entire session (asset or mechanism) that clears both
+   bars cleanly. Worth an actual build, not just a research note.
+
+2. **Rebalance-band width sweep -- tested, REJECTED as noise.** Every
+   backtest already runs a +-5pp drift-trigger rebalance (this IS a
+   trim-on-strength mechanism, just not previously named as one). Widening
+   it to 15% looked good in both normal and stress windows, but the surface
+   is NOT monotonic or well-behaved past that -- 20% is worse than 15% in
+   both regimes, 30-50% MaxDD blows out (-38.5% normal at 50%, worse than
+   today's 5% band in places). No causal story, just an unstable fit to one
+   historical path -- same overfitting signature already flagged elsewhere
+   in this project for single-path results. **Left at 5%, not worth
+   changing.**
+
+**Options/collar overlay flagged but not analyzed** -- real tail-risk tool
+(bounded cost, defined protection, doesn't need a correlated second asset),
+but Avanza's actual AVGO-options access was never confirmed (same class of
+gap that killed the IGLN gold-instrument idea on 2026-07-07). Check
+tradability before spending analysis time on it.
+
+**Not yet built:** the vol-targeting mechanism above is a research result
+only -- not wired into `fi_tracker.py` or any live signal. Natural next step
+if pursued.
+
 ## AVGO customer diversification candidates: peer 10-Ks pulled, NVDA/MRVL fail, AMD is the one live candidate (2026-08-17)
+
+**NOTE: AMD's candidacy is superseded by the entry directly above --
+it reverses under a real stress test (MaxDD -55.5%, worse than LIVE's
+-50.2%) and is now a REJECT, not a live candidate.** Left as-is below for
+the concentration-pull detail, which still stands.
 
 Follow-on to the concentration finding directly below. Question: does splitting
 AVGO's slot with an AI-semi peer that has a genuinely different customer base
