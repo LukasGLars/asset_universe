@@ -100,6 +100,12 @@ TACTICAL RULES
     Joint stress   : inactive  -- retired alongside the guard, shown for continuity only
     Action         : No action -- guard retired as a rotation rule (see PR #88); reading is diagnostic only
 
+  AVGO Volatility-Targeted Weight
+    Trailing 21d vol : 42.2% (annualized)
+    Long-run avg vol : 35.3% (annualized)
+    Scalar           : 0.84x  (clipped to [0.30x, 1.30x])
+    Target weights   : Gold 27.7%  AVGO 33.5%  LLY 38.8%
+
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
@@ -128,9 +134,9 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : STLD (Steel Dynamics, Inc.)  $255.77  (ext +2.2%, 21d med +2.8%, ave +2.4%, win 61.1%, div ROBUST, drift -0.0%)
-    Plan           : buy near $255.77, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open STLD <fill_price> <shares> <capital_sek>
+    Best candidate : HWM (Howmet Aerospace Inc.)  $289.18  (ext +5.1%, 21d med +2.4%, ave +3.6%, win 64.6%, div THIN, drift +0.3%)
+    Plan           : buy near $289.18, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek>
     VIX review     : 14.25  (26% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
@@ -140,10 +146,15 @@ NEXT CONTRIBUTION
 
   Next kr        -> Eli Lilly (LLY)
     Current wt (of Reactor Core) : 22.3%
-    Target wt (current regime)   : 35.0%
-    Gap                          : +12.7%
+    Target wt (current regime)   : 38.8%
+    Gap                          : +16.5%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
+
+  AVGO Rebalance Check  [existing capital, band: 5%]
+    Gold status: HOLD  (30.5% actual vs 27.7% target, gap -2.8%)
+    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,289 kr)
+    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,521 kr)
 
 ==============================================================
   Regime check (2026-08-14): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
@@ -180,8 +191,8 @@ Computing capped 252d distributions for 51 candidates ...
   CMI       N=1278  mu= +24.9%  sigma= 29.1%  hist=27yr  [ROBUST]
   CEG       hist=5yr  (below min 10yr, skipped)
   CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
-  TPR       N=1278  mu= +18.3%  sigma= 31.2%  hist=26yr  [ROBUST]
   WDC       N=1278  mu= +22.1%  sigma= 39.0%  hist=27yr  [ROBUST]
+  TPR       N=1278  mu= +18.3%  sigma= 31.2%  hist=26yr  [ROBUST]
   NVDA      N=1278  mu= +23.3%  sigma= 32.3%  hist=27yr  [ROBUST]
   GS        N=1278  mu= +12.4%  sigma= 23.4%  hist=27yr  [ROBUST]
   PHAG.L    no data
