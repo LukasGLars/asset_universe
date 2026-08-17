@@ -7,6 +7,31 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Rebalance executed against the vol-targeted mix (2026-08-17)
+
+The AVGO Rebalance Check's opening reading fired for real
+(AVGO 46.8% vs 33.5% target, LLY 22.3% vs 38.8% target, Gold in-band) and the
+operator executed it, in two tranches, against live Google Sheet share counts
+(pulled via `sync_sheet.py`, committed straight to `master` same as the
+automated job -- `b17cbd1`, `40dc542`):
+
+- **AVGO 101 -> 73 shares** (sold 28)
+- **LLY 16 -> 24 -> 31 shares** (bought 8, then 7, across the two syncs)
+- **War Chest 100,565 -> 27 kr** -- drawn to fund the buy, per the
+  "War Chest -> 0" funding plan from the 2026-08-16 sizing decision (see the
+  operator's personal memory file, `[[project-reactor-core-mix]]`)
+- Reactor Core Cash left at **35,830 kr** buffer after the second LLY tranche
+
+**Final state, re-verified via a live `fi_tracker.py` run: all three legs
+HOLD.** Gold 27.3% vs 27.7% (gap +0.5%), AVGO 30.2% vs 33.5% (gap +3.3%), LLY
+38.6% vs 38.8% (gap +0.2%) -- all inside the 5% band. Nothing left to trade;
+next thing that can move these targets is the AVGO earnings print on
+2026-09-02 (vol-targeting scalar) or a fresh volatility reading.
+
+**Not touched:** the Reactor Core/Home Base 85%/15% split itself (currently
+~82%/18%, per the 2026-08-17 sizing decision below) -- this rebalance only
+worked the Gold/AVGO/LLY mix inside Reactor Core, not the bucket-level split.
+
 ## AVGO Rebalance Check + Telegram alert SHIPPED (2026-08-17, branch feature/avgo-rebalance-alert)
 
 Closes the gap flagged right after vol-targeting shipped: that build only
