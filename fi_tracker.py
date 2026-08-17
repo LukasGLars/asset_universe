@@ -402,6 +402,34 @@ try:
 except Exception as _e:
     print(f"\n  AVGO Trend Diagnostic : [unavailable — {_e}]")
 
+# ── AVGO volatility-targeted weight (2026-08-17) ──────────────────────────────
+# Replaces the fixed 40% AVGO base weight with one scaled to AVGO's own
+# trailing realized vol vs its long-run average -- the one mechanism from the
+# 2026-08-17 split-candidate research that improved both CAGR and MaxDD in
+# the calm backtest AND a real 2000-2026 stress test, with no reversal (every
+# stock-split candidate either cost return or reversed under stress). See
+# vol_target.py and MEMORY.md. This IS what NEXT CONTRIBUTION routes against
+# below -- not informational-only like the retired guard diagnostic above.
+try:
+    from vol_target import compute_vol_target_weights
+
+    _vt_prices = pd.read_parquet(DATA_DIR / "equities" / "AVGO.parquet")
+    _vt_prices["date"] = pd.to_datetime(_vt_prices["date"])
+    _vt_prices = _vt_prices.set_index("date")["close"].sort_index().dropna()
+
+    _vt = compute_vol_target_weights(_vt_prices)
+    _vt_w = _vt["weights"]
+
+    print(f"\n  AVGO Volatility-Targeted Weight")
+    print(f"    Trailing {21}d vol : {_vt['trailing_vol']:.1%} (annualized)")
+    print(f"    Long-run avg vol : {_vt['long_run_vol']:.1%} (annualized)")
+    print(f"    Scalar           : {_vt['scalar']:.2f}x  (clipped to [0.30x, 1.30x])")
+    print(f"    Target weights   : Gold {_vt_w['GC_F']:.1%}  AVGO {_vt_w['AVGO']:.1%}  LLY {_vt_w['LLY']:.1%}")
+
+except Exception as _e:
+    print(f"\n  AVGO Volatility-Targeted Weight : [unavailable — {_e}]")
+    _vt = None
+
 # ── AVGO earnings checkpoint (manual — guard is price-lagging, this is not) ─────
 # Fixed 2026-07-06: yfinance's raw trailingEps (GAAP) vs forwardEps (non-GAAP
 # consensus) mixes conventions -- for AVGO specifically, VMware-acquisition
@@ -607,6 +635,7 @@ except Exception as _e:
 try:
     from run_combined_system import WEIGHTS
     from next_contribution import next_contribution_target
+    from vol_target import apply_silver_funding
 
     _rc_total = snap[snap["bucket"] == "reactor_core"]["value_sek"].sum()
 
@@ -625,6 +654,7 @@ try:
     _silver_state = ("T2" if _silver_signal == "T2 ACTIVE"
                       else "T1" if _silver_signal == "T1 ACTIVE"
                       else "INACTIVE")
+    _silver_pct = {"INACTIVE": 0.0, "T1": 0.12, "T2": 0.17}[_silver_state]
 
     # Guard RETIRED as a rotation rule (PR #89) -- routing must never consult
     # it. Previously this read WEIGHTS[(_guard_active, ...)] with a
@@ -633,10 +663,20 @@ try:
     # #89 removed the alert, it would have done so with nothing telling the
     # operator. Always the base row now.
     #
+    # AVGO's slice of the base row is now vol-targeted (2026-08-17, see
+    # vol_target.py) rather than a fixed 40% -- routes against the SAME
+    # weights the dashboard section above displays, with silver funding
+    # applied from AVGO's vol-targeted slice, same rule as the static table.
+    # Falls back to the static WEIGHTS table if the vol-target computation
+    # above failed, so routing degrades gracefully rather than going dark.
+    #
     # WEIGHTS keeps its guard dimension because run_combined_system.py's
     # backtests still need it to reproduce PR #88's honest comparison; the
     # live dashboard simply never selects the guard-active rows.
-    _target_weights = WEIGHTS[(False, _silver_state)]
+    if _vt is not None:
+        _target_weights = apply_silver_funding(_vt["weights"], _silver_pct)
+    else:
+        _target_weights = WEIGHTS[(False, _silver_state)]
 
     # No gates. The guard-driven AVGO gate and the LLY-stress gate both existed
     # only to serve the guard / joint-stress escalation, which are retired.
