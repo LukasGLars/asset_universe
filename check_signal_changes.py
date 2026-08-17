@@ -94,6 +94,12 @@ def extract_fingerprint(text: str) -> dict:
         "lly_eps_actual_vs_est": _find(r"LLY Earnings Checkpoint.*?Latest qtr EPS \(actual vs est\.\)\s*:\s*([^\n]+)", text),
         "lly_revenue_actual": _find(r"LLY Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
         "lly_revenue_next_q": _find(r"LLY Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
+        "rebal_gold_status": _find(r"AVGO Rebalance Check.*?Gold status:\s*(\S+)", text),
+        "rebal_avgo_status": _find(r"AVGO Rebalance Check.*?AVGO status:\s*(\S+)", text),
+        "rebal_lly_status": _find(r"AVGO Rebalance Check.*?LLY status:\s*(\S+)", text),
+        "rebal_gold_detail": _find(r"AVGO Rebalance Check.*?Gold status:\s*\S+\s*([^\n]+)", text),
+        "rebal_avgo_detail": _find(r"AVGO Rebalance Check.*?AVGO status:\s*\S+\s*([^\n]+)", text),
+        "rebal_lly_detail": _find(r"AVGO Rebalance Check.*?LLY status:\s*\S+\s*([^\n]+)", text),
     }
 
 
@@ -281,6 +287,26 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             f"EPS beat streak: {curr['lly_beat_streak']} | Guidance: {curr['lly_guidance_trend']}"
         )
         subject_parts.append("LLY earnings reported")
+
+    # AVGO Rebalance Check (2026-08-17): fires only on the HOLD -> SELL/BUY
+    # transition (an asset NEWLY drifting out of the vol-target band), not on
+    # every run while it stays out of band -- same "alert on transition, not
+    # on persisting state" convention as every other block above. The
+    # reverse (SELL/BUY -> HOLD, the gap closing) isn't actionable, so it's
+    # deliberately silent too. Quotes fi_tracker.py's own detail line so the
+    # trade size can never drift from what the dashboard says.
+    for _asset, _status_key, _detail_key, _label in (
+        ("Gold", "rebal_gold_status", "rebal_gold_detail", "Gold"),
+        ("AVGO", "rebal_avgo_status", "rebal_avgo_detail", "AVGO"),
+        ("LLY", "rebal_lly_status", "rebal_lly_detail", "LLY"),
+    ):
+        if (prev[_status_key] == "HOLD" and curr[_status_key] in ("SELL", "BUY")
+                and "unknown" not in (prev[_status_key], curr[_status_key])):
+            blocks.append(
+                f"AVGO REBALANCE CHECK: {_label} drifted out of band ({curr[_status_key]}).\n"
+                f"ACTION: {curr[_detail_key]}"
+            )
+            subject_parts.append(f"{_label} rebalance -> {curr[_status_key]}")
 
     if not blocks:
         return None

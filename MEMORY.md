@@ -7,6 +7,63 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO Rebalance Check + Telegram alert SHIPPED (2026-08-17, branch feature/avgo-rebalance-alert)
+
+Closes the gap flagged right after vol-targeting shipped: that build only
+routed NEW contributions against the vol-targeted weights. This makes
+EXISTING capital actionable too, automated end-to-end.
+
+- **`rebalance_instructions()`** (`vol_target.py`): per-asset (Gold/AVGO/LLY)
+  current vs. vol-targeted weight, gap, and -- if the gap exceeds
+  `REBAL_BAND` -- a trade size in kr and shares. Sized independently per
+  asset (not netted against what a simultaneous sell elsewhere would fund)
+  -- simpler and more robust for automation than a "who funds whom"
+  allocator. Real float-precision bug caught by its own boundary test:
+  0.40-0.35 computes as 0.050000000000000044 in Python, which would have
+  fired a spurious trade exactly at a clean 5% band edge -- fixed by
+  rounding to 1e-9 before the comparison.
+- **`REBAL_BAND = 0.05`**, chosen from a real band-triggered backtest swept
+  0%-8% (2009-2026): 5% gives ~19 trades/yr (vs ~252/yr unbanded, daily
+  rebalance) and keeps Calmar at 1.420 vs the unbanded 1.483 (~96% of the
+  edge retained). Every band tested still clearly beat the non-vol-targeted
+  static base (Calmar 1.288).
+- **`fi_tracker.py`**: new "AVGO Rebalance Check" section, own try/except
+  (a failure here must never be mislabeled as a NEXT CONTRIBUTION failure,
+  which already succeeded by the time this runs -- caught and fixed before
+  shipping, they originally shared one except block).
+- **Telegram/email alert wired into the EXISTING pipeline** (`notify_signal_changes.py`
+  -- Telegram, retry, email fallback, CI-failure escalation, all already
+  built for the guard/silver/sleeve alerts, zero changes needed there).
+  `check_signal_changes.py` gained 6 new fingerprint fields
+  (`rebal_{gold,avgo,lly}_status/_detail`) and a new alert block that fires
+  ONLY on the HOLD -> SELL/BUY transition per asset (an asset NEWLY
+  drifting out of band) -- same "alert on transition, not persisting
+  state" convention as every other block in that file. The reverse
+  (gap closing back to HOLD) stays silent, same as the earnings-reminder
+  DUE -> not_due direction.
+- Detail-field regexes scoped to `AVGO Rebalance Check.*?` prefix, not bare
+  `"AVGO status:"` -- the PR #89 lesson (unscoped regex risk) applied
+  proactively here rather than found the hard way.
+- `check_sync_health.py` `REQUIRED_SECTIONS` extended with both new
+  sections (Volatility-Targeted Weight, Rebalance Check) -- a silent
+  disappearance now fails the health check loudly instead of degrading
+  quietly.
+- **End-to-end verified for real** (not just fixtures): ran `fi_tracker.py`
+  live, simulated a real HOLD->SELL/BUY transition against the actual
+  current portfolio (AVGO 46.8% vs 33.5% target, LLY 22.3% vs 38.8%
+  target), confirmed `notify_signal_changes.py`'s message builder produces
+  the correct Telegram body with real share counts, and confirmed
+  unchanged->unchanged produces no message (no false-positive risk).
+- 20 new/changed tests (9 in `test_vol_target.py`, 5 new in
+  `test_signal_changes.py`, 1 fixture fix in `test_check_sync_health.py`),
+  390 passing project-wide.
+
+**Real reading 2026-08-17 that would have fired this alert:** AVGO 46.8%
+actual vs. 33.5% target (SELL ~29 shares, ~107,382 kr), LLY 22.3% vs 38.8%
+target (BUY ~12 shares, ~133,499 kr), Gold 30.5% vs 27.7% (within band,
+HOLD). Not yet executed -- this is the recommendation, not a completed
+trade.
+
 ## Reactor Core DECIDED at 85% / Home Base 15% (2026-08-17)
 
 Operator's call, closing the open sizing question from the "CRITICAL: the
@@ -51,9 +108,11 @@ not just a research result:
   Gold/LLY absorbed to 27.7%/38.8%.
 - 9 new tests (`tests/test_vol_target.py`), 379 passing project-wide.
 
-**Not done:** no live rebalance executed against these new targets yet --
-this only changes what NEXT CONTRIBUTION recommends going forward.
-Portfolio.toml/actual share counts untouched.
+**Not done at the time this shipped:** no live rebalance executed against
+these new targets, and only NEXT CONTRIBUTION (new money) consulted them --
+existing capital had no instruction at all. **Closed same day, see "AVGO
+Rebalance Check + Telegram alert SHIPPED" above.** Portfolio.toml/actual
+share counts still untouched -- the alert recommends, it doesn't execute.
 
 ## AVGO risk management: full split-candidate sweep closed out, vol-targeting is the one real result (2026-08-17)
 

@@ -21,6 +21,10 @@ TACTICAL RULES
     Signal         : BASE
     Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
 
+  AVGO Volatility-Targeted Weight
+    Scalar           : 0.84x  (clipped to [0.30x, 1.30x])
+    Target weights   : Gold 27.7%  AVGO 33.5%  LLY 38.8%
+
   AVGO Earnings Checkpoint
     Next earnings  : 2026-09-03
     Action         : check guided trajectory
@@ -28,6 +32,11 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Next earnings  : 2026-08-06
     Action         : check guided trajectory
+
+  AVGO Rebalance Check  [existing capital, band: 5%]
+    Gold status: HOLD  (27.7% actual vs 27.7% target, gap +0.0%)
+    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)
+    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)
 """
 
 

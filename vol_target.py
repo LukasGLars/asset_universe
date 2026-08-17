@@ -41,6 +41,14 @@ MAX_MULT   = 1.3
 
 BASE_WEIGHTS = {"GC_F": 0.25, "AVGO": 0.40, "LLY": 0.35}
 
+# Empirically chosen 2026-08-17: a real band-triggered backtest (2009-2026)
+# swept 0%-8%. At 5%, ~19 trades/yr, Calmar 1.420 -- keeps ~96% of the
+# un-banded daily-rebalance edge (Calmar 1.483, ~252 trades/yr, impractical
+# to execute manually) while cutting trade frequency ~13x. Every band tested
+# still clearly beat the non-vol-targeted static base (Calmar 1.288). See
+# MEMORY.md.
+REBAL_BAND = 0.05
+
 
 def compute_vol_target_weights(avgo_prices: pd.Series) -> dict:
     """
@@ -103,3 +111,53 @@ def apply_silver_funding(vt_weights: dict[str, float], silver_pct: float) -> dic
         "LLY":  vt_weights["LLY"],
         "SI_F": funded_silver,
     }
+
+
+def rebalance_instructions(
+    current_weights: dict[str, float],
+    target_weights: dict[str, float],
+    prices: dict[str, float],
+    rc_total: float,
+    band: float = REBAL_BAND,
+) -> dict[str, dict]:
+    """For each of GC_F/AVGO/LLY: whether ALREADY-HELD capital has drifted
+    more than `band` from `target_weights` (distinct from next_contribution's
+    routing of NEW money only) and, if so, the trade size to close that
+    asset's OWN gap back to target -- sized independently per asset, not
+    netted against what a simultaneous sell elsewhere would fund. Simpler
+    and more robust for an automated alert than a "who funds whom" allocator
+    that has to keep working as the number of in/out-of-band assets varies.
+
+    Strict '>' against the band (exactly at the boundary does not trigger),
+    matching run_base_optimizer.py's existing drift-rebalance convention.
+    Missing price data cannot silently corrupt the trade instruction: a
+    missing/zero price forces the shares figure to 0 rather than raising or
+    dividing by zero, but out_of_band and gap_kr are still computed and
+    reported -- "must be accurate always" means never presenting a wrong
+    share count, not never surfacing a real gap.
+    """
+    result: dict[str, dict] = {}
+    for tkr in ("GC_F", "AVGO", "LLY"):
+        cur = current_weights.get(tkr, 0.0)
+        tgt = target_weights.get(tkr, 0.0)
+        gap = tgt - cur
+        # Round before the boundary comparison -- raw float subtraction can
+        # land a hair past an intended-exact band (e.g. 0.40-0.35 ==
+        # 0.05000000000000004), which would wrongly trigger a trade at
+        # exactly the edge. 1e-9 precision is far tighter than any real
+        # portfolio weight needs, so this only ever corrects float noise.
+        out_of_band = round(abs(gap), 9) > band
+        gap_kr = gap * rc_total
+        price = prices.get(tkr) or 0.0
+        shares = round(abs(gap_kr) / price) if (out_of_band and price > 0) else 0
+
+        result[tkr] = {
+            "current": cur,
+            "target": tgt,
+            "gap": gap,
+            "gap_kr": gap_kr,
+            "out_of_band": out_of_band,
+            "action": ("BUY" if gap > 0 else "SELL") if out_of_band else "HOLD",
+            "shares": shares,
+        }
+    return result

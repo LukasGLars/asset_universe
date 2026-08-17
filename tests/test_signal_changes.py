@@ -43,7 +43,22 @@ FIXTURE_BASE = """
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
+
+  AVGO Rebalance Check  [existing capital, band: 5%]
+    Gold status: HOLD  (27.7% actual vs 27.7% target, gap +0.0%)
+    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)
+    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)
 """
+
+FIXTURE_REBAL_AVGO_SELL = FIXTURE_BASE.replace(
+    "    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)",
+    "    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,382 kr)",
+)
+
+FIXTURE_REBAL_LLY_BUY = FIXTURE_BASE.replace(
+    "    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)",
+    "    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,499 kr)",
+)
 
 # Guard retired as a rotation rule 2026-08-16 (PR #88). The CRASH trigger
 # survives as a gap-down BUY signal -- that rests on the gap-down forward-
@@ -579,3 +594,48 @@ def test_live_dashboard_labels_are_parseable():
     fp = extract_fingerprint(FIXTURE_BASE)
     for key in ("avgo_guard", "avgo_trigger", "avgo_action"):
         assert fp[key] != "unknown", f"{key} did not parse -- label contract broken"
+
+
+def test_extract_fingerprint_parses_rebalance_check_fields():
+    fp = extract_fingerprint(FIXTURE_BASE)
+    assert fp["rebal_gold_status"] == "HOLD"
+    assert fp["rebal_avgo_status"] == "HOLD"
+    assert fp["rebal_lly_status"] == "HOLD"
+    assert fp["rebal_avgo_detail"] == "(35.0% actual vs 33.5% target, gap -1.5%)"
+
+
+def test_rebalance_hold_to_sell_fires_with_action():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_REBAL_AVGO_SELL)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "AVGO rebalance" in subject
+    assert "ACTION:" in body
+    assert "~29 shares" in body
+
+
+def test_rebalance_hold_to_buy_fires_with_action():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(FIXTURE_REBAL_LLY_BUY)
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "LLY rebalance" in subject
+    assert "~12 shares" in body
+
+
+def test_rebalance_still_out_of_band_does_not_refire():
+    """Persisting in SELL/BUY (not a fresh transition from HOLD) must stay
+    silent -- same 'alert on transition, not on persisting state' rule as
+    every other block."""
+    curr = extract_fingerprint(FIXTURE_REBAL_AVGO_SELL)
+    assert build_actionable_message(curr, curr) is None
+
+
+def test_rebalance_resolving_back_to_hold_is_silent():
+    """The gap closing (SELL/BUY -> HOLD) isn't actionable, same as the
+    earnings-reminder DUE -> not_due direction."""
+    prev = extract_fingerprint(FIXTURE_REBAL_AVGO_SELL)
+    curr = extract_fingerprint(FIXTURE_BASE)
+    assert build_actionable_message(prev, curr) is None
