@@ -11,37 +11,37 @@ Position                Shares      Price    Value SEK     Wt
   Vertiv                     -   2,796 kr         0 kr   0.0%
   Broadcom                 101   3,740 kr   377,713 kr  34.1%
   Howmet Aerospace           -   2,752 kr         0 kr   0.0%
-  Spiltan Räntefond          -     manual   198,960 kr  18.0%
-  War Chest                  -     manual   100,540 kr   9.1%
+  Spiltan Räntefond          -     manual   199,038 kr  18.0%
+  War Chest                  -     manual   100,565 kr   9.1%
   Reactor Core Cash          -     manual     3,679 kr   0.3%
 --------------------------------------------------------------
-  TPV                                        1,106,854 kr
+  TPV                                        1,106,957 kr
     Reactor Core            807,354 kr  (73%)
-    Home Base               198,960 kr  (18%)
-    War Chest               100,540 kr  (9%)
+    Home Base               199,038 kr  (18%)
+    War Chest               100,565 kr  (9%)
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,106,854 kr
+  Now                     :     1,106,957 kr
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  10.9
 
-  AWAR (trailing)         :  +18.2%
-  Required CAGR           :  +22.3%
-  Status                  :  BEHIND  (-4.1% margin)
+  AWAR (trailing)         :  +18.1%
+  Required CAGR           :  +22.4%
+  Status                  :  BEHIND  (-4.3% margin)
 
-  Projected @ AWAR        :     9,183,539 kr
-  vs target               :    -3,751,167 kr  (deficit)
+  Projected @ AWAR        :     9,062,257 kr
+  vs target               :    -3,872,449 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,530,567 kr       ~2047
-  Conservative   +15%       6,973,674 kr       ~2041
-  Base           +20%      10,650,874 kr       ~2038
-  Current AWAR   +18%       9,183,539 kr       ~2039
-  Bull           +30%      24,111,659 kr       ~2035
+  Bear           +10%       4,526,720 kr       ~2047
+  Conservative   +15%       6,965,553 kr       ~2041
+  Base           +20%      10,635,096 kr       ~2038
+  Current AWAR   +18%       9,062,257 kr       ~2039
+  Bull           +30%      24,060,969 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -91,14 +91,14 @@ TACTICAL RULES
     Signal         : INACTIVE
     Action         : No action -- hold base
 
-  AVGO 200d Guard
+  AVGO Trend Diagnostic  [guard RETIRED as a rotation rule -- PR #88]
     AVGO now       : $392.99  (as of 2026-08-14)
     200d SMA       : $368.25  (+6.7% gap)
-    5d ROC         : -8.1%  (crash threshold: -10%)
-    Signal         : BASE  (trigger: none)
+    5d ROC         : -8.1%  (gap-down buy level: -10%)
+    Signal         : BASE  (trigger: none)  -- informational, no rotation
     LLY stress     : inactive  ($1180.16 vs 200d SMA $1041.33, 5d ROC -0.5%)
-    Joint stress   : inactive  (guard AND LLY stress both active)
-    Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)
+    Joint stress   : inactive  -- retired alongside the guard, shown for continuity only
+    Action         : No action -- guard retired as a rotation rule (see PR #88); reading is diagnostic only
 
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
@@ -116,10 +116,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $46.56
-    Fwd/Trail ratio (normalized): 1.48x  (baseline established 2026-07-06)
+    Forward EPS (+1yr est.)    : $47.33
+    Fwd/Trail ratio (normalized): 1.50x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.16B (implied YoY +25.9%)
+    Next-qtr revenue consensus : $22.23B (implied YoY +26.3%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
@@ -138,10 +138,10 @@ TACTICAL RULES
 NEXT CONTRIBUTION
 ==============================================================
 
-  Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 46.8%
-    Target wt (current regime)   : 55.0%
-    Gap                          : +8.2%
+  Next kr        -> Eli Lilly (LLY)
+    Current wt (of Reactor Core) : 22.3%
+    Target wt (current regime)   : 35.0%
+    Gap                          : +12.7%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
@@ -184,8 +184,8 @@ Computing capped 252d distributions for 51 candidates ...
   WDC       N=1278  mu= +22.1%  sigma= 39.0%  hist=27yr  [ROBUST]
   NVDA      N=1278  mu= +23.3%  sigma= 32.3%  hist=27yr  [ROBUST]
   GS        N=1278  mu= +12.4%  sigma= 23.4%  hist=27yr  [ROBUST]
-  CIEN      N=1278  mu= +22.1%  sigma= 28.2%  hist=27yr  [ROBUST]
   PHAG.L    no data
+  CIEN      N=1278  mu= +22.1%  sigma= 28.2%  hist=27yr  [ROBUST]
   RL        N=1278  mu= +14.7%  sigma= 26.2%  hist=27yr  [ROBUST]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   FOX       hist=7yr  (below min 10yr, skipped)
@@ -200,8 +200,8 @@ Computing capped 252d distributions for 51 candidates ...
   FTNT      N= 630  mu=  -8.8%  sigma= 10.3%  hist=17yr  [SINGLE]
   CRWD      hist=7yr  (below min 10yr, skipped)
   SYF       N= 630  mu= +11.4%  sigma= 17.7%  hist=12yr  [SINGLE]
-  4GLD.DE   no data
   AAPL      N=1278  mu= +19.4%  sigma= 28.6%  hist=27yr  [ROBUST]
+  4GLD.DE   no data
   GC_F      N=1278  mu=  +9.8%  sigma= 11.4%  hist=26yr  [ROBUST]
 
 Cross-sectional prior mu : +18.4%  (shrinkage target)
