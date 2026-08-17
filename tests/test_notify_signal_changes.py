@@ -222,3 +222,78 @@ def test_send_telegram_raises_on_not_ok_response(monkeypatch):
             assert False, "expected RuntimeError"
         except RuntimeError as e:
             assert "not-ok" in str(e)
+
+
+REBAL_OUT_OF_BAND = BASE + """
+  AVGO Rebalance Check  [existing capital, band: 5%]
+    Gold status: HOLD  (30.5% actual vs 27.7% target, gap -2.8%)
+    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,382 kr)
+    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,499 kr)
+"""
+
+REBAL_ALL_HOLD = BASE + """
+  AVGO Rebalance Check  [existing capital, band: 5%]
+    Gold status: HOLD  (27.7% actual vs 27.7% target, gap +0.0%)
+    AVGO status: HOLD  (33.5% actual vs 33.5% target, gap +0.0%)
+    LLY status: HOLD  (38.8% actual vs 38.8% target, gap +0.0%)
+"""
+
+
+def test_force_send_rebalance_bypasses_diff_and_sends(monkeypatch, tmp_path):
+    monkeypatch.setenv("FORCE_SEND_REBALANCE", "true")
+    prev = tmp_path / "prev.md"  # deliberately stale/irrelevant -- must not be read for content
+    curr = tmp_path / "curr.md"
+    prev.write_text(BASE, encoding="utf-8")
+    curr.write_text(REBAL_OUT_OF_BAND, encoding="utf-8")
+
+    with patch.object(nsc, "build_change_email") as mock_email, \
+         patch.object(nsc, "send_telegram") as mock_send:
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", str(prev), str(curr)]
+        try:
+            code = nsc.main()
+        finally:
+            sys.argv = old_argv
+        mock_email.assert_not_called()  # diff path is bypassed entirely
+        mock_send.assert_called_once()
+        subject, body = mock_send.call_args[0]
+        assert "AVGO" in body and "~29 shares" in body
+        assert "LLY" in body and "~12 shares" in body
+        assert code == 0
+
+
+def test_force_send_rebalance_sends_nothing_when_all_in_band(monkeypatch, tmp_path):
+    monkeypatch.setenv("FORCE_SEND_REBALANCE", "true")
+    prev = tmp_path / "prev.md"
+    curr = tmp_path / "curr.md"
+    prev.write_text(BASE, encoding="utf-8")
+    curr.write_text(REBAL_ALL_HOLD, encoding="utf-8")
+
+    with patch.object(nsc, "send_telegram") as mock_send:
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", str(prev), str(curr)]
+        try:
+            code = nsc.main()
+        finally:
+            sys.argv = old_argv
+        mock_send.assert_not_called()
+        assert code == 0
+
+
+def test_force_send_rebalance_missing_curr_file_fails_loudly(monkeypatch, tmp_path):
+    monkeypatch.setenv("FORCE_SEND_REBALANCE", "true")
+    prev = tmp_path / "prev.md"
+    prev.write_text(BASE, encoding="utf-8")
+
+    with patch.object(nsc, "send_telegram") as mock_send:
+        import sys
+        old_argv = sys.argv
+        sys.argv = ["notify_signal_changes.py", str(prev), str(tmp_path / "nope.md")]
+        try:
+            code = nsc.main()
+        finally:
+            sys.argv = old_argv
+        mock_send.assert_not_called()
+        assert code == 1

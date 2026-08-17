@@ -639,3 +639,28 @@ def test_rebalance_resolving_back_to_hold_is_silent():
     prev = extract_fingerprint(FIXTURE_REBAL_AVGO_SELL)
     curr = extract_fingerprint(FIXTURE_BASE)
     assert build_actionable_message(prev, curr) is None
+
+
+def test_rebalance_snapshot_lists_only_out_of_band_assets():
+    from check_signal_changes import build_rebalance_snapshot_message
+
+    text = FIXTURE_BASE.replace(
+        "    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)",
+        "    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,382 kr)",
+    ).replace(
+        "    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)",
+        "    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,499 kr)",
+    )
+    result = build_rebalance_snapshot_message(text)
+    assert result is not None
+    subject, body = result
+    assert "AVGO" in body and "SELL" in body and "~29 shares" in body
+    assert "LLY" in body and "BUY" in body and "~12 shares" in body
+    # Gold stayed HOLD -- must not appear as an actionable block.
+    assert "Gold is out of band" not in body
+
+
+def test_rebalance_snapshot_none_when_everything_in_band():
+    from check_signal_changes import build_rebalance_snapshot_message
+
+    assert build_rebalance_snapshot_message(FIXTURE_BASE) is None

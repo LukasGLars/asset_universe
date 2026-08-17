@@ -316,6 +316,42 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     return subject, body
 
 
+def build_rebalance_snapshot_message(text: str) -> tuple[str, str] | None:
+    """Snapshot (not diff) of the CURRENT AVGO Rebalance Check state -- lists
+    every asset presently out of band, regardless of whether today is a
+    fresh transition. build_actionable_message() only fires on a HOLD ->
+    SELL/BUY transition, so it structurally cannot announce a condition
+    that predates the alert existing (yesterday's prev status.md has no
+    Rebalance Check section at all -> parses "unknown" -> the unknown
+    guard correctly suppresses a diff-based alert with no real baseline).
+    This is the deliberate escape hatch for that gap: an on-demand resend
+    of whatever is currently out of band, used for bootstrapping this
+    alert the day it ships, or any time the operator wants a fresh
+    reminder without waiting for a new transition.
+
+    Returns None if every asset is currently HOLD (nothing to resend).
+    """
+    curr = extract_fingerprint(text)
+    blocks: list[str] = []
+    for status_key, detail_key, label in (
+        ("rebal_gold_status", "rebal_gold_detail", "Gold"),
+        ("rebal_avgo_status", "rebal_avgo_detail", "AVGO"),
+        ("rebal_lly_status", "rebal_lly_detail", "LLY"),
+    ):
+        if curr[status_key] in ("SELL", "BUY"):
+            blocks.append(
+                f"AVGO REBALANCE CHECK: {label} is out of band ({curr[status_key]}).\n"
+                f"ACTION: {curr[detail_key]}"
+            )
+
+    if not blocks:
+        return None
+
+    subject = "Asset Universe: current rebalance state"
+    body = "\n\n".join(blocks)
+    return subject, body
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         print("usage: check_signal_changes.py <prev_status.md> <curr_status.md>", file=sys.stderr)

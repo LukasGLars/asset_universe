@@ -21,6 +21,10 @@ on:
         description: "Suppress signal-change notification (use when this run is a state correction, not a real event)"
         type: boolean
         default: false
+      force_send_rebalance:
+        description: "Resend whatever is CURRENTLY out of band in the AVGO Rebalance Check, bypassing the diff (use when a real out-of-band condition predates the alert and can't self-announce)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -123,6 +127,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
           FORCE_TEST_TELEGRAM: ${{ github.event.inputs.test_telegram || 'false' }}
           SUPPRESS_NOTIFY: ${{ github.event.inputs.suppress_notify || 'false' }}
+          FORCE_SEND_REBALANCE: ${{ github.event.inputs.force_send_rebalance || 'false' }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
 
