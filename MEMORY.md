@@ -7,6 +7,46 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO customer concentration: real 10-K numbers pulled, trend is rising not falling (2026-08-17)
+
+Question was which single number resolves the customer-concentration risk in the
+scarcity/AI-ASIC thesis, and its direction. Pulled real figures from Broadcom's
+FY2025 10-K (filed 2025-12-18, SEC EDGAR CIK 1730168) rather than reasoning from
+the named-customer *count* (5->6, Google/Meta/Anthropic/OpenAI), which says
+nothing about weighting.
+
+| | FY2023 | FY2024 | FY2025 |
+|---|---|---|---|
+| Single largest customer, % of net revenue | 21% | 28% | **32%** |
+| Top 5 end customers combined, % of net revenue | -- | ~40% | ~40% (flat) |
+| Same single customer, % of accounts receivable | -- | 18% | **44%** |
+
+**Trend is rising, not declining -- the risk-off answer.** Single-customer share
+rose 21%->28%->32% over three fiscal years; its share of receivables jumped
+18%->44% in one year alone (a sharper near-term signal than the revenue trend).
+More named logos (5->6) has not translated into less concentration -- the
+dollars are still consolidating in the top one even as the story diversifies
+in name only.
+
+**Two caveats on what this number actually measures:**
+1. Broadcom does not name the customer in the 10-K -- disclosed only as "a
+   distributor... in our semiconductor solutions segment." Very likely tied to
+   the Google TPU relationship (the largest, longest-standing hyperscaler
+   deal) but that is inference, not a 10-K statement.
+2. This is **total company net revenue**, not the AI/XPU segment specifically.
+   Semiconductor solutions also includes networking, broadband, wireless,
+   storage -- so 32% likely overstates AI-specific concentration on this one
+   customer while understating it as a share of AI revenue alone (AI is a
+   growing slice of that segment, not all of it).
+
+**Decision-relevant framing (agreed same session):** if this % is flat/rising
+*and* the Sept 3 earnings print shows named-contract itemization "thinning"
+per the pre-registered CONCERNING criteria above, that combination is the
+actual trigger to revisit sizing -- neither signal alone is decisive. Not
+wired into any live gate; a periodic manual pull against the next 10-K
+(FY2026, expected ~Dec 2026) is the natural refresh point, same cadence as
+the P/E/PEG snapshot below.
+
 ## CRITICAL: the AVGO 200d guard's entire validated edge is lookahead bias (2026-08-16)
 
 **Nothing has been changed in the repo or in live logic. This is a finding
