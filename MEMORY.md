@@ -7,6 +7,54 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Reactor Core DECIDED at 85% / Home Base 15% (2026-08-17)
+
+Operator's call, closing the open sizing question from the "CRITICAL: the
+AVGO 200d guard's entire validated edge is lookahead bias" entry below
+(honest unguarded range was 48%-82%; 85% sits just above even that
+optimistic bound). Decided, not re-derived from the drawdown-ceiling method
+-- explicit trade-off accepted between the ceiling math and Home Base's
+role as a behavioural/rainy-day buffer, not a purely risk-capacity-sized
+number. Not yet executed against live TPV.
+
+## AVGO volatility-targeting SHIPPED (2026-08-17, branch feature/avgo-vol-targeting)
+
+Builds the one mechanism that survived the split-candidate sweep directly
+below -- see that entry for the backtest/stress-test evidence. Live now,
+not just a research result:
+
+- **`vol_target.py`** (new): `compute_vol_target_weights()` scales AVGO's
+  base 40% weight by `long_run_vol / trailing_21d_vol`, clipped to
+  [0.3x, 1.3x] (so AVGO ranges 12%-52%), freed/added weight moving to/from
+  Gold+LLY in their 25:35 ratio. Both vol series only ever use data through
+  the latest available close (expanding-window long-run average, not the
+  backtest's full-sample simplification) -- same "today's reading is
+  tomorrow's instruction" convention as every other live signal in this
+  repo, so it does not repeat the retired guard's lookahead bug.
+  `apply_silver_funding()` funds T1/T2 out of AVGO's vol-targeted slice
+  (same rule as the static WEIGHTS table), with a tested edge case: if
+  AVGO's floor (12%) is below T2's 17% need, silver caps at what's
+  available rather than going negative or reaching into Gold/LLY.
+- **`fi_tracker.py`**: new "AVGO Volatility-Targeted Weight" section
+  (trailing vol, long-run avg, scalar, resulting weights), printed right
+  after the (retired, diagnostic-only) AVGO Trend Diagnostic block.
+- **NEXT CONTRIBUTION now routes against the vol-targeted weights**, not
+  the static 40% row -- this is a live behaviour change, not informational
+  like the guard diagnostic. Falls back to the static `WEIGHTS` table if
+  the vol-target computation fails, so routing degrades gracefully instead
+  of going dark.
+- Live-verified 2026-08-17: `fi_tracker.py` run for real (not just fixture
+  tests -- the PR #89 lesson) and re-parsed with `check_signal_changes.py`/
+  `check_sync_health.py`; zero parsing breaks, `avgo_trigger` still reads
+  `none` not `unknown`. Real reading that day: trailing vol 42.2% vs
+  long-run 35.3% (elevated), scalar 0.84x, AVGO target cut to 33.5%,
+  Gold/LLY absorbed to 27.7%/38.8%.
+- 9 new tests (`tests/test_vol_target.py`), 379 passing project-wide.
+
+**Not done:** no live rebalance executed against these new targets yet --
+this only changes what NEXT CONTRIBUTION recommends going forward.
+Portfolio.toml/actual share counts untouched.
+
 ## AVGO risk management: full split-candidate sweep closed out, vol-targeting is the one real result (2026-08-17)
 
 Follow-on to the two entries directly below (concentration pull, AMD framed
@@ -64,9 +112,7 @@ but Avanza's actual AVGO-options access was never confirmed (same class of
 gap that killed the IGLN gold-instrument idea on 2026-07-07). Check
 tradability before spending analysis time on it.
 
-**Not yet built:** the vol-targeting mechanism above is a research result
-only -- not wired into `fi_tracker.py` or any live signal. Natural next step
-if pursued.
+**SHIPPED same day -- see "AVGO volatility-targeting SHIPPED" entry above.**
 
 ## AVGO customer diversification candidates: peer 10-Ks pulled, NVDA/MRVL fail, AMD is the one live candidate (2026-08-17)
 
