@@ -699,4 +699,38 @@ try:
 except Exception as _e:
     print(f"\n  Next Contribution : [unavailable — {_e}]")
 
+# ── AVGO Rebalance Check (2026-08-17) ─────────────────────────────────────────
+# Distinct from NEXT CONTRIBUTION above, which only routes NEW money. This
+# checks whether capital you ALREADY HOLD has drifted more than REBAL_BAND
+# from the vol-targeted weights -- reuses the SAME _current_weights /
+# _target_weights computed above, so this can never disagree with routing.
+# Own try/except: a failure here must never be mislabeled as a NEXT
+# CONTRIBUTION failure (that section already succeeded by the time this
+# runs) or silently swallowed by its except block.
+# Band choice, trade frequency, and the Calmar cost of the band are all in
+# MEMORY.md ("AVGO volatility-targeting SHIPPED") -- 5pp keeps ~96% of the
+# un-banded edge at ~1/13th the trade frequency.
+try:
+    from vol_target import REBAL_BAND, rebalance_instructions
+
+    _rebal_prices = {
+        "GC_F": float(snap[snap["name"] == "Gold"]["price_sek"].iloc[0]),
+        "AVGO": float(snap[snap["name"] == "Broadcom"]["price_sek"].iloc[0]),
+        "LLY":  float(snap[snap["name"] == "Eli Lilly"]["price_sek"].iloc[0]),
+    }
+    _rebal = rebalance_instructions(_current_weights, _target_weights, _rebal_prices, _rc_total)
+    _rebal_names = {"GC_F": "Gold", "AVGO": "AVGO", "LLY": "LLY"}
+
+    print(f"\n  AVGO Rebalance Check  [existing capital, band: {REBAL_BAND:.0%}]")
+    for _tkr in ("GC_F", "AVGO", "LLY"):
+        _r = _rebal[_tkr]
+        _detail = (f" -- ~{_r['shares']} shares (~{abs(_r['gap_kr']):,.0f} kr)"
+                    if _r["out_of_band"] else "")
+        print(f"    {_rebal_names[_tkr]} status: {_r['action']}  "
+              f"({_r['current']:.1%} actual vs {_r['target']:.1%} target, "
+              f"gap {_r['gap']:+.1%}){_detail}")
+
+except Exception as _e:
+    print(f"\n  AVGO Rebalance Check : [unavailable — {_e}]")
+
 print(f"\n{'='*62}")

@@ -6,9 +6,11 @@ from vol_target import (
     BASE_WEIGHTS,
     MAX_MULT,
     MIN_MULT,
+    REBAL_BAND,
     VOL_WINDOW,
     apply_silver_funding,
     compute_vol_target_weights,
+    rebalance_instructions,
 )
 
 
@@ -120,3 +122,62 @@ def test_silver_funding_caps_at_available_avgo_weight_when_vol_target_floor_bite
     assert funded["SI_F"] == pytest.approx(0.12, abs=1e-9)  # capped, not 0.17
     assert funded["GC_F"] == pytest.approx(0.45, abs=1e-9)  # untouched
     assert funded["LLY"] == pytest.approx(0.43, abs=1e-9)   # untouched
+
+
+# ── rebalance_instructions ──────────────────────────────────────────────────
+
+_REAL_CURRENT = {"GC_F": 0.305, "AVGO": 0.468, "LLY": 0.223}
+_REAL_TARGET  = {"GC_F": 0.277, "AVGO": 0.335, "LLY": 0.388}
+_REAL_PRICES  = {"GC_F": 810.0, "AVGO": 3741.0, "LLY": 11235.0}
+_REAL_RC_TOTAL = 807_501.0
+
+
+def test_in_band_asset_holds_no_shares_no_action():
+    result = rebalance_instructions(_REAL_CURRENT, _REAL_TARGET, _REAL_PRICES, _REAL_RC_TOTAL)
+    assert result["GC_F"]["out_of_band"] is False
+    assert result["GC_F"]["action"] == "HOLD"
+    assert result["GC_F"]["shares"] == 0
+
+
+def test_overweight_asset_out_of_band_recommends_sell():
+    result = rebalance_instructions(_REAL_CURRENT, _REAL_TARGET, _REAL_PRICES, _REAL_RC_TOTAL)
+    avgo = result["AVGO"]
+    assert avgo["out_of_band"] is True
+    assert avgo["action"] == "SELL"
+    assert avgo["gap"] < 0
+    assert avgo["shares"] > 0
+    # gap ~ -13.3% of ~807,501 kr =~ -107,400 kr =~ 28-29 shares at 3,741 kr
+    assert avgo["shares"] == pytest.approx(29, abs=1)
+
+
+def test_underweight_asset_out_of_band_recommends_buy():
+    result = rebalance_instructions(_REAL_CURRENT, _REAL_TARGET, _REAL_PRICES, _REAL_RC_TOTAL)
+    lly = result["LLY"]
+    assert lly["out_of_band"] is True
+    assert lly["action"] == "BUY"
+    assert lly["gap"] > 0
+    assert lly["shares"] > 0
+
+
+def test_boundary_exactly_at_band_does_not_trigger():
+    # Strict '>' -- exactly at the band edge must NOT be out_of_band.
+    current = {"GC_F": 0.25, "AVGO": 0.35, "LLY": 0.35}
+    target = {"GC_F": 0.25, "AVGO": 0.40, "LLY": 0.35}  # AVGO gap exactly +0.05
+    result = rebalance_instructions(current, target, _REAL_PRICES, _REAL_RC_TOTAL, band=0.05)
+    assert result["AVGO"]["out_of_band"] is False
+    assert result["AVGO"]["action"] == "HOLD"
+
+
+def test_just_past_boundary_triggers():
+    current = {"GC_F": 0.25, "AVGO": 0.3499, "LLY": 0.4001}
+    target = {"GC_F": 0.25, "AVGO": 0.40, "LLY": 0.35}  # AVGO gap +0.0501
+    result = rebalance_instructions(current, target, _REAL_PRICES, _REAL_RC_TOTAL, band=0.05)
+    assert result["AVGO"]["out_of_band"] is True
+
+
+def test_missing_price_gives_zero_shares_but_still_reports_gap():
+    result = rebalance_instructions(_REAL_CURRENT, _REAL_TARGET, {}, _REAL_RC_TOTAL)
+    avgo = result["AVGO"]
+    assert avgo["out_of_band"] is True          # gap is still real and reported
+    assert avgo["action"] == "SELL"
+    assert avgo["shares"] == 0                  # but never a fabricated share count
