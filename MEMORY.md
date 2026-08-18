@@ -7,6 +7,44 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Swedish large caps added; SAAB is NOT a hedge (2026-08-18, PR #97)
+
+**Gap closed:** Swedish equities were absent from every universe file even
+though the 2026-06-26 screen had 13 of them (Investor B 11th of 490 by
+Sharpe). No rationale was ever recorded for dropping them. Added 41 Nasdaq
+Stockholm large caps (`config/universes/se_equities.txt`, new `se_equities`
+category in `update.py`), most with ~26yr history.
+
+**`run_ai_basket_beta.py`** rebuilds the 2026-08-16 hedge screen (original
+script deleted per convention). USD pass reproduces every published value
+within 0.01 (SPY 0.42, QQQ 0.54, AMZN 0.53, LLY 0.23, GC_F 0.05) -- that is
+what validates the rebuild. Adds a SEK pass, since the original table was
+all-USD and a USD asset gains SEK value when USD strengthens.
+
+**SAAB screens beautifully and fails on inspection.** Full-sample SEK basis:
+beta 0.11 / corr 0.13 -- better than gold (0.12), far below LLY (0.28). But
+by sub-period:
+
+| | 2012-2017 | 2018-2021 | 2022-2026 |
+|---|---|---|---|
+| SAAB-B.ST | 0.23 | 0.27 | **-0.02** |
+| AZN.ST | 0.18 | 0.09 | -0.07 |
+| TELIA.ST | 0.18 | 0.16 | -0.04 |
+| INVE-B.ST | 0.26 | 0.25 | 0.14 |
+| **GC_F** | **0.16** | **0.13** | **0.10** |
+| LLY | 0.39 | 0.40 | 0.18 |
+
+SAAB was ordinary before 2022 (0.23-0.27, no better than Investor B). Its
+entire edge is the post-Ukraine rearmament window -- one regime, one
+exogenous event, the same single-path signature already rejected elsewhere
+in this project. **Gold's 0.16/0.13/0.10 stability is what a real hedge looks
+like, and is why it holds its slot.**
+
+**Verdict: not adopted.** The 2026-08-16 conclusion stands -- AI-thesis
+exposure and decorrelation are mutually exclusive. **Reusable lesson: always
+sub-period a full-sample beta before believing it.** A single regime can
+carry the whole number.
+
 ## Contribution-splitting to dip-buy: NO EDGE, do not build it (2026-08-18, PR #96)
 
 **Question:** keep a regular monthly DCA tempo but hold part of it back as cash
