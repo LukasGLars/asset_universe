@@ -52,9 +52,12 @@ rather than inherited as a number.** Everything below supersedes
 optimistic on three counts simultaneously (4% rule, no ISK tax drag, no
 inflation indexing). The config value was NOT changed -- see "open" at the end.
 
-**Stated goal:** the *option* to quit the day job at 50. Operator turns 38 on
-2026-10-10, so age 50 = **2038-10-10**. Income need: **35,000 kr/month after
-tax** (420,000 kr/yr in 2026 kr).
+**Stated goal:** the *option* to stop working at the FI horizon date. Horizon
+end is **2038-10-10** (12.15 yrs from 2026-08-18). The income requirement it is
+sized against is deliberately not recorded here -- this repo is PUBLIC. It lives
+in the operator's personal memory (`[[user-income-savings-capacity]]`), along
+with the expense base and salary figures. Everything below is the derived
+result, which is what the repo needs.
 
 **Horizon config fixed (commit 96c983f, master):** `years` 12 -> **13.223**,
 so `start_date` 2025-07-21 + 13.223yr lands exactly on 2038-10-10. It had been
@@ -64,7 +67,8 @@ reporting 10.9 years remaining; now 12.15. Field is consumed as a float
 ### "Living off yield" is structurally impossible with this portfolio
 
 Blended dividend yield is **~0.7%** (Gold 0%, AVGO ~0.6%, LLY ~0.5%, Home Base
-~2.5%). Funding 35,000 kr/mo from actual yield would need roughly **76M kr**.
+~2.5%). Funding the target income from actual yield would need roughly **76M
+kr** -- about 4.7x the threshold below.
 The plan is therefore total-return withdrawal (sell a little each year), not
 yield. Worth stating explicitly because the operator's own framing was "living
 off yield" and it does not survive contact with a 25/40/35 gold-heavy mix.
