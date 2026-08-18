@@ -236,19 +236,28 @@ for sym, name in {"GC_F": "Gold (futures)", "SI_F": "Silver (futures)"}.items():
     except Exception:
         pass
 
-# ── Swedish stocks ────────────────────────────────────────────────────────────
-print("Fetching Swedish stocks ...", flush=True)
-for ticker, name in SWEDISH.items():
-    s = _fetch_yf(ticker)
-    if s is None:
-        print(f"  -- {ticker:<15} no data", flush=True)
-        continue
-    row = _process(s, ticker, name, "Swedish", matched_dates)
-    if row:
-        rows.append(row)
-        print(f"  OK {ticker:<15} {name:<22} {row['history_yr']:.0f}yr  N={row['n_matched']}  {row['diversity']}", flush=True)
-    else:
-        print(f"  -- {ticker:<15} N < {MIN_N}", flush=True)
+# -- Swedish stocks -----------------------------------------------------------
+# Reads the se_equities parquet store (added 2026-08-18) rather than the old
+# hardcoded 15-name live-yfinance list. That list omitted SAAB entirely and
+# carried a dead Hexagon ticker (HEX-B.ST, correct is HEXA-B.ST), so names
+# were being silently dropped from the ranking on every run.
+print("")
+print("Screening Swedish stocks ...", flush=True)
+se_dir = DATA_DIR / "se_equities"
+se_pass = 0
+for f in sorted(se_dir.glob("*.parquet")):
+    try:
+        df = pd.read_parquet(f)
+        df["date"] = pd.to_datetime(df["date"])
+        s_px = df.set_index("date")["close"].sort_index().dropna()
+        ticker = (f.stem[:-3].replace("_", "-") + ".ST") if f.stem.endswith("_ST") else f.stem
+        row = _process(s_px, ticker, SWEDISH.get(ticker, ticker), "Swedish", matched_dates)
+        if row:
+            rows.append(row)
+            se_pass += 1
+    except Exception:
+        pass
+print(f"  {se_pass} passed (N >= {MIN_N})", flush=True)
 
 # ── UCITS ETFs ────────────────────────────────────────────────────────────────
 print("Fetching UCITS ETFs ...", flush=True)
