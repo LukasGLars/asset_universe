@@ -1,11 +1,32 @@
 """vol_target.py
 
-Continuous volatility-scaled sizing for AVGO's weight in the Reactor Core
-base, replacing the fixed 40% with a weight that scales against AVGO's own
-trailing realized volatility -- the one mechanism from the 2026-08-17 split-
-candidate research that improved both CAGR and MaxDD in the calm 2009-2026
-backtest AND a real 2000-2026 stress test (dot-com bust + GFC, via a TXN
-proxy for pre-IPO AVGO), with no reversal. See MEMORY.md.
+*** THE VOL-TARGETING MECHANISM IS RETIRED AS OF 2026-08-18. ***
+*** compute_vol_target_weights() is DIAGNOSTIC-ONLY -- it must not drive  ***
+*** routing or rebalance instructions. rebalance_instructions() remains   ***
+*** LIVE, but against the STATIC base weights.                            ***
+
+Retired because the result that justified shipping it (2026-08-17, PR #91:
+normal CAGR 30.15%->30.79%, Calmar 1.288->1.426) did not replicate. A
+self-checked rebuild -- verified bit-exact against this module's own
+compute_vol_target_weights() at 25 dates across the full history -- found
+the mechanism LOSES to plain static weights, and that finding survived every
+robustness test applied to it:
+  - every sub-period, including with AVGO's 2023-2026 melt-up excluded;
+  - 0 wins in a 30-cell VOL_WINDOW x REBAL_BAND grid, both regimes;
+  - and under identical realistic-drift mechanics (the original comparison
+    had silently given the fixed static target free daily rebalancing).
+In the stress window it made drawdown WORSE (-57.2% vs -48.7% at a 5% band),
+so it was not buying protection in the regime it existed for.
+
+Kept rather than deleted, following the same precedent as the retired AVGO
+200d guard: the dashboard still prints the reading as a diagnostic, and the
+validation scripts (run_vol_target_validation.py,
+run_vol_target_robustness.py) need the live function to check themselves
+against. Full detail in MEMORY.md.
+
+Original design intent, for reference: continuous volatility-scaled sizing
+for AVGO's weight in the Reactor Core base, replacing the fixed 40% with a
+weight scaled against AVGO's own trailing realized volatility.
 
 Mechanism: today's weight is sized from AVGO's trailing VOL_WINDOW-day
 realized volatility (through the latest available close) relative to its
@@ -41,13 +62,30 @@ MAX_MULT   = 1.3
 
 BASE_WEIGHTS = {"GC_F": 0.25, "AVGO": 0.40, "LLY": 0.35}
 
-# Empirically chosen 2026-08-17: a real band-triggered backtest (2009-2026)
-# swept 0%-8%. At 5%, ~19 trades/yr, Calmar 1.420 -- keeps ~96% of the
-# un-banded daily-rebalance edge (Calmar 1.483, ~252 trades/yr, impractical
-# to execute manually) while cutting trade frequency ~13x. Every band tested
-# still clearly beat the non-vol-targeted static base (Calmar 1.288). See
-# MEMORY.md.
-REBAL_BAND = 0.05
+# Widened 5% -> 10% on 2026-08-18. The original 5% came from the same
+# 2026-08-17 research whose headline result did not survive replication (see
+# MEMORY.md, "AVGO vol-targeting: shipped edge does NOT reproduce"), so it was
+# re-derived from scratch against the STATIC base under realistic weight drift
+# (run_vol_target_robustness.py section C + comparison_results/
+# static_band_sweep.csv, buy&hold row cross-validated against an independent
+# fixed-share computation):
+#
+#   band    NORMAL CAGR/Calmar     STRESS CAGR/Calmar
+#    3%     27.45% / 1.136         10.88% / 0.224
+#    5%     29.03% / 1.220         12.02% / 0.263   <- previous
+#    8%     29.72% / 1.329         12.43% / 0.281
+#   10%     30.29% / 1.296         12.87% / 0.294   <- now
+#   15%     31.01% / 1.383         13.46% / 0.306
+#
+# Wider beats 5% on BOTH CAGR and Calmar in both regimes, and the ranking is
+# stable across sub-periods (15% best in 4 of 5 tested). 10% rather than 15%
+# deliberately, for two reasons: the 2026-08-17 band sweep found >20%
+# non-monotonic and unstable, so 10% keeps real distance from that edge; and a
+# wider band lets AVGO drift further before trimming (10% band -> AVGO can
+# reach ~50% of Reactor Core; 15% -> ~55%), which interacts badly with the
+# documented single-name concentration risk in AVGO specifically. Most of the
+# available gain is captured by 8-10% regardless.
+REBAL_BAND = 0.10
 
 
 def compute_vol_target_weights(avgo_prices: pd.Series) -> dict:

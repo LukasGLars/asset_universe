@@ -402,14 +402,14 @@ try:
 except Exception as _e:
     print(f"\n  AVGO Trend Diagnostic : [unavailable — {_e}]")
 
-# ── AVGO volatility-targeted weight (2026-08-17) ──────────────────────────────
-# Replaces the fixed 40% AVGO base weight with one scaled to AVGO's own
-# trailing realized vol vs its long-run average -- the one mechanism from the
-# 2026-08-17 split-candidate research that improved both CAGR and MaxDD in
-# the calm backtest AND a real 2000-2026 stress test, with no reversal (every
-# stock-split candidate either cost return or reversed under stress). See
-# vol_target.py and MEMORY.md. This IS what NEXT CONTRIBUTION routes against
-# below -- not informational-only like the retired guard diagnostic above.
+# ── AVGO volatility-targeted weight (2026-08-17, RETIRED 2026-08-18) ─────────
+# DIAGNOSTIC ONLY -- nothing routes against this. Briefly drove NEXT
+# CONTRIBUTION and the Rebalance Check (2026-08-17 to 2026-08-18) before the
+# backtest that justified it failed to replicate: a self-checked rebuild found
+# it loses to the static base in every sub-period and in 0/30 parameter-grid
+# cells, while making stress-window drawdown worse. Kept displayed on the same
+# basis as the retired AVGO Trend Diagnostic above -- visible, not acted on.
+# See vol_target.py's header and MEMORY.md.
 try:
     from vol_target import compute_vol_target_weights
 
@@ -420,11 +420,12 @@ try:
     _vt = compute_vol_target_weights(_vt_prices)
     _vt_w = _vt["weights"]
 
-    print(f"\n  AVGO Volatility-Targeted Weight")
+    print(f"\n  AVGO Volatility-Targeted Weight  [RETIRED 2026-08-18 -- diagnostic only]")
     print(f"    Trailing {21}d vol : {_vt['trailing_vol']:.1%} (annualized)")
     print(f"    Long-run avg vol : {_vt['long_run_vol']:.1%} (annualized)")
     print(f"    Scalar           : {_vt['scalar']:.2f}x  (clipped to [0.30x, 1.30x])")
-    print(f"    Target weights   : Gold {_vt_w['GC_F']:.1%}  AVGO {_vt_w['AVGO']:.1%}  LLY {_vt_w['LLY']:.1%}")
+    print(f"    Would-be weights : Gold {_vt_w['GC_F']:.1%}  AVGO {_vt_w['AVGO']:.1%}  LLY {_vt_w['LLY']:.1%}")
+    print(f"    NOT ACTED ON     : routing + rebalance use the static base (see MEMORY.md)")
 
 except Exception as _e:
     print(f"\n  AVGO Volatility-Targeted Weight : [unavailable — {_e}]")
@@ -635,7 +636,6 @@ except Exception as _e:
 try:
     from run_combined_system import WEIGHTS
     from next_contribution import next_contribution_target
-    from vol_target import apply_silver_funding
 
     _rc_total = snap[snap["bucket"] == "reactor_core"]["value_sek"].sum()
 
@@ -663,20 +663,19 @@ try:
     # #89 removed the alert, it would have done so with nothing telling the
     # operator. Always the base row now.
     #
-    # AVGO's slice of the base row is now vol-targeted (2026-08-17, see
-    # vol_target.py) rather than a fixed 40% -- routes against the SAME
-    # weights the dashboard section above displays, with silver funding
-    # applied from AVGO's vol-targeted slice, same rule as the static table.
-    # Falls back to the static WEIGHTS table if the vol-target computation
-    # above failed, so routing degrades gracefully rather than going dark.
+    # Vol-targeting RETIRED 2026-08-18 -- routing must never consult it, same
+    # reasoning as the retired guard above. It briefly (2026-08-17 to
+    # 2026-08-18) supplied AVGO's slice of the base row here, on a backtest
+    # result that did not replicate: a self-checked rebuild found it LOSES to
+    # the static base in every sub-period, in 0/30 parameter-grid cells, and
+    # under identical realistic-drift mechanics -- while making stress-window
+    # drawdown worse, not better. See vol_target.py's header and MEMORY.md.
+    # The dashboard section above still prints the reading as a DIAGNOSTIC.
     #
     # WEIGHTS keeps its guard dimension because run_combined_system.py's
     # backtests still need it to reproduce PR #88's honest comparison; the
     # live dashboard simply never selects the guard-active rows.
-    if _vt is not None:
-        _target_weights = apply_silver_funding(_vt["weights"], _silver_pct)
-    else:
-        _target_weights = WEIGHTS[(False, _silver_state)]
+    _target_weights = WEIGHTS[(False, _silver_state)]
 
     # No gates. The guard-driven AVGO gate and the LLY-stress gate both existed
     # only to serve the guard / joint-stress escalation, which are retired.
@@ -702,14 +701,17 @@ except Exception as _e:
 # ── AVGO Rebalance Check (2026-08-17) ─────────────────────────────────────────
 # Distinct from NEXT CONTRIBUTION above, which only routes NEW money. This
 # checks whether capital you ALREADY HOLD has drifted more than REBAL_BAND
-# from the vol-targeted weights -- reuses the SAME _current_weights /
+# from the STATIC base weights -- reuses the SAME _current_weights /
 # _target_weights computed above, so this can never disagree with routing.
+# (Both switched off vol-targeting on 2026-08-18 by that shared variable --
+# see the NEXT CONTRIBUTION block above for why.)
 # Own try/except: a failure here must never be mislabeled as a NEXT
 # CONTRIBUTION failure (that section already succeeded by the time this
 # runs) or silently swallowed by its except block.
-# Band choice, trade frequency, and the Calmar cost of the band are all in
-# MEMORY.md ("AVGO volatility-targeting SHIPPED") -- 5pp keeps ~96% of the
-# un-banded edge at ~1/13th the trade frequency.
+# Band widened 5% -> 10% on 2026-08-18, re-derived against the static base
+# under realistic weight drift -- full table and the reason 10% was chosen
+# over the marginally-better-testing 15% are in vol_target.py's REBAL_BAND
+# comment and MEMORY.md.
 try:
     from vol_target import REBAL_BAND, rebalance_instructions
 
