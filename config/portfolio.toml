@@ -2,7 +2,10 @@
 start_date               = "2025-07-21"
 start_value_sek          = 925983
 target_sek               = 12934706
-years                    = 12
+# Horizon anchored to the FI@50 date: operator turns 38 on 2026-10-10, so
+# age 50 falls on 2038-10-10. 2025-07-21 + 13.223yr lands there. Consumed as
+# a float (portfolio.py: years_left = years - years_elapsed).
+years                    = 13.223
 monthly_contribution_sek = 6000
 
 # ── Reactor Core positions ─────────────────────────────────────────────────────
