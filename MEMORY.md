@@ -7,6 +7,43 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Contribution-splitting to dip-buy: NO EDGE, do not build it (2026-08-18, PR #96)
+
+**Question:** keep a regular monthly DCA tempo but hold part of it back as cash
+and deploy the pile into AVGO at crash-ROC triggers -- better than investing
+every contribution immediately?
+
+**Answer: no.** The dip-buying half was already validated (see "Gap-down tranche
+validated", 2026-08-14) but the **cost of waiting** never was. Triggers fire
+~twice a year, so held-back cash sits idle **~93% of days**, and that drag
+exactly cancels the dip edge.
+
+`run_contribution_split_test.py`, terminal wealth vs pure DCA:
+
+| Contribution | AVGO actual (best -> worst) | TXN analog (best -> worst) |
+|---|---|---|
+| 6,000 kr/mo | +4.4% -> -1.1% | -1.4% -> -3.7% |
+| 18,256 kr/mo | +0.8% -> -1.6% | -2.2% -> -3.8% |
+| 36,236 kr/mo | +0.9% -> -3.4% | +0.6% -> -6.2% |
+
+**Non-monotonic at every contribution level** (75% holdback best at one, 25% at
+another, 100% at a third) -- noise, not signal. **Consistently negative in the
+TXN stress regime**, i.e. it hurts most in the regime it was meant to help.
+
+Why the event study and the portfolio sim disagree: the 2026-08-14 test measured
+each of 32 triggers independently, which prices the dip edge but never charges
+for the idle time between them. Both results are correct; they answer different
+questions. **Deploying capital you already have at a trigger is still good;
+manufacturing that capital by not investing is not.**
+
+Executes every trigger at the NEXT session's close, so this does not repeat the
+lookahead bias that invalidated the 200d guard. Self-check asserts holdback=0%
+reproduces pure DCA exactly. Printed CAGR column is a TPV-growth rate including
+contributions, NOT an investment return.
+
+**Implication for the FI@50 plan: contribution *rate* is the lever, contribution
+*timing* is not.** See the entry below.
+
 ## FI@50 goal DERIVED from actual income need -- the 12.93M target was wrong by ~60% (2026-08-18)
 
 **First time the objective has been derived from the operator's real spending
