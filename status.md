@@ -32,16 +32,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +22.4%
   Status                  :  BEHIND  (-4.6% margin)
 
-  Projected @ AWAR        :     8,822,971 kr
-  vs target               :    -4,111,735 kr  (deficit)
+  Projected @ AWAR        :     8,782,294 kr
+  vs target               :    -4,152,412 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,518,368 kr       ~2047
-  Conservative   +15%       6,951,978 kr       ~2041
-  Base           +20%      10,613,485 kr       ~2038
-  Current AWAR   +18%       8,822,971 kr       ~2039
-  Bull           +30%      24,009,145 kr       ~2035
+  Bear           +10%       4,516,991 kr       ~2047
+  Conservative   +15%       6,949,120 kr       ~2041
+  Base           +20%      10,607,989 kr       ~2038
+  Current AWAR   +18%       8,782,294 kr       ~2039
+  Bull           +30%      23,991,706 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -51,13 +51,13 @@ MACRO REGIME
   ------------------------------------------
   Nominal 10Y             4.68%   HIGH
   Real Yield             +2.41%   HIGH  ^
-  Breakeven               2.27%   MID
+  Breakeven               2.28%   MID
   HY OAS                267 bps   TIGHT
-  IG Credit               1.67%   TIGHT
-  Curve 10Y-3M          +82 bps   MID
-  Curve 10Y-2Y          +51 bps   MID
+  IG Credit               1.69%   TIGHT
+  Curve 10Y-3M          +85 bps   MID
+  Curve 10Y-2Y          +53 bps   MID
   SE 10Y                   nan%   --
-  USD                       nan   --
+  USD                     118.9   STRONG
 
   HY 20d delta  : -6 bps  (tightening)
   Confidence    : HIGH
@@ -67,15 +67,15 @@ MACRO REGIME
 PORTFOLIO SIGNALS
 ==============================================================
 
-  Base: ry=HIGH  nominal_10y=HIGH  baa10y=TIGHT
+  Base: ry=HIGH  nominal_10y=HIGH  baa10y=TIGHT  usd=STRONG
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
   Gold           22.5%   HIGH   LOW     +3.1%     +4.4%   92%   547  ~base fallback
   Silver          0.0%   HIGH   LOW     +3.8%     +4.0%   70%   547  ~base fallback
-  Eli Lilly      31.6%    MID  HIGH     -0.7%     -0.7%   35%   139  
-  Walmart         0.0%    MID   LOW     +0.9%     +0.9%   68%    94  
-  Cameco          0.0%   HIGH   LOW     +0.4%     -1.0%   47%  1173  ~base fallback
+  Eli Lilly      31.6%    MID  HIGH     -0.9%     -0.9%   40%    80  
+  Walmart         0.0%    MID   LOW     +0.8%     +1.6%   59%   546  ~base fallback
+  Cameco          0.0%   HIGH   LOW     -1.7%     -1.8%   43%   546  ~base fallback
   Vertiv          0.0%    MID   LOW     +0.6%     -2.4%   44%   546  ~base fallback
   Broadcom       24.7%    MID   LOW     -0.1%     -0.1%   49%    49  
 
@@ -209,9 +209,9 @@ Computing capped 252d distributions for 51 candidates ...
   APH       N=1269  mu= +16.8%  sigma= 24.3%  hist=27yr  [ROBUST]
   FTNT      N= 630  mu=  -8.8%  sigma= 10.3%  hist=17yr  [SINGLE]
   CRWD      hist=7yr  (below min 10yr, skipped)
+  4GLD.DE   no data
   AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
   SYF       N= 630  mu= +11.4%  sigma= 17.7%  hist=12yr  [SINGLE]
-  4GLD.DE   no data
   ETR       N=1269  mu= +13.3%  sigma= 18.5%  hist=27yr  [ROBUST]
   GC_F      N=1269  mu=  +9.8%  sigma= 11.5%  hist=26yr  [ROBUST]
 
