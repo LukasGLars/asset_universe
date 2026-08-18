@@ -1,11 +1,18 @@
 """
 run_outlook_montecarlo.py
 
-Forward-looking 12-year outlook test for the *full live system* (Strategy E:
-base + AVGO guard + crash trigger + joint-stress escalation + silver GSR),
-assuming the rebalance completes by fall (target weights: Reactor Core
-83.3%, Home Base 12.2%, War Chest 4.5%) and 6,000 kr/month contributions
-continue.
+Forward-looking outlook test for the live system (static base Gold 25 /
+AVGO 40 / LLY 35 + silver GSR tactical), run to the operator's actual FI@50
+date of 2038-10-10 (12.15 years from 2026-08-18) at the decided bucket split
+(Reactor Core 85%, Home Base 15%, War Chest suspended), with 6,000 kr/month
+contributions continuing.
+
+The AVGO 200d guard, crash trigger and joint-stress escalation are all OFF.
+This script originally modelled them ON ("Strategy E"); that was refreshed
+2026-08-18 after the guard's edge was found to be lookahead bias and it was
+disconnected from live routing (PR #88/#90). Projecting forward with a
+mechanism whose backtested edge cannot be realised would overstate every
+number below.
 
 Method: block bootstrap (21-trading-day blocks, preserves some
 autocorrelation/trend structure rather than i.i.d. daily draws) resampled
@@ -49,12 +56,17 @@ import run_combined_system as rcs
 
 DATA_DIR = config.raw_data_dir()
 
-RC_WEIGHT, WC_WEIGHT, HB_WEIGHT = 0.833, 0.045, 0.122
+# War Chest SUSPENDED (2026-08-04), and the bucket split was DECIDED at
+# 85/15 on 2026-08-17 -- superseding the 83.3/4.5/12.2 target this script
+# was originally written against.
+RC_WEIGHT, WC_WEIGHT, HB_WEIGHT = 0.85, 0.0, 0.15
 HOME_BASE_ANNUAL = 0.025
 HOME_BASE_DAILY = (1 + HOME_BASE_ANNUAL) ** (1 / 252) - 1
 
 MONTHLY_CONTRIBUTION = 6000.0
-HORIZON_YEARS = 12
+# Horizon runs to the actual FI@50 date (2038-10-10, operator turns 50),
+# not a round 12 years. Matches config/portfolio.toml's `years`.
+HORIZON_YEARS = 12.15
 TRADING_DAYS_PER_YEAR = 252
 BLOCK_LEN = 21
 N_PATHS = 10_000
@@ -62,19 +74,28 @@ TARGET_SEK = 12_934_706.0
 
 # Assume rebalance completes by fall 2026 -- start the clock from today's
 # TPV, at target weights (not the current mid-transition weights).
-START_TPV = 1_093_499.0  # latest live snapshot (2026-07-02)
+START_TPV = 1_104_009.0  # latest live snapshot (2026-08-17 close, via CI status.md)
 
 rng = np.random.default_rng(20260702)
 
 
-def strategy_e_returns(x_series, gold, lly, silver, start) -> pd.Series:
+def strategy_returns(x_series, gold, lly, silver, start) -> pd.Series:
+    """Live system's return series: static base + silver GSR tactical.
+
+    The AVGO 200d guard and the joint-stress escalation are both OFF. Their
+    backtested edge was lookahead bias (every trade priced at the
+    signal-generating close), so simulating forward with them on would
+    project an edge that cannot be realised -- see MEMORY.md, "the AVGO 200d
+    guard's entire validated edge is lookahead bias" and PR #88/#90, which
+    disconnected the guard from live routing.
+    """
     common = (gold.index.intersection(x_series.index)
               .intersection(lly.index).intersection(silver.index))
     common = common[common >= start].sort_values()
     prices = {"GC_F": gold, "AVGO": x_series, "LLY": lly, "SI_F": silver}
     signals = rcs.build_signals(x_series, gold, silver, lly, common)
-    eq, _ = rcs.run_strategy(prices, signals, use_guard=True, use_silver=True,
-                              label="E", use_joint=True)
+    eq, _ = rcs.run_strategy(prices, signals, use_guard=False, use_silver=True,
+                              label="C", use_joint=False)
     return eq.pct_change().dropna()
 
 
@@ -92,7 +113,9 @@ def block_bootstrap_path(daily_rets: np.ndarray, n_days: int) -> np.ndarray:
 
 
 def simulate(rc_daily_rets: np.ndarray, label: str) -> dict:
-    n_days = HORIZON_YEARS * TRADING_DAYS_PER_YEAR
+    # HORIZON_YEARS is fractional (runs to a real calendar date), so round to
+    # a whole number of trading days rather than truncating a partial one.
+    n_days = int(round(HORIZON_YEARS * TRADING_DAYS_PER_YEAR))
     days_per_month = TRADING_DAYS_PER_YEAR / 12
 
     terminal_values = np.empty(N_PATHS)
@@ -121,15 +144,15 @@ def simulate(rc_daily_rets: np.ndarray, label: str) -> dict:
         hit_25dd[p] = max_dd <= -0.25
 
     pct = lambda q: np.percentile(terminal_values, q)
-    print(f"=== {label} ({N_PATHS:,} paths, {HORIZON_YEARS}y, block bootstrap n={BLOCK_LEN}d) ===")
+    print(f"=== {label} ({N_PATHS:,} paths, {HORIZON_YEARS:g}y, block bootstrap n={BLOCK_LEN}d) ===")
     print(f"  Terminal TPV:  p5 {pct(5):>13,.0f} kr   p25 {pct(25):>13,.0f} kr   "
           f"median {pct(50):>13,.0f} kr")
     print(f"                 p75 {pct(75):>13,.0f} kr   p95 {pct(95):>13,.0f} kr")
     implied_cagr_median = (pct(50) / START_TPV) ** (1 / HORIZON_YEARS) - 1
     print(f"  Median implied blended CAGR (TPV-growth basis, incl. contributions): {implied_cagr_median:+.1%}")
     print(f"  P(reach {TARGET_SEK:,.0f} kr nominal target): {np.mean(terminal_values >= TARGET_SEK):.1%}")
-    print(f"  P(max drawdown worse than -25% at some point in 12y): {np.mean(hit_25dd):.1%}")
-    print(f"  Median max drawdown over the 12y path: {np.median(max_drawdowns):+.1%}")
+    print(f"  P(max drawdown worse than -25% at some point in {HORIZON_YEARS:g}y): {np.mean(hit_25dd):.1%}")
+    print(f"  Median max drawdown over the {HORIZON_YEARS:g}y path: {np.median(max_drawdowns):+.1%}")
     print(f"  Worst 5% of paths' max drawdown (p5 of max_dd): {np.percentile(max_drawdowns, 5):+.1%}")
     print()
     return dict(terminal_values=terminal_values, max_drawdowns=max_drawdowns)
@@ -142,13 +165,25 @@ def main():
     avgo = rcs.load_prices("equities", "AVGO")
     txn = rcs.load_prices("equities", "TXN")
 
-    avgo_rets = strategy_e_returns(avgo, gold, lly, silver, pd.Timestamp("2009-08-06")).values
-    txn_rets = strategy_e_returns(txn, gold, lly, silver, pd.Timestamp("2000-08-30")).values
+    avgo_rets = strategy_returns(avgo, gold, lly, silver, pd.Timestamp("2009-08-06")).values
+    txn_rets = strategy_returns(txn, gold, lly, silver, pd.Timestamp("2000-08-30")).values
 
-    print(f"Starting TPV: {START_TPV:,.0f} kr | Horizon: {HORIZON_YEARS}y | "
+    print(f"Starting TPV: {START_TPV:,.0f} kr | Horizon: {HORIZON_YEARS:g}y (to 2038-10-10) | "
           f"Monthly contribution: {MONTHLY_CONTRIBUTION:,.0f} kr")
     print(f"Target weights assumed: Reactor Core {RC_WEIGHT:.1%} / War Chest {WC_WEIGHT:.1%} "
-          f"/ Home Base {HB_WEIGHT:.1%} (flat {HOME_BASE_ANNUAL:.1%}/yr for HB+WC)\n")
+          f"/ Home Base {HB_WEIGHT:.1%} (flat {HOME_BASE_ANNUAL:.1%}/yr for HB+WC)")
+    print("Guard/joint-stress: OFF (retired as lookahead bias) | Silver GSR: ON\n")
+
+    # Sanity check against run_vol_target_robustness.py's static_band_sweep:
+    # the AVGO-actual source series should reproduce roughly its NORMAL-regime
+    # CAGR (~30%). A large divergence means the two implementations disagree
+    # and one is wrong -- this repo has shipped an unvalidated backtest three
+    # times, so the check is cheap insurance, not ceremony.
+    for label, rets in (("AVGO actual", avgo_rets), ("TXN analog", txn_rets)):
+        ann = (1 + rets.mean()) ** TRADING_DAYS_PER_YEAR - 1
+        print(f"  [check] {label} source series: {len(rets):,} days, "
+              f"annualized mean {ann:+.1%}")
+    print()
 
     simulate(avgo_rets, "Source regime: AVGO actual history (2009-2026)")
     simulate(txn_rets, "Source regime: TXN analog (2000-2026, incl. 2001+2008)")
