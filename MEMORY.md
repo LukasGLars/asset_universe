@@ -61,13 +61,44 @@ rallies (up-moves inflate realized vol same as down-moves) -- it does NOT
 fix the underperformance either; worse on CAGR/Sharpe/Calmar than symmetric
 in the stress window.
 
-**Not yet resolved: what to do about the live system.** `fi_tracker.py`'s
-"NEXT CONTRIBUTION" routing and the AVGO Rebalance Check/Telegram alert are
-both currently live against vol-targeted weights (see entries below).
-Reverting to static-40% routing is a live-system behavior change --
-deliberately NOT made unilaterally here; flagged to the operator instead.
-Recommend at minimum treating any AVGO Rebalance Check alert with skepticism
-until this is decided.
+**Follow-up same day, `run_vol_target_robustness.py` (new, committed):
+resolved from "doesn't reproduce" to "doesn't work," decisively.** Two real
+confounds were flagged and closed before trusting the verdict above as more
+than a single disagreeing number:
+
+1. **Sub-period test** (same anti-fitting method as the 2026-08-16 base-mix
+   research, `[[project-reactor-core-mix]]` in the operator's personal
+   memory -- rank on the WORST sub-period, never full-sample): tested
+   whether STATIC's win was an artifact of AVGO's exceptional 2023-2026
+   AI-melt-up dominating the full-sample average. **It is not.** STATIC
+   beats SYMMETRIC in every sub-period tested: AVGO 2009-2017 (Calmar 1.82
+   vs 1.24), AVGO 2017-2026 (1.56 vs 1.33), AVGO with the AI-melt-up
+   entirely EXCLUDED, 2009-2022 (1.06 vs 0.86), and even INSIDE the
+   AI-melt-up alone, 2023-2026 (2.66 vs 2.64) -- plus both TXN stress
+   sub-periods (2000-2013 incl. dot-com/GFC, and 2013-2026).
+2. **Parameter grid** (VOL_WINDOW in {10,15,21,30,42} x REBAL_BAND in
+   {3%,5%,8%}, clip bounds held at shipped 0.3x-1.3x -- same rigor as the
+   AVGO guard's own 20-cell validation grid): SYMMETRIC beats STATIC on
+   Calmar in **0 of 15 cells, normal window; 0 of 15 cells, stress window.
+   0/30 total.** Not fragile-but-sometimes-works -- never wins, anywhere in
+   the swept space, in either regime.
+
+**Verdict, now well-earned: volatility-scaling AVGO's weight this way does
+not add value. Not a bug in one number -- a mechanism that loses to doing
+nothing, robustly, across every regime and every reasonable parameter choice
+tested.** This is now as thoroughly validated a NEGATIVE result as any
+positive one shipped in this project.
+
+**Live-system action, still the operator's call, not made unilaterally:**
+`fi_tracker.py`'s "NEXT CONTRIBUTION" routing and the AVGO Rebalance
+Check/Telegram alert are both currently live against vol-targeted weights
+(see entries below), and already produced one real executed trade
+(2026-08-17: AVGO 101->73 shares, LLY +15 shares, War Chest drawn to ~27
+kr -- see "Rebalance executed" entry below). Given the robustness result
+above, reverting routing to the static 40% weight and disabling further
+vol-target-driven Rebalance Check alerts is the recommended next step --
+not yet executed, pending explicit operator confirmation since it's a
+live-money-routing change.
 
 **Reusable lesson, now demonstrated a third time in this project (see the
 split-adjustment bug and the `fi_pace()` bug for the first two): a backtest

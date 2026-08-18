@@ -97,25 +97,33 @@ def perf(equity: pd.Series) -> dict:
     return {"cagr": cagr, "sharpe": sharpe, "maxdd": maxdd, "calmar": calmar, "years": yrs}
 
 
-def vectorized_vol_target(x_ret: pd.Series, downside_only: bool) -> pd.DataFrame:
+def vectorized_vol_target(x_ret: pd.Series, downside_only: bool,
+                           vol_window: int = VOL_WINDOW,
+                           min_mult: float = MIN_MULT,
+                           max_mult: float = MAX_MULT) -> pd.DataFrame:
     """Vol-targeted G/X/L weights for every day at once. Mirrors
     compute_vol_target_weights()'s formula exactly (verified below by
-    self_check_against_live_function) with two deliberate additions needed
-    only for a full-history backtest, not a single live snapshot:
+    self_check_against_live_function, at the SHIPPED defaults only) with two
+    deliberate additions needed only for a full-history backtest, not a
+    single live snapshot:
       - EXECUTION_LAG_DAYS=1 shift, so day-t's target only ever depends on
         data known through day t-1 (the live function's docstring notes this
         convention but the single-snapshot function itself has nothing to
         lag against -- it always returns "today's" reading).
       - the optional downside-only (semi-deviation) variant.
+    vol_window/min_mult/max_mult default to the shipped constants but are
+    parameterized for run_vol_target_robustness.py's grid sweep -- the
+    self-check below only ever validates the defaults, since that's the only
+    configuration actually live.
     """
     if downside_only:
         neg = x_ret.where(x_ret < 0, 0.0)
-        trailing_vol = np.sqrt((neg ** 2).rolling(VOL_WINDOW).mean()) * np.sqrt(252)
+        trailing_vol = np.sqrt((neg ** 2).rolling(vol_window).mean()) * np.sqrt(252)
     else:
-        trailing_vol = x_ret.rolling(VOL_WINDOW).std() * np.sqrt(252)
+        trailing_vol = x_ret.rolling(vol_window).std() * np.sqrt(252)
 
     long_run_vol = trailing_vol.expanding().mean()
-    scalar = (long_run_vol / trailing_vol).clip(MIN_MULT, MAX_MULT).fillna(1.0)
+    scalar = (long_run_vol / trailing_vol).clip(min_mult, max_mult).fillna(1.0)
 
     target_x = BASE_WEIGHTS["AVGO"] * scalar
     freed = BASE_WEIGHTS["AVGO"] - target_x
@@ -180,7 +188,9 @@ def self_check_against_live_function(avgo_prices: pd.Series, n_samples: int = 25
 
 
 def simulate(gold: pd.Series, x: pd.Series, lly: pd.Series, start: pd.Timestamp,
-             mode: str) -> tuple[pd.Series, int]:
+             mode: str, end: pd.Timestamp | None = None,
+             vol_window: int = VOL_WINDOW, min_mult: float = MIN_MULT,
+             max_mult: float = MAX_MULT, band: float = REBAL_BAND) -> tuple[pd.Series, int]:
     """mode: 'static' | 'symmetric' | 'downside'.
 
     Convention matches run_combined_system.py exactly: the currently-locked
@@ -188,12 +198,25 @@ def simulate(gold: pd.Series, x: pd.Series, lly: pd.Series, start: pd.Timestamp,
     rebalances); TC is charged only when a band breach moves the locked
     target to a new value. This is what actually reproduces this repo's own
     documented ~19 trades/yr figure for the 5% band -- verified below.
+
+    `end`/vol_window/min_mult/max_mult/band added for
+    run_vol_target_robustness.py's sub-period and parameter-grid sweeps --
+    all default to the full history and shipped constants, so existing
+    callers (main()'s NORMAL/STRESS comparison) are unaffected.
     """
     common = (gold.index.intersection(x.index).intersection(lly.index))
-    common = common[common >= start].sort_values()
+    common = common[common >= start]
+    if end is not None:
+        common = common[common <= end]
+    common = common.sort_values()
 
     g_r, x_r, l_r = gold.reindex(common), x.reindex(common), lly.reindex(common)
-    rets = {"G": g_r.pct_change(), "X": x_r.pct_change(), "L": l_r.pct_change()}
+    rets = {"G": g_r.pct_change(), "L": l_r.pct_change()}
+    # X's return needs pre-start history for the vol window/expanding
+    # long-run average to be defined from day 1 of the sub-period, not
+    # recompute cold -- reindex against the FULL x series, not just `common`.
+    x_full_ret = x.pct_change()
+    rets["X"] = x_full_ret.reindex(common)
 
     if mode == "static":
         target = pd.DataFrame({k: v for k, v in
@@ -201,7 +224,9 @@ def simulate(gold: pd.Series, x: pd.Series, lly: pd.Series, start: pd.Timestamp,
                                     (BASE_WEIGHTS["GC_F"], BASE_WEIGHTS["AVGO"], BASE_WEIGHTS["LLY"]))},
                                index=common)
     else:
-        target = vectorized_vol_target(rets["X"], downside_only=(mode == "downside"))
+        full_target = vectorized_vol_target(x_full_ret, downside_only=(mode == "downside"),
+                                             vol_window=vol_window, min_mult=min_mult, max_mult=max_mult)
+        target = full_target.reindex(common)
 
     locked = {"G": BASE_WEIGHTS["GC_F"], "X": BASE_WEIGHTS["AVGO"], "L": BASE_WEIGHTS["LLY"]}
     port_ret = pd.Series(0.0, index=common)
@@ -212,7 +237,7 @@ def simulate(gold: pd.Series, x: pd.Series, lly: pd.Series, start: pd.Timestamp,
         tgt = dict(row) if not row.isna().any() else locked
 
         gap = {k: tgt[k] - locked[k] for k in locked}
-        if max(abs(v) for v in gap.values()) > REBAL_BAND:
+        if max(abs(v) for v in gap.values()) > band:
             cost = sum(TC for k in locked if abs(tgt[k] - locked[k]) > 0.005)
             locked = dict(tgt)
             n_trades += 1
