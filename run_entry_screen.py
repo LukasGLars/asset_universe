@@ -202,7 +202,12 @@ CATEGORY_DIR = {
     "US Equity":  "equities",
     "Commodity":  "commodities",
     "UCITS ETF":  "intl_etfs",
-    "Swedish":    "intl_etfs",
+    # Swedish names moved into their own parquet category on 2026-08-18
+    # (PR #97). Before that the screen live-fetched them and no parquet
+    # existed, so this mapping was wrong but inert -- nothing ever looked.
+    # They now rank high enough to reach the sleeve's candidate pool, so a
+    # wrong directory here silently drops real candidates.
+    "Swedish":    "se_equities",
 }
 
 # Matches universe_screen_results.csv's own methodology (run_universe_screen.py):
