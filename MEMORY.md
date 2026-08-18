@@ -7,6 +7,116 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## FI@50 goal DERIVED from actual income need -- the 12.93M target was wrong by ~60% (2026-08-18)
+
+**First time the objective has been derived from the operator's real spending
+rather than inherited as a number.** Everything below supersedes
+`target_sek = 12_934_706` in `config/portfolio.toml`, which is now known to be
+optimistic on three counts simultaneously (4% rule, no ISK tax drag, no
+inflation indexing). The config value was NOT changed -- see "open" at the end.
+
+**Stated goal:** the *option* to quit the day job at 50. Operator turns 38 on
+2026-10-10, so age 50 = **2038-10-10**. Income need: **35,000 kr/month after
+tax** (420,000 kr/yr in 2026 kr).
+
+**Horizon config fixed (commit 96c983f, master):** `years` 12 -> **13.223**,
+so `start_date` 2025-07-21 + 13.223yr lands exactly on 2038-10-10. It had been
+reporting 10.9 years remaining; now 12.15. Field is consumed as a float
+(`portfolio.py: years_left = years - years_elapsed`), no code change needed.
+
+### "Living off yield" is structurally impossible with this portfolio
+
+Blended dividend yield is **~0.7%** (Gold 0%, AVGO ~0.6%, LLY ~0.5%, Home Base
+~2.5%). Funding 35,000 kr/mo from actual yield would need roughly **76M kr**.
+The plan is therefore total-return withdrawal (sell a little each year), not
+yield. Worth stating explicitly because the operator's own framing was "living
+off yield" and it does not survive contact with a 25/40/35 gold-heavy mix.
+
+### Conversion threshold (the number that matters)
+
+Retiring at 50 implies a **35-45 year** drawdown horizon, not the 30 years the
+4% rule was built on. Defensible gross SWR is 3.0-3.5%. **ISK drag** --
+schablonintakt = (SLR + 1pp) taxed at 30%, ~**0.9% of capital per year** at
+SLR ~2% -- comes straight off it, since it is paid regardless of returns.
+
+| Gross SWR | - ISK drag | Net for living | Capital (2026 kr) |
+|---|---|---|---|
+| 4.0% | 0.9% | 3.1% | 13,548,000 |
+| **3.5% (chosen)** | 0.9% | **2.6%** | **16,154,000** |
+| 3.0% | 0.9% | 2.1% | 20,000,000 |
+
+**Trigger is WEALTH-based, not age-based** -- and must be inflation-indexed
+since the date it fires is unknown:
+
+```
+Convert to income portfolio when TPV >= 16,150,000 x 1.02^(year - 2026)
+```
+
+= **~20,550,000 kr nominal if it fires in 2038.** Cross it at 46 and convert at
+46; sit at 8M at 50 and do not convert. **The option exists when capital crosses
+the threshold, not when the operator turns 50.** A calendar glidepath was
+explicitly rejected: it can force selling into exactly the -37% stress path that
+removes the option, and it contradicts the same "don't trim strength on a
+schedule" logic that killed vol-targeting and the 200d guard.
+
+**Do NOT restructure toward income now.** At 1.1M TPV yield would produce ~8,000
+kr/yr -- irrelevant. Accumulation stays max-growth; conversion is a future event
+with a defined trigger, not a current allocation question. (Operator pushed back
+on an earlier framing that implied otherwise, and was right.)
+
+### Required return, and why "more confidently" is the wrong ask
+
+| Window | 20M | 22M |
+|---|---|---|
+| **2038-10** (12.15y) | **24.4%** | 25.4% |
+| 2035-10 (9.1y) | 34.7% | 36.2% |
+
+Against the portfolio's own blended backtest: **26.1%** (AVGO-actual regime) /
+**11.3%** (TXN analog). So:
+
+- **2035 is out.** ~35% sustained for 9 years is not deliverable by anything in
+  this repo's tested universe.
+- **2038 at 20-22M needs ~25%,** i.e. it only clears in the optimistic regime.
+  This is exactly the ~50/50 the refreshed Monte Carlo priced (PR #95).
+- **"Build a portfolio that more confidently reaches 20-22M" is self-
+  contradictory.** 24.4% for 12 years only comes from concentrated, high-variance
+  bets. Every confidence-raising move (diversify, cut AVGO, add a 4th asset)
+  lowers expected return and makes 20M LESS likely. Consistent with the
+  2026-08-16 hedging finding that AI-thesis exposure and decorrelation are
+  mutually exclusive.
+
+**The current portfolio is already close to the max-growth configuration
+available from this repo's own validated research. There is no better allocation
+waiting to be found.** The gap is not the allocation.
+
+### The one lever that is not the portfolio
+
+Monthly contribution needed for 20M at 2038-10:
+
+| Contribution | Required CAGR |
+|---|---|
+| 6,000 kr (today) | 24.4% |
+| 18,256 kr | 20.0% |
+| 36,236 kr | 15.0% |
+
+Tripling contributions moves the required return from "needs the exceptional
+regime" to "plausible in a middling one." **It is the only lever that raises
+confidence without costing expected return**, and the only one independent of
+what the market does.
+
+### Deliberately excluded, and open
+
+- **Pension excluded by operator's explicit choice** ("I will certainly have a
+  pension, I don't want to take it into account at this time"). Allmän +
+  tjänstepension from ~65-67 would cut the threshold materially -- the portfolio
+  currently assumes it funds everything forever, which is the conservative
+  anchor, not the likely case. **Largest single reducer available; revisit when
+  the operator wants it in.**
+- `target_sek` in `portfolio.toml` still reads 12,934,706 and is now known to be
+  wrong. Not changed pending the operator's call on which SWR row to adopt.
+- 2038 Swedish ISK rules are unknowable; 0.9% drag is a present-rules
+  approximation. 2% inflation is an assumption, not a forecast.
+
 ## AVGO vol-targeting: shipped edge does NOT reproduce -- live routing is running on an unverified mechanism (2026-08-18)
 
 **Finding: the CAGR/MaxDD improvement that justified shipping vol-targeting
