@@ -1,0 +1,53 @@
+# Swedish large caps (Nasdaq Stockholm)
+#
+# Added 2026-08-18. These were absent from every universe file despite the
+# 2026-06-26 screen having included 13 Swedish names (Investor B ranked 11th
+# of 490 by Sharpe). No rationale for their removal was ever recorded --
+# this restores the coverage.
+#
+# Relevant for two reasons specific to this portfolio:
+#   1. SEK-denominated -- no FX layer and no currency-conversion spread,
+#      the one place the (otherwise unaddressable) cost drag is zero.
+#   2. Defence/industrials are a genuinely different thesis from AI semis,
+#      which is what every hedge candidate tested so far has failed to be.
+ABB.ST
+ADDT-B.ST
+ALFA.ST
+ASSA-B.ST
+ATCO-A.ST
+AZN.ST
+BEIJ-B.ST
+BOL.ST
+CAST.ST
+ELUX-B.ST
+EPI-A.ST
+ERIC-B.ST
+ESSITY-B.ST
+EVO.ST
+FABG.ST
+GETI-B.ST
+HEXA-B.ST
+HM-B.ST
+HOLM-B.ST
+INDU-C.ST
+INVE-B.ST
+KINV-B.ST
+LATO-B.ST
+LIFCO-B.ST
+NDA-SE.ST
+NIBE-B.ST
+SAAB-B.ST
+SAND.ST
+SCA-B.ST
+SEB-A.ST
+SECU-B.ST
+SHB-A.ST
+SINCH.ST
+SKF-B.ST
+SSAB-B.ST
+SWED-A.ST
+TEL2-B.ST
+TELIA.ST
+THULE.ST
+TREL-B.ST
+VOLV-B.ST

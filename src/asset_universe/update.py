@@ -21,6 +21,7 @@ from .store import reader, writer
 
 CATEGORIES = {
     "equities":     "us_equities",
+    "se_equities":  "se_equities",
     "intl_etfs":    "intl_etfs",
     "commodities":  "commodities",
     "fixed_income": "fixed_income",
