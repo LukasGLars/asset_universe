@@ -152,6 +152,73 @@ def simulate(prices: pd.DataFrame, holdback: float, avgo_key: str) -> dict:
     }
 
 
+def simulate_outside_cash(prices: pd.DataFrame, extra_annual: float,
+                          mode: str, avgo_key: str) -> dict:
+    """Full monthly DCA is ALWAYS invested immediately -- never withheld.
+    Separately, `extra_annual` kr/yr of OUTSIDE capital arrives monthly and
+    is either invested on arrival (mode='even') or accumulated as cash and
+    deployed into AVGO at crash-ROC triggers (mode='trigger').
+
+    This is the version that keeps the DCA stream whole, isolating the
+    timing question to the outside pool. Both modes receive identical total
+    capital, so any difference is timing alone, not contribution size.
+    """
+    dates = prices.index
+    signal_days = set(crash_trigger_days(prices[avgo_key]))
+    extra_monthly = extra_annual / 12.0
+
+    shares = {t: START_TPV * w / prices[t].iloc[0] for t, w in BASE_WEIGHTS.items()}
+    cash = 0.0
+    pending_deploy = False
+    n_deploys = 0
+    prev_month = dates[0].month
+
+    for d in dates:
+        px = prices.loc[d]
+        cash *= (1 + CASH_DAILY)
+
+        if pending_deploy and cash > 0:
+            shares[avgo_key] += cash / px[avgo_key]
+            cash = 0.0
+            n_deploys += 1
+        pending_deploy = d in signal_days
+
+        if d.month != prev_month:
+            prev_month = d.month
+            # DCA: always invested immediately, both modes.
+            vals = {t: shares[t] * px[t] for t in BASE_WEIGHTS}
+            tot = sum(vals.values())
+            gaps = {t: BASE_WEIGHTS[t] - vals[t] / tot for t in BASE_WEIGHTS}
+            shares[max(gaps, key=gaps.get)] += MONTHLY_CONTRIBUTION / px[max(gaps, key=gaps.get)]
+            # Outside pool.
+            if mode == "even":
+                vals = {t: shares[t] * px[t] for t in BASE_WEIGHTS}
+                tot = sum(vals.values())
+                gaps = {t: BASE_WEIGHTS[t] - vals[t] / tot for t in BASE_WEIGHTS}
+                shares[max(gaps, key=gaps.get)] += extra_monthly / px[max(gaps, key=gaps.get)]
+            else:
+                cash += extra_monthly
+
+        vals = {t: shares[t] * px[t] for t in BASE_WEIGHTS}
+        tot = sum(vals.values())
+        if tot > 0 and any(abs(BASE_WEIGHTS[t] - vals[t] / tot) > REBAL_BAND for t in BASE_WEIGHTS):
+            for t in BASE_WEIGHTS:
+                shares[t] = tot * BASE_WEIGHTS[t] / px[t]
+
+    final_px = prices.iloc[-1]
+    return {"terminal": sum(shares[t] * final_px[t] for t in BASE_WEIGHTS) + cash,
+            "n_deploys": n_deploys}
+
+
+def run_outside_cash(label: str, prices: pd.DataFrame, extra_annual: float) -> None:
+    even = simulate_outside_cash(prices, extra_annual, "even", "AVGO")
+    trig = simulate_outside_cash(prices, extra_annual, "trigger", "AVGO")
+    delta = trig["terminal"] / even["terminal"] - 1
+    print(f"  {label:<26} extra {extra_annual:>8,.0f} kr/yr | "
+          f"even {even['terminal']:>14,.0f} | trigger {trig['terminal']:>14,.0f} "
+          f"({trig['n_deploys']:>2} deploys) | {delta:>+7.2%}")
+
+
 def run_dataset(label: str, avgo_series: pd.Series, gold: pd.Series,
                 lly: pd.Series, start: pd.Timestamp) -> pd.DataFrame:
     common = (gold.index.intersection(avgo_series.index)
