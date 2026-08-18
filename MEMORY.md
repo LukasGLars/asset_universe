@@ -112,7 +112,40 @@ nothing, robustly, across every regime and every reasonable parameter choice
 tested.** This is now as thoroughly validated a NEGATIVE result as any
 positive one shipped in this project.
 
-**Live-system action, still the operator's call, not made unilaterally:**
+**EXECUTED 2026-08-18 (branch `fix/retire-vol-targeting-widen-band`), on
+explicit operator instruction:**
+- `fi_tracker.py` NEXT CONTRIBUTION routing and the AVGO Rebalance Check
+  both now use the STATIC base row (`WEIGHTS[(False, silver_state)]` =
+  Gold 25 / AVGO 40 / LLY 35). Both read the same `_target_weights`
+  variable, so they can never disagree.
+- `compute_vol_target_weights()` kept and still printed, but relabelled
+  DIAGNOSTIC ONLY ("RETIRED 2026-08-18", "Would-be weights", "NOT ACTED
+  ON") -- same precedent as the retired AVGO 200d guard's trend
+  diagnostic. Not deleted: the validation scripts need the live function
+  to self-check against.
+- `REBAL_BAND` 0.05 -> **0.10** (reasoning and the full band table are in
+  `vol_target.py`'s own comment; 10% over the marginally-better-testing
+  15% because >20% is known non-monotonic and a wider band lets AVGO drift
+  further before trimming, which interacts badly with AVGO's documented
+  single-name concentration risk).
+- Live-verified by a real `fi_tracker.py` run, not just tests: routing now
+  targets AVGO 40.0% (was 33.5% vol-targeted), band displays 10%.
+  395 tests pass.
+
+**Immediate consequence worth knowing, surfaced by that live run: the
+2026-08-17 trade moved the portfolio AWAY from the static target.** It sold
+AVGO 101->73 shares to reach the vol-targeted 33.5%; against the static 40%
+target AVGO now sits at 30.2%, i.e. **9.8pp UNDER target**. NEXT
+CONTRIBUTION accordingly now routes the next kr to AVGO. Note this gap
+(+9.8%) sits just inside the newly-widened 10% band, so the Rebalance Check
+reads HOLD rather than BUY -- at the previous 5% band, or at 8%, it would
+have fired a BUY instruction. The 10% choice was made and documented before
+that live run, on the concentration/stability grounds above, not fitted to
+this outcome -- but the coincidence is close enough to be worth stating
+plainly. **Net effect: no reversing trade is forced; the gap closes
+naturally through ongoing contributions instead.**
+
+**Original recommendation, now superseded by the block above:**
 `fi_tracker.py`'s "NEXT CONTRIBUTION" routing and the AVGO Rebalance
 Check/Telegram alert are both currently live against vol-targeted weights
 (see entries below), and already produced one real executed trade
