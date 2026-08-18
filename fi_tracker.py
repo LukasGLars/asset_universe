@@ -261,15 +261,29 @@ try:
 
     _fallen_enough = _fall_from_pk >= GSR_PEAK_FALL_PCT
 
+    # Weights are READ from run_combined_system.WEIGHTS rather than written
+    # out here. They were hardcoded until 2026-08-18 and had silently gone
+    # stale against the 25/55/20 base -- T1 still said "AVGO -> 43%" when
+    # the strategy table said 28%, and this string is what the Telegram
+    # alert echoes verbatim, so a fired trigger would have instructed a
+    # trade the strategy does not call for.
+    from run_combined_system import WEIGHTS as _W
+
+    def _silver_msg(state: str) -> str:
+        w = _W[(False, state)]
+        return (f"ADD +{w['SI_F']:.0%} silver (fund from AVGO: "
+                f"AVGO -> {w['AVGO']:.0%}, Silver -> {w['SI_F']:.0%})")
+
     if _gsr_now >= GSR_T2 and _fallen_enough:
         _silver_signal = "T2 ACTIVE"
-        _silver_action = "ADD +17% silver (fund from AVGO: AVGO -> 38%, Silver -> 17%)"
+        _silver_action = _silver_msg("T2")
     elif _gsr_now >= GSR_T1 and _fallen_enough:
         _silver_signal = "T1 ACTIVE"
-        _silver_action = "ADD +12% silver (fund from AVGO: AVGO -> 43%, Silver -> 12%)"
+        _silver_action = _silver_msg("T1")
     elif _gsr_now < GSR_EXIT:
         _silver_signal = "EXIT"
-        _silver_action = "SELL silver, return to base (AVGO back to 55%, Silver -> 0%)"
+        _silver_action = (f"SELL silver, return to base "
+                          f"(AVGO back to {_W[(False, 'INACTIVE')]['AVGO']:.0%}, Silver -> 0%)")
     else:
         _silver_signal = "INACTIVE"
         _silver_action = "No action -- hold base"

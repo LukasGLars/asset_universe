@@ -66,7 +66,7 @@ SCENARIOS = [
         "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation"
     ).replace(
         "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
-        "Action         : Rotate AVGO -> Gold+LLY (Gold 52.5%, AVGO 0%, LLY 47.5%)",
+        "Action         : No rotation. But the 5d/-10% gap-down trigger has fired: this is the tranche-deployment signal (guard retired, PR #88).",
     )),
     ("Silver GSR trigger", BASE.replace(
         "Signal         : INACTIVE\n    Action         : No action -- hold base",
