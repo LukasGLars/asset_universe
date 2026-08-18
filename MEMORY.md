@@ -7,6 +7,77 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO vol-targeting: shipped edge does NOT reproduce -- live routing is running on an unverified mechanism (2026-08-18)
+
+**Finding: the CAGR/MaxDD improvement that justified shipping vol-targeting
+(PR #91, "AVGO volatility-targeting SHIPPED" entry below: normal CAGR
+30.15%->30.79%, Calmar 1.288->1.426; stress CAGR 13.43%->13.93%, Calmar
+0.267->0.315) does not reproduce.** A faithful, self-checked rebuild
+(`run_vol_target_validation.py`, new, committed) shows the shipped
+mechanism -- SYMMETRIC realized-vol scaling, exactly as it runs in
+production -- LOSING to plain static weights on CAGR, Sharpe, and Calmar in
+BOTH the normal and stress windows:
+
+| Dataset | Variant | CAGR | Sharpe | MaxDD | Calmar | Trades/yr |
+|---|---|---|---|---|---|---|
+| Normal (AVGO, 2009-2026) | STATIC | 30.58% | 1.433 | -23.45% | 1.304 | 0.0 |
+| Normal | SYMMETRIC (shipped) | 23.66% | 1.183 | -21.49% | 1.101 | 18.4 |
+| Normal | DOWNSIDE (tested, not shipped) | 22.55% | 1.136 | -19.63% | 1.148 | 20.0 |
+| Stress (TXN, 2000-2026) | STATIC | 13.56% | 0.743 | -42.59% | 0.318 | 0.0 |
+| Stress | SYMMETRIC (shipped) | 10.24% | 0.575 | -50.91% | 0.201 | 8.4 |
+| Stress | DOWNSIDE | 8.97% | 0.520 | -54.48% | 0.165 | 10.1 |
+
+**Why this is trusted, not just another disagreeing number:** the original
+2026-08-17 research script was never committed -- only its conclusion
+reached this file. A first reproduction attempt disagreed sharply, which by
+this project's own established rule (see the split-adjustment bug and
+`fi_pace()` bug, both caught the same way) means "find the bug before
+reporting the new number," not "trust either number." Investigation found:
+1. `comparison_results/base_optimizer_grid.csv` (from the older, already-
+   committed `run_base_optimizer.py`) has a THIRD, also-disagreeing number
+   for the same Gold25/AVGO40/LLY35 static baseline (CAGR 22.45%, Calmar
+   0.686) -- proof this repo has never had one canonical, reused backtest
+   convention for the live base, not just a one-off gap.
+2. `run_vol_target_validation.py`'s vectorized backtest computation was
+   checked against actually CALLING the real, live
+   `compute_vol_target_weights()` (imported, not hand-copied) at 25 dates
+   sampled across the full 2009-2026 history, each truncated to only the
+   data that would have been known on that date. **Every sample matched to
+   0.00e+00 -- exact.** This rules out transcription drift as the source of
+   the disagreement.
+3. Its rebalance frequency (18.4 trades/yr) independently matches this
+   project's own documented figure for the 5% band ("~19 trades/yr", see
+   `REBAL_BAND`'s docstring in `vol_target.py`) -- confirms the
+   band/TC/simulation convention matches what was actually parameter-swept
+   at the time, not a different mechanic.
+
+**Conclusion: the mechanism itself (self-check-verified against production
+code) does not have the edge that was claimed for it. The 2026-08-17 research
+script, now unrecoverable, most likely had a real bug** -- most probably in
+its rebalance/TC simulation, since the vol FORMULA itself is proven correct
+by the self-check. Also tested a downside-only (semi-deviation) variant, on
+the hypothesis that the symmetric version wrongly trims AVGO into genuine
+rallies (up-moves inflate realized vol same as down-moves) -- it does NOT
+fix the underperformance either; worse on CAGR/Sharpe/Calmar than symmetric
+in the stress window.
+
+**Not yet resolved: what to do about the live system.** `fi_tracker.py`'s
+"NEXT CONTRIBUTION" routing and the AVGO Rebalance Check/Telegram alert are
+both currently live against vol-targeted weights (see entries below).
+Reverting to static-40% routing is a live-system behavior change --
+deliberately NOT made unilaterally here; flagged to the operator instead.
+Recommend at minimum treating any AVGO Rebalance Check alert with skepticism
+until this is decided.
+
+**Reusable lesson, now demonstrated a third time in this project (see the
+split-adjustment bug and the `fi_pace()` bug for the first two): a backtest
+result that isn't checked against a second, independent implementation
+before shipping is not actually validated, no matter how confident the
+research session was.** `run_vol_target_validation.py` is built to the
+`run_crash_guard_validation.py` / `run_joint_stress_validation.py` pattern
+specifically so this doesn't happen a fourth time -- rerun it, don't
+hand-verify, whenever this mechanism or its parameters are reconsidered.
+
 ## Rebalance executed against the vol-targeted mix (2026-08-17)
 
 The AVGO Rebalance Check's opening reading fired for real
