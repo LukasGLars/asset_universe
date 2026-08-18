@@ -56,9 +56,68 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from run_vol_target_validation import load, perf, simulate, self_check_against_live_function
+from run_vol_target_validation import (
+    load, perf, simulate, self_check_against_live_function, vectorized_vol_target,
+)
 
 OUT_CSV = PROJECT_ROOT / "comparison_results" / "vol_target_robustness.csv"
+
+
+BASE_D = {"G": 0.25, "X": 0.40, "L": 0.35}
+TC = 0.0010
+
+
+def simulate_real_drift(gold, x, lly, start, band, mode, end=None, vol_window=21):
+    """REALISTIC rebalance convention -- held weights actually DRIFT with
+    prices, and are only pulled back to the current target when that drift
+    exceeds `band`.
+
+    This exists because the convention inherited from run_combined_system.py
+    (and used by run_vol_target_validation.simulate) reapplies the locked
+    target fresh EVERY day regardless of drift, charging TC only when the
+    target itself changes. For a fixed static target that silently means
+    FREE DAILY REBALANCING -- verified 2026-08-18: static under that
+    convention scores CAGR 30.58% with TC forced to zero, i.e. identical to
+    its headline 30.64%, because it never pays a cost at all. That flattered
+    static by ~1.6pp CAGR against any moving-target strategy, which does pay.
+
+    Here the mechanics are IDENTICAL for both modes -- same drift, same band,
+    same TC -- so the only difference is what the target is. That is the
+    apples-to-apples comparison.
+    """
+    common = (gold.index.intersection(x.index).intersection(lly.index))
+    common = common[common >= start]
+    if end is not None:
+        common = common[common <= end]
+    common = common.sort_values()
+
+    rets = {"G": gold.reindex(common).pct_change(), "L": lly.reindex(common).pct_change()}
+    x_full_ret = x.pct_change()
+    rets["X"] = x_full_ret.reindex(common)
+
+    if mode == "static":
+        tgt_df = pd.DataFrame({k: BASE_D[k] for k in BASE_D}, index=common)
+    else:
+        tgt_df = vectorized_vol_target(x_full_ret, downside_only=(mode == "downside"),
+                                        vol_window=vol_window).reindex(common)
+
+    held = dict(BASE_D)
+    pr = pd.Series(0.0, index=common)
+    n = 0
+    for i, _d in enumerate(common):
+        row = tgt_df.iloc[i]
+        tgt = dict(row) if not row.isna().any() else dict(BASE_D)
+        gap = {k: tgt[k] - held[k] for k in held}
+        if max(abs(v) for v in gap.values()) > band:
+            pr.iloc[i] -= sum(TC for k in held if abs(tgt[k] - held[k]) > 0.005)
+            n += 1
+            held = dict(tgt)
+        dr = {k: (rets[k].iloc[i] if not pd.isna(rets[k].iloc[i]) else 0.0) for k in held}
+        pr.iloc[i] += sum(held[k] * dr[k] for k in held)
+        nv = {k: held[k] * (1 + dr[k]) for k in held}
+        t = sum(nv.values())
+        held = {k: v / t for k, v in nv.items()} if t > 0 else held
+    return (1 + pr).cumprod(), n
 
 
 def sub_period_test(gold, x, lly, periods: list[tuple[str, pd.Timestamp, pd.Timestamp]]) -> list[dict]:
@@ -159,10 +218,34 @@ def main() -> None:
             print(f"    {r['vol_window']:>8}  {r['band']:>6.0%}  {r['static_calmar']:>8.3f}  "
                   f"{r['symmetric_calmar']:>8.3f}  {flag:>7}  {r['trades_per_yr']:>10.1f}")
 
+    print("\n" + "=" * 78)
+    print("C. APPLES-TO-APPLES -- realistic weight drift, identical mechanics both modes")
+    print("=" * 78)
+    print("  (sections A/B above inherit run_combined_system.py's convention, which")
+    print("   silently gives a FIXED target free daily rebalancing -- see")
+    print("   simulate_real_drift's docstring. This section removes that advantage.)")
+
+    drift_rows = []
+    for label, x_series, start in [("NORMAL (AVGO 2009-2026)", avgo, pd.Timestamp("2009-08-06")),
+                                     ("STRESS (TXN 2000-2026)", txn, pd.Timestamp("2000-08-30"))]:
+        print(f"\n  === {label} ===")
+        print(f"    {'Band':>5}  {'Mode':<10}  {'CAGR':>8}  {'Sharpe':>7}  {'MaxDD':>8}  {'Calmar':>7}  {'Tr/yr':>6}")
+        for b in (0.03, 0.05, 0.08, 0.15):
+            for mode in ("static", "symmetric"):
+                eq, n = simulate_real_drift(gold, x_series, lly, start, b, mode)
+                m = perf(eq)
+                print(f"    {b:>4.0%}  {mode:<10}  {m['cagr']:>8.2%}  {m['sharpe']:>7.3f}  "
+                      f"{m['maxdd']:>8.2%}  {m['calmar']:>7.3f}  {n/m['years']:>6.1f}")
+                drift_rows.append({"dataset": label, "band": b, "mode": mode, **m,
+                                    "trades_per_yr": round(n / m["years"], 1)})
+            print()
+
     pd.DataFrame(rows).to_csv(OUT_CSV.with_name("vol_target_subperiods.csv"), index=False)
     pd.DataFrame(grid_rows).to_csv(OUT_CSV, index=False)
+    pd.DataFrame(drift_rows).to_csv(OUT_CSV.with_name("vol_target_realistic_drift.csv"), index=False)
     print(f"\nSaved: {OUT_CSV}")
     print(f"Saved: {OUT_CSV.with_name('vol_target_subperiods.csv')}")
+    print(f"Saved: {OUT_CSV.with_name('vol_target_realistic_drift.csv')}")
 
 
 if __name__ == "__main__":

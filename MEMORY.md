@@ -83,6 +83,29 @@ than a single disagreeing number:
    0/30 total.** Not fragile-but-sometimes-works -- never wins, anywhere in
    the swept space, in either regime.
 
+3. **Apples-to-apples rebalance mechanics** (section C, added after a
+   validation pass caught a real flaw in 1 and 2 above). The convention
+   inherited from `run_combined_system.py` reapplies the locked target fresh
+   every day and charges TC only when the TARGET changes -- which for a
+   FIXED static target silently means **free daily rebalancing** (confirmed:
+   static scores 30.58% with TC forced to zero, i.e. identical to its 30.64%
+   headline -- it never paid a cost at all). That flattered static by ~1.6pp
+   CAGR against any moving-target strategy. Re-ran with realistic weight
+   drift and identical mechanics for both modes (`simulate_real_drift`):
+
+   | Band | NORMAL static | NORMAL sym | STRESS static | STRESS sym |
+   |---|---|---|---|---|
+   | 3% | 27.49% / 1.138 | 18.28% / 0.824 | 10.65% / 0.207 | 6.41% / 0.104 |
+   | 5% | 29.02% / 1.220 | 23.58% / 1.065 | 11.90% / 0.244 | 9.17% / 0.160 |
+   | 8% | 29.79% / 1.332 | 26.10% / 1.156 | 12.71% / 0.281 | 10.56% / 0.191 |
+   | 15% | 31.05% / 1.375 | 29.42% / 1.280 | 13.71% / 0.302 | 11.34% / 0.213 |
+
+   (CAGR / Calmar.) **Static still wins at every band in both regimes** --
+   the correction narrows the gap but does not reverse it anywhere.
+   Critically, in the STRESS window vol-targeting makes MaxDD *worse*, not
+   better (-57.2% vs -48.7% at the 5% band), so it is not even buying
+   drawdown protection in the regime it was meant for.
+
 **Verdict, now well-earned: volatility-scaling AVGO's weight this way does
 not add value. Not a bug in one number -- a mechanism that loses to doing
 nothing, robustly, across every regime and every reasonable parameter choice
@@ -99,6 +122,31 @@ above, reverting routing to the static 40% weight and disabling further
 vol-target-driven Rebalance Check alerts is the recommended next step --
 not yet executed, pending explicit operator confirmation since it's a
 live-money-routing change.
+
+**Separate, independently useful result found while validating the above --
+the static base's own rebalance band is worth widening.** Static
+Gold25/AVGO40/LLY35 under realistic drift, band swept (buy&hold row
+cross-validated against a fully independent fixed-share computation --
+exact match on CAGR/MaxDD/Sharpe/Calmar in both regimes):
+
+| Band | NORMAL CAGR / MaxDD / Calmar | STRESS CAGR / MaxDD / Calmar |
+|---|---|---|
+| 0% (daily) | 11.79% / -26.20% / 0.450 | -1.55% / -86.30% / -0.018 |
+| 3% | 27.45% / -24.15% / 1.136 | 10.88% / -48.49% / 0.224 |
+| **5% (live today)** | 29.03% / -23.79% / 1.220 | 12.02% / -45.74% / 0.263 |
+| 8% | 29.72% / -22.36% / 1.329 | 12.43% / -44.24% / 0.281 |
+| 15% | 31.01% / -22.42% / 1.383 | 13.46% / -43.99% / 0.306 |
+| never (buy&hold) | 34.66% / -38.52% / 0.900 | 11.76% / -35.92% / 0.327 |
+
+Daily rebalancing is actively destructive (TC friction alone turns the
+stress window negative). Wider bands beat 5% on BOTH CAGR and Calmar in both
+regimes, and the ranking is stable across sub-periods (15% best in 4 of 5
+tested, 10% in the other) -- not a single-path artifact. Consistent with the
+2026-08-17 finding that >20% goes non-monotonic/unstable, so ~10-15% looks
+like the safe upper edge, not "wider is always better." **Not changed
+live** -- `REBAL_BAND = 0.05` still stands in `vol_target.py`; flagged as a
+real, separately-actionable improvement to decide on alongside the routing
+question above. Data: `comparison_results/static_band_sweep.csv`.
 
 **Reusable lesson, now demonstrated a third time in this project (see the
 split-adjustment bug and the `fi_pace()` bug for the first two): a backtest
