@@ -75,7 +75,10 @@ tactical rules and one opportunistic sleeve, all computed live in
 | `fi_tracker.py` | Daily dashboard — the main entry point |
 | `run_entry_screen.py` | Opportunistic sleeve — screen, `--open`/`--close` a position |
 | `check_sync_health.py` | Fails the daily job if `status.md` is stale or broken |
-| `run_universe_screen.py` | Regime-conditional ranking of the full asset universe |
+| `run_universe_screen.py` | Regime-conditional ranking of the full asset universe (US + Swedish + commodities + ETFs) |
+| `run_clean_sheet_search.py` | Clean-sheet 3-asset search over the ROBUST universe, selected in-sample and judged out-of-sample |
+| `run_ai_basket_beta.py` | Hedge screen — beta to the AI-semi basket during its own drawdowns |
+| `run_contribution_split_test.py` | Whether holding contributions back to dip-buy beats pure DCA |
 | `run_combined_system.py` | Backtest of the base + guard + silver system |
 | `run_parameter_sensitivity.py` | Robustness grid for the guard/silver thresholds |
 | `run_joint_stress_validation.py` | Validation for the AVGO/LLY joint-stress escalation rule (TXN analog + sensitivity grids) |
@@ -94,6 +97,9 @@ and why.
 - `config/sleeve_state.toml` — opportunistic sleeve's open/closed position
   state. Managed via `run_entry_screen.py --open`/`--close`, not edited by
   hand.
+- `config/universes/*.txt` — the asset universe, one file per category.
+  `se_equities.txt` (Swedish large caps) was added 2026-08-18; adding a new
+  file also requires an entry in `update.py`'s `CATEGORIES`.
 - `config/fred_series.csv` — FRED macro series fetched daily.
 - `.env` / `fred_api.env` — local secrets (gitignored). See `.env.example`
   if present, or `src/asset_universe/config.py` for what's expected.

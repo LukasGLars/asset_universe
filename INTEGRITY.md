@@ -108,6 +108,22 @@ These terms are prohibited because a percentile split assigns the label to a sta
 
 ---
 
+## 9. Full-sample statistics must be sub-periodded before they are believed
+
+A single regime can carry an entire full-sample number. Any beta,
+correlation, win rate or Calmar quoted over the whole history must also be
+shown split across sub-periods before it is used to justify a decision.
+
+If the statistic only holds in one sub-period, say so and treat it as a
+regime observation, not a property of the asset.
+
+Precedent: SAAB screened at 0.11 beta to the AI-semi basket over
+2012-2026 -- better than gold, apparently the first genuine decorrelation
+candidate found in this project. Sub-periodded it reads 0.23 (2012-17),
+0.27 (2018-21), -0.02 (2022-26): ordinary until the post-Ukraine rearmament
+window, which supplied the entire effect. Gold over the same splits is
+0.16 / 0.13 / 0.10, which is what a durable property looks like.
+
 ## Optimizer methodology rules
 
 **Universe selection — never use the screen as a pre-filter.**
