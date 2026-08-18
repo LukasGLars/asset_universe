@@ -7,6 +7,62 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-08-18: goal derivation, three null results, one live alert bug
+
+Long session. Ordered by what matters.
+
+**1. LIVE BUG FIXED (PR #100).** `fi_tracker.py`'s Silver GSR action strings
+were hardcoded prose and had gone stale against the old 25/55/20 base -- T1
+said "AVGO -> 43%", T2 "AVGO -> 38%", exit "back to 55%", against a table
+saying 28/23/40. **That string is echoed verbatim into the Telegram alert**,
+so a fired GSR trigger would have instructed a ~15pp wrong AVGO trade. Not
+yet fired (GSR 67.8 vs T1 83.36). Now read from
+`run_combined_system.WEIGHTS` so it cannot drift again. **Lesson: any alert
+that restates a number in prose will eventually contradict its source. Point
+it at the source.** The AVGO guard alert was checked and is CORRECT -- the
+"Rotate AVGO" wording that looked alarming lives only in
+`preview_all_triggers.py`'s fixture, now refreshed.
+
+**2. Clean-sheet portfolio search: nothing better exists that is findable
+(PR #99).** `run_clean_sheet_search.py` -- 433 ROBUST assets, 279,720
+weighted 3-asset portfolios, selected on 2009-2017 and judged on 2018-2026.
+**0 of the top 100 in-sample portfolios beat the incumbent out of sample.**
+In-sample winners score Calmar ~3.0 and collapse to 0.24-0.42 OOS; the
+incumbent goes 1.746 -> 1.529. Most in-sample winners were built on
+SCA-B.ST. **Caveat that must travel with this result: it does NOT validate
+the incumbent, which was itself chosen knowing the post-2018 window.** The
+honest claim is only that search-based selection does not transfer -- the
+third time this repo has found that.
+
+**3. Swedish large caps added (PRs #97, #98).** 41 Nasdaq Stockholm names,
+new `se_equities` category, screen now reads them from the store instead of
+a hardcoded 15-name live-fetch list that omitted SAAB and carried a dead
+Hexagon ticker. SAAB looked like the first real hedge (0.11 beta to the
+AI-semi basket) and isn't -- 0.23/0.27/-0.02 by sub-period, all of it
+post-Ukraine. Gold is 0.16/0.13/0.10, stable, which is why it holds its
+slot. Best Swedish names rank 38-84 of 566; none displaces anything.
+
+**4. Contribution timing does not work (PR #96).** Both the
+withhold-from-DCA version and the operator's better-designed
+outside-cash version. -6.2% to +3.0% vs pure DCA, non-monotonic, negative
+in the stress regime. **Contribution RATE is the lever, timing is not.**
+Deploying capital you already hold at a trigger is still fine; manufacturing
+it by not investing is not.
+
+**5. Outlook Monte Carlo refreshed (PR #95)** to the live config and the
+real horizon. See the FI@50 entry below for what it produced.
+
+**LLY note:** it screens at rank 389/566 (+5.9% median, 64% win). That flag
+was raised and WITHDRAWN -- the screen conditions over 2004-2026 and LLY was
+an ordinary pharma for most of it; the GLP-1 franchise only became material
+from ~2022. **General limitation worth remembering: the conditional screen
+has no concept of a structural break and will score any changed company on
+its old self.** LLY is also the best performer since inception (+54% vs AVGO
++35%, gold +28% in SEK). No action.
+
+**Still open:** PR #73 (docs, open since 2026-07-15) and local branch
+`research/pead-reconstruction`, both predating this session.
+
 ## Swedish large caps added; SAAB is NOT a hedge (2026-08-18, PR #97)
 
 **Gap closed:** Swedish equities were absent from every universe file even
