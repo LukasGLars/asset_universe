@@ -96,14 +96,36 @@ and printed daily by the tracker as target/drift alongside each bucket's
 actual. The 2026-08-04 entry is marked superseded in place (the war-chest
 suspension it records still stands; only the split figures were stale).
 
-**Deliberately NOT re-opened:** 85% sits above the drawdown-ceiling method's
-honest post-guard-retirement range of 48%-82%, but the 2026-08-17 entry shows
-that was an informed trade-off, taken with the guard retirement already
-known. Recording the drift is the fix; re-deriving the ceiling is not. For
-reference, closing the 3.1pp gap is worth ~+2% terminal wealth and moves
-modeled MaxDD -23.0% -> -23.8% (SEK backtest) or -35.9% -> -37.2% (TXN
-analog) -- both already through the -25% tolerance at either weight, so the
-3pp does not change the risk picture either way.
+**Ceiling re-examined and 85% REAFFIRMED as the operating target
+(2026-08-19).** 85% sits above the drawdown-ceiling method's honest
+post-guard-retirement range of 48%-82%. That was put to the operator
+explicitly, twice, with the breach in view, and 85/15 was confirmed as the
+target to execute -- not merely to record. An earlier draft of this entry
+recommended leaving the split at its drifted 82%; that recommendation is
+withdrawn.
+
+The 82-vs-85 comparison, for the record:
+
+| | 82% | 85% |
+|---|---|---|
+| Terminal wealth | -- | +1.8% to +2.5% |
+| MaxDD, AVGO regime | -23.0% | -23.8% |
+| MaxDD, TXN stress | -35.9% | -37.2% |
+
+**Neither weight is defensible on the -25% tolerance** -- both blow through
+it in a 2000-style regime, so Home Base at this size is not buying the
+protection the ceiling method assumes it does. Given that, 1.3pp of
+drawdown for ~2% terminal is a rounding error, and the 3pp goes to the
+higher-returning asset. Home Base earns ~2.5% nominal, which is **-0.4%
+real** after ~0.9% ISK drag and 2% inflation -- certain cost against an
+uncertain hedge.
+
+**The live open question this leaves** (worth answering, not urgent): is
+-25% still the operator's real deviation threshold? If yes, no weight above
+~57% complies and the whole sizing needs redoing. If it was aspirational and
+-37% would in fact be held through, the ceiling method should stop being
+used to size this bucket at all. Reaffirming 85% twice with the breach
+visible points at the second, but it has not been stated outright.
 
 ### Left for the operator, not code
 
