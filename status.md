@@ -28,20 +28,20 @@ FI@50 PACE TRACKER
   Target (FI@50)          :    12,934,706 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +18.0%
+  AWAR (trailing)         :  +17.9%
   Required CAGR           :  +19.6%
-  Status                  :  BEHIND  (-1.6% margin)
+  Status                  :  BEHIND  (-1.7% margin)
 
-  Projected @ AWAR        :    11,081,788 kr
-  vs target               :    -1,852,918 kr  (deficit)
+  Projected @ AWAR        :    11,025,119 kr
+  vs target               :    -1,909,587 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,176,699 kr       ~2047
-  Conservative   +15%       8,353,953 kr       ~2041
-  Base           +20%      13,378,809 kr       ~2038
-  Current AWAR   +18%      11,081,788 kr       ~2039
-  Bull           +30%      33,230,533 kr       ~2035
+  Bear           +10%       5,175,150 kr       ~2047
+  Conservative   +15%       8,350,558 kr       ~2041
+  Base           +20%      13,371,934 kr       ~2038
+  Current AWAR   +18%      11,025,119 kr       ~2039
+  Bull           +30%      33,206,473 kr       ~2035
 
 ==============================================================
 MACRO REGIME
@@ -51,11 +51,11 @@ MACRO REGIME
   ------------------------------------------
   Nominal 10Y             4.72%   HIGH
   Real Yield             +2.44%   HIGH  ^
-  Breakeven               2.28%   MID
+  Breakeven               2.30%   MID
   HY OAS                270 bps   TIGHT
   IG Credit               1.69%   TIGHT
   Curve 10Y-3M          +85 bps   MID
-  Curve 10Y-2Y          +53 bps   MID
+  Curve 10Y-2Y          +52 bps   MID
   SE 10Y                   nan%   --
   USD                     118.9   STRONG
 
