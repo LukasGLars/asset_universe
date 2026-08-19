@@ -7,7 +7,7 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
-## Session 2026-08-19: the dashboard was measuring against the wrong goal (PR pending)
+## Session 2026-08-19: the dashboard was measuring against the wrong goal (PRs #102, #103 -- MERGED, tagged v0.2.0)
 
 Review of portfolio construction + performance vs FI@50 target alignment.
 **Construction itself came out clean and is unchanged** -- 25/40/35 with a
@@ -148,6 +148,73 @@ visible points at the second, but it has not been stated outright.
 - **No actual-contribution ledger exists.** The tracker assumes 6,000 kr/mo
   as an axiom, so AWAR and every projection are wrong by however much the
   real rate differs. Cheapest remaining accuracy win in the repo; not built.
+  **This is the agreed next task.**
+
+### 4. Delisted tickers were silently staling the whole local store (PR #103)
+
+Found while checking why a trade instruction had been priced off an old
+close. `check_local_data_freshness.py` had been reporting `refresh FAILED`
+on every local run: `EA` (taken private, last bar 2026-08-10) and `SATS`
+(last bar 2026-07-17) were still in `us_equities.txt`, yfinance returns
+nothing for either, `asset_universe.update` exits non-zero, and the freshness
+script treats that as the entire refresh having failed. Store sat a day
+behind while every script read it without complaint.
+
+**It produced a real wrong number in this very session:** a local
+`fi_tracker.py` run priced AVGO off the 08-17 close and reported drift as
++8.6% when the 08-18 figure was +9.66%.
+
+Both removed, with a header comment so a regenerated S&P constituent list
+does not re-add them, plus a test asserting they stay out. **Their parquets
+are deliberately kept** -- delisted history cannot be refetched, and the
+screen's M&A/history gates already exclude them from ranking.
+
+`fi_tracker.py` now reads the same freshness check and prints a stale banner
+at the top and again above NEXT CONTRIBUTION (~700 lines down, and the part
+that gets acted on). **Warn only, never non-zero** -- `sync.yml` pipes this
+script into `status.md`, so aborting would blank the dashboard on a day the
+market simply has not closed. The gate that does fail the pipeline already
+runs earlier in `sync.yml`.
+
+### PENDING TRADE -- decided, not executed (2026-08-19)
+
+Operator confirmed **85/15** and approved the rebalance. Not executed at
+session end; needs an Avanza trade. Sized on the 2026-08-18 close:
+
+| # | Action | Amount |
+|---|---|---|
+| 1 | SELL Spiltan Räntefond | ~32,911 kr -> Home Base 166,127 (15.0%) |
+| 2 | BUY 19 AVGO @ ~3,613 kr | ~68,647 kr (35,830 idle cash + 32,911 from HB) |
+
+Lands the bucket split exactly on 85.0/15.0 and cuts leg drift from 9.8% to
+4.7%. Leaves ~94 kr cash. **Re-price before executing** -- share count moves
+with the close.
+
+**After executing:** update `Spiltan Räntefond` `value_sek` -> 166,127 and
+`Reactor Core Cash` -> 94 in `config/portfolio.toml`, or sync the Sheet.
+
+**Timing note:** AVGO's drift closed the session at **+9.8%, 0.2pp from the
+10% band**. If it drifts further the band fires on its own and the rebalance
+becomes forced rather than chosen. The dashboard's own cash line says 9
+shares, not 19 -- that is correct, not a contradiction: it only sees the
+35,830 kr inside Reactor Core. The other 10 shares are funded by the
+bucket-level Spiltan sale, which no script models by design.
+
+### OPEN QUESTION worth answering before the next sizing decision
+
+**Is -25% still the operator's real deviation threshold?** It is currently
+used to derive the Reactor Core ceiling, but *no weight in live use
+satisfies it* -- 82% gives -35.9% and 85% gives -37.2% in the TXN stress
+analog. Either:
+
+- -25% is real, in which case nothing above ~57% complies and the whole
+  bucket sizing needs redoing; or
+- it was aspirational and a -37% path would in fact be held through, in
+  which case the ceiling method should stop being used to size this bucket.
+
+Reaffirming 85% twice with the breach explicitly in view points at the
+second, but the operator has not stated it outright. **Do not re-derive the
+ceiling until this is settled** -- it is the input, and it is unverified.
 
 ## Session 2026-08-18: goal derivation, three null results, one live alert bug
 
