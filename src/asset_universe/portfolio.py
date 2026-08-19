@@ -157,23 +157,69 @@ def _solve_required_cagr(
 
 def years_to_reach_target(
     tpv: float, annual_rate: float, monthly_contribution: float, target: float,
+    target_inflation: float = 0.0,
 ) -> float:
     """
     Years (possibly fractional) for TPV + ongoing monthly contributions,
     compounded at annual_rate, to reach target. inf if unreachable within a
     century even at the given rate (e.g. rate <= 0 and contributions too
     small).
+
+    `target` is the threshold as of TODAY. With target_inflation > 0 the
+    threshold is a moving bar -- it grows at that rate while the portfolio
+    grows at annual_rate -- because the FI@50 trigger is inflation-indexed
+    (the conversion date is unknown, so the number it fires on cannot be a
+    fixed nominal one). Comparing a nominal portfolio against a frozen
+    target is what made the old "FI date" column optimistic; a path that
+    only beats inflation never crosses. Defaults to 0.0, which reproduces
+    the prior fixed-target behaviour exactly.
     """
     if tpv >= target:
         return 0.0
 
     def f(years: float) -> float:
-        return future_value_with_contributions(tpv, annual_rate, years, monthly_contribution) - target
+        return (future_value_with_contributions(tpv, annual_rate, years, monthly_contribution)
+                - target * (1 + target_inflation) ** years)
 
     lo, hi = 0.0, 100.0
     if f(hi) < 0:
         return float("inf")
     return brentq(f, lo, hi, xtol=1e-4)
+
+
+def _fi_target(fi: dict, years_ahead: float = 0.0) -> float:
+    """The FI@50 conversion threshold in NOMINAL kr, `years_ahead` years from
+    today.
+
+    Preferred config form is a real (base-year kr) threshold plus an
+    indexing rate, since the trigger is wealth-based and can fire in any
+    year:
+
+        target_real_sek * (1 + target_inflation) ** (year - target_base_year)
+
+    Falls back to a flat `target_sek` when those keys are absent, so an
+    older config (and the existing fixed-target tests) still work unchanged.
+    """
+    if "target_real_sek" not in fi:
+        return float(fi["target_sek"])
+
+    real      = float(fi["target_real_sek"])
+    base_year = float(fi.get("target_base_year", 2026))
+    infl      = float(fi.get("target_inflation", 0.0))
+
+    today = pd.Timestamp(date.today())
+    year_now = today.year + (today.dayofyear - 1) / 365.25
+    return real * (1 + infl) ** (year_now + years_ahead - base_year)
+
+
+def bucket_targets() -> dict[str, float]:
+    """Target fraction of TPV per bucket, from config/portfolio.toml's
+    [buckets] table. Empty dict if the table is absent -- callers should
+    treat that as "no target recorded" and print actuals only, not
+    substitute a hardcoded guess (a hardcoded 85/15 in
+    run_outlook_montecarlo.py silently outliving a change to the real split
+    is exactly what this table exists to prevent)."""
+    return {k: float(v) for k, v in _load_portfolio_config().get("buckets", {}).items()}
 
 
 def fi_pace(data_dir: Path | None = None) -> dict:
@@ -213,7 +259,6 @@ def fi_pace(data_dir: Path | None = None) -> dict:
 
     start_date  = pd.Timestamp(fi["start_date"])
     start_value = fi["start_value_sek"]
-    target      = fi["target_sek"]
     years_total = fi["years"]
     monthly_contribution = fi.get("monthly_contribution_sek", 0)
 
@@ -221,6 +266,17 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     days_elapsed  = (today - start_date).days
     years_elapsed = days_elapsed / 365.25
     years_left    = years_total - years_elapsed
+
+    # Two different thresholds, both needed and easy to confuse:
+    #   target_now -- what TPV would have to be TODAY to trigger conversion.
+    #   target     -- the same bar grown to the horizon date, which is what
+    #                 required_cagr and the surplus/deficit must be measured
+    #                 against. Using target_now for those would understate
+    #                 the requirement by the whole indexing factor (~27% at
+    #                 a 12-year horizon and 2% inflation).
+    target_now = _fi_target(fi, 0.0)
+    target     = _fi_target(fi, max(years_left, 0.0))
+    inflation  = float(fi.get("target_inflation", 0.0))
 
     awar          = (tpv / start_value) ** (365.25 / days_elapsed) - 1 if days_elapsed > 0 else 0.0
     required_cagr = _solve_required_cagr(tpv, target, years_left, monthly_contribution)
@@ -233,6 +289,10 @@ def fi_pace(data_dir: Path | None = None) -> dict:
         "start_value_sek":      start_value,
         "start_date":           fi["start_date"],
         "target_sek":           target,
+        "target_now_sek":       target_now,
+        "target_real_sek":      float(fi.get("target_real_sek", target)),
+        "target_base_year":     fi.get("target_base_year"),
+        "target_inflation":     inflation,
         "years_remaining":      years_left,
         "days_elapsed":         days_elapsed,
         "awar":                 awar,

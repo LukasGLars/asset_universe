@@ -1,12 +1,54 @@
 [fi]
 start_date               = "2025-07-21"
 start_value_sek          = 925983
-target_sek               = 12934706
+
+# ── FI@50 conversion threshold ────────────────────────────────────────────────
+# Real (2026 kr) threshold, inflation-indexed. Derived 2026-08-18 from the
+# operator's actual stated income need, NOT inherited: 3.5% gross SWR (a
+# 35-45yr drawdown horizon, not the 30yr the 4% rule assumes) minus ~0.9%/yr
+# ISK drag (schablonintakt = (SLR + 1pp) taxed at 30%, paid regardless of
+# returns) = 2.6% net for living.
+#
+# Supersedes target_sek = 12_934_706, which was wrong on three counts at once
+# (4% rule, no ISK drag, no inflation indexing) and understated the
+# requirement by ~25%. Do not resurrect that figure -- see MEMORY.md
+# "FI@50 goal DERIVED from actual income need".
+#
+# To adopt a different SWR row, change target_real_sek only:
+#     4.0% gross -> 3.1% net -> 13_548_000
+#     3.5% gross -> 2.6% net -> 16_150_000   <- chosen
+#     3.0% gross -> 2.1% net -> 20_000_000
+#
+# The trigger is WEALTH-based, not calendar-based: convert when
+#   TPV >= target_real_sek * (1 + target_inflation)^(year - target_base_year)
+# Cross the bar early and convert early; sit below it at the horizon and do
+# not convert. A calendar glidepath was explicitly rejected -- it can force
+# selling into the same stress path that removes the option in the first
+# place. ~20.8M nominal if it fires at the horizon date.
+target_real_sek          = 16150000
+target_base_year         = 2026
+target_inflation         = 0.02
 # Horizon anchored to the FI horizon end date of 2038-10-10: start_date
 # 2025-07-21 + 13.223yr lands exactly there. Consumed as a float
 # (portfolio.py: years_left = years - years_elapsed).
 years                    = 13.223
 monthly_contribution_sek = 6000
+
+# ── Bucket targets (fractions of TPV) ─────────────────────────────────────────
+# Single source of truth for the bucket-level split. Previously recorded only
+# in prose (MEMORY.md carried both 85/15 and a superseded 83.3/16.7) and
+# hardcoded once in run_outlook_montecarlo.py, so the Monte Carlo could model
+# a split the live portfolio was not actually at.
+#
+# 85/15 DECIDED 2026-08-17. Deliberately above the drawdown-ceiling method's
+# honest post-guard-retirement range of 48%-82% (-25% tolerance / unguarded
+# Reactor Core MaxDD); the operator accepted that trade-off explicitly,
+# valuing Home Base as a behavioural buffer rather than a risk-capacity-sized
+# number. Recorded here so the gap to actual stays visible, not to re-open it.
+[buckets]
+reactor_core = 0.85
+home_base    = 0.15
+war_chest    = 0.00
 
 # ── Reactor Core positions ─────────────────────────────────────────────────────
 # currency: USD = convert via USDSEK, EUR = convert via EURSEK, SEK = no conversion

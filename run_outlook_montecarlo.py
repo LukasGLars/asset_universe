@@ -3,9 +3,10 @@ run_outlook_montecarlo.py
 
 Forward-looking outlook test for the live system (static base Gold 25 /
 AVGO 40 / LLY 35 + silver GSR tactical), run to the operator's actual FI@50
-date of 2038-10-10 (12.15 years from 2026-08-18) at the decided bucket split
-(Reactor Core 85%, Home Base 15%, War Chest suspended), with 6,000 kr/month
-contributions continuing.
+date of 2038-10-10 (12.15 years from 2026-08-18) at the bucket split and
+FI@50 threshold recorded in config/portfolio.toml, with 6,000 kr/month
+contributions continuing. Both are read from config, never restated here --
+the split and the threshold print in the run's own header.
 
 The AVGO 200d guard, crash trigger and joint-stress escalation are all OFF.
 This script originally modelled them ON ("Strategy E"); that was refreshed
@@ -50,16 +51,22 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
-from asset_universe import config
+from asset_universe import config, portfolio
 
 import run_combined_system as rcs
 
 DATA_DIR = config.raw_data_dir()
 
-# War Chest SUSPENDED (2026-08-04), and the bucket split was DECIDED at
-# 85/15 on 2026-08-17 -- superseding the 83.3/4.5/12.2 target this script
-# was originally written against.
-RC_WEIGHT, WC_WEIGHT, HB_WEIGHT = 0.85, 0.0, 0.15
+# War Chest SUSPENDED (2026-08-04), bucket split DECIDED at 85/15 on
+# 2026-08-17. READ from config/portfolio.toml's [buckets] table rather than
+# restated here: these constants were previously hardcoded, so a change to
+# the live split would have left this Monte Carlo quietly pricing the odds
+# of a portfolio the operator no longer holds. Same rule that fixed the
+# stale Silver GSR alert strings in PR #100 -- point it at the source.
+_BUCKETS  = portfolio.bucket_targets()
+RC_WEIGHT = _BUCKETS["reactor_core"]
+HB_WEIGHT = _BUCKETS["home_base"]
+WC_WEIGHT = _BUCKETS["war_chest"]
 HOME_BASE_ANNUAL = 0.025
 HOME_BASE_DAILY = (1 + HOME_BASE_ANNUAL) ** (1 / 252) - 1
 
@@ -70,7 +77,12 @@ HORIZON_YEARS = 12.15
 TRADING_DAYS_PER_YEAR = 252
 BLOCK_LEN = 21
 N_PATHS = 10_000
-TARGET_SEK = 12_934_706.0
+# Threshold READ from config, not restated. The old hardcoded 12_934_706
+# was the pre-derivation figure and is wrong by ~25%; _fi_target() returns
+# it inflation-indexed to the horizon, which is the bar these paths must
+# actually clear.
+_FI_CFG = portfolio._load_portfolio_config()["fi"]
+TARGET_SEK = portfolio._fi_target(_FI_CFG, HORIZON_YEARS)
 
 # Assume rebalance completes by fall 2026 -- start the clock from today's
 # TPV, at target weights (not the current mid-transition weights).

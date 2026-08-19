@@ -7,6 +7,148 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-08-19: the dashboard was measuring against the wrong goal (PR pending)
+
+Review of portfolio construction + performance vs FI@50 target alignment.
+**Construction itself came out clean and is unchanged** -- 25/40/35 with a
+10pp band, full sample 2009-2026 CAGR 30.3% USD / 32.5% SEK, Sharpe 1.40,
+MaxDD -23.3% / -28.0% SEK, beating SPY and both individual legs on
+risk-adjusted terms; PR #99 already established nothing findable beats it
+out of sample. **Every finding below is about the wrapper around the
+allocation, not the allocation.** Three fixes shipped together.
+
+### 1. `target_sek` was still the retired 12.93M figure -- now real and indexed
+
+The 2026-08-18 derivation concluded `target_sek = 12_934_706` was wrong by
+~25% but deliberately left the config alone pending an SWR call. It was
+never revisited, so `status.md` printed **"BEHIND -1.7%"** every day against
+a threshold nobody endorsed. Against the real bar the gap is **-7.3%**.
+
+`config/portfolio.toml` `[fi]` now carries the 3.5%-gross row (the one
+marked "chosen" in the derivation) in real terms plus an indexing rate,
+replacing the flat nominal field:
+
+```toml
+target_real_sek  = 16150000   # 2026 kr
+target_base_year = 2026
+target_inflation = 0.02
+```
+
+The other two SWR rows are in a comment so switching is a one-line edit.
+
+**Indexing was the missing half, not a nicety.** The trigger is wealth-based
+and can fire in any year, so a fixed nominal number is wrong the moment it
+is written. `portfolio._fi_target(fi, years_ahead)` returns the bar at any
+horizon, and `fi_pace()` now reports three distinct numbers that were
+previously collapsed into one and are easy to confuse:
+
+| | value | what it is |
+|---|---|---|
+| Threshold (2026 kr) | 16,150,000 | the real, indexed bar |
+| Trigger now | 16,352,649 | what TPV would have to be TODAY |
+| Trigger @ horizon | 20,798,454 | what `required_cagr` is solved against |
+
+Required CAGR moved **19.7% -> 24.8%** on identical TPV and horizon. AWAR is
++17.6%, so the honest margin is -7.3%, not -1.7%.
+
+**Knock-on bug found and fixed in the scenario table.** `years_to_reach_target()`
+solved against a frozen bar, so a path that merely beat inflation still
+"reached" FI. It now takes `target_inflation` and grows the bar alongside the
+portfolio (default 0.0 reproduces the old behaviour exactly; a test asserts a
+path growing at exactly the indexing rate returns `inf`). The FI-date column
+also had `2026 +` hardcoded as its year base. Combined effect: Bear moved
+~2047 -> ~2056, Base ~2038 -> ~2041.
+
+`run_outlook_montecarlo.py`'s own hardcoded `TARGET_SEK = 12_934_706.0` was
+the same stale figure and now reads config too.
+
+### 2. Idle cash was sitting in the rebalance band denominator
+
+`fi_tracker.py`'s `_rc_total` included the manual `Reactor Core Cash` row, so
+every leg weight was scaled by (1 - cash%) and every reported gap widened by
+that factor. Live effect on 2026-08-19: **AVGO read -10.9% against a 10% band
+and printed `BUY -- ~27 shares (~98,552 kr)`, when its real drift against the
+invested book was -9.7%, i.e. inside the band.** The alert was firing on the
+cash balance, not on drift, and would have fired on all three legs at once
+had cash grown further.
+
+Denominator is now invested Reactor Core capital only (share positions,
+excluding no-ticker manual rows). Weights sum to 1.0 again; all three legs
+read HOLD. Cash is not thereby ignored -- it gets its own **Idle Reactor Core
+Cash** line reporting the deployable amount and routing it to the most
+underweight leg (35,830 kr -> 9 AVGO shares today). **Drift rebalancing and
+cash deployment are two different actions; one number could not carry both.**
+
+Same class of bug as PR #100's stale alert strings: a live instruction
+computed off the wrong source. Worth checking any other denominator in this
+repo that sums a bucket rather than its invested subset.
+
+### 3. Bucket targets had two live values and no single source
+
+MEMORY.md carried **83.3/16.7** (2026-08-04, war-chest suspension) and
+**85/15** (2026-08-17) as if both were current, and the only code that
+consumed a bucket target was a hardcoded `0.85, 0.0, 0.15` in
+`run_outlook_montecarlo.py` -- so the Monte Carlo priced the odds for 85%
+while the portfolio actually sat at 81.9%.
+
+Now a `[buckets]` table in `config/portfolio.toml`, read by the Monte Carlo
+and printed daily by the tracker as target/drift alongside each bucket's
+actual. The 2026-08-04 entry is marked superseded in place (the war-chest
+suspension it records still stands; only the split figures were stale).
+
+**Ceiling re-examined and 85% REAFFIRMED as the operating target
+(2026-08-19).** 85% sits above the drawdown-ceiling method's honest
+post-guard-retirement range of 48%-82%. That was put to the operator
+explicitly, twice, with the breach in view, and 85/15 was confirmed as the
+target to execute -- not merely to record. An earlier draft of this entry
+recommended leaving the split at its drifted 82%; that recommendation is
+withdrawn.
+
+The 82-vs-85 comparison, for the record:
+
+| | 82% | 85% |
+|---|---|---|
+| Terminal wealth | -- | +1.8% to +2.5% |
+| MaxDD, AVGO regime | -23.0% | -23.8% |
+| MaxDD, TXN stress | -35.9% | -37.2% |
+
+**Neither weight is defensible on the -25% tolerance** -- both blow through
+it in a 2000-style regime, so Home Base at this size is not buying the
+protection the ceiling method assumes it does. Given that, 1.3pp of
+drawdown for ~2% terminal is a rounding error, and the 3pp goes to the
+higher-returning asset. Home Base earns ~2.5% nominal, which is **-0.4%
+real** after ~0.9% ISK drag and 2% inflation -- certain cost against an
+uncertain hedge.
+
+**The live open question this leaves** (worth answering, not urgent): is
+-25% still the operator's real deviation threshold? If yes, no weight above
+~57% complies and the whole sizing needs redoing. If it was aspirational and
+-37% would in fact be held through, the ceiling method should stop being
+used to size this bucket at all. Reaffirming 85% twice with the breach
+visible points at the second, but it has not been stated outright.
+
+### Left for the operator, not code
+
+- **Deploy the 35,830 kr.** Worth +160k to +557k terminal at 15%-26% core
+  returns. Requires an Avanza trade and a share-count sync; the dashboard now
+  states the instruction but cannot execute it.
+- **Contribution rate is the only remaining lever**, and it dwarfs everything
+  above: 6,000 -> 25,000 kr/mo moves required CAGR 24.8% -> 18.5%. Everything
+  fixed in this session is worth ~3% terminal; this is worth ~6pp of required
+  return. Re-derived against the corrected threshold this session:
+
+  | Contribution | Required CAGR |
+  |---|---|
+  | 6,000 kr/mo (today) | 24.8% |
+  | 10,000 | 23.3% |
+  | 15,000 | 21.5% |
+  | 18,256 | 20.5% |
+  | 25,000 | 18.5% |
+
+- **No actual-contribution ledger exists.** The tracker assumes 6,000 kr/mo
+  as an axiom, so AWAR and every projection are wrong by however much the
+  real rate differs. Cheapest remaining accuracy win in the repo; not built.
+
 ## Session 2026-08-18: goal derivation, three null results, one live alert bug
 
 Long session. Ordered by what matters.
@@ -3855,6 +3997,16 @@ change needs to clear this same portfolio-level bar, not just the
 event-level one.
 
 ## War chest SUSPENDED (not retired) -- target updated to Reactor Core 83.3% / Home Base 16.7% (2026-08-04)
+
+> **SUPERSEDED for the bucket split only (2026-08-19).** The 83.3/16.7
+> figures below were replaced by **85/15** on 2026-08-17 ("Reactor Core
+> DECIDED at 85% / Home Base 15%" above) and now live in
+> `config/portfolio.toml`'s `[buckets]` table, which is the single source of
+> truth. This entry was still being read as current alongside that one --
+> two live splits in one file. **The war-chest suspension itself stands**,
+> as does the ceiling-derivation reasoning, which is why the entry is marked
+> rather than deleted. If the war chest is un-suspended, re-derive against
+> the 85/15 baseline, not the 83.3/4.5/12.2 one named below.
 
 Operator's call: the war chest / opp sleeve concept stays (it's a real,
 validated, positive-expectancy mechanism -- see the STLD expectancy work
