@@ -1,4 +1,14 @@
 # S&P 500 current constituents (sourced from Wikipedia)
+#
+# Removed as delisted (yfinance returns no data, which made
+#   `python -m asset_universe.update` exit non-zero and so made
+#   check_local_data_freshness.py report the whole refresh FAILED,
+#   leaving the local store silently stale):
+#     EA    -- taken private, last bar 2026-08-10
+#     SATS  -- last bar 2026-07-17
+#   Their existing parquets are kept: the history cannot be refetched
+#   once a ticker is gone, and the screen's own M&A/history gates
+#   already exclude them from candidate ranking.
 A
 AAPL
 ABBV
@@ -152,7 +162,6 @@ DUK
 DVA
 DVN
 DXCM
-EA
 EBAY
 ECL
 ED
@@ -399,7 +408,6 @@ ROST
 RSG
 RTX
 RVTY
-SATS
 SBAC
 SBUX
 SCHW

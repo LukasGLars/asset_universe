@@ -19,6 +19,40 @@ from asset_universe.analysis.engine import current_regime, query as engine_query
 
 DATA_DIR = config.raw_data_dir()
 
+# ── Data freshness banner ───────────────────────────────────────────────────────
+# This script prints TRADE INSTRUCTIONS (rebalance actions, cash deployment,
+# tactical triggers). Those are only as good as the store's last bar, and
+# nothing here previously said how old that was -- a local run against a
+# stale store printed a share count and price with no indication anything
+# was wrong. That happened on 2026-08-19: the store was a day behind, so
+# AVGO's real drift (+9.66%, 0.34pp inside the band) was reported as +8.6%.
+#
+# check_local_data_freshness.py has existed since 2026-07-07 for exactly
+# this and is wired into sync.yml, so CI is already gated -- but it only
+# protects a run that remembers to invoke it first. Reading the same check
+# here means a stale run cannot look like a fresh one, whoever started it.
+#
+# WARN ONLY, never exit non-zero: sync.yml pipes this script's stdout into
+# status.md and preview_notification.yml diffs it, so aborting would replace
+# the dashboard with nothing on a day the market simply hasn't closed yet.
+# The freshness gate that *does* fail the pipeline runs earlier in sync.yml;
+# this is the reader-facing half.
+try:
+    from check_local_data_freshness import check_freshness
+
+    _fresh, _latest_bar, _required_since = check_freshness(DATA_DIR)
+except Exception as _e:
+    _fresh, _latest_bar, _required_since = True, None, None
+    print(f"  [freshness check unavailable — {_e}]")
+
+if not _fresh:
+    print("!" * 62)
+    print("  STALE DATA -- TRADE INSTRUCTIONS BELOW MAY BE WRONG")
+    print(f"  Store's latest bar : {_latest_bar}")
+    print(f"  Expected since     : {_required_since}")
+    print("  Fix: python check_local_data_freshness.py")
+    print("!" * 62)
+
 # ── Pre-compute regime state (used by both macro and signals sections) ──────────
 
 try:
@@ -750,6 +784,10 @@ try:
 
     print(f"\n{'='*62}")
     print("NEXT CONTRIBUTION")
+    # Repeated here, not just in the top banner: this section is ~700 lines
+    # down and is the part that gets acted on, often read on its own.
+    if not _fresh:
+        print(f"  [STALE DATA -- prices are from {_latest_bar}, not {_required_since}]")
     print(f"{'='*62}")
     print(f"\n  Next kr        -> {_next_name}")
     print(f"    Current wt (of Reactor Core) : {_next_row['current']:.1%}")
