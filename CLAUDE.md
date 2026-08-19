@@ -29,7 +29,7 @@ details are not to be added:
 This was violated on 2026-08-18 and redacted in `355d802`. Redaction does
 not purge git history — check before committing, not after.
 
-## Two rules earned the hard way
+## Three rules earned the hard way
 
 - **Alerts must read their numbers from the source, never restate them in
   prose.** `fi_tracker.py`'s silver action strings drifted 15pp from
@@ -39,3 +39,11 @@ not purge git history — check before committing, not after.
   screened at 0.11 beta to the AI-semi basket and looked like the first real
   hedge this project had found; by sub-period it was 0.23 / 0.27 / -0.02,
   entirely post-Ukraine (PR #97). One regime can carry a whole number.
+- **A live number is only as good as the bar it was computed from, and
+  neither the source nor the freshness is self-evident.** Two instances,
+  both 2026-08-19 (PRs #102, #103): `fi_tracker.py` sized its rebalance band
+  off a denominator that included idle cash, so the alert fired on the cash
+  balance rather than on drift; and a delisted ticker (`EA`) made the daily
+  refresh exit non-zero, leaving the local store a day stale while every
+  script kept reading it silently. Before trusting a printed instruction,
+  check what is in its denominator and how old its last bar is.
