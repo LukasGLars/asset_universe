@@ -60,10 +60,22 @@ for _, row in snap.iterrows():
 print("-" * 62)
 if tpv is not None:
     print(f"  {'TPV':<20} {'':>7} {'':>10} {tpv:>12,.0f} kr")
+    # Target column reads config/portfolio.toml [buckets] -- printed so the
+    # bucket-level drift is visible daily instead of only found by
+    # inspecting status.md against MEMORY.md prose (which had carried two
+    # different splits at once). No alert and no trade instruction: the
+    # split is a deliberate operator trade-off, not a banded rule.
+    _bucket_tgt = portfolio.bucket_targets()
     for bucket, label in [("reactor_core", "Reactor Core"), ("home_base", "Home Base"), ("war_chest", "War Chest")]:
         sub = snap[snap["bucket"] == bucket]["value_sek"].sum()
         pct = sub / tpv if tpv else 0
-        print(f"    {label:<18} {sub:>12,.0f} kr  ({pct:.0%})")
+        if bucket in _bucket_tgt:
+            tgt = _bucket_tgt[bucket]
+            drift = pct - tgt
+            print(f"    {label:<18} {sub:>12,.0f} kr  ({pct:>5.1%})"
+                  f"   target {tgt:>5.1%}  drift {drift:+.1%}")
+        else:
+            print(f"    {label:<18} {sub:>12,.0f} kr  ({pct:>5.1%})")
 else:
     print(f"  TPV : [unavailable — {_fi_error}]")
 
@@ -77,7 +89,19 @@ if fi:
     pace_icon = "ON PACE" if fi["on_pace"] else "BEHIND"
     print(f"  Start  ({fi['start_date']})  :  {fi['start_value_sek']:>12,.0f} kr")
     print(f"  Now                     :  {fi['tpv_sek']:>12,.0f} kr")
-    print(f"  Target (FI@50)          :  {fi['target_sek']:>12,.0f} kr")
+    # Three threshold lines, because one number cannot carry it: the trigger
+    # is wealth-based and inflation-indexed, so "the target" differs
+    # depending on which year it fires in. Trigger now = the bar TPV is
+    # actually racing today; at horizon = the bar required_cagr is solved
+    # against.
+    if fi["target_inflation"]:
+        _thr_label = f"Threshold ({fi['target_base_year']} kr)"
+        print(f"  {_thr_label:<24}:  {fi['target_real_sek']:>12,.0f} kr"
+              f"   (indexed {fi['target_inflation']:.1%}/yr)")
+        print(f"  {'Trigger now':<24}:  {fi['target_now_sek']:>12,.0f} kr")
+        print(f"  {'Trigger @ horizon':<24}:  {fi['target_sek']:>12,.0f} kr")
+    else:
+        print(f"  Target (FI@50)          :  {fi['target_sek']:>12,.0f} kr")
     print(f"  Years remaining         :  {fi['years_remaining']:.1f}")
     print()
     print(f"  AWAR (trailing)         :  {fi['awar']:>+.1%}")
@@ -94,11 +118,21 @@ if fi:
     print(f"  {'Scenario':<14} {'CAGR':>6}  {'Projected':>14}  {'FI date':>10}"
           f"   (incl. {monthly_contrib:,.0f} kr/mo contributions)")
     print(f"  {'-'*72}")
+    # FI date is solved against the trigger as it stands TODAY, grown at the
+    # indexing rate alongside the portfolio -- not against the horizon-year
+    # figure (that bar belongs to 2038 and would be far too high to test a
+    # 2031 crossing against) and not against a frozen one (which would let a
+    # path that merely beats inflation "reach" FI). Year base is today's
+    # actual year, previously hardcoded to 2026.
+    _today    = pd.Timestamp.today()
+    _year_now = _today.year + (_today.dayofyear - 1) / 365.25
     for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
                         ("Current AWAR", fi["awar"]), ("Bull", 0.30)]:
         proj      = portfolio.future_value_with_contributions(tpv, rate, fi["years_remaining"], monthly_contrib)
-        yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib, fi["target_sek"])
-        fi_year   = 2026 + yrs_to_fi
+        yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib,
+                                                    fi["target_now_sek"],
+                                                    target_inflation=fi["target_inflation"])
+        fi_year   = _year_now + yrs_to_fi
         fi_str    = f"~{fi_year:.0f}" if fi_year < 2100 else ">2100"
         print(f"  {label:<14} {rate:>+.0%}  {proj:>14,.0f} kr  {fi_str:>10}")
 else:
@@ -651,13 +685,28 @@ try:
     from run_combined_system import WEIGHTS
     from next_contribution import next_contribution_target
 
-    _rc_total = snap[snap["bucket"] == "reactor_core"]["value_sek"].sum()
+    # Denominator is INVESTED Reactor Core capital only -- share positions,
+    # excluding the manual no-ticker cash row. Idle cash used to sit in this
+    # denominator, which scaled every leg weight by (1 - cash%) and so
+    # widened every reported gap by that factor. On 2026-08-19 that was the
+    # sole reason AVGO read -10.9% (band 10%, BUY ~98,552 kr) when its real
+    # drift against the invested book was -9.7%, i.e. inside the band: the
+    # alert was firing on the cash balance, not on drift, and would have
+    # fired on all three legs at once had cash grown further.
+    #
+    # Cash is not thereby ignored -- it is reported as its own deployable
+    # figure below. Drift rebalancing and cash deployment are two different
+    # actions and conflating them in one number made both harder to read.
+    _rc_rows      = snap[snap["bucket"] == "reactor_core"]
+    _rc_total     = _rc_rows["value_sek"].sum()
+    _rc_invested  = _rc_rows[_rc_rows["ticker"] != ""]["value_sek"].sum()
+    _rc_cash      = _rc_total - _rc_invested
 
     def _rc_weight(name):
         row = snap[snap["name"] == name]
-        if row.empty or not _rc_total:
+        if row.empty or not _rc_invested:
             return 0.0
-        return float(row["value_sek"].iloc[0]) / _rc_total
+        return float(row["value_sek"].iloc[0]) / _rc_invested
 
     _current_weights = {
         "GC_F": _rc_weight("Gold"),
@@ -734,7 +783,10 @@ try:
         "AVGO": float(snap[snap["name"] == "Broadcom"]["price_sek"].iloc[0]),
         "LLY":  float(snap[snap["name"] == "Eli Lilly"]["price_sek"].iloc[0]),
     }
-    _rebal = rebalance_instructions(_current_weights, _target_weights, _rebal_prices, _rc_total)
+    # Sized off invested capital, matching the weights it is comparing --
+    # passing _rc_total here while the weights were invested-only would
+    # inflate every gap_kr / share count by the cash fraction.
+    _rebal = rebalance_instructions(_current_weights, _target_weights, _rebal_prices, _rc_invested)
     _rebal_names = {"GC_F": "Gold", "AVGO": "AVGO", "LLY": "LLY"}
 
     print(f"\n  AVGO Rebalance Check  [existing capital, band: {REBAL_BAND:.0%}]")
@@ -745,6 +797,21 @@ try:
         print(f"    {_rebal_names[_tkr]} status: {_r['action']}  "
               f"({_r['current']:.1%} actual vs {_r['target']:.1%} target, "
               f"gap {_r['gap']:+.1%}){_detail}")
+
+    # Separate line, deliberately not folded into the band check above: idle
+    # cash is a permanent drag on a max-growth accumulation portfolio and is
+    # deployable whether or not any leg has drifted out of band. Routed to
+    # the most underweight leg, which is the same answer NEXT CONTRIBUTION
+    # gives for new money -- same question, capital already on hand.
+    print(f"\n  Idle Reactor Core Cash")
+    print(f"    Uninvested     : {_rc_cash:,.0f} kr  ({_rc_cash / _rc_total:.1%} of Reactor Core)")
+    if _rc_cash > 0:
+        _cash_px = _rebal_prices.get(_next_ticker) or 0.0
+        _cash_sh = int(_rc_cash // _cash_px) if _cash_px > 0 else 0
+        print(f"    Action         : deploy -> {_next_name}  "
+              f"(~{_cash_sh} shares at {_cash_px:,.0f} kr)")
+    else:
+        print(f"    Action         : none -- fully invested")
 
 except Exception as _e:
     print(f"\n  AVGO Rebalance Check : [unavailable — {_e}]")

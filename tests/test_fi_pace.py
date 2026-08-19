@@ -128,3 +128,130 @@ def test_fi_pace_does_not_raise_for_manual_positions_with_zero_shares():
         mp.setattr(portfolio, "_load_portfolio_config", lambda: _FI_CFG)
         result = portfolio.fi_pace("unused")
         assert result["tpv_sek"] == 233162.0
+
+
+# ── Inflation-indexed FI@50 threshold (2026-08-19) ──────────────────────────
+# The trigger is wealth-based and can fire in any year, so the threshold is
+# stored in real (base-year) kr and indexed. Flat `target_sek` remains
+# supported -- the tests above still use it -- so an older config keeps
+# working unchanged.
+
+_FI_CFG_INDEXED = {
+    "fi": {
+        "start_date": "2025-07-21",
+        "start_value_sek": 925983,
+        "target_real_sek": 16_150_000,
+        "target_base_year": 2026,
+        "target_inflation": 0.02,
+        "years": 13.223,
+        "monthly_contribution_sek": 6000,
+    }
+}
+
+
+def test_fi_target_falls_back_to_flat_target_sek():
+    # Backwards compatibility: no target_real_sek -> the flat figure, and
+    # crucially NOT indexed (a flat config has no base year to index from).
+    fi = dict(_FI_CFG["fi"])
+    assert portfolio._fi_target(fi, 0.0) == 12934706
+    assert portfolio._fi_target(fi, 12.0) == 12934706
+
+
+def test_fi_target_indexes_forward_at_the_configured_rate():
+    fi = _FI_CFG_INDEXED["fi"]
+    now = portfolio._fi_target(fi, 0.0)
+    ten = portfolio._fi_target(fi, 10.0)
+    assert math.isclose(ten, now * 1.02 ** 10, rel_tol=1e-9)
+    # Sanity: today's bar has already grown past the 2026 base figure.
+    assert now > fi["target_real_sek"]
+
+
+def test_indexed_target_raises_the_required_cagr_versus_the_stale_flat_one():
+    """The whole point of the correction. The retired 12.93M figure was not
+    merely unendorsed, it made the dashboard read materially better than
+    reality -- required CAGR must go UP once the real, indexed threshold is
+    used, on identical TPV and horizon."""
+    snap = _snap([{"name": "Gold", "shares": 304, "value_sek": 1_106_368.0}])
+    # Same horizon on both sides -- _FI_CFG carries the old years=12, and
+    # comparing across different horizons would measure that instead of the
+    # threshold change this test is about.
+    stale_cfg = {"fi": {**_FI_CFG["fi"], "years": 13.223}}
+
+    def _pace(cfg):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(portfolio, "snapshot", lambda data_dir: snap)
+            mp.setattr(portfolio, "_load_portfolio_config", lambda: cfg)
+            return portfolio.fi_pace("unused")
+
+    stale   = _pace(stale_cfg)
+    indexed = _pace(_FI_CFG_INDEXED)
+    assert indexed["required_cagr"] > stale["required_cagr"] + 0.03
+    # ~24-25% at these inputs, vs ~20% against the stale target.
+    assert 0.23 < indexed["required_cagr"] < 0.27
+
+
+def test_fi_pace_reports_todays_bar_below_the_horizon_bar():
+    snap = _snap([{"name": "Gold", "shares": 304, "value_sek": 1_106_368.0}])
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(portfolio, "snapshot", lambda data_dir: snap)
+        mp.setattr(portfolio, "_load_portfolio_config", lambda: _FI_CFG_INDEXED)
+        r = portfolio.fi_pace("unused")
+    # required_cagr / surplus are solved against the HORIZON bar, which must
+    # be the larger of the two -- swapping them would understate the gap by
+    # the whole indexing factor.
+    assert r["target_now_sek"] < r["target_sek"]
+    assert math.isclose(
+        r["target_sek"],
+        r["target_now_sek"] * 1.02 ** r["years_remaining"],
+        rel_tol=1e-9,
+    )
+
+
+def test_years_to_reach_target_default_reproduces_fixed_target_behaviour():
+    tpv, rate, monthly, target = 1_000_000.0, 0.20, 6000.0, 5_000_000.0
+    assert math.isclose(
+        years_to_reach_target(tpv, rate, monthly, target),
+        years_to_reach_target(tpv, rate, monthly, target, target_inflation=0.0),
+        rel_tol=1e-12,
+    )
+
+
+def test_years_to_reach_target_takes_longer_against_a_moving_bar():
+    tpv, rate, monthly, target = 1_000_000.0, 0.20, 6000.0, 5_000_000.0
+    fixed  = years_to_reach_target(tpv, rate, monthly, target)
+    moving = years_to_reach_target(tpv, rate, monthly, target, target_inflation=0.02)
+    assert moving > fixed
+
+
+def test_years_to_reach_target_never_crosses_a_bar_growing_as_fast():
+    """A path that only matches the indexing rate makes no real progress and
+    must report inf, not a finite date. The old fixed-target solve would
+    happily return one."""
+    assert years_to_reach_target(1_000_000.0, 0.02, 0.0, 5_000_000.0,
+                                 target_inflation=0.02) == float("inf")
+
+
+# ── Bucket targets ──────────────────────────────────────────────────────────
+
+def test_bucket_targets_reads_the_config_table():
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(portfolio, "_load_portfolio_config",
+                   lambda: {"buckets": {"reactor_core": 0.85, "home_base": 0.15,
+                                        "war_chest": 0.0}})
+        assert portfolio.bucket_targets() == {
+            "reactor_core": 0.85, "home_base": 0.15, "war_chest": 0.0}
+
+
+def test_bucket_targets_empty_when_table_absent():
+    """Absent table must yield {} so callers print actuals only. Substituting
+    a hardcoded default is the failure mode this table exists to remove."""
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(portfolio, "_load_portfolio_config", lambda: {"fi": {}})
+        assert portfolio.bucket_targets() == {}
+
+
+def test_live_config_bucket_targets_sum_to_one():
+    """Guards the real config file, not a fixture: a split that does not sum
+    to 1.0 would silently mis-scale run_outlook_montecarlo.py's blended
+    return."""
+    assert math.isclose(sum(portfolio.bucket_targets().values()), 1.0, abs_tol=1e-9)
