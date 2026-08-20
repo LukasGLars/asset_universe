@@ -7,6 +7,59 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-08-20 (cont.): ADDT_B_ST holdout-verified and REJECTED; no Swedish candidate survives
+
+Independent verification of the ADDT_B_ST write-up directly below (not
+committed as scripts -- audit only, run ad hoc). Two of its three claims
+reproduce; the third, most important one does not, and changes the call.
+
+**Reproduced, real:**
+- Sub-period Sharpe check: 6/6 under calendar-year-aligned chunks (5/6 under
+  an even-date split, one virtual tie) -- holds up, not partition-sensitive
+  in any meaningful way.
+- Regime-bucket check (ry x baa10y): exactly 7/7, matches.
+- FI@50 MC funding-mechanism reversal: reproduced and stress-tested for MC
+  noise using paired/common-random-number sampling (same bootstrap day-draws
+  across variants, only weights differ) -- deltas are stable to +-0.2pp
+  across 6 seeds. AVGO-specific funding: -8pp P(reach target) (write-up:
+  -6.1pp). Pro-rata funding: +2.4pp (write-up: +2.6pp). **Real signal, not
+  noise -- this part of the write-up is solid.**
+
+**Did NOT reproduce -- this is the one that matters:** a genuine train/test
+holdout (select on 2009-2017, judge purely on untouched 2018-2026 -- same
+convention as `run_clean_sheet_search`, PR #99's "0/100" result) was never
+run for ADDT_B_ST. Running it: ADDT_B_ST **fails**. OOS CAGR is a wash
+(36.7% vs base 36.8%), MaxDD is worse (-24.8% vs -23.5%, same direction as
+every other window tested -- MaxDD never once improved, IS, OOS, or full
+sample). Only OOS Sharpe holds up (1.604 vs 1.511). Screening the full
+local universe (545 tickers) the same way: only 8/138 loose-criterion IS
+survivors (6%) also pass OOS -- generalizes PR #99's finding to this
+screen type too. **MEMORY.md's own description of the original filter
+("improves CAGR, Sharpe AND MaxDD simultaneously") is inconsistent with
+its own later admission that MaxDD got slightly worse** -- worth reading
+critically next time a "passed the screen" claim shows up here.
+
+**Also checked: does any Swedish name survive the same genuine holdout?**
+Screened all 41 `se_equities` tickers IS(2009-17)->OOS(2018-26). Strict
+pass (CAGR+Sharpe+MaxDD all improve, both windows): **0/41**. Loosened to
+CAGR+Sharpe only: **1/41**, SAAB_B_ST -- but OOS CAGR is rounding-level
+(36.9% vs 36.8%), MaxDD worse (-25.6%), MC edge only +0.9pp (vs ADDT's
++2.4pp), and this repo already established (2026-08-18, "SAAB is NOT a
+hedge") that SAAB's whole correlation profile is a single post-Ukraine
+regime artifact. **No genuine Swedish diversifier exists in the local
+universe.**
+
+**Revised call: REJECT ADDT_B_ST at 10%, or size far smaller than planned
+if done at all.** The only edge that survives a real holdout is smoother
+day-to-day Sharpe -- no extra return, no extra drawdown protection, tested
+honestly. Not enough to justify 10% single-name concentration risk in a
+small/mid Swedish industrial. **The rebalance below was never executed and
+should now not be, on the terms it was sized.** Reusable lesson, same
+species as the split-adjustment/`fi_pace()`/vol-targeting bugs: a
+sub-period or regime check that reuses the SAME full-sample data it was
+selected on is not an out-of-sample test, no matter how many buckets it's
+sliced into -- only a genuine train/test holdout is.
+
 ## Session 2026-08-20: stale-weights doc fix (PR #104, MERGED); ADDT_B_ST candidate found, not yet executed
 
 ### 1. `run_comparison_backtest.py` / `run_combined_system.py` were modelling a retired portfolio
@@ -84,7 +137,7 @@ Lesson: portfolio-level Sharpe/MaxDD and goal-level P(reach target) can point
 in opposite directions depending on *which* leg funds the new position --
 always check both before concluding a change "helps."
 
-### 5. Status: decision leaning yes, NOT YET EXECUTED
+### 5. Status: decision leaning yes, NOT YET EXECUTED -- SUPERSEDED, see the "holdout-verified and REJECTED" entry above. Do not execute the rebalance below.
 
 Final call was "reasonable small bet, not a must-do" -- +2.6pp target-hit
 probability for real single-stock concentration risk (10% in one Swedish
