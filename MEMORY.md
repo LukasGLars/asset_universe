@@ -49,6 +49,20 @@ hedge") that SAAB's whole correlation profile is a single post-Ukraine
 regime artifact. **No genuine Swedish diversifier exists in the local
 universe.**
 
+**Widened to the entire local universe (545 tickers, equities + se_equities),
+same strict test: 0/545 pass.** Nothing in the local data simultaneously
+improves CAGR, Sharpe AND MaxDD both in-sample (2009-2017) and
+out-of-sample (2018-2026) as a 10% pro-rata blend into Gold25/AVGO40/LLY35.
+Loosening to CAGR+Sharpe only (MaxDD allowed to get worse) surfaces 8 OOS
+survivors -- TPL, SAAB_B_ST, NVDA, DXCM, AXON, FTNT, STX, FIX -- all trading
+worse drawdown for the Sharpe gain, same shape as ADDT. **This generalizes
+`run_clean_sheet_search`'s 0/100 (PR #99) from full clean-sheet portfolios
+down to the single-asset-diversifier level: not a search-coverage gap, a
+real null result.** Nothing findable in this repo's local universe
+genuinely improves on the live base -- stop looking for a diversifier
+here; the next lever (per PR #99 and the FI@50 goal-derivation entry) is
+still contribution rate, not asset selection.
+
 **Revised call: REJECT ADDT_B_ST at 10%, or size far smaller than planned
 if done at all.** The only edge that survives a real holdout is smoother
 day-to-day Sharpe -- no extra return, no extra drawdown protection, tested
