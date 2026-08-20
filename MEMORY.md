@@ -7,6 +7,100 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Session 2026-08-20: stale-weights doc fix (PR #104, MERGED); ADDT_B_ST candidate found, not yet executed
+
+### 1. `run_comparison_backtest.py` / `run_combined_system.py` were modelling a retired portfolio
+
+`run_comparison_backtest.py`'s `PORT_WEIGHTS` hardcoded the old 7-asset mix
+(Gold/Silver/LLY/WMT/CCJ/VRT/AVGO), labelled "actual weights from
+portfolio.toml" -- stale since the 2026-08-16/17 move to Gold25/AVGO40/LLY35
+(Silver/WMT/CCJ/VRT/HWM are all 0 shares, not held). `run_combined_system.py`'s
+docstring weight table still showed the old 25/55/20 base. Both corrected to
+match live config; Strategy D's anchor drops WMT. Live alerting
+(`fi_tracker.py` <- `run_combined_system.WEIGHTS`) was never affected -- only
+prose/docs had drifted. **Lesson for next session: don't trust a script's
+"actual weights" comment without checking it against `config/portfolio.toml`
+directly.**
+
+### 2. Bitcoin explored as both a diversifier and a timing candidate -- rejected on both
+
+- **Diversifier**: full-sample corr to AVGO looks low (0.16) but is
+  regime-dependent -- rises to 0.24-0.34 specifically in risk-on/credit-WIDE
+  periods, i.e. weakest exactly when a hedge should earn its keep. Naive
+  blend (adding 2-10% BTC) improves Sharpe full-sample but Sharpe improved in
+  only 4/6 calendar sub-periods, worsening in the two most recent.
+- **Timing**: walk-forward momentum/MA200-distance/depth-off-ATH signals for
+  BTC's own entries showed "buy strength" beating "buy the dip" -- but this
+  was pooled-sample noise. Split by actual halving cycle: HIGH-momentum
+  bucket was the WORST place to be in both real bear markets (2018, 2022;
+  0% win rate, -55% to -65% median forward 252d return). No timing edge
+  survives cycle-conditioning.
+
+### 3. AVGO-diversifier screen: ADDT_B_ST (Addtech) is the one candidate that survives
+
+Scanned the full local universe (555 tickers) for a candidate that
+improves CAGR, Sharpe AND MaxDD simultaneously when blended 5-10% into
+Gold25/AVGO40/LLY35. ~30 passed a naive full-sample filter (mostly
+correlated growth/tech names -- AMZN/NFLX/NVDA/AMD -- likely just adding
+return, not real diversification). Applied the SAAB-style sub-period check
+(see rule below) to the top candidates:
+
+- **EVO_ST, SAAB_B_ST and everything else tested (ORLY/CASY/PGR/AZO)
+  failed** -- only 3-4/6 sub-periods improved Sharpe; full-sample result was
+  carried by 1-2 strong early years.
+- **ADDT_B_ST (Addtech, Swedish industrial conglomerate) passed both checks**:
+  Sharpe improved in 6/6 calendar sub-periods AND 7/7 regime buckets
+  (ry_regime x baa10y_regime), 17yr history, corr to AVGO 0.20 full-sample
+  (rises to ~0.24-0.29 in WIDE-credit regime -- same directional pattern as
+  BTC, just much weaker). Independently re-verified with a second,
+  non-pandas implementation (plain-loop NAV/drawdown calc) -- matched to
+  within floating-point noise.
+
+**Job it does in the portfolio**: smooths day-to-day vol and adds solid
+standalone return (27.5% CAGR) -- it is NOT a crash hedge. In the
+portfolio's actual worst historical drawdown it moved with AVGO, not against
+it, which is why MaxDD/Calmar get *slightly worse* even as CAGR/Sharpe/vol
+all improve. Two different statistics measuring different things (typical
+day vs. worst day) -- don't expect this to cushion the next real crash.
+
+### 4. Funding mechanism matters more than the asset itself -- FI@50 outlook check
+
+Ran the block-bootstrap Monte Carlo (`run_outlook_montecarlo.py` methodology,
+10k paths to 2038-10-10, target 20.8M kr) for two ways of funding a 10% ADDT
+sleeve:
+
+- **Funded specifically from AVGO** (40% -> 30%): best portfolio-level
+  Sharpe/MaxDD (1.57 / -22.0%, both better than baseline), but **HURTS the
+  actual goal** -- P(reach target) drops 66.8% -> 60.7%, median terminal TPV
+  -2.2M kr. Cutting the highest-CAGR leg for a smoother ride costs real odds
+  on a hard-date wealth target. **Rejected.**
+- **Funded pro-rata** (all three legs trimmed proportionally): worse-looking
+  portfolio stats (Sharpe 1.54, MaxDD -24.8%) but **helps the goal** --
+  P(reach target) 66.8% -> 69.5% (+2.6pp), median TPV +685k kr, for only
+  +0.7pp worse drawdown-tail risk. **This is the version worth doing, if
+  either.**
+
+Lesson: portfolio-level Sharpe/MaxDD and goal-level P(reach target) can point
+in opposite directions depending on *which* leg funds the new position --
+always check both before concluding a change "helps."
+
+### 5. Status: decision leaning yes, NOT YET EXECUTED
+
+Final call was "reasonable small bet, not a must-do" -- +2.6pp target-hit
+probability for real single-stock concentration risk (10% in one Swedish
+industrial name) and inherent data-snooping risk (1-of-555 screen survivor,
+even though sub-period/regime-robust). Computed the concrete rebalance
+(live prices, 2026-08-20): current live holdings had already drifted off the
+25/40/35 target (~28/41/30 actual) before this trade. Target: Gold 304->238,
+LLY 31->23, AVGO 73->92, ADDT_B_ST 0->261 shares. **`portfolio.toml` was NOT
+updated** -- operator has not placed the trade yet. Next session: check
+whether the trade was executed; if so, update `config/portfolio.toml`
+(new ADDT_B_ST position + adjusted share counts) in a branch+PR.
+
+Also noted in passing: PR #73 (`docs/avgo-staged-entry-decision`) has been
+open since 2026-07-15 -- over a month stale. Not touched, flagging for
+operator to close or merge.
+
 ## Session 2026-08-19: the dashboard was measuring against the wrong goal (PRs #102, #103 -- MERGED, tagged v0.2.0)
 
 Review of portfolio construction + performance vs FI@50 target alignment.
