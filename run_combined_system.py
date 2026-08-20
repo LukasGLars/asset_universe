@@ -4,20 +4,20 @@ run_combined_system.py
 Complete integrated system backtest.
 
 Layers:
-  1. Base          : Gold 25%, AVGO 55%, LLY 20%
-  2. AVGO 200d guard: AVGO < 200d SMA → Gold 52.5%, AVGO 0%, LLY 47.5%
+  1. Base          : Gold 25%, AVGO 40%, LLY 35%
+  2. AVGO 200d guard: AVGO < 200d SMA → Gold 45%, AVGO 0%, LLY 55%
   3. Silver tactical: T1/T2 adds funded from AVGO (base) or Gold (guard)
 
 Priority rule (guard + silver simultaneous):
   Silver funded from AVGO in base mode, from Gold in guard mode.
 
 Weight table:
-  Base          : Gold 25%   AVGO 55%  LLY 20%   Silver 0%
-  Base + T1     : Gold 25%   AVGO 43%  LLY 20%   Silver 12%
-  Base + T2     : Gold 25%   AVGO 38%  LLY 20%   Silver 17%
-  Guard         : Gold 52.5% AVGO 0%   LLY 47.5% Silver 0%
-  Guard + T1    : Gold 40.5% AVGO 0%   LLY 47.5% Silver 12%
-  Guard + T2    : Gold 35.5% AVGO 0%   LLY 47.5% Silver 17%
+  Base          : Gold 25%   AVGO 40%  LLY 35%   Silver 0%
+  Base + T1     : Gold 25%   AVGO 28%  LLY 35%   Silver 12%
+  Base + T2     : Gold 25%   AVGO 23%  LLY 35%   Silver 17%
+  Guard         : Gold 45%   AVGO 0%   LLY 55%   Silver 0%
+  Guard + T1    : Gold 33%   AVGO 0%   LLY 55%   Silver 12%
+  Guard + T2    : Gold 28%   AVGO 0%   LLY 55%   Silver 17%
 
 Silver state machine:
   INACTIVE → T1/T2 when GSR >= threshold AND fallen >=5% from 60d peak

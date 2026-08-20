@@ -20,8 +20,9 @@ Strategy D — Hybrid
     50% anchor (Gold + LLY + WMT, fixed proportions), 50% universe EW
     rotation (5 assets, walk-forward), 10bps TC on rotation half.
 
-Weights for Strategy A (actual, HWM excluded, normalized):
-    Gold 23.9%  LLY 19.2%  WMT 18.4%  CCJ 12.2%  VRT 12.0%  AVGO 9.9%  Silver 4.3%
+Weights for Strategy A (actual, current live portfolio — Gold/AVGO/LLY only,
+Silver/WMT/CCJ/VRT are configured at 0 shares and are not held):
+    Gold 25%  AVGO 40%  LLY 35%
 """
 from __future__ import annotations
 
@@ -51,21 +52,17 @@ MIN_DATES     = 5        # min matched dates for walk-forward selection
 CONFIRM_DAYS  = 3        # calendar days for regime confirmation
 START_DATE    = "2004-01-01"
 
-# Actual portfolio weights (HWM excluded, computed from portfolio.toml × prices 2026-06-30)
-_RAW = {
-    "GC=F":  0.239,   # Gold  (GC_F in parquet)
-    "SI=F":  0.043,   # Silver (SI_F in parquet)
-    "LLY":   0.192,
-    "WMT":   0.184,
-    "CCJ":   0.122,
-    "VRT":   0.120,
-    "AVGO":  0.099,
+# Actual portfolio weights — Gold/AVGO/LLY only (config/portfolio.toml, 2026-08-16
+# Reactor Core decision). Silver/WMT/CCJ/VRT/HWM are configured at 0 shares:
+# not held, do not add them back here.
+PORT_WEIGHTS = {
+    "GC=F":  0.25,   # Gold  (GC_F in parquet)
+    "LLY":   0.35,
+    "AVGO":  0.40,
 }
-_s = sum(_RAW.values())
-PORT_WEIGHTS = {k: v / _s for k, v in _RAW.items()}
 
-# Strategy D anchor: Gold + LLY + WMT scaled to 50% of portfolio
-_ANC = {k: PORT_WEIGHTS[k] for k in ("GC=F", "LLY", "WMT")}
+# Strategy D anchor: Gold + LLY scaled to 50% of portfolio (WMT dropped — not held)
+_ANC = {k: PORT_WEIGHTS[k] for k in ("GC=F", "LLY")}
 _as  = sum(_ANC.values())
 ANCHOR_W = {k: v / _as * 0.50 for k, v in _ANC.items()}
 
