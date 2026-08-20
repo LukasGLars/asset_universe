@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,108,864 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,352,649 kr
+  Trigger now             :    16,353,535 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +18.2%
+  AWAR (trailing)         :  +18.1%
   Required CAGR           :  +24.8%
   Status                  :  BEHIND  (-6.6% margin)
 
-  Projected @ AWAR        :    11,302,627 kr
-  vs target               :    -9,495,827 kr  (deficit)
+  Projected @ AWAR        :    11,244,344 kr
+  vs target               :    -9,554,110 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,183,092 kr       ~2056
-  Conservative   +15%       8,364,184 kr       ~2046
-  Base           +20%      13,394,781 kr       ~2041
-  Current AWAR   +18%      11,302,627 kr       ~2043
-  Bull           +30%      33,266,867 kr       ~2037
+  Bear           +10%       5,181,542 kr       ~2056
+  Conservative   +15%       8,360,786 kr       ~2046
+  Base           +20%      13,387,898 kr       ~2041
+  Current AWAR   +18%      11,244,344 kr       ~2043
+  Bull           +30%      33,242,780 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -55,9 +55,9 @@ MACRO REGIME
   Real Yield             +2.41%   HIGH  ^
   Breakeven               2.30%   MID
   HY OAS                275 bps   TIGHT
-  IG Credit               1.69%   TIGHT
-  Curve 10Y-3M          +85 bps   MID
-  Curve 10Y-2Y          +52 bps   MID
+  IG Credit               1.68%   TIGHT
+  Curve 10Y-3M          +79 bps   MID
+  Curve 10Y-2Y          +46 bps   LOW
   SE 10Y                   nan%   --
   USD                     118.9   STRONG
 
