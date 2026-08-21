@@ -4395,11 +4395,14 @@ and Reactor Core's 85/15 bucket-drift math, which drives real rebalance
 instructions, shouldn't be distorted by fun money it was never sized
 for).
 
-**Position:** 145 shares, Virtune Bitcoin (Swedish-listed ETP), @ 117.96
-SEK/share = **17,104 kr**, ~1.55% of TPV at the time (1,102,656 kr) --
-inside the "doesn't matter if it goes to zero" sizing range discussed
-(~1-2% of TPV) when this was first floated, prompted by Bitcoin's
-200-day-SMA reclaim after 270 days below it (2026-08-19/20 news).
+**Position (updated 2026-08-21):** 171 shares, Virtune Bitcoin
+(Swedish-listed ETP), @ 118.27 SEK/share = **20,224 kr**, ~1.83% of TPV
+(1,102,656 kr) -- added to from the initial 145-share/17,104 kr tranche
+logged same day. Still inside the "doesn't matter if it goes to zero"
+range discussed (~1-2% of TPV), now near the top of it rather than the
+middle -- worth noting if it grows further. Original entry prompted by
+Bitcoin's 200-day-SMA reclaim after 270 days below it (2026-08-19/20
+news).
 
 **Deliberately off-book.** Logged here for continuity/record-keeping
 only -- not in `portfolio.toml`, not in any snapshot/TPV calculation,
