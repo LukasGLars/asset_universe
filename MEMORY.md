@@ -4383,3 +4383,29 @@ descriptive/event-study not a compounding portfolio simulation (each
 trigger treated independently, no attempt to net overlapping windows
 across the 32 events). Diagnostic script, test, and workflow deleted
 after logging this, per repo convention.
+
+## Small speculative Bitcoin position -- held, deliberately untracked (2026-08-21)
+
+Real position, real capital, but **not** in `portfolio.toml` and not part
+of any bucket target -- operator briefly added it to the Google Sheet
+config, then reverted that same session on the concrete methodological
+concerns raised (price data not registered in the download universe
+would have broken `fi_pace()`'s "raise on any missing price" behavior;
+and Reactor Core's 85/15 bucket-drift math, which drives real rebalance
+instructions, shouldn't be distorted by fun money it was never sized
+for).
+
+**Position:** 145 shares, Virtune Bitcoin (Swedish-listed ETP), @ 117.96
+SEK/share = **17,104 kr**, ~1.55% of TPV at the time (1,102,656 kr) --
+inside the "doesn't matter if it goes to zero" sizing range discussed
+(~1-2% of TPV) when this was first floated, prompted by Bitcoin's
+200-day-SMA reclaim after 270 days below it (2026-08-19/20 news).
+
+**Deliberately off-book.** Logged here for continuity/record-keeping
+only -- not in `portfolio.toml`, not in any snapshot/TPV calculation,
+not subject to any bucket target or rebalance instruction. If this
+changes (position grows, or the operator wants it tracked), it needs
+its own bucket outside `reactor_core`/`home_base` so it doesn't
+contaminate the drawdown-ceiling-derived bucket math, and its ticker
+needs to actually exist in the download universe before it's added to
+`portfolio.toml` -- neither was true when the reverted attempt was made.
