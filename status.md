@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,102,656 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,353,535 kr
+  Trigger now             :    16,354,422 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
   AWAR (trailing)         :  +17.5%
   Required CAGR           :  +24.8%
-  Status                  :  BEHIND  (-7.3% margin)
+  Status                  :  BEHIND  (-7.4% margin)
 
-  Projected @ AWAR        :    10,571,591 kr
-  vs target               :   -10,226,863 kr  (deficit)
+  Projected @ AWAR        :    10,519,177 kr
+  vs target               :   -10,279,277 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,161,795 kr       ~2056
-  Conservative   +15%       8,326,910 kr       ~2046
-  Base           +20%      13,331,102 kr       ~2041
-  Current AWAR   +18%      10,571,591 kr       ~2043
-  Bull           +30%      33,092,679 kr       ~2037
+  Bear           +10%       5,160,250 kr       ~2056
+  Conservative   +15%       8,323,526 kr       ~2046
+  Base           +20%      13,324,250 kr       ~2041
+  Current AWAR   +17%      10,519,177 kr       ~2043
+  Bull           +30%      33,068,718 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -201,8 +201,8 @@ Computing capped 252d distributions for 51 candidates ...
   CEG       hist=5yr  (below min 10yr, skipped)
   WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
   TPR       N=1269  mu= +18.6%  sigma= 31.1%  hist=26yr  [ROBUST]
-  NVDA      N=1269  mu= +23.5%  sigma= 32.4%  hist=27yr  [ROBUST]
   GS        N=1269  mu= +12.7%  sigma= 23.4%  hist=27yr  [ROBUST]
+  NVDA      N=1269  mu= +23.5%  sigma= 32.4%  hist=27yr  [ROBUST]
   PHAG.L    no data
   RL        N=1269  mu= +14.8%  sigma= 26.3%  hist=27yr  [ROBUST]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
