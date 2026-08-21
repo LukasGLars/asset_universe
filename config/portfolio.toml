@@ -105,7 +105,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Broadcom"
 ticker   = "AVGO"
-shares   = 73
+shares   = 77
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -152,4 +152,4 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 17327
+value_sek = 24
