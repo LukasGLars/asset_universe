@@ -4412,3 +4412,68 @@ its own bucket outside `reactor_core`/`home_base` so it doesn't
 contaminate the drawdown-ceiling-derived bucket math, and its ticker
 needs to actually exist in the download universe before it's added to
 `portfolio.toml` -- neither was true when the reverted attempt was made.
+
+## BTC trend-following: real signal, but the 200d rule specifically is weak, era-dependent and cost-fragile (2026-08-24)
+
+Operator asked whether it's possible to "bet on BTC when it's about to or
+has started rallying." First pass (`run_btc_momentum_check.py`) reported
+200d SMA trend beating buy-and-hold on Sharpe/Calmar and I presented that
+as a clean positive. Operator asked for verification -- correctly, given
+this project has twice shipped an "edge" that did not survive it (AVGO
+200d guard = lookahead bias; AVGO vol-targeting = did not reproduce).
+Built `run_btc_momentum_validation.py` + 6 unit tests. Six independent
+checks; **two passed cleanly, one found a real bug in my own reported
+numbers, and three materially qualified the result.**
+
+**BUG FOUND IN THE FIRST REPORT: wrong annualization.** BTC trades 365
+days/yr; I annualized Sharpe with sqrt(252). Reported Sharpes (B&H 0.911,
+trend 0.958) are wrong. Correct: **B&H 1.096, trend 1.153.** Both arms were
+wrong by the same factor so the ranking never changed, and CAGR/MaxDD/
+Calmar were unaffected -- but the absolute figures were misstated.
+
+**PASSED -- not lookahead-contaminated.** Ran the identical code path with
+shift(1) removed as a deliberate biased twin: Calmar 0.846 (correct) vs
+**2.139 (lookahead), +153%.** The reported result is the worse of the two,
+which is what a correctly-shifted backtest must be. Unit test asserts the
+shift(1) arm provably cannot capture a signal-day spike the twin does.
+This is the exact failure mode that voided the AVGO guard.
+
+**PASSED -- survives realistic execution.** Next-day-OPEN fill on real OHLC:
+Calmar 0.845 vs 0.846 close-fill -- essentially identical. This is the
+check every AVGO guard execution model failed. **Structural reason it
+passes here: BTC trades 24/7, so there is no overnight gap between a
+signal close and the next open.** The AVGO guard died precisely on that
+gap. Do not generalize this pass to any equity signal.
+
+**QUALIFIED -- 200d is the WEAKEST member of the family.** Grid over
+{50,100,150,200,250,300}: all 6 beat B&H on Calmar (each vs its own start),
+so the effect is a family not a spike -- but 200d's edge (+0.064) is the
+smallest of the six. 50d (+0.482), 150d (+0.443), 100d (+0.273) are far
+stronger. Reassuring for robustness (the quoted number was not cherry-picked
+to the best cell) but it means 200d specifically is a poor choice.
+
+**QUALIFIED -- the edge is concentrated in early history.** Sub-periods
+(200d, Calmar, trend vs B&H): 2016-2018 **+0.697** (trend wins big),
+2019-2022 -0.018 (wash), 2023-2026 +0.177 (trend wins), full-sample +0.064.
+**But dropping to 2020-onward flips it negative: -0.036, B&H wins.** The
+full-sample edge is substantially carried by 2016-2018 -- thin, illiquid,
+structurally different BTC. Coherent story: long clean trends 2016-2018,
+whipsawed by the COVID V-shape and the choppy 2021 double-top, working
+again 2023-2026. That is regime-dependent, not a stable edge.
+
+**QUALIFIED -- dies at realistic cost.** TC sweep per flip: 5bp +0.082,
+15bp +0.064, **50bp +0.004 (gone), 100bp -0.078 (negative).** And the
+operator does not hold spot BTC -- he holds a **Virtune ETP**, whose
+bid/ask spread plus annual management fee are **not modelled here at all**.
+Realistic all-in round-trip cost for that wrapper plausibly sits at or past
+the 50bp point where the edge is already zero.
+
+**Verdict: "yes, this is possible" was too strong.** The trend family shows
+a real, non-lookahead, execution-robust signal on spot BTC. The specific
+200d rule quoted is the weakest window, its full-sample edge leans on
+2015-2018, it loses outright post-2020, and it does not survive Virtune-
+realistic costs. **Not actioned, nothing wired.** If revisited, the honest
+next steps are: test 50d/150d rather than 200d, get Virtune's real spread
+and management fee into the cost model, and treat the post-2020 sub-period
+as the decision-relevant window rather than the full sample. Script, tests
+and workflow deleted after logging, per repo convention.
