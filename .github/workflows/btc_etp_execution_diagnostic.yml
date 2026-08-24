@@ -1,0 +1,32 @@
+name: btc-etp-execution-diagnostic
+
+# Manual-only, read-only. Re-tests the BTC trend result under the execution
+# constraint of the instrument actually held: Virtune Bitcoin, a Swedish
+# ETP trading ~252 exchange days/yr, NOT 24/7 spot. The 2026-08-24
+# validation's execution-realism PASS rested on BTC's 24/7 venue having no
+# signal-to-fill gap; that reasoning does not transfer to the ETP.
+# See run_btc_etp_execution_check.py. Temporary -- delete after logging.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -e . pytest
+      - name: Unit tests for the ETP execution mechanics
+        run: python -m pytest tests/test_btc_etp_execution_check.py -q
+      - name: BTC ETP execution check
+        run: python run_btc_etp_execution_check.py
