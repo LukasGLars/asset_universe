@@ -4542,3 +4542,60 @@ concluded, and my pessimism there came from anchoring on the one broken
 window.** Still **not actioned, nothing wired, no live code touched** -- the
 FX gap alone means this is not decision-ready for the real instrument.
 Script, tests and workflow deleted after logging, per repo convention.
+
+## BTC trend CLOSED as not actionable: with the FX leg in, the natural implementation loses to just holding (2026-08-24)
+
+**Closing entry for the BTC trend thread. Supersedes the optimistic verdict
+of the entry directly above.** Operator asked to close gap #1 -- add the
+SEK/USD leg -- and rerun 150d. Built `run_btc_fx_check.py` + 6 unit tests
+(one pins the FX direction to `portfolio.py`'s own `price_sek = price *
+usdsek` convention; one asserts weekend FX forward-fill puts the whole gap
+on Monday's bar, as a Monday ETP open actually does).
+
+Model: `BTC_SEK = BTC_USD x USDSEK`, so holding the ETP is long BTC **and**
+long USD vs SEK; flat is SEK cash with neither exposure. **USDSEK moved
+7.118 -> 9.471 (+33.1%) across the sample** -- a large tailwind that was
+entirely missing from every prior BTC number in this file.
+
+**Two signal variants, because the choice is not obvious and is the
+operator's to make in practice:** USD-signal (trend on BTC-USD) vs
+SEK-signal (trend on BTC-SEK -- **the line he actually sees in his
+broker**, and therefore the natural implementation).
+
+**Post-2020, scored in SEK (B&H BTC-SEK Calmar 0.607):**
+
+| Variant | CAGR | Calmar | vs B&H | Verdict |
+|---|---|---|---|---|
+| 150d USD-signal | +44.6% | 1.000 | **+0.393** | trend |
+| 150d SEK-signal | +32.2% | 0.573 | **-0.034** | **B&H** |
+| 200d SEK-signal (control) | +28.9% | 0.468 | -0.139 | B&H |
+
+**THE KILLER: those two signals agree on 97.2% of days (115 days apart out
+of ~4,000).** A 2.8% difference in positioning swings post-2020 Calmar by
+**0.427** -- from clearly winning to losing. An effect that fragile to an
+essentially arbitrary implementation choice is noise-dominated, not
+structural, and **cannot be picked correctly ex ante.** The variant that
+loses is also the one the operator would naturally reach for.
+
+Secondary damage: the benchmark got HARDER (B&H BTC-SEK Calmar 0.814 vs
+BTC-USD 0.782 -- the weak SEK flattered buy-and-hold too), the full-sample
+edge for the natural SEK-signal shrank to +0.166 (from +0.511 USD-only),
+and cost tolerance dropped -- **SEK-signal dies at 100bp/flip (-0.031)**
+where the USD-only version had survived 150bp.
+
+**Pattern worth naming, because it is the real lesson.** Each added dose of
+realism moved the answer, and the moves were not random -- they tracked how
+close the model got to the actual instrument: BTC-USD daily (looked strong)
+-> weekday-only ETP execution (looked stronger, genuinely) -> **FX leg in
+SEK (edge collapses under the natural implementation)**. I revised the
+verdict twice in one session, once up and once down. That oscillation is
+itself the finding: this is a marginal effect that survives only under
+particular modelling choices, which is exactly the profile of the AVGO
+guard and vol-targeting before they were retired.
+
+**Verdict: CLOSED, not actionable. Do not trade the 20,224 kr BTC position
+on a trend rule.** Hold it as the ~1.8%-of-TPV speculative position already
+logged. Nothing wired, no live code touched, `portfolio.toml` untouched.
+Still unmodelled and would have to be closed before ANY revisit: Virtune's
+tracking error and annual management fee. Script, tests and workflow
+deleted after logging, per repo convention.
