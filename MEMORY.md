@@ -4599,3 +4599,70 @@ logged. Nothing wired, no live code touched, `portfolio.toml` untouched.
 Still unmodelled and would have to be closed before ANY revisit: Virtune's
 tracking error and annual management fee. Script, tests and workflow
 deleted after logging, per repo convention.
+
+## BTC trend REOPENED and corrected: the operator's stated thesis defeats the ex-ante objection (2026-08-24)
+
+**Corrects the entry directly above, which was wrong on its central claim.**
+That entry closed the thread on the grounds that the two signal variants
+(USD-signal vs SEK-signal) agree 97.2% of the time yet diverge sharply in
+outcome, therefore the winning variant "cannot be picked correctly ex
+ante." Two operator interventions dismantled that.
+
+**1. Judged on the wrong metric.** I scored everything on Calmar and
+post-2020 return. The operator's stated purpose is avoiding BTC's
+recurring -60% to -80% drawdowns. On THAT metric the result is far more
+robust than the entry above implies, and I had the numbers in hand:
+
+| | MaxDD | Recovery needed |
+|---|---|---|
+| B&H BTC-SEK | -82.2% | +462% |
+| 150d SEK-signal | -64.9% | +185% |
+| 150d USD-signal | -61.5% | +160% |
+
+**Every window cut drawdown** (50d -59.0%, 100d -61.8%, 150d -61.4%,
+200d -70.2%, 250d -65.8%, vs B&H -83.4%), and critically **both signal
+variants cut it, including the one I called a loser.** The 97.2%-agreement
+fragility argument applies to the RETURN difference between variants. It
+does NOT apply to the drawdown effect, which is consistent everywhere.
+Caveat that stands: a 150d MA is slow, so it converts -82% into -62%; it
+does not exit near the top.
+
+**2. The variant choice was never post-hoc.** Operator's thesis, stated in
+his own words: he uses **the Virtune ETP as a vessel and reads signals off
+Bitcoin's actual price.** That is a prior, holdable before any backtest,
+not hindsight selection -- which was the entire basis of the previous
+entry's verdict.
+
+It is also mechanically the better choice independent of any result:
+`BTC_SEK = BTC_USD x USDSEK`, so trend-following the SEK line contaminates
+a Bitcoin-momentum signal with SEK/USD moves that carry no information
+about Bitcoin. You want the trend of the thing being forecast. There is a
+*reason* the USD signal is correct, not merely a backtest that prefers it.
+
+**The operator's actual configuration -- USD signal, SEK returns -- is the
+best row tested:** full-sample Calmar 1.237 vs B&H-SEK 0.814; post-2020
+1.000 vs 0.607; MaxDD -61.5% vs -82.2%.
+
+**What still does NOT survive:** the MAGNITUDE of the return edge. The
++0.393 post-2020 gap rests on 115 differing days out of ~4,000 -- direction
+defensible, size a soft estimate. Honest expectation is "materially
+shallower drawdowns, return a wash to modestly better," not +0.393.
+
+**Sizing is what makes this academic today.** At 20,224 kr (~1.8% of TPV),
+-82% costs ~1.5% of TPV and -62% costs ~1.1% -- the protection is worth
+**~0.4% of TPV**, smaller than rebalance bands already tolerated, and not
+worth the monitoring overhead. **At 5-10% of TPV the same protection is
+worth 1-2% of TPV and the drawdown-ceiling logic governing Reactor Core
+would make it required rather than optional.** That is the trigger to
+revisit, not a new backtest.
+
+**Status: thesis coherent and accepted, still nothing wired and nothing
+actioned.** Fee finding from the same session, separate and more valuable
+than any of this: Virtune runs **two** Bitcoin ETPs -- Sustainable
+(SE0020845709) at **1.49%/yr** and Bitcoin Prime (SE0025012032) at
+**0.25%/yr**, same asset, both SEK on Nasdaq Stockholm. If the position
+sits in the 1.49% product, switching is a certain ~1.24%/yr saving needing
+no forecast. **Operator has not yet confirmed which product he holds.**
+Also corrected: the management fee is NOT neutral between arms as earlier
+claimed -- a trend arm is out of the market ~41% of the time and so pays
+~41% less fee (~0.6%/yr tailwind at 1.49%), which was never modelled.
