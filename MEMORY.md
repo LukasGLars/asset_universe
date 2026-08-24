@@ -4787,3 +4787,70 @@ touches live code.
 
 **Still unmodelled:** Virtune tracking error; entry/exit window asymmetry
 (slower exit, faster re-entry) which was never tested and is not endorsed.
+
+## AVGO's return is EXTREMELY concentrated: 30 days out of 4,286 carry over half the growth (2026-08-24)
+
+Operator asked whether AVGO's growth came from a few days or was spread
+out. Measured on the real 2009-2026 series (`run_avgo_best_days.py` + 6
+unit tests, incl. a positive control that a deliberately concentrated
+synthetic series is detected and an even one is not).
+
+**Baseline: 4,286 trading days, 17.0 years, 324.5x total, CAGR +40.4%.**
+
+**Miss the best days (they are 1% of the sample):**
+
+| Days removed | % of days | CAGR | Total growth |
+|---|---|---|---|
+| 0 | 0.00% | +40.4% | 324.5x |
+| 1 | 0.02% | +38.6% | 260.7x |
+| 5 | 0.12% | +34.0% | 147.3x |
+| 10 | 0.23% | +29.8% | 85.4x |
+| 20 | 0.47% | +23.0% | 34.0x |
+| 30 | 0.70% | +17.3% | 15.3x |
+| **50** | **1.17%** | **+8.2%** | **3.8x** |
+
+**Share of total compounded growth:** top 10 days = 23.1%, top 20 = 39.0%,
+**top 30 = 52.9%**, top 50 = 76.8%. Missing 1.17% of days destroys 99% of
+the wealth (324.5x -> 3.8x).
+
+**THE MIRROR, which must be quoted alongside it.** Missing the 50 WORST
+days takes 324.5x -> **22,965x** and CAGR +40.4% -> **+80.3%**. Avoiding
+bad days is worth MORE than capturing good ones. So concentration alone
+does NOT prove "never sell" -- it proves "never be out at random." A rule
+better than random at separating them could still add value; the retired
+AVGO guard simply was not one (see the lookahead-bias entry above).
+
+**Clustering is weaker than folk wisdom claims.** Only 20% of the top-10
+and top-20 best days fall within 5 trading days of a comparable worst day
+(36% at top-50). The extreme tails are somewhat separable, not hopelessly
+interleaved.
+
+**Recency warning.** The 20 best days by year: 2011 x2, 2013 x2, 2015 x2,
+2020 x3, 2023 x2, 2024 x4, **2025 x5** -- 9 of the top 20 landed in
+2024-2025 alone. The concentration is substantially an AI-melt-up
+phenomenon, not a stable 17-year property. Treat forward extrapolation
+with care.
+
+**The 200d-SMA window, measured directly.** AVGO sits below its 200d SMA
+on only **14.7%** of days. That window contains **20%** of the best days
+but **36-50%** of the worst days -- roughly a 2:1 ratio in the rule's
+favour on tail days alone. **This does NOT rehabilitate the retired
+guard:** tail-day counts ignore the ordinary positive drift forfeited
+across all other out-of-market days, the ~104 episodes' transaction costs,
+and the SMA's lag -- all of which the realistic-execution backtest already
+showed to be decisive (next-day fill: CAGR 19.1% vs 32.5% unguarded).
+Recorded so the two findings are not mistaken for a contradiction.
+
+**Implication for the live portfolio: supports the CURRENT configuration.**
+Guard retired, static weights, AVGO held continuously. With half the
+growth in 30 days and no validated way to know which ones, continuous
+exposure is the correct posture for this holding -- and that is already
+what the portfolio does. **No change recommended, nothing wired.** Script,
+tests and workflow deleted after logging, per repo convention.
+
+**Ops note:** `git push` credentials failed mid-session ("could not read
+Username for https://github.com") while `git fetch` kept working. Worked
+around it with the GitHub MCP API (`push_files`), which writes commits
+directly. Local was then `git reset --hard origin/master` to resync after
+verifying the content diff was comment-formatting only. Worth remembering
+as the fallback if push auth drops again.
