@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,093,018 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,354,422 kr
+  Trigger now             :    16,357,082 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +16.5%
+  AWAR (trailing)         :  +16.4%
   Required CAGR           :  +24.9%
-  Status                  :  BEHIND  (-8.4% margin)
+  Status                  :  BEHIND  (-8.5% margin)
 
-  Projected @ AWAR        :     9,558,390 kr
-  vs target               :   -11,240,065 kr  (deficit)
+  Projected @ AWAR        :     9,425,900 kr
+  vs target               :   -11,372,554 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,129,598 kr       ~2056
-  Conservative   +15%       8,270,948 kr       ~2046
-  Base           +20%      13,236,111 kr       ~2041
-  Current AWAR   +17%       9,558,390 kr       ~2044
-  Bull           +30%      32,835,833 kr       ~2037
+  Bear           +10%       5,124,990 kr       ~2056
+  Conservative   +15%       8,260,864 kr       ~2046
+  Base           +20%      13,215,709 kr       ~2041
+  Current AWAR   +16%       9,425,900 kr       ~2045
+  Bull           +30%      32,764,553 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -56,7 +56,7 @@ MACRO REGIME
   Breakeven               2.34%   HIGH
   HY OAS                275 bps   TIGHT
   IG Credit               1.64%   TIGHT
-  Curve 10Y-3M          +82 bps   MID
+  Curve 10Y-3M          +86 bps   MID
   Curve 10Y-2Y          +50 bps   MID
   SE 10Y                   nan%   --
   USD                     118.9   STRONG
@@ -112,10 +112,10 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
-    Forward EPS (+1yr est.)    : $19.53
+    Forward EPS (+1yr est.)    : $19.50
     Fwd/Trail ratio (normalized): 2.40x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
-    Next-qtr revenue consensus : $29.44B (implied YoY +84.5%)
+    Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
     Next earnings  : 2026-09-02
     Reminder       : not_due
     Latest quarter : 2026-04-30
@@ -125,7 +125,7 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.33
+    Forward EPS (+1yr est.)    : $47.23
     Fwd/Trail ratio (normalized): 1.50x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
     Next-qtr revenue consensus : $22.23B (implied YoY +26.3%)
@@ -218,8 +218,8 @@ Computing capped 252d distributions for 51 candidates ...
   APH       N=1269  mu= +16.8%  sigma= 24.3%  hist=27yr  [ROBUST]
   PM        N= 630  mu= +10.8%  sigma= 13.7%  hist=18yr  [SINGLE]
   CRWD      hist=7yr  (below min 10yr, skipped)
-  AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
   4GLD.DE   no data
+  AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
   GC_F      N=1269  mu=  +9.8%  sigma= 11.5%  hist=26yr  [ROBUST]
 
 Cross-sectional prior mu : +18.8%  (shrinkage target)
