@@ -86,10 +86,23 @@ def equity(position: pd.Series, ret: pd.Series, tc: float = TC) -> pd.Series:
     return (1 + (position * ret - flips * tc).fillna(0.0)).cumprod()
 
 
-def load_usdsek() -> pd.Series:
-    df = pd.read_parquet(DATA_DIR / "fx" / "USDSEK=X.parquet")
-    df["date"] = pd.to_datetime(df["date"])
-    return df.set_index("date")["close"].sort_index().dropna()
+def load_usdsek() -> tuple[pd.Series, str]:
+    """Parquet store first (repo's own data), else fetch the same ticker the
+    repo's fx universe lists. The restored CI cache does not always contain
+    the fx/ directory, and silently proceeding without FX is exactly the gap
+    this script exists to close -- so fall back rather than skip."""
+    path = DATA_DIR / "fx" / "USDSEK=X.parquet"
+    if path.exists():
+        df = pd.read_parquet(path)
+        df["date"] = pd.to_datetime(df["date"])
+        return df.set_index("date")["close"].sort_index().dropna(), "parquet store"
+
+    fx = yf.Ticker("USDSEK=X").history(period="max")["Close"]
+    fx.index = pd.to_datetime(fx.index.date)
+    fx = fx.sort_index().dropna()
+    if fx.empty:
+        raise RuntimeError("USDSEK=X unavailable from both parquet and yfinance")
+    return fx, "yfinance USDSEK=X (parquet cache had no fx/)"
 
 
 def main() -> None:
@@ -97,11 +110,11 @@ def main() -> None:
     btc_df.index = pd.to_datetime(btc_df.index.date)
     btc_usd = btc_df["Close"].sort_index().dropna()
 
-    usdsek_raw = load_usdsek()
+    usdsek_raw, fx_source = load_usdsek()
     print(f"BTC-USD  : {btc_usd.index[0].date()} -> {btc_usd.index[-1].date()}  "
           f"({len(btc_usd)} bars)")
     print(f"USDSEK=X : {usdsek_raw.index[0].date()} -> {usdsek_raw.index[-1].date()}  "
-          f"({len(usdsek_raw)} bars, weekday-only)")
+          f"({len(usdsek_raw)} bars, weekday-only)  [source: {fx_source}]")
 
     # Overlap, then FX forward-filled onto BTC's 365-day index.
     start = max(btc_usd.index[0], usdsek_raw.index[0])
