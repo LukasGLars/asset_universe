@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - name: Install dependencies
-        run: pip install -e .
+        run: pip install -e . pytest
       - name: Unit tests for the validation mechanics
         run: python -m pytest tests/test_btc_momentum_validation.py -q
       - name: BTC momentum validation
