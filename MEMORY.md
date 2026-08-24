@@ -4477,3 +4477,68 @@ next steps are: test 50d/150d rather than 200d, get Virtune's real spread
 and management fee into the cost model, and treat the post-2020 sub-period
 as the decision-relevant window rather than the full sample. Script, tests
 and workflow deleted after logging, per repo convention.
+
+## BTC trend on the ACTUAL instrument: the entry above is too pessimistic -- it anchored on 200d, the one window that fails (2026-08-24)
+
+**Supersedes the pessimistic half of the entry directly above.** That entry
+passed its execution-realism check on the reasoning "BTC trades 24/7, so
+there is no signal-to-fill gap." Operator corrected the premise: he does not
+hold spot BTC, he holds **Virtune Bitcoin, a Swedish-listed ETP trading
+~252 exchange days/yr.** BTC moves nights and weekends; the ETP cannot be
+traded then. A Friday-close signal is not actionable until Monday --
+structurally the same gap that voided the AVGO 200d guard, so the prior
+PASS did not transfer and had to be re-earned.
+
+Built `run_btc_etp_execution_check.py` + 5 unit tests (one asserts the ETP
+position series provably never changes on a weekend bar; a control asserts
+the 24/7 model does, so that test is not vacuous).
+
+**PREDICTION MADE BEFORE RUNNING: the weekday-only constraint would degrade
+the result. It did the opposite -- it IMPROVED it in every single window.**
+
+Weekend gap is real and large (Fri-close -> Mon-close, n=623): median
+|move| 2.27%, mean 3.60%, 90th pct 8.46%, worst -22.68%, and **25.2% of
+weekends move >5%, 6.6% move >10%.** Genuine unreactable exposure. But the
+inability to trade it turns out to be a *filter*, not a cost -- it blocks
+whipsaw round-trips on weekend noise. Calmar gained purely from the
+constraint: +0.042 (50d), +0.055 (100d), **+0.078 (150d)**, +0.020 (200d),
++0.046 (250d).
+
+**Tradeable-ETP results, full sample (B&H Calmar 0.782):**
+
+| Window | ETP CAGR | ETP Calmar | vs B&H |
+|---|---|---|---|
+| 50 | +73.4% | 1.223 | +0.519 |
+| 100 | +62.9% | 1.048 | +0.330 |
+| **150** | **+77.4%** | **1.304** | **+0.511** |
+| 200 | +58.7% | 0.866 | +0.085 |
+| 250 | +62.1% | 0.966 | +0.161 |
+
+**Post-2020 -- the window the prior entry called fatal (B&H Calmar 0.560):**
+50d **+0.519**, 100d **+0.475**, 150d **+0.539**, 250d +0.059 all beat
+buy-and-hold; only **200d loses (-0.089)**. 4/5 windows win. The prior
+entry's "post-2020 the edge is gone" was **true only of 200d** and was
+wrongly generalized to the family. 200d is not a representative member --
+it is the singular failure.
+
+**Cost robustness at 150d is in a different class than 200d's.** 200d died
+at 50bp/flip. 150d: 5bp +0.535, 15bp +0.511, 50bp +0.428, 100bp +0.318,
+**150bp still +0.213** vs buy-and-hold. It does not die at any plausible
+Swedish-ETP round-trip cost.
+
+**Honest remaining gaps -- none of these were modelled:**
+1. **FX.** Virtune is SEK-denominated tracking a USD asset. All of the above
+   uses BTC-USD; the SEK/USD leg is absent entirely. Real.
+2. **Tracking error** between the ETP and spot BTC.
+3. **Virtune's annual management fee** -- a drag on the trend arm and on
+   buy-and-hold alike, so roughly neutral to the *comparison* but it does
+   cut absolute returns.
+4. **Selection.** 150d was named best after seeing the grid. Mitigated by
+   4 of 5 windows working post-2020 (family, not a point), but not zero.
+5. Post-2020 is ~6.6 years, a single regime, n=1.
+
+**Verdict: BTC trend-following is materially stronger than the entry above
+concluded, and my pessimism there came from anchoring on the one broken
+window.** Still **not actioned, nothing wired, no live code touched** -- the
+FX gap alone means this is not decision-ready for the real instrument.
+Script, tests and workflow deleted after logging, per repo convention.
