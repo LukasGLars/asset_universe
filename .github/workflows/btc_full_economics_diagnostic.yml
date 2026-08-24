@@ -1,0 +1,39 @@
+name: btc-full-economics-diagnostic
+
+# Manual-only, read-only. First end-to-end model of the operator's real BTC
+# setup: Virtune Sustainable Bitcoin ETP (1.49%/yr, the only one on Avanza),
+# SEK-denominated, signal read off BTC-USD, weekday-only execution.
+# Charges the 1.49% fee correctly to BOTH arms -- daily while held for the
+# trend arm, every day for buy-and-hold -- which no earlier run did.
+# Sweeps the unpublished ETP spread and solves for break-even.
+# Temporary -- delete after logging.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+      - name: Install dependencies
+        run: pip install -e . pytest
+      - name: Unit tests for the fee/spread mechanics
+        run: python -m pytest tests/test_btc_full_economics.py -q
+      - name: BTC full economics
+        run: python run_btc_full_economics.py
