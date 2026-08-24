@@ -4739,3 +4739,51 @@ minor against 1.15M TPV. **Nothing wired, nothing actioned,
 `portfolio.toml` untouched.** The revisit trigger remains sizing: at 5-10%
 of TPV this stops being optional under the drawdown-ceiling logic that
 governs Reactor Core. Script, tests and workflow deleted after logging.
+
+## BTC 150d rule ADOPTED -- spread gate cleared at 0.16% vs 116bp break-even (2026-08-24)
+
+**The decision gate from the entry above is closed.** Operator checked
+Virtune's actual bid/ask in Avanza: **0.16%.** Break-even for the 150d rule
+was **116bp per flip**, so this clears by roughly **7x**. At 16bp/flip the
+150d Calmar lands around **1.25 vs 0.805 for holding** (interpolated
+between the run's 0bp -> 1.284 and 25bp -> 1.226 points; not re-run for an
+exact figure because a 7x margin makes the precision irrelevant to the
+decision).
+
+**Two conservatisms remain in the model, both favouring the rule:**
+1. Cost was charged at 16bp per TRANSACTION. If 0.16% is the quoted
+   bid/ask, crossing it costs ~8bp per side -- so real cost is likely half
+   what was modelled.
+2. The flat arm earned **0%** while out of the market. Parking proceeds in
+   Home Base (Spiltan Räntefond) earns the short rate on ~40% of the
+   calendar. Unmodelled, additive.
+
+**THE RULE, as adopted:**
+- Watch **BTC-USD** daily close vs its **150-day SMA** (Bitcoin's own price
+  -- the ETP is a vessel; see the vessel-vs-signal entry above for why the
+  SEK line is the wrong thing to trend).
+- Close **below** the 150d SMA -> sell the Virtune ETP on the **next Swedish
+  trading day** (never same-day; the signal day's own move is not capturable).
+- Close back **above** -> buy back on the next Swedish trading day.
+- Expect **~6 signals/year** (6.1 flips/yr measured).
+- Park proceeds in **Home Base** while out, not idle cash.
+
+**Expected outcome, stated honestly:** materially shallower drawdowns
+(post-2020 -71.5% -> -46.1% at near-identical CAGR), with return roughly a
+wash to modestly better. **Do NOT expect a specific CAGR uplift** -- the
+97.2%-signal-agreement fragility means the magnitude is a soft estimate
+even though the direction is defensible.
+
+**Scope: manual, off-book, unchanged.** Still not in `portfolio.toml`, still
+~1.8% of TPV (20,224 kr), still outside every bucket target and rebalance
+instruction. At this size the 25-point drawdown saving is ~5,000 kr in a
+crash -- the rule is sound, the sleeve is small. No live code touched.
+
+**Offered and NOT yet actioned:** wiring a BTC-USD 150d signal line into
+`fi_tracker.py` as a display-only dashboard entry (same pattern as the
+retired AVGO trend diagnostic -- no auto-execution). Would require adding
+BTC-USD to the data universe. Awaiting the operator's call, since it
+touches live code.
+
+**Still unmodelled:** Virtune tracking error; entry/exit window asymmetry
+(slower exit, faster re-entry) which was never tested and is not endorsed.
