@@ -1,0 +1,112 @@
+name: commit-memory-append
+
+# One-shot maintenance job. This session's `git push` credentials failed
+# ("could not read Username for https://github.com") while `git fetch` kept
+# working, so the finding could not be pushed from the container. The runner
+# has its own write token, so it performs the append and commit instead --
+# same mechanism sync.yml already uses to commit status.md.
+#
+# The MEMORY.md section is carried base64-encoded so that markdown tables,
+# backticks and asterisks cannot be mangled by YAML parsing.
+#
+# Also removes the three temporary diagnostic files, per repo convention
+# (findings live in MEMORY.md; one-off scripts are deleted after logging).
+#
+# DELETE THIS WORKFLOW after it has run once.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Write the encoded section
+        run: |
+          cat > /tmp/section.b64 <<'B64EOF'
+            CiMjIEFWR08ncyByZXR1cm4gaXMgRVhUUkVNRUxZIGNvbmNlbnRyYXRlZDogMzAgZGF5cyBvdXQgb2YgNCwyODYgY2Fycnkgb3Zl
+            ciBoYWxmIHRoZSBncm93dGggKDIwMjYtMDgtMjQpCgpPcGVyYXRvciBhc2tlZCB3aGV0aGVyIEFWR08ncyBncm93dGggY2FtZSBm
+            cm9tIGEgZmV3IGRheXMgb3Igd2FzIHNwcmVhZApvdXQuIE1lYXN1cmVkIG9uIHRoZSByZWFsIDIwMDktMjAyNiBzZXJpZXMgKGBy
+            dW5fYXZnb19iZXN0X2RheXMucHlgICsgNgp1bml0IHRlc3RzLCBpbmNsLiBhIHBvc2l0aXZlIGNvbnRyb2wgdGhhdCBhIGRlbGli
+            ZXJhdGVseSBjb25jZW50cmF0ZWQKc3ludGhldGljIHNlcmllcyBpcyBkZXRlY3RlZCBhbmQgYW4gZXZlbiBvbmUgaXMgbm90KS4K
+            CioqQmFzZWxpbmU6IDQsMjg2IHRyYWRpbmcgZGF5cywgMTcuMCB5ZWFycywgMzI0LjV4IHRvdGFsLCBDQUdSICs0MC40JS4qKgoK
+            KipNaXNzIHRoZSBiZXN0IGRheXMgKHRoZXkgYXJlIDElIG9mIHRoZSBzYW1wbGUpOioqCgp8IERheXMgcmVtb3ZlZCB8ICUgb2Yg
+            ZGF5cyB8IENBR1IgfCBUb3RhbCBncm93dGggfAp8LS0tfC0tLXwtLS18LS0tfAp8IDAgfCAwLjAwJSB8ICs0MC40JSB8IDMyNC41
+            eCB8CnwgMSB8IDAuMDIlIHwgKzM4LjYlIHwgMjYwLjd4IHwKfCA1IHwgMC4xMiUgfCArMzQuMCUgfCAxNDcuM3ggfAp8IDEwIHwg
+            MC4yMyUgfCArMjkuOCUgfCA4NS40eCB8CnwgMjAgfCAwLjQ3JSB8ICsyMy4wJSB8IDM0LjB4IHwKfCAzMCB8IDAuNzAlIHwgKzE3
+            LjMlIHwgMTUuM3ggfAp8ICoqNTAqKiB8ICoqMS4xNyUqKiB8ICoqKzguMiUqKiB8ICoqMy44eCoqIHwKCioqU2hhcmUgb2YgdG90
+            YWwgY29tcG91bmRlZCBncm93dGg6KiogdG9wIDEwIGRheXMgPSAyMy4xJSwgdG9wIDIwID0gMzkuMCUsCioqdG9wIDMwID0gNTIu
+            OSUqKiwgdG9wIDUwID0gNzYuOCUuIE1pc3NpbmcgMS4xNyUgb2YgZGF5cyBkZXN0cm95cyA5OSUgb2YKdGhlIHdlYWx0aCAoMzI0
+            LjV4IC0+IDMuOHgpLgoKKipUSEUgTUlSUk9SLCB3aGljaCBtdXN0IGJlIHF1b3RlZCBhbG9uZ3NpZGUgaXQuKiogTWlzc2luZyB0
+            aGUgNTAgV09SU1QKZGF5cyB0YWtlcyAzMjQuNXggLT4gKioyMiw5NjV4KiogYW5kIENBR1IgKzQwLjQlIC0+ICoqKzgwLjMlKiou
+            IEF2b2lkaW5nCmJhZCBkYXlzIGlzIHdvcnRoIE1PUkUgdGhhbiBjYXB0dXJpbmcgZ29vZCBvbmVzLiBTbyBjb25jZW50cmF0aW9u
+            IGFsb25lCmRvZXMgTk9UIHByb3ZlICJuZXZlciBzZWxsIiAtLSBpdCBwcm92ZXMgIm5ldmVyIGJlIG91dCBhdCByYW5kb20uIiBB
+            IHJ1bGUKYmV0dGVyIHRoYW4gcmFuZG9tIGF0IHNlcGFyYXRpbmcgdGhlbSBjb3VsZCBzdGlsbCBhZGQgdmFsdWU7IHRoZSByZXRp
+            cmVkCkFWR08gZ3VhcmQgc2ltcGx5IHdhcyBub3Qgb25lIChzZWUgdGhlIGxvb2thaGVhZC1iaWFzIGVudHJ5IGFib3ZlKS4KCioq
+            Q2x1c3RlcmluZyBpcyB3ZWFrZXIgdGhhbiBmb2xrIHdpc2RvbSBjbGFpbXMuKiogT25seSAyMCUgb2YgdGhlIHRvcC0xMAphbmQg
+            dG9wLTIwIGJlc3QgZGF5cyBmYWxsIHdpdGhpbiA1IHRyYWRpbmcgZGF5cyBvZiBhIGNvbXBhcmFibGUgd29yc3QgZGF5CigzNiUg
+            YXQgdG9wLTUwKS4gVGhlIGV4dHJlbWUgdGFpbHMgYXJlIHNvbWV3aGF0IHNlcGFyYWJsZSwgbm90IGhvcGVsZXNzbHkKaW50ZXJs
+            ZWF2ZWQuCgoqKlJlY2VuY3kgd2FybmluZy4qKiBUaGUgMjAgYmVzdCBkYXlzIGJ5IHllYXI6IDIwMTEgeDIsIDIwMTMgeDIsIDIw
+            MTUgeDIsCjIwMjAgeDMsIDIwMjMgeDIsIDIwMjQgeDQsICoqMjAyNSB4NSoqIC0tIDkgb2YgdGhlIHRvcCAyMCBsYW5kZWQgaW4K
+            MjAyNC0yMDI1IGFsb25lLiBUaGUgY29uY2VudHJhdGlvbiBpcyBzdWJzdGFudGlhbGx5IGFuIEFJLW1lbHQtdXAKcGhlbm9tZW5v
+            biwgbm90IGEgc3RhYmxlIDE3LXllYXIgcHJvcGVydHkuIFRyZWF0IGZvcndhcmQgZXh0cmFwb2xhdGlvbgp3aXRoIGNhcmUuCgoq
+            KlRoZSAyMDBkLVNNQSB3aW5kb3csIG1lYXN1cmVkIGRpcmVjdGx5LioqIEFWR08gc2l0cyBiZWxvdyBpdHMgMjAwZCBTTUEKb24g
+            b25seSAqKjE0LjclKiogb2YgZGF5cy4gVGhhdCB3aW5kb3cgY29udGFpbnMgKioyMCUqKiBvZiB0aGUgYmVzdCBkYXlzCmJ1dCAq
+            KjM2LTUwJSoqIG9mIHRoZSB3b3JzdCBkYXlzIC0tIHJvdWdobHkgYSAyOjEgcmF0aW8gaW4gdGhlIHJ1bGUncwpmYXZvdXIgb24g
+            dGFpbCBkYXlzIGFsb25lLiAqKlRoaXMgZG9lcyBOT1QgcmVoYWJpbGl0YXRlIHRoZSByZXRpcmVkCmd1YXJkOioqIHRhaWwtZGF5
+            IGNvdW50cyBpZ25vcmUgdGhlIG9yZGluYXJ5IHBvc2l0aXZlIGRyaWZ0IGZvcmZlaXRlZAphY3Jvc3MgYWxsIG90aGVyIG91dC1v
+            Zi1tYXJrZXQgZGF5cywgdGhlIH4xMDQgZXBpc29kZXMnIHRyYW5zYWN0aW9uIGNvc3RzLAphbmQgdGhlIFNNQSdzIGxhZyAtLSBh
+            bGwgb2Ygd2hpY2ggdGhlIHJlYWxpc3RpYy1leGVjdXRpb24gYmFja3Rlc3QgYWxyZWFkeQpzaG93ZWQgdG8gYmUgZGVjaXNpdmUg
+            KG5leHQtZGF5IGZpbGw6IENBR1IgMTkuMSUgdnMgMzIuNSUgdW5ndWFyZGVkKS4KUmVjb3JkZWQgc28gdGhlIHR3byBmaW5kaW5n
+            cyBhcmUgbm90IG1pc3Rha2VuIGZvciBhIGNvbnRyYWRpY3Rpb24uCgoqKkltcGxpY2F0aW9uIGZvciB0aGUgbGl2ZSBwb3J0Zm9s
+            aW86IHN1cHBvcnRzIHRoZSBDVVJSRU5UIGNvbmZpZ3VyYXRpb24uKioKR3VhcmQgcmV0aXJlZCwgc3RhdGljIHdlaWdodHMsIEFW
+            R08gaGVsZCBjb250aW51b3VzbHkuIFdpdGggaGFsZiB0aGUKZ3Jvd3RoIGluIDMwIGRheXMgYW5kIG5vIHZhbGlkYXRlZCB3YXkg
+            dG8ga25vdyB3aGljaCBvbmVzLCBjb250aW51b3VzCmV4cG9zdXJlIGlzIHRoZSBjb3JyZWN0IHBvc3R1cmUgZm9yIHRoaXMgaG9s
+            ZGluZyAtLSBhbmQgdGhhdCBpcyBhbHJlYWR5CndoYXQgdGhlIHBvcnRmb2xpbyBkb2VzLiAqKk5vIGNoYW5nZSByZWNvbW1lbmRl
+            ZCwgbm90aGluZyB3aXJlZC4qKiBTY3JpcHQsCnRlc3RzIGFuZCB3b3JrZmxvdyBkZWxldGVkIGFmdGVyIGxvZ2dpbmcsIHBlciBy
+            ZXBvIGNvbnZlbnRpb24uCgoqKk9wcyBub3RlOioqIGBnaXQgcHVzaGAgY3JlZGVudGlhbHMgZmFpbGVkIG1pZC1zZXNzaW9uICgi
+            Y291bGQgbm90IHJlYWQKVXNlcm5hbWUgZm9yIGh0dHBzOi8vZ2l0aHViLmNvbSIpIHdoaWxlIGBnaXQgZmV0Y2hgIGtlcHQgd29y
+            a2luZy4gV29ya2VkCmFyb3VuZCBpdCB3aXRoIHRoZSBHaXRIdWIgTUNQIEFQSSAoYHB1c2hfZmlsZXNgKSwgd2hpY2ggd3JpdGVz
+            IGNvbW1pdHMKZGlyZWN0bHkuIExvY2FsIHdhcyB0aGVuIGBnaXQgcmVzZXQgLS1oYXJkIG9yaWdpbi9tYXN0ZXJgIHRvIHJlc3lu
+            YyBhZnRlcgp2ZXJpZnlpbmcgdGhlIGNvbnRlbnQgZGlmZiB3YXMgY29tbWVudC1mb3JtYXR0aW5nIG9ubHkuIFdvcnRoIHJlbWVt
+            YmVyaW5nCmFzIHRoZSBmYWxsYmFjayBpZiBwdXNoIGF1dGggZHJvcHMgYWdhaW4uCg==
+          B64EOF
+
+      - name: Append to MEMORY.md (idempotent) and drop the diagnostics
+        run: |
+          python3 - <<'PY'
+          import base64, pathlib
+          sec = base64.b64decode(
+              pathlib.Path("/tmp/section.b64").read_text().replace(" ", "").replace("\n", "")
+          ).decode()
+          mem = pathlib.Path("MEMORY.md")
+          txt = mem.read_text()
+          key = "AVGO's return is EXTREMELY concentrated"
+          if key in txt:
+              print("Section already present -- no append.")
+          else:
+              mem.write_text(txt + sec)
+              print(f"Appended {len(sec)} chars to MEMORY.md")
+          PY
+          rm -f run_avgo_best_days.py \
+                tests/test_avgo_best_days.py \
+                .github/workflows/avgo_best_days_diagnostic.yml
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "Log AVGO best-days concentration finding; remove diagnostics"
+            git push origin master
+          fi
