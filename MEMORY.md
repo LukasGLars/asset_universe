@@ -4666,3 +4666,76 @@ no forecast. **Operator has not yet confirmed which product he holds.**
 Also corrected: the management fee is NOT neutral between arms as earlier
 claimed -- a trend arm is out of the market ~41% of the time and so pays
 ~41% less fee (~0.6%/yr tailwind at 1.49%), which was never modelled.
+
+## BTC 150d: full economics modelled, RECOMMENDED window is 150d, gated on one checkable number (2026-08-24)
+
+**First run with every leg of the operator's real setup modelled at once.**
+All constraints now confirmed by him: instrument is **Virtune Sustainable
+Bitcoin ETP (SE0020845709), 1.49%/yr -- the only Virtune BTC ETP on Avanza,
+so the 0.25% Prime product is NOT available and 1.49% is a constraint, not
+a choice.** SEK-denominated, signal read off BTC-USD (his vessel-vs-signal
+thesis), weekday-only execution. `run_btc_full_economics.py` + 7 unit tests
+(one proves an always-held trend arm equals buy-and-hold exactly, i.e. the
+fee is applied on the same basis to both arms).
+
+**A REAL ERROR IN EVERY PRIOR RUN, and it ran against the strategy.** All
+earlier BTC work charged the trend arm its trading costs while giving
+buy-and-hold its management fee for free. But a 1.49%/yr ETP fee is paid
+only while HOLDING -- buy-and-hold pays it every day; a trend arm out of
+the market ~40% of the time pays ~0.90%/yr instead of 1.49%. Correcting
+this is worth **+1.02% CAGR** to the trend arm. Not a modelling
+preference -- the prior treatment was simply wrong.
+
+**Full sample (2014-2026), 50bp/flip, fee correct on both arms:**
+
+| Window | InMkt | Fee paid | Flips/yr | CAGR | MaxDD | Calmar | vs Hold |
+|---|---|---|---|---|---|---|---|
+| HOLD | 100% | 1.49% | 0.0 | +66.4% | -82.5% | 0.805 | -- |
+| 50 | 58% | 0.86% | 15.4 | +65.1% | -63.1% | 1.032 | +0.227 |
+| 100 | 59% | 0.88% | 11.1 | +61.1% | -64.3% | 0.950 | +0.145 |
+| **150** | 61% | 0.90% | **6.1** | **+73.3%** | **-62.6%** | **1.170** | **+0.365** |
+| 200 | 61% | 0.91% | 6.0 | +52.1% | -69.9% | 0.746 | -0.059 |
+| 250 | 65% | 0.97% | 5.1 | +55.5% | -66.7% | 0.833 | +0.028 |
+
+**Post-2020 (50bp/flip) -- the answer to the operator's actual question
+about avoiding -60/-80% drawdowns:**
+
+| | CAGR | MaxDD | Calmar | vs Hold |
+|---|---|---|---|---|
+| HOLD | +41.4% | **-71.5%** | 0.580 | -- |
+| 50d | +43.9% | -61.1% | 0.718 | +0.138 |
+| 100d | +34.5% | -44.2% | 0.782 | +0.202 |
+| **150d** | +39.3% | **-46.1%** | **0.853** | **+0.273** |
+| 200d | +22.4% | -69.0% | 0.325 | -0.255 |
+| 250d | +27.6% | -60.0% | 0.460 | -0.119 |
+
+**-71.5% -> -46.1% post-2020 at near-identical CAGR.** 150d wins on every
+cut; 200d fails again, consistent with every prior run.
+
+**DECISION GATE -- break-even spread, the one input the operator can
+verify himself:**
+- **150d: 116bp per flip** (6.1 flips/yr)
+- 50d: only 45bp per flip (15.4 flips/yr -- 3x the trading kills it)
+
+Below ~1.16% round-trip cost, 150d beats holding. Swedish crypto ETPs
+typically quote 30-80bp, which would leave headroom, but **this is
+unverified -- check Virtune's actual bid/ask in Avanza's order book before
+acting.** That number, not another backtest, decides this.
+
+**Why 150d over 50d beyond the scores:** 6.1 vs 15.4 flips/yr. Lower cost
+exposure, a 2.6x higher break-even spread, and far less operational burden
+for a manually-executed rule (a missed exit is precisely when the
+protection was supposed to fire).
+
+**Caveats that survive:** the 97.2%-signal-agreement fragility means the
+MAGNITUDE of the return edge is a soft estimate (direction is defensible,
+size is not); post-2020 is a single ~6.6yr regime; Virtune tracking error
+still unmodelled; and entry/exit asymmetry (slower exit, faster re-entry)
+was never tested and is NOT endorsed.
+
+**Sizing keeps this small regardless.** At 20,224 kr (~1.8% of TPV), the
+25-point post-2020 drawdown saving is ~5,000 kr in a crash -- real, but
+minor against 1.15M TPV. **Nothing wired, nothing actioned,
+`portfolio.toml` untouched.** The revisit trigger remains sizing: at 5-10%
+of TPV this stops being optional under the drawdown-ceiling logic that
+governs Reactor Core. Script, tests and workflow deleted after logging.
