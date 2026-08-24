@@ -1,0 +1,28 @@
+name: btc-momentum-diagnostic
+
+# Manual-only, read-only: tests whether a simple trend/momentum rule on
+# BTC-USD (200d SMA, golden cross) beats buy-and-hold, shift(1)-correct
+# (no lookahead -- see run_btc_momentum_check.py docstring). BTC-USD
+# fetched fresh via yfinance, no parquet cache needed. Temporary.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -e .
+      - name: BTC momentum check
+        run: python run_btc_momentum_check.py
