@@ -7,6 +7,24 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## AVGO peer valuation snapshot now wired into daily sync (2026-08-25)
+
+Reverses the 2026-07-06 "manual only" decision (~line 1505 below):
+`run_peer_valuation.py` now runs as a `sync.yml` step, output appended to
+`status.md` same as `run_regime_alert.py`/`run_optimizer.py`. Still no
+alert/trigger — `notify_signal_changes.py`'s fingerprint is regex-scoped to
+specific known fields, so this new block can't cause a false signal-change
+notification. Reason for the reversal: AVGO dropped -14% between the
+2026-08-14 snapshot ($417.82) and 2026-08-24 ($358.76) with `status.md`'s
+P/E/PEG still showing the stale price the whole time; daily is cheap enough
+to just do given the 2026-09-02 earnings print is close.
+
+**2026-08-25 rerun, for reference:** AVGO $358.76, fwd/trail 2.40x (unchanged
+-- EPS inputs didn't move), fwd P/E 18.39x (was 21.39x), PEG(1y) 0.13 (was
+0.15). Rank improved to 4/9 cheapest on fwd P/E (was 5/9), 3/9 on PEG(1y)
+(was 3/9, unchanged). Mid-pack framing still holds, now cheaper in absolute
+and relative terms than two weeks ago.
+
 ## Session 2026-08-20 (cont.): ADDT_B_ST holdout-verified and REJECTED; no Swedish candidate survives
 
 Independent verification of the ADDT_B_ST write-up directly below (not

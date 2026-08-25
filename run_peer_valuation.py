@@ -26,9 +26,9 @@ TTM/forward EPS the same way `fi_tracker.py`'s AVGO checkpoint already does:
 `earnings_history["epsActual"]` / `eps_trend.loc["+1y", "current"]`, both
 non-GAAP on both sides.
 
-Periodic, manually-run exercise (per the 2026-07-06 decision recorded in
-MEMORY.md ~line 755) -- not wired into status.md or sync.yml, no alert or
-trigger of any kind.
+Wired into daily sync.yml as of 2026-08-25 (appended to status.md, same
+pattern as run_regime_alert.py/run_optimizer.py) -- supersedes the
+2026-07-06 "manual only" decision. Still no alert/trigger of any kind.
 
 Usage:
     python run_peer_valuation.py

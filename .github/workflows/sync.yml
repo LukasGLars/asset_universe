@@ -107,6 +107,11 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
 
+      - name: AVGO peer valuation snapshot
+        run: python run_peer_valuation.py 2>&1 | tee -a status.md
+        env:
+          PYTHONIOENCODING: utf-8
+
       - name: Write step summary
         run: cat status.md >> $GITHUB_STEP_SUMMARY
 
