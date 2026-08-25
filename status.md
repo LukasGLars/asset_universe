@@ -26,7 +26,7 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,089,009 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,357,082 kr
+  Trigger now             :    16,357,969 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
@@ -34,16 +34,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +25.0%
   Status                  :  BEHIND  (-9.0% margin)
 
-  Projected @ AWAR        :     9,060,024 kr
-  vs target               :   -11,738,430 kr  (deficit)
+  Projected @ AWAR        :     9,019,391 kr
+  vs target               :   -11,779,063 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,112,252 kr       ~2056
-  Conservative   +15%       8,239,022 kr       ~2046
-  Base           +20%      13,179,107 kr       ~2042
-  Current AWAR   +16%       9,060,024 kr       ~2045
-  Bull           +30%      32,667,906 kr       ~2037
+  Bear           +10%       5,110,720 kr       ~2056
+  Conservative   +15%       8,235,672 kr       ~2046
+  Base           +20%      13,172,332 kr       ~2042
+  Current AWAR   +16%       9,019,391 kr       ~2045
+  Bull           +30%      32,644,249 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -221,8 +221,8 @@ Computing capped 252d distributions for 51 candidates ...
   APH       N=1269  mu= +16.8%  sigma= 24.3%  hist=27yr  [ROBUST]
   PM        N= 630  mu= +10.8%  sigma= 13.7%  hist=18yr  [SINGLE]
   CRWD      hist=7yr  (below min 10yr, skipped)
-  4GLD.DE   no data
   AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
+  4GLD.DE   no data
   GC_F      N=1269  mu=  +9.8%  sigma= 11.5%  hist=26yr  [ROBUST]
 
 Cross-sectional prior mu : +18.8%  (shrinkage target)
