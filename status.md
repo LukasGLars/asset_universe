@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,078,676 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,357,969 kr
+  Trigger now             :    16,358,856 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +15.0%
+  AWAR (trailing)         :  +14.9%
   Required CAGR           :  +25.1%
   Status                  :  BEHIND  (-10.1% margin)
 
-  Projected @ AWAR        :     8,144,910 kr
-  vs target               :   -12,653,544 kr  (deficit)
+  Projected @ AWAR        :     8,110,858 kr
+  vs target               :   -12,687,596 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,077,893 kr       ~2056
-  Conservative   +15%       8,179,391 kr       ~2046
-  Base           +20%      13,078,029 kr       ~2042
-  Current AWAR   +15%       8,144,910 kr       ~2046
-  Bull           +30%      32,395,297 kr       ~2037
+  Bear           +10%       5,076,371 kr       ~2056
+  Conservative   +15%       8,176,064 kr       ~2046
+  Base           +20%      13,071,304 kr       ~2042
+  Current AWAR   +15%       8,110,858 kr       ~2046
+  Bull           +30%      32,371,836 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -117,7 +117,7 @@ TACTICAL RULES
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
     Next earnings  : 2026-09-02
-    Reminder       : not_due
+    Reminder       : DUE
     Latest quarter : 2026-04-30
     Beat streak    : 4
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
@@ -252,7 +252,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-08-25
+AVGO peer valuation snapshot -- 2026-08-26
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
