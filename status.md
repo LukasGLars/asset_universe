@@ -54,14 +54,14 @@ MACRO REGIME
   Nominal 10Y             4.64%   HIGH
   Real Yield             +2.32%   HIGH  ^
   Breakeven               2.32%   MID
-  HY OAS                270 bps   TIGHT
+  HY OAS                267 bps   TIGHT
   IG Credit               1.62%   TIGHT
   Curve 10Y-3M          +81 bps   MID
   Curve 10Y-2Y          +47 bps   LOW
   SE 10Y                   nan%   --
   USD                     118.1   STRONG
 
-  HY 20d delta  : -14 bps  (tightening)
+  HY 20d delta  : -20 bps  (tightening)
   Confidence    : HIGH
   Data through  : 2026-08-26
 
@@ -137,7 +137,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : IBKR (Interactive Brokers Group, Inc.)  $97.02  (ext +5.3%, 21d med +1.2%, ave +2.0%, win 58.6%, div THIN, drift +0.0%)
+    Best candidate : IBKR (Interactive Brokers Group, Inc.)  $97.02  (ext +5.3%, 21d med +1.2%, ave +2.0%, win 58.6%, div THIN, drift -0.2%)
     Plan           : buy near $97.02, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open IBKR <fill_price> <shares> <capital_sek>
     VIX review     : 15.21  (33% percentile, flat) -- for review, not a gate
@@ -256,15 +256,15 @@ AVGO peer valuation snapshot -- 2026-08-27
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $938.40    $45.12   $155.03      3.44x        +244%     6.05x      0.02
-AMD         $480.93     $5.76    $15.45      2.68x        +168%    31.13x      0.19
-AVGO*       $355.59     $8.13    $19.49      2.40x        +140%    18.24x      0.13
-MRVL        $245.11     $3.03     $6.32      2.08x        +108%    38.81x      0.36
-ASML      $1,745.64    $27.56    $51.69      1.88x         +88%    33.77x      0.39
-NVDA        $209.66     $7.01    $13.13      1.87x         +87%    15.97x      0.18
-TSM         $417.69    $13.86    $21.78      1.57x         +57%    19.18x      0.34
-ANET        $202.25     $3.46     $5.16      1.49x         +49%    39.20x      0.80
-QCOM        $163.72    $11.36    $10.20      0.90x         -10%    16.05x       n/a
+MU          $912.76    $45.12   $155.03      3.44x        +244%     5.89x      0.02
+AMD         $474.51     $5.76    $15.45      2.68x        +168%    30.71x      0.18
+AVGO*       $369.95     $8.13    $19.49      2.40x        +140%    18.98x      0.14
+MRVL        $245.18     $3.03     $6.32      2.08x        +108%    38.82x      0.36
+ASML      $1,732.50    $27.56    $51.69      1.88x         +88%    33.52x      0.38
+NVDA        $229.85     $7.01    $13.13      1.87x         +87%    17.51x      0.20
+TSM         $428.75    $13.86    $21.78      1.57x         +57%    19.68x      0.34
+ANET        $201.69     $3.46     $5.16      1.49x         +49%    39.09x      0.80
+QCOM        $164.83    $11.36    $10.20      0.90x         -10%    16.16x       n/a
 
 * = AVGO
 
