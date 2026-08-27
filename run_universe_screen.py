@@ -46,6 +46,28 @@ CORE_FEATURES = ["ry_regime", "baa10y_regime"]
 
 MIN_N = 10  # minimum matched dates to include an asset
 
+# Drop tickers whose last bar trails the freshest bar in the run by more than
+# this many calendar days -- i.e. delisted/dead names.
+#
+# Why this exists (2026-08-27): delisted tickers get removed from
+# config/universes/*.txt but their parquets are deliberately KEPT (history
+# cannot be refetched once a ticker is gone). This screen reads the parquet
+# store directly, so it went on ranking them as live candidates -- SATS sat at
+# rank 8 with a last bar of 2026-07-17, 41 days dead. run_entry_screen.py then
+# pulled it as a gate-1 candidate and queried it live; yfinance printed a raw
+# 'HTTP Error 404 ... Quote not found for symbol: SATS' into status.md, and
+# check_sync_health.py correctly failed the entire daily sync on the 'Error'
+# signature. One dead ticker took the pipeline down.
+#
+# us_equities.txt's header asserted "the screen's own M&A/history gates
+# already exclude them from candidate ranking". That was false -- no such gate
+# existed. This is it.
+#
+# Reference is the MAX last-bar across everything screened, not today's date,
+# so the gate is self-calibrating: the freshest ticker always passes, and the
+# gate can never empty the universe even if the whole store is stale.
+MAX_STALE_DAYS = 10
+
 SWEDISH: dict[str, str] = {
     "INVE-B.ST":  "Investor B",
     "ATCO-A.ST":  "Atlas Copco A",
@@ -152,6 +174,9 @@ def _process(
         "category":  category,
         "history_yr": round(nyrs, 1),
         "start":     str(prices.index[0].date()),
+        # Consumed by the MAX_STALE_DAYS gate below, and worth carrying in the
+        # CSV regardless: it is the one field that makes a dead ticker obvious.
+        "last_bar":  str(prices.index[-1].date()),
         "cagr":      round(cagr, 4),
         "n_matched": len(rets[252]),
         "diversity": div,
@@ -277,6 +302,27 @@ for ticker, name in UCITS.items():
 if not rows:
     print("No assets passed screening.", flush=True)
     sys.exit(1)
+
+# ── Staleness gate: drop delisted/dead tickers before ranking ────────────────
+# See MAX_STALE_DAYS. Loud on purpose -- a name silently vanishing from the
+# candidate list is exactly the kind of thing this repo has been bitten by.
+_ref = max(pd.Timestamp(r["last_bar"]) for r in rows)
+_fresh, _stale = [], []
+for r in rows:
+    (_stale if (_ref - pd.Timestamp(r["last_bar"])).days > MAX_STALE_DAYS
+     else _fresh).append(r)
+
+if _stale:
+    print(f"\nDropped {len(_stale)} stale ticker(s) "
+          f"(last bar > {MAX_STALE_DAYS}d behind {_ref.date()}):", flush=True)
+    for r in sorted(_stale, key=lambda x: x["last_bar"]):
+        age = (_ref - pd.Timestamp(r["last_bar"])).days
+        print(f"  -- {r['ticker']:<12} last bar {r['last_bar']}  ({age}d stale)", flush=True)
+
+if not _fresh:
+    print("No assets passed the staleness gate.", flush=True)
+    sys.exit(1)
+rows = _fresh
 
 df_out = pd.DataFrame(rows)
 df_out = df_out.sort_values("med_252d", ascending=False).reset_index(drop=True)

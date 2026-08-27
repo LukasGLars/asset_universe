@@ -7,8 +7,18 @@
 #     EA    -- taken private, last bar 2026-08-10
 #     SATS  -- last bar 2026-07-17
 #   Their existing parquets are kept: the history cannot be refetched
-#   once a ticker is gone, and the screen's own M&A/history gates
-#   already exclude them from candidate ranking.
+#   once a ticker is gone.
+#
+#   CORRECTION (2026-08-27): this note used to claim "the screen's own
+#   M&A/history gates already exclude them from candidate ranking". That was
+#   false -- no such gate existed. run_universe_screen.py reads the parquet
+#   store directly, so SATS stayed at rank 8 with a 41-day-old last bar,
+#   run_entry_screen.py queried it live as a gate-1 candidate, yfinance wrote
+#   a raw 404 into status.md, and check_sync_health.py failed the whole daily
+#   sync. The gate now genuinely exists: MAX_STALE_DAYS in
+#   run_universe_screen.py, covered by tests/test_universe_screen_staleness.py.
+#   Removing a delisted ticker from this file is still correct, but it is the
+#   staleness gate -- not this list -- that keeps dead names out of the ranking.
 A
 AAPL
 ABBV
