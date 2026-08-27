@@ -1,4 +1,3 @@
-HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not found for symbol: SATS"}}}
 ==============================================================
 REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
@@ -113,7 +112,7 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
-    Forward EPS (+1yr est.)    : $19.50
+    Forward EPS (+1yr est.)    : $19.49
     Fwd/Trail ratio (normalized): 2.40x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
@@ -178,7 +177,6 @@ Computing capped 252d distributions for 51 candidates ...
   CVNA      hist=9yr  (below min 10yr, skipped)
   GEV       hist=2yr  (below min 10yr, skipped)
   LITE      N= 630  mu= +49.5%  sigma= 60.6%  hist=11yr  [SINGLE]
-  SATS      max_up=73%  (M&A / corporate event detected, skipped)
   HWM       hist=10yr  (below min 10yr, skipped)
   VRT       hist=8yr  (below min 10yr, skipped)
   AVGO      N= 630  mu= +27.7%  sigma= 36.1%  hist=17yr  [SINGLE]
@@ -221,31 +219,32 @@ Computing capped 252d distributions for 51 candidates ...
   AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
   4GLD.DE   no data
   CRWD      hist=7yr  (below min 10yr, skipped)
+  ETR       N=1269  mu= +13.3%  sigma= 18.5%  hist=27yr  [ROBUST]
   GC_F      N=1269  mu=  +9.8%  sigma= 11.5%  hist=26yr  [ROBUST]
 
-Cross-sectional prior mu : +18.3%  (shrinkage target)
+Cross-sectional prior mu : +18.2%  (shrinkage target)
 Shrinkage lambda         : 100  (asset needs N>>100 to be fully trusted)
 
-Optimizing (50 restarts, 29 candidates) ...
+Optimizing (50 restarts, 30 candidates) ...
 
 ========================================================================
 PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
 ========================================================================
   Universe       : top 50 screen candidates + GC_F
   Matched dates  : 1398  MODERATE
-  Shrinkage      : lambda=100  prior=+18.3%
+  Shrinkage      : lambda=100  prior=+18.2%
 
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
   -----------------------------------------------------------------
-  GRMN        31.2%    +30.5%    +29.6%    31.2%   1269    26yr    ROBUST
-  LITE        29.6%    +49.5%    +37.4%    60.6%    630    11yr    SINGLE
+  GRMN        31.3%    +30.5%    +29.6%    31.2%   1269    26yr    ROBUST
+  LITE        29.5%    +49.5%    +37.4%    60.6%    630    11yr    SINGLE
   BKNG        21.8%    +32.5%    +31.4%    47.4%   1269    27yr    ROBUST
   DECK        12.3%    +31.0%    +30.1%    53.8%   1269    27yr    ROBUST
   GC_F         5.0%     +9.8%    +10.4%    11.5%   1269    26yr    ROBUST  [gold]
 
   Active positions   : 5  (weight >= 1%)
-  Equal-weight g(w)  : +18.6%  (benchmark)
-  Optimized g(w)     : +28.6%
+  Equal-weight g(w)  : +18.4%  (benchmark)
+  Optimized g(w)     : +28.5%
 
   WARNING: only 5 active positions — below recommended minimum of 6.
   Consider reducing MAX_W or increasing N_CANDIDATES.
@@ -259,8 +258,8 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 -----------------------------------------------------------------------------------
 MU          $938.40    $45.12   $155.03      3.44x        +244%     6.05x      0.02
 AMD         $480.93     $5.76    $15.45      2.68x        +168%    31.13x      0.19
-AVGO*       $355.59     $8.13    $19.50      2.40x        +140%    18.23x      0.13
-MRVL        $245.11     $3.03     $6.25      2.06x        +106%    39.21x      0.37
+AVGO*       $355.59     $8.13    $19.49      2.40x        +140%    18.24x      0.13
+MRVL        $245.11     $3.03     $6.32      2.08x        +108%    38.81x      0.36
 ASML      $1,745.64    $27.56    $51.69      1.88x         +88%    33.77x      0.39
 NVDA        $209.66     $7.01    $13.13      1.87x         +87%    15.97x      0.18
 TSM         $417.69    $13.86    $21.78      1.57x         +57%    19.18x      0.34
