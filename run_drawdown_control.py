@@ -67,6 +67,20 @@ PREV_CORE_W   = {"Gold": 0.25, "AVGO": 0.55, "LLY": 0.20}   # pre 2026-08-16
 DD_TOLERANCE  = -0.25        # the operator's stated total-portfolio ceiling
 
 CORE_FRACTIONS = [0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00]
+
+# This project's documented anti-fitting standard for base-mix selection
+# (MEMORY.md, the [[project-reactor-core-mix]] method) is: rank on the WORST
+# sub-period, NEVER full-sample. Full-sample ranking is how you pick a
+# winner that only won once. Windows chosen to break up the regimes that
+# could each carry a full-sample result on their own -- notably the
+# 2023-2026 AI melt-up, which one window deliberately excludes.
+WEIGHT_SUBPERIODS = [
+    ("2009-08..2013", "2009-08-06", "2013-12-31"),
+    ("2013..2017",    "2014-01-01", "2017-12-31"),
+    ("2017..2021",    "2018-01-01", "2021-12-31"),
+    ("2021..2026",    "2022-01-01", None),
+    ("no AI melt-up", "2009-08-06", "2022-12-31"),
+]
 STEP           = 5           # weight grid step, %
 
 ASSETS = {
@@ -324,6 +338,66 @@ def main() -> None:
         best_at[ceil] = b
         print(f"{ceil:>8.0%}   {b.label:<22}{b.core_frac:>7.0%}{b.cagr:>9.2%}"
               f"{b.mdd:>9.2%}{b.calmar:>8.3f}")
+
+    # ── 4b. Worst-sub-period ranking (the project's own standard) ─────────
+    print("\n" + "=" * 78)
+    print("4b. WORST-SUB-PERIOD RANKING -- the standard this repo actually sets")
+    print("=" * 78)
+    print("Full-sample ranking is how you pick a winner that only won once.")
+    print("Each core mix is scored by its WORST sub-period, then ranked on that.")
+    print("Windows: " + ", ".join(n for n, _, _ in WEIGHT_SUBPERIODS))
+
+    sub_rows = []
+    for (g, a, l), cn in core_navs.items():
+        worst_mdd, worst_cal = 0.0, 1e9
+        per = {}
+        for name, s_, e_ in WEIGHT_SUBPERIODS:
+            w = cn
+            if s_: w = w[w.index >= pd.Timestamp(s_)]
+            if e_: w = w[w.index <= pd.Timestamp(e_)]
+            if len(w) < 250:
+                continue
+            m = metrics(w)
+            per[name] = m
+            worst_mdd = min(worst_mdd, m["mdd"])
+            worst_cal = min(worst_cal, m["calmar"])
+        if not per:
+            continue
+        sub_rows.append({"label": f"Gold{g}/AVGO{a}/LLY{l}",
+                         "gold": g, "avgo": a, "lly": l,
+                         "worst_mdd": worst_mdd, "worst_calmar": worst_cal,
+                         **{f"mdd_{k}": v["mdd"] for k, v in per.items()}})
+    sub = pd.DataFrame(sub_rows)
+    sub.to_csv(out / "drawdown_control_subperiods.csv", index=False)
+
+    livesub = sub[sub.label == "Gold25/AVGO40/LLY35"].iloc[0]
+    prevsub = sub[sub.label == "Gold25/AVGO55/LLY20"].iloc[0]
+    print(f"\nLIVE Gold25/AVGO40/LLY35 : worst-sub-period MaxDD "
+          f"{livesub.worst_mdd:7.2%}  worst Calmar {livesub.worst_calmar:6.3f}")
+    print(f"PREV Gold25/AVGO55/LLY20 : worst-sub-period MaxDD "
+          f"{prevsub.worst_mdd:7.2%}  worst Calmar {prevsub.worst_calmar:6.3f}")
+
+    print("\nBest 12 core mixes by WORST-sub-period MaxDD:")
+    print(sub.nlargest(12, "worst_mdd")[
+        ["label", "worst_mdd", "worst_calmar"]].to_string(
+            index=False, float_format=lambda x: f"{x:8.3f}"))
+
+    print("\nBest 12 core mixes by WORST-sub-period CALMAR:")
+    print(sub.nlargest(12, "worst_calmar")[
+        ["label", "worst_mdd", "worst_calmar"]].to_string(
+            index=False, float_format=lambda x: f"{x:8.3f}"))
+
+    print("\nDoes the LLY effect survive sub-period ranking?")
+    bylly = sub.groupby("lly").agg(best_worst_mdd=("worst_mdd", "max"),
+                                   med_worst_mdd=("worst_mdd", "median"),
+                                   best_worst_calmar=("worst_calmar", "max"))
+    print(bylly.to_string(float_format=lambda x: f"{x:8.3f}"))
+
+    print("\nDoes the GOLD effect survive sub-period ranking?")
+    bygold = sub.groupby("gold").agg(best_worst_mdd=("worst_mdd", "max"),
+                                     med_worst_mdd=("worst_mdd", "median"),
+                                     best_worst_calmar=("worst_calmar", "max"))
+    print(bygold.to_string(float_format=lambda x: f"{x:8.3f}"))
 
     # ── 5. What it costs, in FI@50 terms ──────────────────────────────────
     print("\n" + "=" * 78)
