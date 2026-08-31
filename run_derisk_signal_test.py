@@ -483,6 +483,32 @@ def main() -> None:
     print(act.sort_values("mdd", ascending=False).head(5)[cols]
             .to_string(index=False, float_format=lambda x: f"{x:8.3f}"))
 
+    # ── The operational table: credit alone, every threshold x reduction.
+    #    Split out because the mode comparison above shows the credit leg
+    #    carries the whole result and VIX only adds cost.
+    print("\n" + "-" * 78)
+    print("CREDIT-ONLY (BAA10Y 20d widening), every threshold x reduction")
+    print("-" * 78)
+    ccols = ["credit_bps", "reduction", "cash_yield", "pct_days_derisked",
+             "n_episodes", "cagr", "mdd", "calmar", "calmar_vs_static"]
+    ccols += [c for c in df.columns if c.startswith("calmar_")
+              and c != "calmar_vs_static"]
+    print(df[df["mode"] == "CREDIT"].sort_values(["credit_bps", "reduction"])[ccols]
+            .to_string(index=False, float_format=lambda x: f"{x:8.3f}"))
+
+    # When did it actually fire? With N this small the dates matter more
+    # than the summary stats -- they are the sample.
+    print("\nFiring episodes by credit threshold (start -> end, trading days):")
+    for cbps in CREDIT_BPS:
+        f = pd.Series(build_flags("CREDIT", cbps, None), index=prices.index)
+        starts = f & ~f.shift(1, fill_value=False)
+        ends   = f & ~f.shift(-1, fill_value=False)
+        sd, ed = list(f.index[starts]), list(f.index[ends])
+        print(f"\n  >= {cbps}bp  ({f.mean():.1%} of days, {len(sd)} episodes)")
+        for a, b in zip(sd, ed):
+            print(f"      {a.date()} -> {b.date()}  "
+                  f"({len(f.loc[a:b])}d)")
+
     # ── Did it help in the episodes the question is actually about? ──
     print("\n" + "-" * 78)
     print("NAMED STRESS EPISODES -- best ACTIVE cell by full-sample Calmar")
