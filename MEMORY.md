@@ -4872,3 +4872,102 @@ around it with the GitHub MCP API (`push_files`), which writes commits
 directly. Local was then `git reset --hard origin/master` to resync after
 verifying the content diff was comment-formatting only. Worth remembering
 as the fallback if push auth drops again.
+
+---
+
+## De-risking on VIX / credit-spread spikes -- tested 2026-08-31
+
+**Question (user):** "Should I be reducing my positions if e.g. VIX and
+credit spreads spike, if so can we operationalize it?"
+
+**Answer: the credit signal is real but the evidence is two crashes. Do
+NOT wire it as an automated rule. An alert is defensible; automation is
+not.**
+
+**Why this was worth testing at all.** VIX is implied vol and BAA10Y is a
+credit-market price -- neither is a function of the Core's own price
+history, so this is a different signal class from the two overlays already
+retired here (the AVGO 200d guard, a price-trend rule killed by lookahead
+bias; vol-targeting, a realized-vol rule that lost 0 of 30 cells).
+
+**Credit series is BAA10Y, not HY OAS.** `BAMLH0A0HYM2` is licence-
+restricted to the trailing 3 years via the FRED API and `INTEGRITY.md:145`
+already bars it as a conditioning variable. It cannot be backtested.
+
+**Method.** `run_derisk_signal_test.py`, 348-cell grid: 4 modes (credit /
+VIX / OR / AND) x credit thresholds {25,50,75,100}bp of 20d widening x VIX
+rules {p80,p90,p95 point-in-time, >20,>25,>30} x reduction {25,50,100}% x
+cash yield {0,2}%. Benchmark: static Gold25/AVGO40/LLY35, 10bps costs,
++-5pp drift rebalance. Signal from close(i) sets weights held close(i) ->
+close(i+1); BAA10Y carries an extra publication-lag day; VIX percentiles
+are expanding, never full-sample. 16 tests pin the timing invariants.
+Runs: Actions 33438179581 and 33438579479.
+
+**Found and fixed a real bug in the first cut of the script**: turnover
+decided at close(i) was charged against day i's NAV while the weights
+applied to day i+1 -- letting a signal move the NAV on its own signal day.
+Smaller cousin of what killed the guard. Two tests now fail if it returns.
+
+**Pre-committed kill criteria (written before any output was seen):** beat
+static on Calmar in a majority of ACTIVE cells (>=5 episodes and >=1% of
+days on -- inert cells excluded, "never traded" is not evidence), full
+sample AND post-2020.
+
+**Result: PASS.** 199/264 active cells (75%) full sample, 156/264 (59%)
+post-2020.
+
+**But the structure of the result is the classic overfit signature, and
+that matters more than the verdict.** Static: CAGR 22.28%, MaxDD -32.74%,
+Calmar 0.681.
+
+| credit | reduce | episodes | CAGR | MaxDD | Calmar | 2010-19 | 2020+ |
+|--------|--------|----------|------|-------|--------|---------|-------|
+| >=25bp | 100%   | **39**   | 18.4%| -22.7%| 0.813  | **1.150** | **1.488** |
+| >=50bp | 100%   | 10       | 22.0%| -22.6%| 0.977  | 1.643   | 1.973 |
+| >=75bp | 100%   | **2**    | 22.9%| -21.8%| **1.050** | 1.679 | 2.010 |
+| static | --     | --       | 22.28%| -32.74%| 0.681 | 1.679   | 1.773 |
+
+Calmar rises monotonically as the sample collapses: 39 episodes -> 0.813,
+10 -> 0.977, 2 -> 1.050. Performance improves in direct proportion to how
+little evidence supports it. The >=25bp threshold -- the only one with a
+real sample -- is the one that actively DAMAGES 2010-2019 and post-2020.
+
+**The firing dates are the sample, and they are tiny.** >=75bp and >=100bp
+fire exactly twice in 22 years: Oct 2008 and Mar 2020. >=50bp fires 10
+times, but 6 are 2007-2009, which is pre-AVGO-IPO -- that leg of the
+portfolio is Gold/LLY only, so it is not a test of the real portfolio. In
+the AVGO era >=50bp fires four times: 2010-05 (6d), 2011-08 (**1d**),
+2011-09 (**1d**), 2020-03 (24d). Two real events and two one-day blips.
+
+**VIX contributes nothing and costs money.** Credit-only: 100% of cells
+beat static, +0.128 median Calmar, **0.00% CAGR cost** (out of the market
+~1.2% of days). VIX-only: 67% win rate, +0.029 Calmar, **-3.3%/yr**, out
+13.1% of days. In the top-10 table `CREDIT >=50bp` alone is numerically
+identical to `AND >=50bp + VIX>20` -- same Calmar, same 10 episodes. The
+OR mode is dominated by the VIX leg and is the worst of the four.
+
+**It is a crash rule, not a bear-market rule.** 2022: 0% of days on, zero
+effect. GFC 2008 +8.8% vs static, COVID 2020 +12.2%.
+
+**Lookahead twin: median Calmar leak +0.591, 52/58 cells.** Large, as
+expected -- same-day VIX/credit is loaded with contemporaneous
+information. Confirms the shift is doing real work and the honest numbers
+are the honest numbers.
+
+**Decision: alert, not automation.** `BAA10Y 20d widening >= 50bp` is the
+one defensible cell -- costs 0.3%/yr, cuts MaxDD ~10pp, and is neutral
+through 2010-2019 (1.643 vs 1.679) rather than damaging it. Recommended as
+a display/alert line in `fi_tracker.py` so the condition surfaces and the
+decision stays manual. **Hard-wiring an automatic 100%-to-cash trigger off
+2-4 AVGO-era observations is exactly the mistake that produced the 200d
+guard and the vol-targeter.** Passing a pre-committed kill test earns a
+signal the right to be looked at; it does not earn it the right to trade
+the portfolio unattended.
+
+**Nothing wired. No change to live config.** Reading at 2026-08-28:
+BAA10Y 20d widening **-4.0bp (tightening)**, VIX 14.4, p95 threshold 33.6.
+Nowhere near firing.
+
+**Open, not done:** the alert line in `fi_tracker.py` is recommended but
+NOT built -- user has not decided. Script, tests and workflow deleted after
+logging, per repo convention; recoverable from commits c636b78 / bb74e70.
