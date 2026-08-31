@@ -4971,3 +4971,95 @@ Nowhere near firing.
 **Open, not done:** the alert line in `fi_tracker.py` is recommended but
 NOT built -- user has not decided. Script, tests and workflow deleted after
 logging, per repo convention; recoverable from commits c636b78 / bb74e70.
+
+---
+
+## Drawdown control: allocation, not timing -- tested 2026-08-31
+
+**Question (user):** "Figure out a confident strategy to avoid drawdowns."
+
+**Answer: the live weights are already right. Do not change them. The only
+open lever is the bucket split, and whether to move it is a judgment call
+about 2008, not a data question.**
+
+**Timing is closed -- 4 attempts, 0 survivors.** AVGO 200d guard (lookahead
+bias), vol-targeting (0 of 30 cells), VIX/credit (passed its criteria but
+on two crashes). Allocation needs no forecast and cannot be overfit to a
+handful of crash dates, which is why this pass looked there instead.
+
+**Method.** `run_drawdown_control.py`: 231 core weight combos x 9 bucket
+splits x 2 Home Base models (SHY real data, flat 2% cash) = 4,158
+portfolios. Same conventions as `run_base_optimizer.py` so numbers are
+comparable to the committed grid. Two-level rebalancing (Core internally,
+then the bucket split against it), matching the live portfolio. 12 tests
+on the blend accounting. Runs: Actions 33440203087, 33440402387.
+
+### The robust structural findings
+
+**Core reweighting alone CANNOT reach the -25% tolerance: 0 of 231 combos.
+Shallowest achievable by any weight mix is -28.42% (Gold70/AVGO15/LLY15).**
+All three assets fall together in 2008 and 2020. The bucket split is the
+only lever that reaches -25% -- confirmed, not assumed.
+
+**Cost of drawdown control (full sample, Home Base = SHY):**
+
+| ceiling | best config | core% | CAGR | MaxDD |
+|---------|-------------|-------|------|-------|
+| -18% | Gold40/AVGO50/LLY10 | 60% | 15.39% | -17.80% |
+| -20% | Gold25/AVGO55/LLY20 | 65% | 17.13% | -19.42% |
+| -22% | Gold30/AVGO50/LLY20 | 75% | 18.72% | -21.83% |
+| -25% | Gold35/AVGO55/LLY10 | 80% | 20.62% | -24.32% |
+| -28% | Gold35/AVGO50/LLY15 | 95% | 23.69% | -27.85% |
+| none | Gold5/AVGO95/LLY0   | 100% | 33.52% | -48.15% |
+
+Going -28% -> -25% costs ~3pp CAGR; -25% -> -20% costs another 3.5pp.
+Every row falls short of the 20.48M nominal FI target (proj. 10.4M-14.4M),
+so de-risking below -25% is expensive against an already-short projection.
+
+### MY ERROR, and the correction -- this is the important part
+
+**I first ranked the weight grid on the FULL SAMPLE and reported that the
+live mix was dominated on both axes -- that LLY was the drawdown driver and
+should be cut, and that the 2026-08-16 change (AVGO 55->40, LLY 20->35) had
+cost 2.7pp CAGR and 2.9pp of drawdown. That was wrong.**
+
+`MEMORY.md`'s `[[project-reactor-core-mix]]` method is explicit: base-mix
+selection ranks on the WORST sub-period, never full-sample. Re-ranked
+properly across five windows (one excluding the 2023-2026 AI melt-up):
+
+| mix | worst-sub-period MaxDD | worst-sub-period Calmar |
+|-----|------------------------|-------------------------|
+| **LIVE Gold25/AVGO40/LLY35** | **-23.41%** | **1.034** |
+| PREV Gold25/AVGO55/LLY20 | -29.82% | 0.867 |
+
+**The live weights WIN, by 6.4pp of worst-case drawdown. The 2026-08-16
+change was a good decision and must not be reversed.**
+
+**The LLY conclusion inverts completely.** Best achievable worst-sub-period
+MaxDD by LLY weight: 0% -> -22.7%, 10% -> -18.8%, 20% -> -17.2%,
+35% -> -15.2%, 50% -> -14.7% (best), 75% -> -19.0%, 100% -> -34.5%.
+**LLY is PROTECTIVE up to ~50%, not destructive** -- it diversifies AVGO.
+LLY at 0-10% is the worst zone. The full-sample picture said the opposite
+only because full-sample MaxDD is dominated by LLY's 2004-2009 stretch,
+when AVGO did not yet exist. Textbook "winner that only won once" -- and I
+produced it one hour after criticising exactly that failure mode in the
+VIX/credit test. Gold 25-35% is the sweet spot on the same ranking; live
+sits at 25%, which is fine.
+
+### The one open decision
+
+The -27.90% full-sample figure that breaches tolerance includes a 2008 in
+which the portfolio is Gold/LLY only (pre-AVGO-IPO). On the post-AVGO
+record the live mix's worst sub-period is **-23.41% at 100% Core** --
+already inside -25% before any dilution. So:
+- sizing for a 2008-style repeat -> Reactor Core 75-80%
+- sizing on the AVGO-era record -> 85% already complies, no change
+
+**That is a risk-appetite judgment, not something the data settles.
+Nothing changed, nothing wired.** Also note the backtest cannot see
+single-name blowup risk (fraud, patent cliff, obsolescence) -- the
+operator's AVGO concentration worry is about a risk these numbers
+structurally cannot measure, and should not be overridden by them.
+
+Script, tests and workflow deleted after logging, per repo convention;
+recoverable from commits 5c8e252 / 35b58a7.
