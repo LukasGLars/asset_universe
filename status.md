@@ -137,9 +137,9 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : HOOD (Robinhood Markets, Inc.)  $104.26  (ext +2.9%, 21d med +4.0%, ave +5.3%, win 59.4%, div THIN, drift +0.4%)
-    Plan           : buy near $104.26, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open HOOD <fill_price> <shares> <capital_sek>
+    Best candidate : CEG (Constellation Energy Corporation)  $276.75  (ext +4.4%, 21d med +1.2%, ave +2.1%, win 55.4%, div THIN, drift -0.0%)
+    Plan           : buy near $276.75, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open CEG <fill_price> <shares> <capital_sek>
     VIX review     : 14.43  (27% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
@@ -197,8 +197,8 @@ Computing capped 252d distributions for 51 candidates ...
   FOXA      hist=7yr  (below min 10yr, skipped)
   CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
   CEG       hist=5yr  (below min 10yr, skipped)
-  WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
   PHAG.L    no data
+  WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
   DASH      hist=6yr  (below min 10yr, skipped)
   GS        N=1269  mu= +12.7%  sigma= 23.4%  hist=27yr  [ROBUST]
   TPR       N=1269  mu= +18.6%  sigma= 31.1%  hist=26yr  [ROBUST]
@@ -256,15 +256,15 @@ AVGO peer valuation snapshot -- 2026-08-31
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $932.86    $45.12   $155.03      3.44x        +244%     6.02x      0.02
-AMD         $465.58     $5.76    $15.45      2.68x        +168%    30.13x      0.18
-AVGO*       $368.79     $8.13    $19.51      2.40x        +140%    18.91x      0.14
-NVDA        $217.55     $7.01    $15.31      2.18x        +118%    14.21x      0.12
-MRVL        $216.62     $3.30     $6.64      2.01x        +101%    32.60x      0.32
-ASML      $1,696.16    $27.56    $51.69      1.88x         +88%    32.81x      0.37
-TSM         $417.52    $13.86    $21.78      1.57x         +57%    19.17x      0.34
-ANET        $195.38     $3.46     $5.16      1.49x         +49%    37.87x      0.77
-QCOM        $164.19    $11.36    $10.20      0.90x         -10%    16.09x       n/a
+MU          $937.73    $45.12   $155.03      3.44x        +244%     6.05x      0.02
+AMD         $469.49     $5.76    $15.45      2.68x        +168%    30.39x      0.18
+AVGO*       $367.89     $8.13    $19.51      2.40x        +140%    18.86x      0.13
+NVDA        $217.90     $7.01    $15.31      2.18x        +118%    14.24x      0.12
+MRVL        $212.25     $3.30     $6.64      2.01x        +101%    31.94x      0.32
+ASML      $1,696.06    $27.56    $51.69      1.88x         +88%    32.81x      0.37
+TSM         $420.03    $13.86    $21.78      1.57x         +57%    19.28x      0.34
+ANET        $195.46     $3.46     $5.16      1.49x         +49%    37.88x      0.77
+QCOM        $166.55    $11.36    $10.20      0.90x         -10%    16.33x       n/a
 
 * = AVGO
 
