@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,078,325 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,361,517 kr
+  Trigger now             :    16,363,291 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +14.8%
+  AWAR (trailing)         :  +14.7%
   Required CAGR           :  +25.1%
-  Status                  :  BEHIND  (-10.3% margin)
+  Status                  :  BEHIND  (-10.4% margin)
 
-  Projected @ AWAR        :     7,983,078 kr
-  vs target               :   -12,815,376 kr  (deficit)
+  Projected @ AWAR        :     7,918,117 kr
+  vs target               :   -12,880,337 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,070,688 kr       ~2056
-  Conservative   +15%       8,164,176 kr       ~2046
-  Base           +20%      13,047,945 kr       ~2042
-  Current AWAR   +15%       7,983,078 kr       ~2047
-  Bull           +30%      32,293,104 kr       ~2037
+  Bear           +10%       5,067,647 kr       ~2056
+  Conservative   +15%       8,157,534 kr       ~2046
+  Base           +20%      13,034,528 kr       ~2042
+  Current AWAR   +15%       7,918,117 kr       ~2047
+  Bull           +30%      32,246,346 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -112,7 +112,7 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
     TTM EPS (non-GAAP actual)  : $8.13
-    Forward EPS (+1yr est.)    : $19.49
+    Forward EPS (+1yr est.)    : $19.51
     Fwd/Trail ratio (normalized): 2.40x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
@@ -137,7 +137,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : HOOD (Robinhood Markets, Inc.)  $104.26  (ext +2.9%, 21d med +4.0%, ave +5.3%, win 59.4%, div THIN, drift -0.0%)
+    Best candidate : HOOD (Robinhood Markets, Inc.)  $104.26  (ext +2.9%, 21d med +4.0%, ave +5.3%, win 59.4%, div THIN, drift +0.4%)
     Plan           : buy near $104.26, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open HOOD <fill_price> <shares> <capital_sek>
     VIX review     : 14.43  (27% percentile, flat) -- for review, not a gate
@@ -252,16 +252,16 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-08-29
+AVGO peer valuation snapshot -- 2026-08-31
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
 MU          $932.86    $45.12   $155.03      3.44x        +244%     6.02x      0.02
 AMD         $465.58     $5.76    $15.45      2.68x        +168%    30.13x      0.18
-AVGO*       $368.79     $8.13    $19.49      2.40x        +140%    18.92x      0.14
-MRVL        $216.62     $3.03     $6.32      2.08x        +108%    34.30x      0.32
+AVGO*       $368.79     $8.13    $19.51      2.40x        +140%    18.91x      0.14
+NVDA        $217.55     $7.01    $15.31      2.18x        +118%    14.21x      0.12
+MRVL        $216.62     $3.30     $6.64      2.01x        +101%    32.60x      0.32
 ASML      $1,696.16    $27.56    $51.69      1.88x         +88%    32.81x      0.37
-NVDA        $217.55     $7.01    $13.13      1.87x         +87%    16.57x      0.19
 TSM         $417.52    $13.86    $21.78      1.57x         +57%    19.17x      0.34
 ANET        $195.38     $3.46     $5.16      1.49x         +49%    37.87x      0.77
 QCOM        $164.19    $11.36    $10.20      0.90x         -10%    16.09x       n/a
@@ -270,6 +270,6 @@ QCOM        $164.19    $11.36    $10.20      0.90x         -10%    16.09x       
 
 AVGO rank -- growth ratio (highest first): 3 of 9
 AVGO rank -- forward P/E (cheapest first): 4 of 9
-AVGO rank -- PEG(1y) (cheapest first)    : 2 of 9
+AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
