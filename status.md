@@ -3,47 +3,47 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================
 Position                Shares      Price    Value SEK     Wt
 --------------------------------------------------------------
-  Gold                     304     822 kr   249,934 kr  23.4%
-  Silver                     -     603 kr         0 kr   0.0%
-  Eli Lilly                 31  11,098 kr   344,028 kr  32.3%
-  Walmart                    -   1,006 kr         0 kr   0.0%
-  Cameco                     -     948 kr         0 kr   0.0%
-  Vertiv                     -   2,482 kr         0 kr   0.0%
-  Broadcom                  77   3,553 kr   273,584 kr  25.6%
-  Howmet Aerospace           -   2,350 kr         0 kr   0.0%
-  Spiltan Räntefond          -     manual   199,038 kr  18.7%
+  Gold                     304     824 kr   250,347 kr  23.4%
+  Silver                     -     604 kr         0 kr   0.0%
+  Eli Lilly                 31  11,112 kr   344,471 kr  32.3%
+  Walmart                    -   1,007 kr         0 kr   0.0%
+  Cameco                     -     949 kr         0 kr   0.0%
+  Vertiv                     -   2,485 kr         0 kr   0.0%
+  Broadcom                  77   3,558 kr   273,936 kr  25.7%
+  Howmet Aerospace           -   2,353 kr         0 kr   0.0%
+  Spiltan Räntefond          -     manual   199,038 kr  18.6%
   War Chest                  -     manual        27 kr   0.0%
   Reactor Core Cash          -     manual        24 kr   0.0%
 --------------------------------------------------------------
-  TPV                                        1,066,635 kr
-    Reactor Core            867,570 kr  (81.3%)   target 85.0%  drift -3.7%
-    Home Base               199,038 kr  (18.7%)   target 15.0%  drift +3.7%
+  TPV                                        1,067,843 kr
+    Reactor Core            868,778 kr  (81.4%)   target 85.0%  drift -3.6%
+    Home Base               199,038 kr  (18.6%)   target 15.0%  drift +3.6%
     War Chest                    27 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,066,635 kr
+  Now                     :     1,067,843 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
   Trigger now             :    16,364,178 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +13.5%
+  AWAR (trailing)         :  +13.6%
   Required CAGR           :  +25.2%
-  Status                  :  BEHIND  (-11.7% margin)
+  Status                  :  BEHIND  (-11.5% margin)
 
-  Projected @ AWAR        :     7,039,823 kr
-  vs target               :   -13,758,631 kr  (deficit)
+  Projected @ AWAR        :     7,123,003 kr
+  vs target               :   -13,675,451 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,029,056 kr       ~2056
-  Conservative   +15%       8,090,712 kr       ~2046
-  Base           +20%      12,921,508 kr       ~2042
-  Current AWAR   +14%       7,039,823 kr       ~2048
-  Bull           +30%      31,942,755 kr       ~2037
+  Bear           +10%       5,032,887 kr       ~2056
+  Conservative   +15%       8,097,275 kr       ~2046
+  Base           +20%      12,932,495 kr       ~2042
+  Current AWAR   +14%       7,123,003 kr       ~2048
+  Bull           +30%      31,971,717 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -79,7 +79,7 @@ PORTFOLIO SIGNALS
   Walmart         0.0%    LOW   LOW     +1.0%     +1.0%   61%    79  
   Cameco          0.0%   HIGH   LOW     -1.9%     -1.8%   43%   558  ~base fallback
   Vertiv          0.0%    MID   LOW     -0.0%     -2.4%   44%   558  ~base fallback
-  Broadcom       25.6%    LOW   LOW     +1.2%     +1.2%   61%   103  
+  Broadcom       25.7%    LOW   LOW     +1.2%     +1.2%   61%   103  
 
 ==============================================================
 TACTICAL RULES
@@ -137,7 +137,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : BKNG (Booking Holdings Inc.)  $199.09  (ext +3.4%, 21d med +1.5%, ave +2.3%, win 57.2%, div ROBUST, drift +0.0%)
+    Best candidate : BKNG (Booking Holdings Inc.)  $199.09  (ext +3.4%, 21d med +1.5%, ave +2.3%, win 57.2%, div ROBUST, drift -0.4%)
     Plan           : buy near $199.09, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open BKNG <fill_price> <shares> <capital_sek>
     VIX review     : 14.92  (31% percentile, flat) -- for review, not a gate
@@ -161,7 +161,7 @@ NEXT CONTRIBUTION
 
   Idle Reactor Core Cash
     Uninvested     : 24 kr  (0.0% of Reactor Core)
-    Action         : deploy -> Broadcom (AVGO)  (~0 shares at 3,553 kr)
+    Action         : deploy -> Broadcom (AVGO)  (~0 shares at 3,558 kr)
 
 ==============================================================
   Regime check (2026-08-31): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
@@ -196,8 +196,8 @@ Computing capped 252d distributions for 51 candidates ...
   CIEN      N=1269  mu= +22.3%  sigma= 28.2%  hist=27yr  [ROBUST]
   FOXA      hist=7yr  (below min 10yr, skipped)
   CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
-  CEG       hist=5yr  (below min 10yr, skipped)
   PHAG.L    no data
+  CEG       hist=5yr  (below min 10yr, skipped)
   WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
   DASH      hist=6yr  (below min 10yr, skipped)
   GS        N=1269  mu= +12.7%  sigma= 23.4%  hist=27yr  [ROBUST]
@@ -259,8 +259,8 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 MU          $958.73    $45.12   $155.03      3.44x        +244%     6.18x      0.03
 AMD         $470.72     $5.76    $15.45      2.68x        +168%    30.47x      0.18
 AVGO*       $370.34     $8.13    $19.51      2.40x        +140%    18.98x      0.14
-NVDA        $220.78     $7.01    $15.31      2.18x        +118%    14.42x      0.12
-MRVL        $211.66     $3.30     $6.64      2.01x        +101%    31.86x      0.31
+NVDA        $220.78     $7.01    $15.36      2.19x        +119%    14.38x      0.12
+MRVL        $211.66     $3.30     $6.66      2.02x        +102%    31.76x      0.31
 ASML      $1,696.01    $27.56    $51.69      1.88x         +88%    32.81x      0.37
 TSM         $415.32    $13.86    $21.78      1.57x         +57%    19.07x      0.33
 ANET        $195.69     $3.46     $5.16      1.49x         +49%    37.93x      0.77
