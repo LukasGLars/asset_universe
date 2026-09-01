@@ -5063,3 +5063,74 @@ structurally cannot measure, and should not be overridden by them.
 
 Script, tests and workflow deleted after logging, per repo convention;
 recoverable from commits 5c8e252 / 35b58a7.
+
+---
+
+## BTC inside the Reactor Core: it ADDS on the repo's own standard, but on one cycle (2026-09-01)
+
+**Question (user):** "What would happen if I held x% BTC in RC as well?"
+
+**Result: BTC adds at every Core fraction and both arms, ranked on the
+WORST sub-period. Direction supported, magnitude not. Recommended ~5% of
+Core; the 15-20% the backtest prefers should NOT be acted on.**
+
+**Setup -- the real instrument, not spot BTC.** Virtune Sustainable ETP
+SE0020845709, 1.49%/yr (only Virtune BTC product on Avanza -- a constraint,
+not a choice), 0.16% measured spread, weekday-only execution,
+`BTC_SEK = BTC_USD x USDSEK`, signal read off BTC-USD per the
+vessel-vs-signal thesis. Two arms: plain HOLD, and the 150d SMA rule
+adopted 2026-08-24. Core weights held at the live Gold25/AVGO40/LLY35
+(settled, and correct on worst-sub-period). Everything converted to SEK,
+so these numbers are NOT comparable to the 2004-2026 USD grid -- the 0% BTC
+row is the baseline. Ranked on worst sub-period FROM THE START, with BTC's
+2021-2022 -77% bear isolated as its own window. 12 tests, including the
+one MEMORY.md flags as decisive: an always-held trend arm must equal
+buy-and-hold exactly, proving the fee is on the same basis for both arms.
+Run: Actions 33473529794.
+
+**Core 85% (live split), SEK, 2014-09..2026-08:**
+
+| BTC% | HOLD CAGR | HOLD worstDD | 150d CAGR | 150d worstDD | 150d worstCal |
+|------|-----------|--------------|-----------|--------------|---------------|
+| 0%   | 30.65%    | -25.16% BREACH | 30.65%  | -25.16% BREACH | 1.110 |
+| 5%   | 33.46%    | -24.70%      | 33.47%    | -24.38%      | 1.268 |
+| 10%  | 35.52%    | -24.47%      | 35.90%    | -23.85%      | 1.372 |
+| 15%  | 37.83%    | -23.79%      | 37.23%    | **-22.15%**  | 1.335 |
+| 20%  | 39.41%    | -24.42%      | 39.56%    | -22.18%      | **1.418** |
+
+Worst-sub-period best weight: Core 85% -> HOLD 10%, 150d 20%. Core 80% ->
+HOLD 15%, 150d 15%. **Every case says ADDS.**
+
+**BTC made drawdown SHALLOWER, not deeper -- the opposite of the
+pre-run prediction.** Coherent mechanism (BTC crashes unsynced from the
+Core's, the 150d rule exits during BTC's own crashes, rebalancing an
+uncorrelated high-vol asset harvests volatility), but see the caveats.
+**5% BTC is also where Core 85% flips from breaching the -25% tolerance to
+complying** -- BTC does what cutting the Core to 80% would have done.
+
+**Why the magnitude is not trustworthy:**
+1. **ONE cycle.** 11.5yr, one BTC bull and one bear. The core-mix result
+   had 22yr and five regimes. Weakest evidence base in this file's recent
+   work -- comparable to the VIX/credit result, not to the weights answer.
+2. **The drawdown improvement is the fragile claim.** It requires BTC not
+   crashing WITH equities. March 2020 it did exactly that (-50% in a day
+   alongside the crash). This window happens to have BTC's 2021-22 bear
+   LEAD the equity bear; reorder those events and the finding flips.
+3. **CAGR levels are not forward-looking.** The 30.65% baseline carries no
+   2008, AVGO's AI melt-up, and SEK depreciation (USDSEK ~6.5 -> ~9.5).
+   BTC itself compounded ~66%/yr. **The FI@50 projections in the run output
+   (35M-76M against a 20.5M target) are arithmetic on a backtested CAGR and
+   must NOT be planned on.**
+4. **Survivorship.** BTC is the crypto that won; picking it in 2014 was not
+   obvious ex ante and the backtest cannot see what went to zero.
+
+**Mild corroboration:** the 150d arm beats HOLD on drawdown in nearly every
+row, consistent with the rule already adopted on independent evidence.
+
+**Nothing wired, no config change, position still untracked.** Current
+holding ~20,225 kr = ~1.8% of TPV, ~2.1% of Core. Moving to 5% of Core at
+the live split would be ~48,900 kr, i.e. ~+28,700 kr. **User asked what
+would happen, not to act -- this is a report, not an executed decision.**
+
+Script, tests and workflow deleted after logging, per repo convention;
+recoverable from commit 185aa94.
