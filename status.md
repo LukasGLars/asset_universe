@@ -26,24 +26,24 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,066,187 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,364,178 kr
+  Trigger now             :    16,365,065 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
   AWAR (trailing)         :  +13.5%
   Required CAGR           :  +25.2%
-  Status                  :  BEHIND  (-11.7% margin)
+  Status                  :  BEHIND  (-11.8% margin)
 
-  Projected @ AWAR        :     7,009,269 kr
-  vs target               :   -13,789,186 kr  (deficit)
+  Projected @ AWAR        :     6,983,290 kr
+  vs target               :   -13,815,164 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,027,638 kr       ~2056
-  Conservative   +15%       8,088,282 kr       ~2046
-  Base           +20%      12,917,440 kr       ~2042
-  Current AWAR   +13%       7,009,269 kr       ~2048
-  Bull           +30%      31,932,032 kr       ~2037
+  Bear           +10%       5,026,128 kr       ~2056
+  Conservative   +15%       8,084,990 kr       ~2046
+  Base           +20%      12,910,795 kr       ~2042
+  Current AWAR   +13%       6,983,290 kr       ~2048
+  Bull           +30%      31,908,904 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -125,10 +125,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.23
+    Forward EPS (+1yr est.)    : $47.26
     Fwd/Trail ratio (normalized): 1.50x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.23B (implied YoY +26.3%)
+    Next-qtr revenue consensus : $22.22B (implied YoY +26.2%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
@@ -137,7 +137,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : ANET (Arista Networks, Inc.)  $189.26  (ext +4.4%, 21d med +2.9%, ave +3.1%, win 65.2%, div THIN, drift +0.0%)
+    Best candidate : ANET (Arista Networks, Inc.)  $189.26  (ext +4.4%, 21d med +2.9%, ave +3.1%, win 65.2%, div THIN, drift -0.8%)
     Plan           : buy near $189.26, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open ANET <fill_price> <shares> <capital_sek>
     VIX review     : 16.34  (41% percentile, flat) -- for review, not a gate
@@ -252,24 +252,24 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-01
+AVGO peer valuation snapshot -- 2026-09-02
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
 MU          $933.44    $45.12   $155.03      3.44x        +244%     6.02x      0.02
 AMD         $459.61     $5.76    $15.45      2.68x        +168%    29.75x      0.18
 AVGO*       $369.68     $8.13    $19.51      2.40x        +140%    18.95x      0.14
-NVDA        $217.44     $7.01    $15.36      2.19x        +119%    14.16x      0.12
+NVDA        $217.44     $7.01    $15.40      2.20x        +120%    14.12x      0.12
 MRVL        $210.39     $3.30     $6.66      2.02x        +102%    31.57x      0.31
 ASML      $1,665.14    $27.56    $51.69      1.88x         +88%    32.21x      0.37
-TSM         $414.00    $13.86    $21.78      1.57x         +57%    19.01x      0.33
+TSM         $414.00    $13.86    $21.86      1.58x         +58%    18.94x      0.33
 ANET        $189.26     $3.46     $5.16      1.49x         +49%    36.68x      0.75
 QCOM        $166.61    $11.36    $10.20      0.90x         -10%    16.33x       n/a
 
 * = AVGO
 
 AVGO rank -- growth ratio (highest first): 3 of 9
-AVGO rank -- forward P/E (cheapest first): 4 of 9
+AVGO rank -- forward P/E (cheapest first): 5 of 9
 AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
