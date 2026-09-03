@@ -26,7 +26,7 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,065,676 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,365,065 kr
+  Trigger now             :    16,365,953 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
@@ -34,16 +34,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +25.2%
   Status                  :  BEHIND  (-11.8% margin)
 
-  Projected @ AWAR        :     6,948,751 kr
-  vs target               :   -13,849,703 kr  (deficit)
+  Projected @ AWAR        :     6,923,218 kr
+  vs target               :   -13,875,236 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,024,507 kr       ~2056
-  Conservative   +15%       8,082,214 kr       ~2046
-  Base           +20%      12,906,148 kr       ~2042
-  Current AWAR   +13%       6,948,751 kr       ~2049
-  Bull           +30%      31,896,658 kr       ~2037
+  Bear           +10%       5,022,999 kr       ~2056
+  Conservative   +15%       8,078,924 kr       ~2046
+  Base           +20%      12,899,508 kr       ~2042
+  Current AWAR   +13%       6,923,218 kr       ~2049
+  Bull           +30%      31,873,555 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -110,15 +110,15 @@ TACTICAL RULES
     NOT ACTED ON     : routing + rebalance use the static base (see MEMORY.md)
 
   AVGO Earnings Checkpoint
-    Latest qtr EPS (actual vs est.): $3.32 vs $3.24  (+2.5% surprise)
-    TTM EPS (non-GAAP actual)  : $9.76
+    Latest qtr EPS (actual vs est.): $2.44 vs $2.40  (+1.7% surprise)
+    TTM EPS (non-GAAP actual)  : $8.13
     Forward EPS (+1yr est.)    : $19.57
-    Fwd/Trail ratio (normalized): 2.01x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
+    Fwd/Trail ratio (normalized): 2.41x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
-    Next-qtr revenue consensus : $35.00B (implied YoY +94.3%)
+    Next-qtr revenue consensus : $29.43B (implied YoY +84.5%)
     Next earnings  : 2026-09-02
-    Reminder       : DUE
-    Latest quarter : 2026-07-31
+    Reminder       : not_due
+    Latest quarter : 2026-04-30
     Beat streak    : 4
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
@@ -137,7 +137,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $293.46  (ext +6.0%, 21d med +2.1%, ave +2.6%, win 66.4%, div THIN, drift +0.0%)
+    Best candidate : TRGP (Targa Resources Corp.)  $293.46  (ext +6.0%, 21d med +2.1%, ave +2.6%, win 66.4%, div THIN, drift +0.4%)
     Plan           : buy near $293.46, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
     VIX review     : 15.20  (33% percentile, flat) -- for review, not a gate
@@ -252,15 +252,15 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-02
+AVGO peer valuation snapshot -- 2026-09-03
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
 MU          $956.08    $45.12   $155.03      3.44x        +244%     6.17x      0.03
 AMD         $457.06     $5.76    $15.45      2.68x        +168%    29.58x      0.18
+AVGO*       $367.24     $8.13    $19.57      2.41x        +141%    18.76x      0.13
 NVDA        $224.41     $7.01    $15.40      2.20x        +120%    14.57x      0.12
 MRVL        $206.48     $3.30     $6.72      2.04x        +104%    30.75x      0.30
-AVGO*       $367.24     $9.76    $19.57      2.01x        +101%    18.76x      0.19
 ASML      $1,682.30    $27.56    $51.70      1.88x         +88%    32.54x      0.37
 TSM         $415.50    $13.86    $21.86      1.58x         +58%    19.01x      0.33
 ANET        $186.10     $3.46     $5.16      1.49x         +49%    36.06x      0.73
@@ -268,8 +268,8 @@ QCOM        $169.96    $11.36    $10.20      0.90x         -10%    16.66x       
 
 * = AVGO
 
-AVGO rank -- growth ratio (highest first): 5 of 9
+AVGO rank -- growth ratio (highest first): 3 of 9
 AVGO rank -- forward P/E (cheapest first): 4 of 9
-AVGO rank -- PEG(1y) (cheapest first)    : 4 of 9
+AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
