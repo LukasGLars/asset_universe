@@ -106,3 +106,57 @@ def test_lookup_still_maps_existing_assets_after_cash_added():
     assert sync_sheet._lookup("PPFB.DE") == "Gold"
     assert sync_sheet._lookup("War Chest") == "War Chest"
     assert sync_sheet._lookup("Spiltan Räntefond Sverige") == "Spiltan Räntefond"
+
+
+# ── Crypto trend sleeve ETPs, and the silent-failure modes ────────────────
+def test_asset_map_resolves_both_etp_spellings():
+    assert sync_sheet._lookup("Virtune Bitcoin") == "Virtune Bitcoin"
+    assert sync_sheet._lookup("Virtune BTC") == "Virtune Bitcoin"
+    assert sync_sheet._lookup("Virtune Staked ETH") == "Virtune Staked ETH"
+    assert sync_sheet._lookup("Virtune ETH") == "Virtune Staked ETH"
+
+
+def test_asset_map_resolves_etp_with_trailing_text():
+    """The sheet's Asset cells carry suffixes ('Spiltan Räntefond Sverige ')."""
+    assert sync_sheet._lookup("Virtune Bitcoin ETP") == "Virtune Bitcoin"
+
+
+def test_unknown_sheet_row_warns_instead_of_passing_silently(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sync_sheet, "fetch_sheet_rows",
+                        lambda *a, **k: [{"Asset": "Solana ETP", "value": "5 000 kr"}])
+    rc = sync_sheet.main()
+    err = capsys.readouterr().err
+    assert "not in ASSET_MAP" in err
+    assert "Solana ETP" in err
+    assert rc == 0          # a stray row is a warning, not a job failure
+
+
+def test_mapped_name_without_a_positions_block_fails_loudly(monkeypatch, capsys, tmp_path):
+    """The old behaviour printed the change and returned success while
+    patch_toml() silently matched nothing."""
+    toml = tmp_path / "portfolio.toml"
+    toml.write_text('[buckets]\nreactor_core = 1.0\n\n'
+                    '[[positions]]\nname = "Gold"\nshares = 1\nbucket = "reactor_core"\n',
+                    encoding="utf-8")
+    monkeypatch.setattr(sync_sheet, "TOML_PATH", toml)
+    monkeypatch.setattr(sync_sheet, "fetch_sheet_rows",
+                        lambda *a, **k: [{"Asset": "Virtune Bitcoin", "value": "27 225 kr"}])
+    rc = sync_sheet.main()
+    assert rc == 1
+    assert "no [[positions]] block" in capsys.readouterr().err
+
+
+def test_etp_value_reaches_the_toml(monkeypatch, capsys, tmp_path):
+    toml = tmp_path / "portfolio.toml"
+    toml.write_text('[buckets]\ncrypto_sleeve = 0.05\n\n'
+                    '[[positions]]\nname = "Virtune Bitcoin"\nshares = 0\n'
+                    'bucket = "crypto_sleeve"\nvalue_sek = 0\n',
+                    encoding="utf-8")
+    monkeypatch.setattr(sync_sheet, "TOML_PATH", toml)
+    monkeypatch.setattr(sync_sheet, "fetch_sheet_rows",
+                        lambda *a, **k: [{"Asset": "Virtune Bitcoin", "value": "31 400 kr"}])
+    assert sync_sheet.main() == 0
+    import tomllib
+    with open(toml, "rb") as f:
+        pos = {p["name"]: p for p in tomllib.load(f)["positions"]}
+    assert pos["Virtune Bitcoin"]["value_sek"] == 31400

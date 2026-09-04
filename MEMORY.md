@@ -7,6 +7,39 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Crypto ETPs are now real positions; sheet sync hardened (2026-09-04)
+
+The ETPs existed only as `[crypto_sleeve]` sleeve capital, so **TPV omitted
+them entirely** while still counting the core positions that were sold to fund
+them. Every downstream figure (bucket weights, rebalance check, FI pace) was
+computed off that denominator.
+
+Now: `Virtune Bitcoin` / `Virtune Staked ETH` are `[[positions]]` in a new
+**`crypto_sleeve` bucket**, targets moved from 85/15/0 to **Reactor Core 85 /
+Home Base 10 / War Chest 0 / Crypto Sleeve 5** -- the non-core 15% is split,
+the core target is unchanged. Tracked as manual `value_sek` from the sheet
+(SEK-quoted by the broker, so no FX and no ticker to price). The trend rule
+still reads BTC-USD/ETH-USD from the store; these rows exist only so the ETPs
+appear in TPV.
+
+**To add a holding via the Google Sheet you need BOTH** an `ASSET_MAP` entry in
+`sync_sheet.py` and a `[[positions]]` block in `portfolio.toml`. Two silent
+failures were found and fixed here:
+- an unmapped sheet row was skipped with no warning -- now a stderr WARNING
+- a mapped name with no `[[positions]]` block made `patch_toml()` a no-op while
+  the script still printed the change and returned success -- now returns 1,
+  plus a post-write verification that re-reads the toml and fails if the value
+  did not actually land
+
+`fi_tracker.py`'s bucket table was a hardcoded 3-bucket list, so `crypto_sleeve`
+dropped out of it silently while still counting toward TPV -- the rows stopped
+summing to 100%. Now driven by config + buckets actually present in positions.
+
+**Still stale as of this entry:** the sheet itself. Gold/LLY/AVGO share counts
+and Spiltan's value predate the operator's sales; the ETP rows are not in the
+sheet yet, so their values are seeded at 27,225 each from the operator's own
+figure. Until the sheet is updated, status.md's TPV is wrong.
+
 ## Crypto trend sleeve LIVE; opportunistic sleeve RETIRED (2026-09-04)
 
 **The opportunistic sleeve's four gates were never better than random entry

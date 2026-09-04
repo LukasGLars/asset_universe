@@ -54,9 +54,10 @@ monthly_contribution_sek = 6000
 "ETH-USD" = 27225
 
 [buckets]
-reactor_core = 0.85
-home_base    = 0.15
-war_chest    = 0.00
+reactor_core  = 0.85
+home_base     = 0.10
+war_chest     = 0.00
+crypto_sleeve = 0.05
 
 # ── Reactor Core positions ─────────────────────────────────────────────────────
 # currency: USD = convert via USDSEK, EUR = convert via EURSEK, SEK = no conversion
@@ -161,3 +162,27 @@ currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
 value_sek = 24
+
+# ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
+# Manual value_sek, updated from the Google Sheet like Spiltan/War Chest --
+# quoted in SEK by the broker, so no FX conversion and no ticker to price.
+# The trend rule itself reads BTC-USD/ETH-USD from the store, NOT these rows;
+# these exist so the ETPs appear in TPV and bucket weights at all.
+
+[[positions]]
+name      = "Virtune Bitcoin"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "crypto_sleeve"
+value_sek = 27225
+
+[[positions]]
+name      = "Virtune Staked ETH"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "crypto_sleeve"
+value_sek = 27225
