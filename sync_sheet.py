@@ -23,7 +23,12 @@ TOML_PATH = Path(__file__).parent / "config" / "portfolio.toml"
 # Sheet "Asset" value  →  portfolio.toml name
 # Keys are prefix-matched (case-insensitive) so "Spiltan Räntefond Sverige " hits "Spiltan"
 ASSET_MAP: dict[str, str] = {
+    # The sheet's label is still "PPFB.DE" but the held instrument is the
+    # Avanza-listed iShares Physical Gold ETC (id 1634504) -- both map to the
+    # "Gold" position, which now prices via Avanza. PPFB.DE stays in the
+    # commodities universe for analysis; only the POSITION moved.
     "PPFB.DE":   "Gold",
+    "iShares Physical Gold": "Gold",
     "VZLC.DE":   "Silver",
     "Eli Lilly": "Eli Lilly",
     "Walmart":   "Walmart",

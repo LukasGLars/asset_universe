@@ -65,10 +65,10 @@ war_chest     = 0.00
 
 [[positions]]
 name     = "Gold"
-ticker   = "PPFB.DE"
+ticker   = "1634504"
 shares   = 243
 currency = "EUR"
-category = "commodities"
+category = "avanza"
 bucket   = "reactor_core"
 target_weight = 0.2
 
@@ -204,10 +204,9 @@ target_weight = 0.025
 
 [[positions]]
 name      = "LF Global Index"
-ticker    = ""
+ticker    = "417655"
 shares    = 0
 currency  = "SEK"
-category  = ""
+category  = "avanza"
 bucket    = "global_index"
-value_sek = 0
 target_weight = 0.25
