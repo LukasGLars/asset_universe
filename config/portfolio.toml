@@ -54,14 +54,14 @@ monthly_contribution_sek = 6000
 "ETH-USD" = 27225
 
 [buckets]
-reactor_core  = 0.85
-home_base     = 0.10
+# Derived from the per-asset target_weight values below (2026-09-04
+# restructure). Per-asset targets are authoritative; this table is a grouping
+# of them, not the other way round.
+reactor_core  = 0.60   # AVGO 20 + LLY 20 + Gold 20
+global_index  = 0.25   # Länsförsäkringar Global Index
+home_base     = 0.10   # cash
+crypto_sleeve = 0.05   # Virtune BTC 2.5 + staked ETH 2.5
 war_chest     = 0.00
-crypto_sleeve = 0.05
-
-# ── Reactor Core positions ─────────────────────────────────────────────────────
-# currency: USD = convert via USDSEK, EUR = convert via EURSEK, SEK = no conversion
-# category: parquet subdirectory where the ticker lives
 
 [[positions]]
 name     = "Gold"
@@ -70,6 +70,7 @@ shares   = 243
 currency = "EUR"
 category = "commodities"
 bucket   = "reactor_core"
+target_weight = 0.2
 
 [[positions]]
 name     = "Silver"
@@ -78,6 +79,7 @@ shares   = 0
 currency = "USD"
 category = "commodities"
 bucket   = "reactor_core"
+target_weight = 0.0
 
 [[positions]]
 name     = "Eli Lilly"
@@ -86,6 +88,7 @@ shares   = 19
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
+target_weight = 0.2
 
 [[positions]]
 name     = "Walmart"
@@ -94,6 +97,7 @@ shares   = 0
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
+target_weight = 0.0
 
 [[positions]]
 name     = "Cameco"
@@ -102,6 +106,7 @@ shares   = 0
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
+target_weight = 0.0
 
 [[positions]]
 name     = "Vertiv"
@@ -110,6 +115,7 @@ shares   = 0
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
+target_weight = 0.0
 
 [[positions]]
 name     = "Broadcom"
@@ -118,6 +124,7 @@ shares   = 65
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
+target_weight = 0.2
 
 [[positions]]
 name     = "Howmet Aerospace"
@@ -128,6 +135,7 @@ category = "equities"
 bucket   = "reactor_core"
 
 # ── Manual positions (no ticker — update value_sek after each trade) ───────────
+target_weight = 0.0
 
 [[positions]]
 name      = "Spiltan Räntefond"
@@ -137,6 +145,7 @@ currency  = "SEK"
 category  = ""
 bucket    = "home_base"
 value_sek = 199352
+target_weight = 0.0
 
 [[positions]]
 name      = "War Chest"
@@ -146,6 +155,7 @@ currency  = "SEK"
 category  = ""
 bucket    = "war_chest"
 value_sek = 19
+target_weight = 0.0
 
 [[positions]]
 # Idle/uninvested cash sitting inside the Reactor Core brokerage account
@@ -160,7 +170,7 @@ ticker    = ""
 shares    = 0
 currency  = "SEK"
 category  = ""
-bucket    = "reactor_core"
+bucket    = "home_base"
 value_sek = 187520
 
 # ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
@@ -168,21 +178,36 @@ value_sek = 187520
 # quoted in SEK by the broker, so no FX conversion and no ticker to price.
 # The trend rule itself reads BTC-USD/ETH-USD from the store, NOT these rows;
 # these exist so the ETPs appear in TPV and bucket weights at all.
+target_weight = 0.1
 
 [[positions]]
 name      = "Virtune Bitcoin"
-ticker    = ""
+ticker    = "1639655"
 shares    = 218
 currency  = "SEK"
-category  = ""
+category  = "avanza"
 bucket    = "crypto_sleeve"
-value_sek = 27225
+target_weight = 0.025
 
 [[positions]]
 name      = "Virtune Staked ETH"
-ticker    = ""
+ticker    = "1623064"
 shares    = 470
 currency  = "SEK"
-category  = ""
+category  = "avanza"
 bucket    = "crypto_sleeve"
-value_sek = 27225
+target_weight = 0.025
+
+# ── Global index fund ──────────────────────────────────────
+# Swedish fondbolag fund: no ticker and no public price feed (not on Yahoo),
+# so it is valued as shares * price_sek, with the NAV maintained by hand.
+
+[[positions]]
+name      = "LF Global Index"
+ticker    = ""
+shares    = 0
+currency  = "SEK"
+category  = ""
+bucket    = "global_index"
+value_sek = 0
+target_weight = 0.25

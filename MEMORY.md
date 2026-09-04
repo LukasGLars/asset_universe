@@ -7,6 +7,43 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Portfolio restructured to per-asset target weights; Avanza price source (2026-09-04)
+
+**Supersedes the DECIDED Gold 25 / AVGO 40 / LLY 35 core mix and the 85/15
+bucket split.** New operator-stated targets, now in each `[[positions]]`
+block's `target_weight` (authoritative; `[buckets]` is a grouping of them):
+
+  AVGO 20 / LLY 20 / Gold 20 / LF Global Index 25 / Virtune BTC 2.5 /
+  Virtune staked ETH 2.5 / cash 10
+
+Buckets follow: reactor_core 0.60, global_index 0.25, home_base 0.10,
+crypto_sleeve 0.05, war_chest 0. Cash MOVED from reactor_core to home_base --
+it is a deliberate 10% allocation now, not idle core cash inflating the Reactor
+Core denominator (the PR #102 trap). `fi_tracker`'s "Idle Reactor Core Cash"
+section is consequently near-obsolete and should be revisited.
+
+**Avanza is now a price source** (`download/avanza.py`, category `avanza`,
+ids in `config/universes/avanza.txt`). Needed because Yahoo cannot price the
+Virtune ETPs (ISINs resolve to Stuttgart symbols with no history) or Swedish
+fondbolag funds (no symbol at all). Keyed by the orderbook id in the Avanza URL.
+Only the current quote is exposed, so the store accumulates one close per run.
+
+**THE TRAP, nearly shipped: Avanza quotes in the LISTING currency, not SEK.**
+LLY/AVGO in USD, the iShares gold ETC in EUR, the Virtune ETPs in SEK. A
+SEK-for-everything assumption valued LLY at 1/9.6 of reality and looked
+plausible. `verify_currencies()` cross-checks each avanza position's configured
+currency against what Avanza actually quotes; 6 tests cover it.
+
+Also: `snapshot()` ignored `shares` entirely for tickerless positions, so a
+share-tracked manual holding silently valued at its stale `value_sek` (or 0) --
+that is how the Virtune legs sat frozen at a seeded figure. Now shares*price_sek
+with a `needs_price` flag rendering as "STALE" in the dashboard.
+
+**Open:** which gold instrument is actually held -- the sheet says `PPFB.DE`
+(Xetra, EUR 73.15) but the operator linked iShares Physical Gold ETC (Avanza id
+1634504, Xetra, EUR 74.57). Different products, ~2% apart. LF Global Index has
+no shares/price recorded yet, so it shows 0 vs its 25% target.
+
 ## Crypto ETPs are now real positions; sheet sync hardened (2026-09-04)
 
 The ETPs existed only as `[crypto_sleeve]` sleeve capital, so **TPV omitted

@@ -160,3 +160,8 @@ def test_etp_value_reaches_the_toml(monkeypatch, capsys, tmp_path):
     with open(toml, "rb") as f:
         pos = {p["name"]: p for p in tomllib.load(f)["positions"]}
     assert pos["Virtune Bitcoin"]["value_sek"] == 31400
+
+
+def test_asset_map_resolves_the_global_index_fund():
+    assert sync_sheet._lookup("Länsförsäkringar Global Index") == "LF Global Index"
+    assert sync_sheet._lookup("LF Global") == "LF Global Index"

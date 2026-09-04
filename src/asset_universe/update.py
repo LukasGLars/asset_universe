@@ -16,6 +16,7 @@ import pandas as pd
 
 from . import config
 from .download import fred as fred_dl
+from .download import avanza as avanza_dl
 from .download import yf as yf_dl
 from .store import reader, writer
 
@@ -28,6 +29,7 @@ CATEGORIES = {
     "fx":           "fx",
     "volatility":   "volatility",
     "crypto":       "crypto",
+    "avanza":       "avanza",
 }
 
 # 5-minute buffer past NYSE's 4:00pm ET close.
@@ -94,7 +96,8 @@ def run(dry: bool = False) -> None:
                 continue
 
             try:
-                df = yf_dl.fetch(ticker, fetch_start, yf_fetch_end)
+                df = (avanza_dl.fetch(ticker) if category == "avanza"
+                      else yf_dl.fetch(ticker, fetch_start, yf_fetch_end))
                 if df is None or df.empty:
                     print(f"  {ticker:<16} no data returned")
                 else:

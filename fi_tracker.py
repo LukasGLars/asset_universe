@@ -80,18 +80,27 @@ tpv = fi["tpv_sek"] if fi else None
 
 print("=" * 62)
 print("REACTOR CORE -- PORTFOLIO SNAPSHOT")
-print("=" * 62)
-print(f"{'Position':<22} {'Shares':>7} {'Price':>10} {'Value SEK':>12} {'Wt':>6}")
-print("-" * 62)
+print("=" * 78)
+# Per-asset target/drift: the 2026-09-04 restructure states the allocation per
+# asset, so drift belongs on the position row rather than only at bucket level.
+_tw = portfolio.target_weights()
+print(f"{'Position':<22} {'Shares':>7} {'Price':>10} {'Value SEK':>12} {'Wt':>6}"
+      f" {'Tgt':>6} {'Drift':>7}")
+print("-" * 78)
 
 for _, row in snap.iterrows():
     shares_str = f"{int(row['shares'])}" if row["shares"] else "-"
-    price_str  = f"{row['price_sek']:,.0f} kr" if pd.notna(row["price_sek"]) else "manual"
+    price_str  = f"{row['price_sek']:,.0f} kr" if pd.notna(row["price_sek"]) else (
+                 "STALE" if row.get("needs_price") else "manual")
     value_str  = f"{row['value_sek']:,.0f} kr" if pd.notna(row["value_sek"]) else "-"
     wt_str     = f"{row['weight']:.1%}"
-    print(f"  {row['name']:<20} {shares_str:>7} {price_str:>10} {value_str:>12} {wt_str:>6}")
+    _t = _tw.get(row["name"])
+    tgt_str    = f"{_t:.1%}" if _t is not None else "-"
+    drift_str  = f"{row['weight'] - _t:+.1%}" if _t is not None else "-"
+    print(f"  {row['name']:<20} {shares_str:>7} {price_str:>10} {value_str:>12} {wt_str:>6}"
+          f" {tgt_str:>6} {drift_str:>7}")
 
-print("-" * 62)
+print("-" * 78)
 if tpv is not None:
     print(f"  {'TPV':<20} {'':>7} {'':>10} {tpv:>12,.0f} kr")
     # Target column reads config/portfolio.toml [buckets] -- printed so the

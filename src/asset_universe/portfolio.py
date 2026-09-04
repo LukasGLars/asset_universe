@@ -76,10 +76,35 @@ def snapshot(data_dir: Path | None = None) -> pd.DataFrame:
             "fx_rate":     None,
             "price_sek":   None,
             "value_sek":   None,
+            "needs_price": False,
         }
 
         if pos["ticker"] == "":
-            row["value_sek"] = float(pos.get("value_sek", 0))
+            # Manual position. Two shapes:
+            #   shares == 0 -> value_sek is the holding (Cash, Spiltan)
+            #   shares  > 0 -> shares * price_sek (instruments with no price
+            #                  feed: Swedish fondbolag funds, Virtune ETPs).
+            # The second shape exists because the sheet tracks those by share
+            # count, and the old code ignored `shares` for tickerless rows
+            # entirely -- so a share-tracked holding silently valued at its
+            # stale value_sek, or at 0. price_sek is required in that case and
+            # left as None if absent, so tpv()'s guard fails loudly.
+            if pos.get("shares", 0) > 0:
+                p = pos.get("price_sek")
+                if p:
+                    row["price_sek"] = float(p)
+                    row["fx_rate"]   = 1.0
+                    row["value_sek"] = float(p) * pos["shares"]
+                else:
+                    # No per-share price recorded yet. Fall back to the last
+                    # known value so the dashboard still renders, but flag it:
+                    # this number does NOT move with the market and will drift
+                    # silently, which is exactly how the Virtune legs sat
+                    # frozen at their seeded figure.
+                    row["value_sek"]  = float(pos.get("value_sek", 0))
+                    row["needs_price"] = True
+            else:
+                row["value_sek"] = float(pos.get("value_sek", 0))
         else:
             price = _latest_price(data_dir, pos["category"], pos["ticker"])
             if price is not None:
@@ -220,6 +245,22 @@ def bucket_targets() -> dict[str, float]:
     run_outlook_montecarlo.py silently outliving a change to the real split
     is exactly what this table exists to prevent)."""
     return {k: float(v) for k, v in _load_portfolio_config().get("buckets", {}).items()}
+
+
+def target_weights() -> dict[str, float]:
+    """Target fraction of TPV per POSITION, from each [[positions]] block's
+    `target_weight`. Authoritative from the 2026-09-04 restructure: the
+    allocation is now stated per asset, and the bucket split is a grouping
+    of these rather than the other way round.
+
+    Positions without the key are omitted (not defaulted to 0) so a missing
+    target reads as "not recorded" rather than "deliberately zero" -- the
+    same reasoning as bucket_targets()."""
+    out = {}
+    for pos in _load_portfolio_config().get("positions", []):
+        if "target_weight" in pos:
+            out[pos["name"]] = float(pos["target_weight"])
+    return out
 
 
 def fi_pace(data_dir: Path | None = None) -> dict:
