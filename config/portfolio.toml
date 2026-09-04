@@ -45,6 +45,14 @@ monthly_contribution_sek = 6000
 # Reactor Core MaxDD); the operator accepted that trade-off explicitly,
 # valuing Home Base as a behavioural buffer rather than a risk-capacity-sized
 # number. Recorded here so the gap to actual stays visible, not to re-open it.
+# ── Crypto trend sleeve (replaced the opportunistic sleeve 2026-09-04) ────────
+# Held as Virtune ETPs. capital_sek is what a 100% target exposure means for
+# each leg -- update after any add/withdraw, same convention as the manual
+# positions above. 10% of TPV is the agreed hard cap for the sleeve as a whole.
+[crypto_sleeve]
+"BTC-USD" = 27225
+"ETH-USD" = 27225
+
 [buckets]
 reactor_core = 0.85
 home_base    = 0.15

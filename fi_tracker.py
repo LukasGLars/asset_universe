@@ -710,6 +710,13 @@ try:
 except Exception as _e:
     print(f"\n  Opportunistic Sleeve : [unavailable — {_e}]")
 
+# ── Crypto trend sleeve (replaced the opportunistic sleeve 2026-09-04) ────
+try:
+    import run_crypto_trend
+    run_crypto_trend.crypto_trend_daily_summary()
+except Exception as _e:
+    print(f"\n  Crypto Trend Sleeve : [unavailable — {_e}]")
+
 # ── Next contribution (where should the next kr go) ──────────────────────────
 # Answers "where does new/monthly capital go today", not "should we hold what
 # we already own" (that's the guard above). Gold/AVGO/LLY only -- Silver is
