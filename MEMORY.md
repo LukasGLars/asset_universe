@@ -19,9 +19,10 @@ through 2026-08-25, then jumped: 3.39, 6.28, 3.42, 2.16, 2.18, 2.15h from
 Aug 27. Downtimes of 16-19 min = the run starting ~10 min after healthchecks
 gave up. Nothing in the repo changed; GitHub scheduling latency did.
 
-**Fix (healthchecks.io setting, not repo):** keep the cron, raise Grace Time
-2h -> 8h. Max observed delay 6.28h. Also delete the stale `TEST` check (0 pings,
-permanently down).
+**Fix APPLIED 2026-09-04 by the operator:** grace raised 2h -> 8h on the
+existing cron; stale `TEST` check deleted. If DOWN alerts resume, check the
+GitHub queue delay first (`gh run list --workflow=sync.yml`) before suspecting
+the pipeline -- max observed delay was 6.28h.
 
 A `/start` ping does NOT help -- the delay is GitHub failing to START the job,
 so there is nothing to ping from. No workflow change can compensate.
