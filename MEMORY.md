@@ -7,6 +7,65 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Crypto trend sleeve LIVE; opportunistic sleeve RETIRED (2026-09-04)
+
+**The opportunistic sleeve's four gates were never better than random entry
+from the same universe.** The "+1.28% median/trade, 57.5% win, n=4,300" figure
+in `sleeve_entry_duration_grid.csv` was never benchmarked against anything.
+Control run: all 504 US equities in the universe, every trading date 2009-2026,
+no gates at all -> median +1.07%, win 57.8%. So the gates buy **+0.2 to +0.5pp
+of median return and a LOWER win rate at every duration** (-0.3pp at 21d,
+-1.8pp at 90d). Bootstrap z oscillates 1.47-2.64 across durations -- noise, not
+an effect. Nearly all the apparent edge was just being long US equities in a
+bull market: a denominator that was never checked.
+
+Live confirmation, reconstructed from the committed `status.md` history
+(every `chore(sync)` commit is a point-in-time record of that morning's
+recommendation, computed off the prior close -- no lookahead): 13 closed
+trades 2026-07-01 -> 09-03 at **mean -5.24%, win 23%, alpha -5.25%**. The
+sequential 1-slot sim returned **-19.5% vs SPY +3.7%**. Saved as
+`comparison_results/opp_sleeve_live_recommendations.csv` and
+`opp_sleeve_live_sequential.csv`.
+
+Higher median + lower win rate is the signature of selecting higher-VOLATILITY
+names -- beta, not skill. Cost settled it regardless: ~1% round trip against a
+0.2-0.5pp edge. **This supersedes the 2026-08-04 "real, validated,
+positive-expectancy mechanism" note.**
+
+**Dead ends tested the same day -- do not re-test:**
+- VIX >90th pct, or VIX +40%/5d -> buy SPY/QQQ: NEGATIVE vs baseline. Fear is priced.
+- SPY/QQQ/IWM drawdown-from-60d-high buying: noise, sign flips by duration.
+- BTC -25% / ETH -30% dip buying: strongly NEGATIVE (-4.5% to -15%). Crypto is a
+  momentum regime, not a reversal regime.
+- Trend-following SPY/QQQ/GLD/SLV/USO: loses to exposure-matched B&H, 25/25 cells.
+
+**What replaced it.** `run_crypto_trend.py` + `analysis/crypto_trend.py`, live
+from 2026-09-04, 5% of TPV (27,225 kr each in Virtune BTC and Virtune Staked
+ETH ETPs), funded from the Home Base overweight (18.3% -> 13.3%), core
+untouched. Rule per asset: weekday closes only, 50/100/200d SMA, long above
+MA+2%, flat below MA-2%, else hold prior state; target = mean of the three
+(0/33/67/100%). Validated vs **exposure-matched** buy-and-hold net of the 1.49%
+ETP fee and 0.5% round trip: 3/3 eras, 12/13 rule variants, BTC/ETH/SOL
+independently, ~2.2 round trips/yr. The 2% band is load-bearing -- without
+hysteresis the rule loses to B&H in 2023-26.
+
+Sizing came from gap risk, not the drawdown budget: measured 85/10/5 MaxDD is
+-20.79% (better than core-only -23.45%, because the filter sits at 0-33%
+exposure exactly when the core is stressed -- correlation to core 0.048, and it
+was fully flat at the 2020-03-18 trough). A daily rule cannot exit ahead of a
+weekend collapse or issuer failure, hence 5% start and a **10% hard cap**.
+SOL and other alts are deliberately excluded: that backtest is hindsight
+selection, and the tier fails in days.
+
+**Kill criterion, agreed up front:** if after 3 completed cycles realized return
+trails exposure-matched buy-and-hold, close it.
+
+Known gaps: the retired opportunistic sleeve still prints a daily candidate
+into `status.md` (war chest is 27 kr, so it can never act) -- left in place
+rather than removed unasked; removing it is a clean follow-up. The staked-ETH
+ETP can trade at a discount to NAV in stress exactly when the rule says exit --
+take the exit anyway.
+
 ## AVGO peer valuation snapshot now wired into daily sync (2026-08-25)
 
 Reverses the 2026-07-06 "manual only" decision (~line 1505 below):

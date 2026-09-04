@@ -60,7 +60,16 @@ tactical rules and one opportunistic sleeve, all computed live in
   threshold.
 - **AVGO earnings checkpoint**: tracks the forward/trailing EPS ratio against
   a peer baseline — a forward-looking check that price alone won't catch.
-- **Opportunistic sleeve** (`run_entry_screen.py`): a separate, capped
+- **Crypto trend sleeve** (`run_crypto_trend.py`): the live tactical layer as
+  of 2026-09-04, replacing the opportunistic sleeve below. 5% of TPV in
+  Virtune BTC + staked ETH ETPs. Per asset: weekday closes, 50/100/200d SMA,
+  long above MA+2%, flat below MA-2%, else hold; target exposure = mean of the
+  three. Validated against *exposure-matched* buy-and-hold — 3/3 eras, 12/13
+  rule variants — net of the 1.49% ETP fee. 10% hard cap.
+- **Opportunistic sleeve** (`run_entry_screen.py`) — **RETIRED 2026-09-04**;
+  its four gates never beat random entry from the same universe (see
+  MEMORY.md). Still printed to `status.md` for continuity, but the war chest is
+  suspended so it cannot act. Was: a separate, capped
   tactical layer for war-chest capital only (1 open position at a time).
   Screens the current macro regime's top-ranked assets through momentum,
   earnings-avoidance, and diversity gates, sizes the recommendation's exit
@@ -74,6 +83,7 @@ tactical rules and one opportunistic sleeve, all computed live in
 |---|---|
 | `fi_tracker.py` | Daily dashboard — the main entry point |
 | `run_entry_screen.py` | Opportunistic sleeve — screen, `--open`/`--close` a position |
+| `run_crypto_trend.py` | Crypto trend sleeve — daily target exposure for the BTC/ETH ETP legs |
 | `check_sync_health.py` | Fails the daily job if `status.md` is stale or broken |
 | `run_universe_screen.py` | Regime-conditional ranking of the full asset universe (US + Swedish + commodities + ETFs) |
 | `run_clean_sheet_search.py` | Clean-sheet 3-asset search over the ROBUST universe, selected in-sample and judged out-of-sample |
@@ -94,6 +104,8 @@ and why.
 - `config/portfolio.toml` — live positions and manual cash buckets (war
   chest, home base). Synced from the Google Sheet; manual buckets need
   `value_sek` updated after each trade.
+- `config/universes/crypto.txt` — crypto trend sleeve universe (BTC/ETH).
+  Sleeve capital per leg lives in `config/portfolio.toml`'s `[crypto_sleeve]`.
 - `config/sleeve_state.toml` — opportunistic sleeve's open/closed position
   state. Managed via `run_entry_screen.py --open`/`--close`, not edited by
   hand.
