@@ -26,7 +26,7 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,057,582 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,365,953 kr
+  Trigger now             :    16,366,840 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
@@ -34,16 +34,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +25.3%
   Status                  :  BEHIND  (-12.7% margin)
 
-  Projected @ AWAR        :     6,401,431 kr
-  vs target               :   -14,397,023 kr  (deficit)
+  Projected @ AWAR        :     6,379,379 kr
+  vs target               :   -14,419,075 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,997,345 kr       ~2056
-  Conservative   +15%       8,034,990 kr       ~2046
-  Base           +20%      12,825,971 kr       ~2042
-  Current AWAR   +13%       6,401,431 kr       ~2050
-  Bull           +30%      31,679,805 kr       ~2037
+  Bear           +10%       4,995,843 kr       ~2056
+  Conservative   +15%       8,031,717 kr       ~2046
+  Base           +20%      12,819,372 kr       ~2042
+  Current AWAR   +13%       6,379,379 kr       ~2050
+  Bull           +30%      31,656,858 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -137,11 +137,25 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : IBKR (Interactive Brokers Group, Inc.)  $92.95  (ext +1.0%, 21d med +1.2%, ave +2.0%, win 58.7%, div THIN, drift +0.0%)
+    Best candidate : IBKR (Interactive Brokers Group, Inc.)  $92.95  (ext +1.0%, 21d med +1.2%, ave +2.0%, win 58.7%, div THIN, drift -0.0%)
     Plan           : buy near $92.95, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open IBKR <fill_price> <shares> <capital_sek>
     VIX review     : 14.32  (27% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
+
+  Crypto Trend Sleeve
+    Bitcoin (BTC-USD)  $77,300  (as of 2026-09-02)
+      Target       : 100%  = 27 225 kr of 27 225 kr
+      MA50         : LONG (MA $66,424, flat below $65,095)
+      MA100        : LONG (MA $69,565, flat below $68,174)
+      MA200        : LONG (MA $74,381, flat below $72,893)
+      Last change  : 2026-08-21 -> 100%
+    Ethereum (ETH-USD)  $2,392  (as of 2026-09-02)
+      Target       : 100%  = 27 225 kr of 27 225 kr
+      MA50         : LONG (MA $1,959, flat below $1,920)
+      MA100        : LONG (MA $2,007, flat below $1,967)
+      MA200        : LONG (MA $2,274, flat below $2,228)
+      Last change  : 2026-08-21 -> 100%
 
 ==============================================================
 NEXT CONTRIBUTION
@@ -252,7 +266,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-03
+AVGO peer valuation snapshot -- 2026-09-04
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
