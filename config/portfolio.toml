@@ -139,12 +139,11 @@ target_weight = 0.0
 
 [[positions]]
 name      = "Spiltan Räntefond"
-ticker    = ""
-shares    = 0
+ticker    = "94867"
+shares    = 1307.311537
 currency  = "SEK"
-category  = ""
+category  = "avanza"
 bucket    = "home_base"
-value_sek = 199352
 target_weight = 0.0
 
 [[positions]]

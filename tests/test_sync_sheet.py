@@ -171,3 +171,39 @@ def test_gold_maps_from_either_label():
     """The sheet still says PPFB.DE; the held instrument is the iShares ETC."""
     assert sync_sheet._lookup("PPFB.DE") == "Gold"
     assert sync_sheet._lookup("iShares Physical Gold ETC") == "Gold"
+
+
+# ── Fractional fund units ──────────────────────────────────────────────────
+
+def test_parse_shares_handles_swedish_fractional_units():
+    """Funds are held in fractional units, formatted "1 307,311537" -- space
+    or nbsp thousands separator, comma decimal. int(s) raised on all of these
+    and returned None, which the caller reads as "no shares" and skips."""
+    assert sync_sheet.parse_shares("1 307,311537") == 1307.311537
+    assert sync_sheet.parse_shares("1\xa0307,311537") == 1307.311537
+    assert sync_sheet.parse_shares("1307.311537") == 1307.311537
+
+
+def test_parse_shares_keeps_whole_numbers_as_int():
+    v = sync_sheet.parse_shares("243")
+    assert v == 243 and isinstance(v, int)
+
+
+def test_parse_shares_rejects_junk():
+    assert sync_sheet.parse_shares("") is None
+    assert sync_sheet.parse_shares("abc") is None
+
+
+def test_patch_toml_replaces_a_fractional_value_whole():
+    """\d+ alone matched only the integer part, so re-patching 1307.311537
+    to 900 produced "900.311537" -- a plausible-looking corrupted holding."""
+    blk = '[[positions]]\nname = "X"\nshares = 1307.311537\n'
+    out = sync_sheet.patch_toml(blk, "X", "shares", 900)
+    assert "shares = 900\n" in out
+    assert "311537" not in out
+
+
+def test_patch_toml_writes_a_fractional_value():
+    blk = '[[positions]]\nname = "X"\nshares = 0\n'
+    out = sync_sheet.patch_toml(blk, "X", "shares", 1307.311537)
+    assert "shares = 1307.311537" in out
