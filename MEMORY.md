@@ -39,10 +39,17 @@ share-tracked manual holding silently valued at its stale `value_sek` (or 0) --
 that is how the Virtune legs sat frozen at a seeded figure. Now shares*price_sek
 with a `needs_price` flag rendering as "STALE" in the dashboard.
 
-**Open:** which gold instrument is actually held -- the sheet says `PPFB.DE`
-(Xetra, EUR 73.15) but the operator linked iShares Physical Gold ETC (Avanza id
-1634504, Xetra, EUR 74.57). Different products, ~2% apart. LF Global Index has
-no shares/price recorded yet, so it shows 0 vs its 25% target.
+**Resolved 2026-09-04:** gold is the **iShares Physical Gold ETC** (Avanza
+1634504, EUR), NOT `PPFB.DE`. The position was repointed; valuation moved
+198,328 -> 202,110 kr (+3,782). `PPFB.DE` stays in the commodities universe for
+analysis and the sheet still labels the row "PPFB.DE" -- only the POSITION
+moved, and `_lookup` accepts either label. Gold backtests still use `GC_F`,
+untouched.
+
+**LF Global Index** = Avanza fund 417655, NAV 603.99 SEK (fund-guide endpoint,
+a different shape from certificates -- reads `nav`, not `quote.last`). Priced
+live now; still 0 shares until the switch is executed, so it reads 0 vs its 25%
+target.
 
 ## Crypto ETPs are now real positions; sheet sync hardened (2026-09-04)
 

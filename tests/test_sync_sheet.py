@@ -165,3 +165,9 @@ def test_etp_value_reaches_the_toml(monkeypatch, capsys, tmp_path):
 def test_asset_map_resolves_the_global_index_fund():
     assert sync_sheet._lookup("Länsförsäkringar Global Index") == "LF Global Index"
     assert sync_sheet._lookup("LF Global") == "LF Global Index"
+
+
+def test_gold_maps_from_either_label():
+    """The sheet still says PPFB.DE; the held instrument is the iShares ETC."""
+    assert sync_sheet._lookup("PPFB.DE") == "Gold"
+    assert sync_sheet._lookup("iShares Physical Gold ETC") == "Gold"
