@@ -79,6 +79,14 @@ def extract_fingerprint(text: str) -> dict:
             r"Basket-crash\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:\s*([^\n]+)", text),
         "sleeve_basket_open_cmd": _find(
             r"Basket-crash\s*:\s*(?!none eligible)[^\n]*\n\s*Plan\s*:[^\n]*\n\s*Open\s*:\s*([^\n]+)", text),
+        # Crypto trend sleeve. Two fields per asset on purpose: the bare
+        # percentage is the trigger (a capital edit must not fire an alert),
+        # the full Target line is what the message quotes, so the kr figure
+        # is always the one fi_tracker computed rather than restated here.
+        "crypto_btc_exposure": _find(r"Crypto Trend Sleeve.*?BTC-USD.*?Target\s*:\s*(\S+)", text),
+        "crypto_eth_exposure": _find(r"Crypto Trend Sleeve.*?ETH-USD.*?Target\s*:\s*(\S+)", text),
+        "crypto_btc_target": _find(r"Crypto Trend Sleeve.*?BTC-USD.*?Target\s*:\s*([^\n]+)", text),
+        "crypto_eth_target": _find(r"Crypto Trend Sleeve.*?ETH-USD.*?Target\s*:\s*([^\n]+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -110,6 +118,8 @@ LABELS = {
     "joint_stress": "Joint stress",
     "silver_signal": "Silver GSR",
     "sleeve_status": "Opportunistic sleeve",
+    "crypto_btc_exposure": "Crypto sleeve BTC",
+    "crypto_eth_exposure": "Crypto sleeve ETH",
     "regime_flip": "Regime",
 }
 
@@ -234,6 +244,23 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             lines.append(f"Open: {curr['sleeve_basket_open_cmd']}")
         blocks.append("\n".join(lines))
         subject_parts.append(f"Sleeve basket-crash candidate -> {curr['sleeve_basket_candidate']}")
+
+    # Crypto trend sleeve tier change -- the whole point of the sleeve's
+    # alerting. It switches ~2.2 times a year, so it fails through
+    # inattention rather than through being wrong: nothing else in the daily
+    # job would surface a change. Each asset is diffed independently because
+    # they run the rule independently and routinely disagree.
+    for _key, _label, _ticker in (("crypto_btc", "BTC", "Virtune BTC"),
+                                  ("crypto_eth", "ETH", "Virtune Staked ETH")):
+        _prev, _curr = prev[f"{_key}_exposure"], curr[f"{_key}_exposure"]
+        if _prev != _curr and "unknown" not in (_prev, _curr):
+            blocks.append(
+                f"CRYPTO TREND SLEEVE -- {_label}: {_prev} -> {_curr}\n"
+                f"ACTION: set the {_ticker} leg to {curr[f'{_key}_target']}\n"
+                f"State-based rule -- act on today's target regardless of how "
+                f"far the move has already run."
+            )
+            subject_parts.append(f"{_label} sleeve -> {_curr}")
 
     if prev["regime_flip"] != curr["regime_flip"] and curr["regime_flip"] == "FLIP":
         blocks.append(
