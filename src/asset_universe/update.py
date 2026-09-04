@@ -27,6 +27,7 @@ CATEGORIES = {
     "fixed_income": "fixed_income",
     "fx":           "fx",
     "volatility":   "volatility",
+    "crypto":       "crypto",
 }
 
 # 5-minute buffer past NYSE's 4:00pm ET close.

@@ -664,3 +664,63 @@ def test_rebalance_snapshot_none_when_everything_in_band():
     from check_signal_changes import build_rebalance_snapshot_message
 
     assert build_rebalance_snapshot_message(FIXTURE_BASE) is None
+
+
+# ── Crypto trend sleeve ────────────────────────────────────────────────────
+
+CRYPTO_BLOCK = """
+  Crypto Trend Sleeve
+    Bitcoin (BTC-USD)  $81,027  (as of 2026-09-04)
+      Target       : {btc}  = 27 225 kr of 27 225 kr
+      MA50         : LONG (MA $67,275, flat below $65,929)
+      Last change  : 2026-08-21 -> 100%
+    Ethereum (ETH-USD)  $4,120  (as of 2026-09-04)
+      Target       : {eth}  = 27 225 kr of 27 225 kr
+      MA50         : LONG (MA $3,400, flat below $3,332)
+      Last change  : 2026-08-19 -> 100%
+"""
+
+
+def _crypto(btc: str, eth: str) -> str:
+    return FIXTURE_BASE + CRYPTO_BLOCK.format(btc=btc, eth=eth)
+
+
+def test_crypto_fingerprint_reads_each_asset_separately():
+    fp = extract_fingerprint(_crypto("100%", "67%"))
+    assert fp["crypto_btc_exposure"] == "100%"
+    assert fp["crypto_eth_exposure"] == "67%"
+    assert "27 225 kr" in fp["crypto_btc_target"]
+
+
+def test_crypto_tier_change_alerts_with_the_kr_amount_from_status_md():
+    prev = extract_fingerprint(_crypto("100%", "100%"))
+    curr = extract_fingerprint(_crypto("67%", "100%"))
+    result = build_actionable_message(prev, curr)
+    assert result is not None
+    subject, body = result
+    assert "BTC sleeve -> 67%" in subject
+    assert "CRYPTO TREND SLEEVE -- BTC: 100% -> 67%" in body
+    assert "Virtune BTC" in body
+    assert "27 225 kr" in body          # quoted from status.md, not restated
+    assert "ETH" not in subject         # unchanged leg stays silent
+
+
+def test_crypto_both_legs_can_alert_independently():
+    prev = extract_fingerprint(_crypto("100%", "100%"))
+    curr = extract_fingerprint(_crypto("33%", "0%"))
+    subject, body = build_actionable_message(prev, curr)
+    assert "BTC sleeve -> 33%" in subject and "ETH sleeve -> 0%" in subject
+
+
+def test_crypto_unchanged_is_silent():
+    fp = extract_fingerprint(_crypto("100%", "100%"))
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_crypto_missing_section_does_not_alert():
+    """A status.md written before the sleeve existed must not read as a
+    change -- 'unknown' on either side is not actionable."""
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(_crypto("100%", "100%"))
+    result = build_actionable_message(prev, curr)
+    assert result is None or "sleeve ->" not in result[0]
