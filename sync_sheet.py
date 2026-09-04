@@ -35,6 +35,12 @@ ASSET_MAP: dict[str, str] = {
     "Spiltan":   "Spiltan Räntefond",
     "War Chest": "War Chest",
     "Cash":      "Reactor Core Cash",
+    # Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm). Prefix-matched like
+    # the rest, so "Virtune Bitcoin ETP" or "Virtune BTC" both resolve.
+    "Virtune Bitcoin":    "Virtune Bitcoin",
+    "Virtune BTC":        "Virtune Bitcoin",
+    "Virtune Staked ETH": "Virtune Staked ETH",
+    "Virtune ETH":        "Virtune Staked ETH",
 }
 
 
@@ -144,12 +150,19 @@ def main() -> int:
 
     # Parse sheet → updates dict: {toml_name: (key, new_value)}
     updates: dict[str, tuple[str, int]] = {}
+    unmapped: list[str] = []
     for row in rows:
         asset = row.get("Asset", "").strip()
         if not asset:
             continue
         name = _lookup(asset)
         if name is None:
+            # Loud, not silent: an unmapped row means the operator added a
+            # holding to the sheet that this script does not know about, so it
+            # silently never reaches portfolio.toml and TPV is quietly wrong.
+            # That failure mode is invisible from the dashboard -- the number
+            # just looks plausible and small.
+            unmapped.append(asset)
             continue
         shares_raw = row.get("shares", "").strip()
         value_raw  = row.get("value", "").strip()
@@ -163,6 +176,12 @@ def main() -> int:
             if v is not None:
                 updates[name] = ("value_sek", v)
 
+    if unmapped:
+        print(f"  WARNING: {len(unmapped)} sheet row(s) not in ASSET_MAP, ignored: "
+              f"{', '.join(unmapped)}", file=sys.stderr)
+        print("  Add them to ASSET_MAP and give them a [[positions]] block, or "
+              "their value never reaches TPV.", file=sys.stderr)
+
     if not updates:
         print("  No parseable rows in sheet -- portfolio.toml unchanged.")
         return 0
@@ -175,6 +194,16 @@ def main() -> int:
 
     toml_text = TOML_PATH.read_text(encoding="utf-8")
     changed: list[str] = []
+
+    missing = [n for n in updates if n not in current_map]
+    if missing:
+        # patch_toml() is a regex over existing [[positions]] blocks: with no
+        # block to match it is a no-op, but the old code still printed the
+        # change and reported success. Fail loudly instead -- a wrong TPV that
+        # looks fine is worse than a failed sync.
+        print(f"  ERROR: sheet names have no [[positions]] block in portfolio.toml: "
+              f"{', '.join(missing)}", file=sys.stderr)
+        return 1
 
     for name, (key, new_val) in updates.items():
         pos = current_map.get(name, {})
@@ -190,6 +219,17 @@ def main() -> int:
         return 0
 
     TOML_PATH.write_text(toml_text, encoding="utf-8")
+
+    # Verify the regex actually took. A silently-missed substitution leaves a
+    # stale number that every downstream figure (TPV, bucket weights, FI pace)
+    # is then computed from.
+    with open(TOML_PATH, "rb") as f:
+        after = {p["name"]: p for p in tomllib.load(f)["positions"]}
+    bad = [n for n in changed if after.get(n, {}).get(updates[n][0]) != updates[n][1]]
+    if bad:
+        print(f"  ERROR: patch did not apply for: {', '.join(bad)}", file=sys.stderr)
+        return 1
+
     print(f"  Saved. Updated: {', '.join(changed)}")
     return 0
 

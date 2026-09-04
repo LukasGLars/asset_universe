@@ -100,7 +100,15 @@ if tpv is not None:
     # different splits at once). No alert and no trade instruction: the
     # split is a deliberate operator trade-off, not a banded rule.
     _bucket_tgt = portfolio.bucket_targets()
-    for bucket, label in [("reactor_core", "Reactor Core"), ("home_base", "Home Base"), ("war_chest", "War Chest")]:
+    # Driven by config + what positions actually carry, NOT a hardcoded list:
+    # a bucket added to portfolio.toml but missed here would drop silently out
+    # of this table while still counting toward TPV, so the rows would stop
+    # summing to 100% and every drift figure would be quietly wrong.
+    _labels = {"reactor_core": "Reactor Core", "home_base": "Home Base",
+               "war_chest": "War Chest", "crypto_sleeve": "Crypto Sleeve"}
+    _order = list(_bucket_tgt) + [b for b in snap["bucket"].unique() if b not in _bucket_tgt]
+    for bucket in _order:
+        label = _labels.get(bucket, bucket.replace("_", " ").title())
         sub = snap[snap["bucket"] == bucket]["value_sek"].sum()
         pct = sub / tpv if tpv else 0
         if bucket in _bucket_tgt:
