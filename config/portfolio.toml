@@ -66,7 +66,7 @@ crypto_sleeve = 0.05
 [[positions]]
 name     = "Gold"
 ticker   = "PPFB.DE"
-shares   = 304
+shares   = 243
 currency = "EUR"
 category = "commodities"
 bucket   = "reactor_core"
@@ -82,7 +82,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Eli Lilly"
 ticker   = "LLY"
-shares   = 31
+shares   = 19
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -114,7 +114,7 @@ bucket   = "reactor_core"
 [[positions]]
 name     = "Broadcom"
 ticker   = "AVGO"
-shares   = 77
+shares   = 65
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -136,7 +136,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "home_base"
-value_sek = 199038
+value_sek = 199352
 
 [[positions]]
 name      = "War Chest"
@@ -145,7 +145,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "war_chest"
-value_sek = 27
+value_sek = 19
 
 [[positions]]
 # Idle/uninvested cash sitting inside the Reactor Core brokerage account
@@ -161,7 +161,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 24
+value_sek = 187520
 
 # ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
 # Manual value_sek, updated from the Google Sheet like Spiltan/War Chest --
@@ -172,7 +172,7 @@ value_sek = 24
 [[positions]]
 name      = "Virtune Bitcoin"
 ticker    = ""
-shares    = 0
+shares    = 218
 currency  = "SEK"
 category  = ""
 bucket    = "crypto_sleeve"
@@ -181,7 +181,7 @@ value_sek = 27225
 [[positions]]
 name      = "Virtune Staked ETH"
 ticker    = ""
-shares    = 0
+shares    = 470
 currency  = "SEK"
 category  = ""
 bucket    = "crypto_sleeve"
