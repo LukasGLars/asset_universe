@@ -220,6 +220,19 @@ def main() -> int:
     toml_text = TOML_PATH.read_text(encoding="utf-8")
     changed: list[str] = []
 
+    # A position that has a ticker is priced from market data every run, so a
+    # manual `value` in the sheet for it is meaningless -- and, once such a
+    # position has no value_sek key left, patch_toml() has nothing to match and
+    # the run fails. Skip those with a warning rather than failing the whole
+    # daily job on a stale sheet cell the live price already supersedes.
+    superseded = [n for n, (key, _) in updates.items()
+                  if key == "value_sek" and current_map.get(n, {}).get("ticker")]
+    for n in superseded:
+        print(f"  NOTE: {n} is priced live from its ticker -- ignoring the "
+              f"sheet's manual value. Put the unit count in `shares` instead.",
+              file=sys.stderr)
+        updates.pop(n)
+
     missing = [n for n in updates if n not in current_map]
     if missing:
         # patch_toml() is a regex over existing [[positions]] blocks: with no

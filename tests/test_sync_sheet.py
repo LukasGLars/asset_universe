@@ -207,3 +207,41 @@ def test_patch_toml_writes_a_fractional_value():
     blk = '[[positions]]\nname = "X"\nshares = 0\n'
     out = sync_sheet.patch_toml(blk, "X", "shares", 1307.311537)
     assert "shares = 1307.311537" in out
+
+
+def test_sheet_value_is_ignored_for_a_live_priced_position(monkeypatch, capsys, tmp_path):
+    """Once a position gains a ticker it is priced from market data every run,
+    so a leftover manual `value` in the sheet is meaningless -- and with no
+    value_sek key left to patch it would otherwise fail the whole daily job."""
+    toml = tmp_path / "portfolio.toml"
+    toml.write_text('[buckets]\nhome_base = 1.0\n\n'
+                    '[[positions]]\nname = "Spiltan Räntefond"\nticker = "94867"\n'
+                    'shares = 1307.311537\nbucket = "home_base"\n',
+                    encoding="utf-8")
+    monkeypatch.setattr(sync_sheet, "TOML_PATH", toml)
+    monkeypatch.setattr(sync_sheet, "fetch_sheet_rows",
+                        lambda *a, **k: [{"Asset": "Spiltan", "value": "199 352 kr"}])
+    assert sync_sheet.main() == 0
+    assert "priced live from its ticker" in capsys.readouterr().err
+    import tomllib
+    with open(toml, "rb") as f:
+        pos = {p["name"]: p for p in tomllib.load(f)["positions"]}
+    assert pos["Spiltan Räntefond"]["shares"] == 1307.311537
+    assert "value_sek" not in pos["Spiltan Räntefond"]
+
+
+def test_sheet_value_still_applies_to_a_manual_position(monkeypatch, tmp_path):
+    """Cash has no ticker, so its sheet value remains authoritative."""
+    toml = tmp_path / "portfolio.toml"
+    toml.write_text('[buckets]\nhome_base = 1.0\n\n'
+                    '[[positions]]\nname = "Reactor Core Cash"\nticker = ""\n'
+                    'shares = 0\nbucket = "home_base"\nvalue_sek = 24\n',
+                    encoding="utf-8")
+    monkeypatch.setattr(sync_sheet, "TOML_PATH", toml)
+    monkeypatch.setattr(sync_sheet, "fetch_sheet_rows",
+                        lambda *a, **k: [{"Asset": "Cash", "value": "187 520 kr"}])
+    assert sync_sheet.main() == 0
+    import tomllib
+    with open(toml, "rb") as f:
+        pos = {p["name"]: p for p in tomllib.load(f)["positions"]}
+    assert pos["Reactor Core Cash"]["value_sek"] == 187520
