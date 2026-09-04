@@ -145,4 +145,19 @@ jobs:
         # healthchecks.io side is itself the alert for "the pipeline is
         # dead," independent of GitHub Actions entirely. `|| true` so a
         # transient healthchecks.io-side hiccup never fails the sync job.
-        run: curl -fsS -m 10 --retry 3 "${{ secrets.HEALTHCHECKS_PING_URL }}" > /dev/null || true
+        # `|| true` keeps a healthchecks.io hiccup from failing the sync, but
+        # it also made a permanently broken ping URL indistinguishable from a
+        # working one: the step reports success either way, so an expired
+        # secret would show green here while healthchecks.io reported the
+        # pipeline dead. Log the outcome so the two are tellable apart.
+        run: |
+          if [ -z "${{ secrets.HEALTHCHECKS_PING_URL }}" ]; then
+            echo "HEARTBEAT: SECRET MISSING -- healthchecks.io will report this pipeline down."
+            exit 0
+          fi
+          code=$(curl -sS -m 10 --retry 3 -o /dev/null -w '%{http_code}'                  "${{ secrets.HEALTHCHECKS_PING_URL }}" || echo "000")
+          if [ "$code" = "200" ]; then
+            echo "HEARTBEAT: ping accepted (HTTP $code)"
+          else
+            echo "HEARTBEAT: PING FAILED (HTTP $code) -- healthchecks.io will report this pipeline down."
+          fi
