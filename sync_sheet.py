@@ -110,14 +110,26 @@ def fetch_sheet_rows(retries: int = 3, backoff_seconds: float = 2.0) -> list[dic
     return list(reader)
 
 
-def parse_shares(s: str) -> int | None:
+def parse_shares(s: str) -> float | int | None:
+    """Share/unit count from a sheet cell.
+
+    Funds are held in FRACTIONAL units and the sheet formats them Swedish-
+    style: "1 307,311537" -- space or non-breaking-space thousands separator,
+    comma decimal. The old int(s) raised on every one of those and returned
+    None, which the caller treats as "no shares in this row" and skips
+    silently, so a fund holding never reached portfolio.toml at all.
+
+    Whole numbers still come back as int so existing rows are unchanged.
+    """
     s = s.strip()
     if not s:
         return None
+    cleaned = s.replace(" ", "").replace(" ", "").replace(",", ".")
     try:
-        return int(s)
+        v = float(cleaned)
     except ValueError:
         return None
+    return int(v) if v.is_integer() else v
 
 
 def parse_value_sek(s: str) -> int | None:
@@ -129,7 +141,7 @@ def parse_value_sek(s: str) -> int | None:
     return int(digits) if digits else None
 
 
-def patch_toml(text: str, name: str, key: str, new_val: int) -> str:
+def patch_toml(text: str, name: str, key: str, new_val: float | int) -> str:
     """Replace `key = <int>` inside the [[positions]] block named `name`."""
     name_esc = re.escape(name)
     key_esc  = re.escape(key)
@@ -137,7 +149,11 @@ def patch_toml(text: str, name: str, key: str, new_val: int) -> str:
     def replacer(m: re.Match) -> str:
         block = m.group(0)
         if re.search(rf'name\s*=\s*"{name_esc}"', block):
-            block = re.sub(rf'({key_esc}\s*=\s*)\d+', rf'\g<1>{new_val}', block)
+            # \d+ alone would match only the integer part of an existing
+            # fractional value and leave its decimals behind -- patching
+            # 1307.311537 to 900 would produce "900.311537".
+            block = re.sub(rf'({key_esc}\s*=\s*)\d+(?:\.\d+)?',
+                           rf'\g<1>{new_val}', block)
         return block
 
     return re.sub(

@@ -89,7 +89,11 @@ print(f"{'Position':<22} {'Shares':>7} {'Price':>10} {'Value SEK':>12} {'Wt':>6}
 print("-" * 78)
 
 for _, row in snap.iterrows():
-    shares_str = f"{int(row['shares'])}" if row["shares"] else "-"
+    # Funds are held in fractional units (Spiltan 1307.311537), so int() here
+    # would silently report a different holding than the one being valued.
+    _sh = row["shares"]
+    shares_str = ("-" if not _sh else
+                  f"{int(_sh)}" if float(_sh).is_integer() else f"{_sh:,.2f}")
     price_str  = f"{row['price_sek']:,.0f} kr" if pd.notna(row["price_sek"]) else (
                  "STALE" if row.get("needs_price") else "manual")
     value_str  = f"{row['value_sek']:,.0f} kr" if pd.notna(row["value_sek"]) else "-"

@@ -46,6 +46,22 @@ analysis and the sheet still labels the row "PPFB.DE" -- only the POSITION
 moved, and `_lookup` accepts either label. Gold backtests still use `GC_F`,
 untouched.
 
+**Spiltan Räntefond** = Avanza fund 94867, 1307.311537 units @ NAV 152.49
+= 199,352 kr, matching the manual value it replaced exactly. Only the two cash
+balances (War Chest, Reactor Core Cash) are manual now.
+
+**Fractional fund units broke two things, both silent:**
+- `parse_shares()` did `int(s)`, which raised on "1 307,311537" (nbsp/space
+  thousands separator, comma decimal) and returned None -- the caller reads
+  None as "no shares in this row" and skips it, so a fund holding never
+  reached portfolio.toml at all.
+- `patch_toml()`'s `\d+` matched only the integer part of an existing
+  fractional value, so re-patching 1307.311537 to 900 would have written
+  "900.311537" -- a corrupted holding that still looks like a number. Now
+  `\d+(?:\.\d+)?`.
+`fi_tracker` also printed `int(shares)`, reporting a different unit count than
+the one being valued.
+
 **LF Global Index** = Avanza fund 417655, NAV 603.99 SEK (fund-guide endpoint,
 a different shape from certificates -- reads `nav`, not `quote.last`). Priced
 live now; still 0 shares until the switch is executed, so it reads 0 vs its 25%
