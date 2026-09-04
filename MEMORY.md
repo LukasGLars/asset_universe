@@ -7,6 +7,29 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## healthchecks.io "DOWN" alerts are FALSE POSITIVES -- grace too tight (2026-09-04)
+
+Investigated recurring Telegram "asset_universe is DOWN" alerts. **The pipeline
+is healthy** -- 39 of the last 40 scheduled runs succeeded.
+
+The check is configured with cron `37 20 * * 1-5` UTC and a **2-hour grace**
+(DOWN fires at 22:37 UTC). GitHub's queue delay for that slot was 0.26-1.22h
+through 2026-08-25, then jumped: 3.39, 6.28, 3.42, 2.16, 2.18, 2.15h from
+2026-08-27 onward. 7 of 23 evening runs exceeded the grace, every one since
+Aug 27. Downtimes of 16-19 min = the run starting ~10 min after healthchecks
+gave up. Nothing in the repo changed; GitHub scheduling latency did.
+
+**Fix (healthchecks.io setting, not repo):** keep the cron, raise Grace Time
+2h -> 8h. Max observed delay 6.28h. Also delete the stale `TEST` check (0 pings,
+permanently down).
+
+A `/start` ping does NOT help -- the delay is GitHub failing to START the job,
+so there is nothing to ping from. No workflow change can compensate.
+
+Related: the heartbeat step used `curl ... || true`, which made a broken ping
+URL indistinguishable from a working one (step green either way). PR #111 logs
+the HTTP status instead; still never fails the job.
+
 ## Portfolio restructured to per-asset target weights; Avanza price source (2026-09-04)
 
 **Supersedes the DECIDED Gold 25 / AVGO 40 / LLY 35 core mix and the 85/15
