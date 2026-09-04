@@ -41,6 +41,10 @@ ASSET_MAP: dict[str, str] = {
     "Virtune BTC":        "Virtune Bitcoin",
     "Virtune Staked ETH": "Virtune Staked ETH",
     "Virtune ETH":        "Virtune Staked ETH",
+    # Swedish fondbolag fund -- no ticker, valued as shares * price_sek.
+    "Länsförsäkringar Global Index": "LF Global Index",
+    "Lansforsakringar Global":       "LF Global Index",
+    "LF Global":                     "LF Global Index",
 }
 
 
