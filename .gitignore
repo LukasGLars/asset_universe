@@ -16,3 +16,6 @@ dist/
 build/
 .venv/
 .pytest_cache/
+
+# Written by sync.yml's commit step; read by notify_sync_failure.py
+.sync_committed
