@@ -3,7 +3,7 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     243     818 kr   198,765 kr  18.5%  20.0%   -1.5%
+  Gold                     243     818 kr   198,724 kr  18.5%  20.0%   -1.5%
   Silver                     -     579 kr         0 kr   0.0%   0.0%   +0.0%
   Eli Lilly                 19  10,768 kr   204,590 kr  19.1%  20.0%   -0.9%
   Walmart                    -   1,016 kr         0 kr   0.0%   0.0%   +0.0%
@@ -14,41 +14,41 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
   Spiltan Räntefond    1,307.31     153 kr   199,417 kr  18.6%   0.0%  +18.6%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
   Reactor Core Cash          -     manual   187,520 kr  17.5%  10.0%   +7.5%
-  Virtune Bitcoin          218     125 kr    27,180 kr   2.5%   2.5%   +0.0%
-  Virtune Staked ETH       470      57 kr    26,611 kr   2.5%   2.5%   -0.0%
-  LF Global Index            -     603 kr         0 kr   0.0%  25.0%  -25.0%
+  Virtune Bitcoin          218     125 kr    27,250 kr   2.5%   2.5%   +0.0%
+  Virtune Staked ETH       470      56 kr    26,555 kr   2.5%   2.5%   -0.0%
+  LF Global Index            -     600 kr         0 kr   0.0%  25.0%  -25.0%
 ------------------------------------------------------------------------------
-  TPV                                        1,073,623 kr
-    Reactor Core            632,875 kr  (58.9%)   target 60.0%  drift -1.1%
+  TPV                                        1,073,596 kr
+    Reactor Core            632,835 kr  (58.9%)   target 60.0%  drift -1.1%
     Global Index                  0 kr  ( 0.0%)   target 25.0%  drift -25.0%
     Home Base               386,937 kr  (36.0%)   target 10.0%  drift +26.0%
-    Crypto Sleeve            53,792 kr  ( 5.0%)   target  5.0%  drift +0.0%
+    Crypto Sleeve            53,805 kr  ( 5.0%)   target  5.0%  drift +0.0%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,073,623 kr
+  Now                     :     1,073,596 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,370,390 kr
+  Trigger now             :    16,371,277 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
   AWAR (trailing)         :  +13.9%
   Required CAGR           :  +25.2%
-  Status                  :  BEHIND  (-11.2% margin)
+  Status                  :  BEHIND  (-11.3% margin)
 
-  Projected @ AWAR        :     7,334,010 kr
-  vs target               :   -13,464,444 kr  (deficit)
+  Projected @ AWAR        :     7,304,478 kr
+  vs target               :   -13,493,977 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,040,616 kr       ~2056
-  Conservative   +15%       8,105,547 kr       ~2046
-  Base           +20%      12,938,387 kr       ~2042
-  Current AWAR   +14%       7,334,010 kr       ~2048
-  Bull           +30%      31,947,848 kr       ~2037
+  Bear           +10%       5,039,017 kr       ~2056
+  Conservative   +15%       8,102,100 kr       ~2046
+  Base           +20%      12,931,485 kr       ~2042
+  Current AWAR   +14%       7,304,478 kr       ~2048
+  Bull           +30%      31,924,060 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -117,8 +117,8 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $3.32 vs $3.24  (+2.5% surprise)
     TTM EPS (non-GAAP actual)  : $7.06
-    Forward EPS (+1yr est.)    : $19.37
-    Fwd/Trail ratio (normalized): 2.74x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
+    Forward EPS (+1yr est.)    : $19.39
+    Fwd/Trail ratio (normalized): 2.75x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $22.19B  (TTM YoY: +32.3%)
     Next-qtr revenue consensus : $34.88B (implied YoY +93.6%)
     Next earnings  : 2026-09-02
@@ -142,7 +142,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $294.29  (ext +5.8%, 21d med +2.1%, ave +2.6%, win 66.4%, div THIN, drift -0.0%)
+    Best candidate : TRGP (Targa Resources Corp.)  $294.29  (ext +5.8%, 21d med +2.1%, ave +2.6%, win 66.4%, div THIN, drift +0.6%)
     Plan           : buy near $294.29, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
     VIX review     : 15.72  (36% percentile, flat) -- for review, not a gate
@@ -271,7 +271,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-08
+AVGO peer valuation snapshot -- 2026-09-09
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
@@ -279,11 +279,11 @@ MU        $1,000.26    $45.12   $155.03      3.44x        +244%     6.45x      0
 AMD         $505.74     $5.76    $15.61      2.71x        +171%    32.39x      0.19
 NVDA        $225.73     $7.01    $15.52      2.21x        +121%    14.55x      0.12
 MRVL        $225.41     $3.30     $6.72      2.04x        +104%    33.54x      0.32
-ASML      $1,764.85    $27.56    $51.71      1.88x         +88%    34.13x      0.39
+ASML      $1,764.85    $27.56    $51.72      1.88x         +88%    34.12x      0.39
 TSM         $439.00    $13.86    $21.93      1.58x         +58%    20.02x      0.34
 ANET        $194.96     $3.46     $5.16      1.49x         +49%    37.78x      0.77
 QCOM        $174.09    $11.36    $10.22      0.90x         -10%    17.04x       n/a
-AVGO*       $368.56       n/a    $19.37        n/a          n/a       n/a       n/a
+AVGO*       $368.56       n/a    $19.39        n/a          n/a       n/a       n/a
 
 * = AVGO
 
