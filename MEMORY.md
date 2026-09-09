@@ -7,6 +7,137 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Rate sensitivity and midterm seasonality: neither is a deployment signal (2026-09-09)
+
+Operator asked how crypto, then LLY/AVGO, react to rate hikes, and what
+midterms do to the holdings. Three threads, one conclusion: **no timing
+edge survives a control in any of them.** All figures from the local
+store; policy-rate proxies derived as `DGS10 - T10Y3M` (3m) and
+`DGS10 - T10Y2Y` (2y), real yields from `DFII10`.
+
+### Crypto vs rate hikes -- the effect is 2022, and 2022 was not rates
+
+Conditioning 21bd forward returns on the 63bd change in the 2y yield
+(HIKING = +25bp or more) looks damning: BTC +0.41% in hiking vs +8.12%
+flat, ETH +0.13% vs +9.70%. It does not survive. n=875 is 11 overlapping
+episodes; block-bootstrapped (63bd blocks, 5000 draws) the gap gives
+**p = 0.56 for BTC, 0.82 for ETH**. Sub-periods flip sign: 2015-19
+hiking +5.79%, 2022-23 -2.38%, 2024-26 +1.00%. Daily rate beta flips
+sign in 8 of 12 years; full-sample corr(BTC, d2y) = **-0.008**.
+
+The decisive cut -- strip 19 trading days around Luna (2022-05-06/13),
+3AC-Celsius (06-10/17) and FTX (11-07/14):
+
+| 2022 | full year | ex-blowup windows |
+|---|---|---|
+| BTC | -64.1% | **-16.2%** |
+| ETH | -67.4% | **-3.0%** |
+| QQQ | -32.6% | -29.4% |
+
+Those 19 days carry 122% of BTC's underperformance vs QQQ for the year.
+Outside its own credit unwind crypto BEAT tech through the fastest
+hiking cycle in 40 years. The hikes and the deleveraging were
+coincident, not causal.
+
+**Do not add a rate filter to `run_crypto_trend.py`** -- there is
+nothing to filter on, and it would be fitted to one 2022 correlation.
+The tail risk that matters for the sleeve is counterparty/credit inside
+crypto, which the MA ensemble already catches (all three blowups broke
+MA50 before the worst of the drawdown).
+
+### LLY and AVGO vs rate hikes -- one is indifferent, one is beta
+
+- **LLY is genuinely rate-indifferent.** Hiking is its BEST regime
+  (21bd fwd +1.56% hiking / +1.48% flat / +0.93% cutting, 2000-2026,
+  3 cycles), and it repeats: 2022-23 +4.46% vs +3.53% rest, 2024-26
+  +3.68% vs +2.09%. Bootstrap p=0.76. Market-controlled 2y beta
+  **-0.05% per 10bp**. Market beta only 0.67.
+- **AVGO's apparent rate sensitivity is entirely market beta.** Raw 2y
+  beta +0.49% per 10bp and positive in 15 of 18 years -- but SPY is
+  positive in 19 of 23, and AVGO is SPY x 1.39. Control for SPY and it
+  goes to **+0.02%**. Regime gap -1.12pp, bootstrap p=0.57.
+
+| | raw 2y beta | controlled for SPY | market beta |
+|---|---|---|---|
+| AVGO | +0.49% /10bp | **+0.02%** | 1.39 |
+| LLY | +0.31% | -0.05% | 0.67 |
+| GOLD | -0.35% | **-0.38%** | 0.01 |
+| BTC | -0.07% | **-0.28%** | 0.84 |
+
+Gold's beta SURVIVES the market control unchanged -- that is what a
+genuine rate exposure looks like, and gold is the only position that
+has one. At current target weights the portfolio's real-rate beta is
+-0.24% per +10bp, of which gold contributes -0.125pp: **half the
+sensitivity from a fifth of the book.**
+
+Caveat on framing: this measures discount-rate sensitivity, not macro
+risk. AVGO's real rate exposure runs through the AI capex cycle -- if
+hikes ever tighten hyperscaler budgets that hits AVGO through orders,
+not through the multiple, and none of the above would detect it.
+
+### Midterms -- SUPERSEDES the 2026-08-07 entry below
+
+The 2026-08-07 figures reproduce exactly (AVGO +14.1/+23.1/+44.6, n=4).
+They were arithmetically right and **missing the control**: none of the
+post-election windows were ever compared to the same asset's
+unconditional return over the same era. Against that control, and a
+tiny-n test (draw n random dates from the same history, 20000 times):
+
+| | horizon | midterm med | all-days med | edge | p(random >= mid) |
+|---|---|---|---|---|---|
+| AVGO | 21d | +14.1% | +3.2% | +10.9pp | **0.018** |
+| AVGO | 63d | +23.1% | +9.7% | +13.4pp | **0.047** |
+| AVGO | 252d | +44.6% | +42.9% | +1.6pp | 0.479 |
+| LLY | 252d | +13.8% | +14.6% | -0.9pp | 0.540 |
+| GOLD | 63d | +7.7% | +2.9% | +4.8pp | 0.088 |
+| GOLD | 252d | +19.6% | +11.4% | +8.2pp | 0.202 |
+| SPY | 252d | +11.2% | +14.0% | -2.8pp | 0.680 |
+| QQQ | 63d | +2.7% | +4.6% | -1.9pp | 0.700 |
+
+Three corrections to the old entry:
+
+- **"All three show genuinely positive post-midterm drift" is wrong for
+  LLY.** +13.8% at 252d against +14.6% unconditional is a NEGATIVE
+  edge; every LLY cell is p > 0.10. That was LLY's ordinary drift read
+  as a signal.
+- **AVGO's "+44.6% median, 100% win" at 252d is worth +1.6pp.** AVGO's
+  unconditional 252d median 2010-2026 is +42.9% at a 92% win rate. A
+  100% win rate on n=4 is what a 92% base rate looks like four times.
+- **The market-wide premise does not hold.** SPY and QQQ show no
+  midterm effect at any horizon against their own controls. The
+  "well-known pattern" is not in 2002-2026 data.
+
+What survives: AVGO at 21-63d (p=0.018/0.047) and gold at 63d
+(p=0.088, suggestive only). The run-up half is directionally there
+(midterm-year Jan->Nov: SPY -8.4pp, QQQ -18.8pp vs other years) but
+n=6 containing 2002 and 2022 -- two bear markets that happened to fall
+in midterm years. BTC has only 3 midterms (2014/2018/2022), -11.3% at
+21d, p=0.93 -- nothing either way.
+
+**Impact on the AVGO tranche plan (2026-08-10 entry below).** That plan
+deploys the remaining ~100k kr after 2026-11-03 citing this finding.
+The finding does not support it: at the horizon relevant to permanent
+capital (252d) there is no midterm edge in AVGO at all. The surviving
+effect lives at 21-63d, a trading window, not a deployment window.
+Waiting for November costs nothing detectable and buys nothing
+detectable -- **it should not be the stated reason.** The plan is not
+wrong, it is unsupported; decide it on schedule or valuation instead.
+
+### Bottom line for both threads
+
+Neither rates nor midterms gives a buy-the-dip signal. Rates: there is
+no rate-driven dip in LLY (zero beta) or AVGO (pure market beta) to
+catch, and crypto's sign is unstable. Midterms: no edge at deployment
+horizon. Honest limit -- 2-3 hiking cycles and 4-6 elections cannot
+detect a modest edge even if one exists, so this is "no evidence to act
+on", not "proven absent". The practical difference is nil.
+
+Both failed the same way the opportunistic sleeve did: the number
+looked strong until it was compared against doing nothing special.
+Scripts live in the session scratchpad only, not committed (consistent
+with the convention for diagnostics) -- the method above is enough to
+rebuild them.
+
 ## healthchecks.io "DOWN" alerts are FALSE POSITIVES -- grace too tight (2026-09-04)
 
 Investigated recurring Telegram "asset_universe is DOWN" alerts. **The pipeline
@@ -4459,6 +4590,10 @@ revert to Reactor Core 83.3% / War Chest 4.5% / Home Base 12.2%.
 
 ## Midterm-election pattern shows up in all 3 core holdings (2026-08-07)
 
+**SUPERSEDED 2026-09-09** -- figures reproduce, but the control was
+missing and the conclusion does not survive it. See "Rate sensitivity
+and midterm seasonality" at the top. Kept for the record.
+
 Checked whether the well-known US midterm-election-year pattern (weak
 run-up, strong post-election rally) shows up in AVGO/LLY/Gold
 specifically, not just the broad index. Real historical US midterm
@@ -4518,6 +4653,9 @@ tied to a signal already validated this session rather than a guess:
   +16.7% above 200SMA, 5d ROC +9.9%) was explicitly evaluated and
   rejected as this trigger -- noise, nowhere close to -10%/5d, guard
   state BASE throughout.
+- **[2026-09-09: the midterm rationale below is UNSUPPORTED --
+  no 252d edge once controlled. See the top entry. Plan not
+  re-decided; the stated reason no longer stands.]**
 - **Remainder deployed after 2026-11-03** (the next US midterm
   election), per this session's midterm-election seasonality finding
   (AVGO post-election window showed a positive pattern, n=4-6,
