@@ -124,6 +124,11 @@ jobs:
           git commit -m "chore(sync): daily update [skip ci]"
           git pull --rebase origin master
           git push
+          # Marks that a new status.md is now the committed one. If the run
+          # fails after this point, the next run's status.md.prev is THIS
+          # commit, so a signal change in this run would never be reported.
+          # notify_sync_failure.py reads this to say so instead of reassuring.
+          touch .sync_committed
 
       - name: Notify on signal change
         run: python notify_signal_changes.py status.md.prev status.md
@@ -161,3 +166,17 @@ jobs:
           else
             echo "HEARTBEAT: PING FAILED (HTTP $code) -- healthchecks.io will report this pipeline down."
           fi
+
+      # Any earlier failure stops the workflow before "Notify on signal change",
+      # so a tripped freshness guard used to be completely silent -- it happened
+      # three times on 2026-09-08 and was only found by opening the Actions tab.
+      # The heartbeat above catches this too, but only externally and only after
+      # healthchecks.io's grace period expires. This is the immediate one.
+      - name: Notify on sync failure
+        if: failure()
+        run: python notify_sync_failure.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
