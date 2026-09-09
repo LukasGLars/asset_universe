@@ -7,6 +7,33 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Sync failure alerting (2026-09-09)
+
+`Notify on signal change` is the second-to-last step of `sync.yml`, so any
+earlier failure stopped the workflow and sent **nothing**. The freshness guard
+tripped three times on 2026-09-08 (prices stuck at 09-04, run required 09-07)
+and it was only found by opening the Actions tab. `notify_sync_failure.py` now
+runs under `if: failure()`.
+
+### The distinction that matters
+Step order decides whether a failure loses a signal or merely delays it:
+- **Before `Commit changes`** — master still holds the last successful sync, and
+  the next run diffs against that same committed `status.md`. Delayed, not lost.
+  All three 09-08 failures were this.
+- **After it** — `status.md` was pushed, so the next run snapshots *this* commit
+  as `status.md.prev`. A signal change in that run is **never reported**.
+
+The commit step touches `.sync_committed` (gitignored) so the alert can tell
+them apart. Without it the message would promise a signal "will be reported
+later" in exactly the case where it is gone — the same class of error as the
+first rule in CLAUDE.md.
+
+### Open: scheduled runs drift by hours
+Crons are `7 6 * * 1-5` and `37 20 * * 1-5`, but 09-08 and 09-09 both fired at
+~11:10 UTC, and the last twelve scheduled runs span 00:00–22:46. The
+round-minute offset added 2026-07-08 fixed a 166–286min delay once; it is back.
+The heartbeat and this alert cover a dead run, neither covers a late one.
+
 ## Rate sensitivity and midterm seasonality: neither is a deployment signal (2026-09-09)
 
 Operator asked how crypto, then LLY/AVGO, react to rate hikes, and what
