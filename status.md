@@ -3,52 +3,52 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     243     815 kr   198,161 kr  18.5%  20.0%   -1.5%
+  Gold                     243     813 kr   197,601 kr  18.4%  20.0%   -1.6%
   Silver                     -     568 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  10,805 kr   205,295 kr  19.2%  20.0%   -0.8%
+  Eli Lilly                 19  10,805 kr   205,295 kr  19.1%  20.0%   -0.9%
   Walmart                    -   1,038 kr         0 kr   0.0%   0.0%   +0.0%
   Cameco                     -     936 kr         0 kr   0.0%   0.0%   +0.0%
   Vertiv                     -   2,489 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  65   3,506 kr   227,870 kr  21.3%  20.0%   +1.3%
+  Broadcom                  65   3,506 kr   227,870 kr  21.2%  20.0%   +1.2%
   Howmet Aerospace           -   2,224 kr         0 kr   0.0%   0.0%   +0.0%
   Spiltan Räntefond    1,307.31     153 kr   199,404 kr  18.6%   0.0%  +18.6%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
   Reactor Core Cash          -     manual   187,520 kr  17.5%  10.0%   +7.5%
-  Virtune Bitcoin          218     124 kr    26,927 kr   2.5%   2.5%   +0.0%
-  Virtune Staked ETH       470      57 kr    26,672 kr   2.5%   2.5%   -0.0%
-  LF Global Index            -     596 kr         0 kr   0.0%  25.0%  -25.0%
+  Virtune Bitcoin          218     126 kr    27,385 kr   2.6%   2.5%   +0.1%
+  Virtune Staked ETH       470      58 kr    27,434 kr   2.6%   2.5%   +0.1%
+  LF Global Index            -     603 kr         0 kr   0.0%  25.0%  -25.0%
 ------------------------------------------------------------------------------
-  TPV                                        1,071,869 kr
-    Reactor Core            631,325 kr  (58.9%)   target 60.0%  drift -1.1%
+  TPV                                        1,072,528 kr
+    Reactor Core            630,766 kr  (58.8%)   target 60.0%  drift -1.2%
     Global Index                  0 kr  ( 0.0%)   target 25.0%  drift -25.0%
     Home Base               386,924 kr  (36.1%)   target 10.0%  drift +26.1%
-    Crypto Sleeve            53,600 kr  ( 5.0%)   target  5.0%  drift +0.0%
+    Crypto Sleeve            54,819 kr  ( 5.1%)   target  5.0%  drift +0.1%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,071,869 kr
+  Now                     :     1,072,528 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,373,053 kr
+  Trigger now             :    16,375,716 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +13.7%
+  AWAR (trailing)         :  +13.6%
   Required CAGR           :  +25.2%
   Status                  :  BEHIND  (-11.6% margin)
 
-  Projected @ AWAR        :     7,132,515 kr
-  vs target               :   -13,665,939 kr  (deficit)
+  Projected @ AWAR        :     7,098,417 kr
+  vs target               :   -13,700,037 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,030,528 kr       ~2056
-  Conservative   +15%       8,086,157 kr       ~2046
-  Base           +20%      12,902,551 kr       ~2042
-  Current AWAR   +14%       7,132,515 kr       ~2048
-  Bull           +30%      31,836,714 kr       ~2037
+  Bear           +10%       5,028,082 kr       ~2056
+  Conservative   +15%       8,079,850 kr       ~2046
+  Base           +20%      12,888,608 kr       ~2042
+  Current AWAR   +14%       7,098,417 kr       ~2048
+  Bull           +30%      31,783,248 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -78,13 +78,13 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           18.5%    LOW   LOW     +0.8%     +0.8%   69%    96  
+  Gold           18.4%    LOW   LOW     +0.8%     +0.8%   69%    96  
   Silver          0.0%    MID   LOW     +0.6%     +0.6%   61%    51  
-  Eli Lilly      19.2%    LOW   LOW     +1.4%     +1.4%   71%   105  
+  Eli Lilly      19.1%    LOW   LOW     +1.4%     +1.4%   71%   105  
   Walmart         0.0%    LOW   LOW     +1.0%     +1.0%   62%    91  
   Cameco          0.0%    MID   MID     -0.3%     -0.3%   47%    49  
   Vertiv          0.0%    LOW   LOW     +2.8%     +2.8%   67%    96  
-  Broadcom       21.3%    LOW   LOW     +0.9%     +0.9%   61%   109  
+  Broadcom       21.2%    LOW   LOW     +0.9%     +0.9%   61%   109  
 
 ==============================================================
 TACTICAL RULES
@@ -116,21 +116,21 @@ TACTICAL RULES
 
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $3.32 vs $3.24  (+2.5% surprise)
-    TTM EPS (non-GAAP actual)  : $7.06
+    TTM EPS (non-GAAP actual)  : $9.76
     Forward EPS (+1yr est.)    : $19.38
-    Fwd/Trail ratio (normalized): 2.75x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
+    Fwd/Trail ratio (normalized): 1.99x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $29.59B  (TTM YoY: +48.7%)
     Next-qtr revenue consensus : $34.88B (implied YoY +93.6%)
     Next earnings  : 2026-12-09
     Reminder       : not_due
     Latest quarter : 2026-07-31
-    Beat streak    : 3
+    Beat streak    : 4
     Guidance trend : flat  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.26
+    Forward EPS (+1yr est.)    : $47.24
     Fwd/Trail ratio (normalized): 1.50x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
     Next-qtr revenue consensus : $22.22B (implied YoY +26.2%)
@@ -174,7 +174,7 @@ NEXT CONTRIBUTION
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
   AVGO Rebalance Check  [existing capital, band: 10%]
-    Gold status: HOLD  (31.4% actual vs 25.0% target, gap -6.4%)
+    Gold status: HOLD  (31.3% actual vs 25.0% target, gap -6.3%)
     AVGO status: HOLD  (36.1% actual vs 40.0% target, gap +3.9%)
     LLY status: HOLD  (32.5% actual vs 35.0% target, gap +2.5%)
 
@@ -271,24 +271,24 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-11
+AVGO peer valuation snapshot -- 2026-09-14
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $975.26    $45.12   $155.03      3.44x        +244%     6.29x      0.03
+MU          $975.26    $45.12   $156.07      3.46x        +246%     6.25x      0.03
 AMD         $516.13     $5.76    $15.51      2.69x        +169%    33.28x      0.20
 NVDA        $218.29     $7.01    $15.57      2.22x        +122%    14.02x      0.11
-MRVL        $236.10     $3.30     $6.72      2.04x        +104%    35.13x      0.34
+MRVL        $236.10     $3.30     $6.73      2.04x        +104%    35.07x      0.34
+AVGO*       $361.99     $9.76    $19.38      1.99x         +99%    18.67x      0.19
 ASML      $1,698.30    $27.56    $51.72      1.88x         +88%    32.83x      0.37
 TSM         $433.24    $13.86    $21.93      1.58x         +58%    19.76x      0.34
 ANET        $199.59     $3.46     $5.16      1.49x         +49%    38.68x      0.79
-QCOM        $181.97    $11.36    $10.20      0.90x         -10%    17.84x       n/a
-AVGO*       $361.99       n/a    $19.38        n/a          n/a       n/a       n/a
+QCOM        $181.97    $11.36    $10.22      0.90x         -10%    17.80x       n/a
 
 * = AVGO
 
-AVGO rank -- growth ratio (highest first): n/a of 9
-AVGO rank -- forward P/E (cheapest first): n/a of 9
-AVGO rank -- PEG(1y) (cheapest first)    : n/a of 9
+AVGO rank -- growth ratio (highest first): 5 of 9
+AVGO rank -- forward P/E (cheapest first): 4 of 9
+AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
