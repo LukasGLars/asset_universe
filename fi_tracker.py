@@ -141,7 +141,8 @@ print("FI@50 PACE TRACKER")
 print(f"{'='*62}")
 
 if fi:
-    pace_icon = "ON PACE" if fi["on_pace"] else "BEHIND"
+    pace_icon = ("UNKNOWN" if fi["on_pace"] is None
+                 else "ON PACE" if fi["on_pace"] else "BEHIND")
     print(f"  Start  ({fi['start_date']})  :  {fi['start_value_sek']:>12,.0f} kr")
     print(f"  Now                     :  {fi['tpv_sek']:>12,.0f} kr")
     # Three threshold lines, because one number cannot carry it: the trigger
@@ -159,14 +160,25 @@ if fi:
         print(f"  Target (FI@50)          :  {fi['target_sek']:>12,.0f} kr")
     print(f"  Years remaining         :  {fi['years_remaining']:.1f}")
     print()
-    print(f"  AWAR (trailing)         :  {fi['awar']:>+.1%}")
-    print(f"  Required CAGR           :  {fi['required_cagr']:>+.1%}")
-    print(f"  Status                  :  {pace_icon}  ({fi['awar'] - fi['required_cagr']:+.1%} margin)")
-    print()
-    print(f"  Projected @ AWAR        :  {fi['projected_sek']:>12,.0f} kr")
-    surplus = fi["surplus_deficit"]
-    label = "surplus" if surplus >= 0 else "deficit"
-    print(f"  vs target               :  {surplus:>+12,.0f} kr  ({label})")
+    print(f"  Wealth growth (incl. deposits) :  {fi['wealth_growth']:>+.1%}")
+    if fi["awar"] is None:
+        print(f"  Return (deposit-adjusted)      :  n/a  <- [[deposits]] ledger empty")
+        print(f"  Required CAGR                  :  {fi['required_cagr']:>+.1%}")
+        print(f"  Status                         :  {pace_icon}"
+              f"  (fill config/portfolio.toml [[deposits]] to resolve)")
+        print()
+        print("  Projection suppressed: compounding wealth growth would count")
+        print("  every deposit twice -- once in the rate, once in the contributions.")
+    else:
+        print(f"  Return (deposit-adjusted)      :  {fi['awar']:>+.1%}")
+        print(f"  Required CAGR                  :  {fi['required_cagr']:>+.1%}")
+        print(f"  Status                         :  {pace_icon}"
+              f"  ({fi['awar'] - fi['required_cagr']:+.1%} margin)")
+        print()
+        print(f"  Projected @ return             :  {fi['projected_sek']:>12,.0f} kr")
+        surplus = fi["surplus_deficit"]
+        label = "surplus" if surplus >= 0 else "deficit"
+        print(f"  vs target                      :  {surplus:>+12,.0f} kr  ({label})")
 
     monthly_contrib = fi["monthly_contribution_sek"]
     print()
@@ -181,8 +193,10 @@ if fi:
     # actual year, previously hardcoded to 2026.
     _today    = pd.Timestamp.today()
     _year_now = _today.year + (_today.dayofyear - 1) / 365.25
-    for label, rate in [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20),
-                        ("Current AWAR", fi["awar"]), ("Bull", 0.30)]:
+    _scenarios = [("Bear", 0.10), ("Conservative", 0.15), ("Base", 0.20), ("Bull", 0.30)]
+    if fi["awar"] is not None:
+        _scenarios.insert(3, ("Current (actual)", fi["awar"]))
+    for label, rate in _scenarios:
         proj      = portfolio.future_value_with_contributions(tpv, rate, fi["years_remaining"], monthly_contrib)
         yrs_to_fi = portfolio.years_to_reach_target(tpv, rate, monthly_contrib,
                                                     fi["target_now_sek"],
