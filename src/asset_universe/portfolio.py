@@ -129,6 +129,58 @@ def snapshot(data_dir: Path | None = None) -> pd.DataFrame:
     return df
 
 
+def _load_deposits() -> list[dict]:
+    """Actual external cash flows from config/portfolio.toml's [[deposits]].
+
+    Empty when the ledger has not been filled in -- callers must treat that as
+    "unknown", never as "no deposits happened".
+    """
+    rows = _load_portfolio_config().get("deposits", [])
+    return sorted(
+        ({"date": pd.Timestamp(r["date"]), "amount_sek": float(r["amount_sek"])}
+         for r in rows),
+        key=lambda r: r["date"],
+    )
+
+
+def modified_dietz_return(
+    start_value: float, end_value: float, flows: list[dict],
+    start_date: pd.Timestamp, end_date: pd.Timestamp,
+) -> float:
+    """Deposit-adjusted period return (Modified Dietz), as a simple fraction.
+
+    R = (EV - BV - F) / (BV + sum(w_i * F_i)), where each flow is weighted by
+    the fraction of the period it was actually present for. This is the honest
+    ceiling on what this repo can compute: a true time-weighted return needs
+    portfolio value at every flow date, and the store holds only CURRENT share
+    counts -- reconstructing history from today's shares would misattribute
+    every past trade (Gold, the HWM exit) to the wrong period.
+    """
+    days = (end_date - start_date).days
+    if days <= 0 or start_value <= 0:
+        return 0.0
+
+    total_flow = sum(f["amount_sek"] for f in flows)
+    weighted = sum(
+        f["amount_sek"] * ((end_date - f["date"]).days / days) for f in flows
+    )
+    denominator = start_value + weighted
+    # A withdrawal large enough to zero out the weighted base makes the ratio
+    # meaningless rather than merely extreme -- see MEMORY.md "check what is in
+    # a denominator". Report no return instead of a fabricated one.
+    if denominator <= 0:
+        return 0.0
+    return (end_value - start_value - total_flow) / denominator
+
+
+def _annualize(period_return: float, days: float) -> float:
+    """Period return -> annual rate. Guards the fractional-power domain error
+    that a <= -100% period return would otherwise raise."""
+    if days <= 0 or period_return <= -1:
+        return period_return
+    return (1 + period_return) ** (365.25 / days) - 1
+
+
 def _annuity_due_fv_factor(monthly_rate: float, n_months: float) -> float:
     """
     Future-value factor for 1 kr/month contributed at the start of each
@@ -319,11 +371,33 @@ def fi_pace(data_dir: Path | None = None) -> dict:
     target     = _fi_target(fi, max(years_left, 0.0))
     inflation  = float(fi.get("target_inflation", 0.0))
 
-    awar          = (tpv / start_value) ** (365.25 / days_elapsed) - 1 if days_elapsed > 0 else 0.0
+    # Raw wealth growth: TPV vs start_value, deposits INCLUDED. Kept because it
+    # is the honest answer to "how fast is the pot growing", but it is not a
+    # return and must never drive a projection -- compounding it and then
+    # adding future contributions counts deposits twice.
+    wealth_growth = _annualize(tpv / start_value - 1, days_elapsed)
+
+    deposits = _load_deposits()
+    if deposits:
+        adjusted_return = _annualize(
+            modified_dietz_return(start_value, tpv, deposits, start_date, today),
+            days_elapsed,
+        )
+        return_basis = "modified_dietz"
+    else:
+        # No ledger -> no way to separate savings from performance. Say so
+        # rather than presenting wealth growth under a return's name.
+        adjusted_return = None
+        return_basis = "unadjusted"
+
+    # Projections compound the return, then add contributions on top. Feeding
+    # wealth_growth in here double-counts every deposit, so a missing ledger
+    # means no projection rate exists -- not that wealth_growth substitutes.
+    awar          = adjusted_return
     required_cagr = _solve_required_cagr(tpv, target, years_left, monthly_contribution)
     projected     = (future_value_with_contributions(tpv, awar, years_left, monthly_contribution)
-                      if years_left > 0 else tpv)
-    surplus       = projected - target
+                      if years_left > 0 and awar is not None else None)
+    surplus       = projected - target if projected is not None else None
 
     return {
         "tpv_sek":              tpv,
@@ -337,8 +411,10 @@ def fi_pace(data_dir: Path | None = None) -> dict:
         "years_remaining":      years_left,
         "days_elapsed":         days_elapsed,
         "awar":                 awar,
+        "wealth_growth":        wealth_growth,
+        "return_basis":         return_basis,
         "required_cagr":        required_cagr,
-        "on_pace":              awar >= required_cagr,
+        "on_pace":              awar >= required_cagr if awar is not None else None,
         "projected_sek":        projected,
         "surplus_deficit":      surplus,
         "monthly_contribution_sek": monthly_contribution,

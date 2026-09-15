@@ -209,3 +209,22 @@ currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
 target_weight = 0.25
+
+# ── Actual deposit ledger ─────────────────────────────────────────────────────
+# Real external cash flows into (or out of) the portfolio since fi.start_date.
+# Positive = deposit, negative = withdrawal. Dates are the day the money hit
+# the account, not the day it was invested -- idle cash is still capital the
+# return has to be measured against.
+#
+# Why this exists: AWAR was computed as (tpv / start_value)^(1/yrs) - 1, which
+# counts every krona deposited as investment return. With no ledger there is no
+# way to tell savings from performance, and fi.monthly_contribution_sek is a
+# PLANNING assumption -- it was never evidence of what was actually paid in.
+#
+# An EMPTY ledger is honest: fi_pace() then reports return_basis = "unadjusted"
+# and refuses to present a deposit-adjusted figure, rather than inventing one
+# from the 6,000 kr/mo assumption. Fill this in and the real number appears.
+# Add rows as:
+#     [[deposits]]
+#     date       = "2025-08-25"
+#     amount_sek = 6000

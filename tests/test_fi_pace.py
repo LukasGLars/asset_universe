@@ -255,3 +255,86 @@ def test_live_config_bucket_targets_sum_to_one():
     to 1.0 would silently mis-scale run_outlook_montecarlo.py's blended
     return."""
     assert math.isclose(sum(portfolio.bucket_targets().values()), 1.0, abs_tol=1e-9)
+
+
+# ── Deposit-adjusted return (Modified Dietz) ──────────────────────────────────
+
+def test_pure_deposit_growth_is_not_counted_as_return():
+    # THE regression this whole feature exists for. A portfolio that grew
+    # ONLY because money was paid in returned 0% -- the old AWAR formula
+    # reported this as a large positive and drove every projection off it.
+    start = pd.Timestamp("2025-01-01")
+    end   = pd.Timestamp("2026-01-01")
+    flows = [{"date": pd.Timestamp("2025-01-01"), "amount_sek": 100_000.0}]
+
+    r = portfolio.modified_dietz_return(1_000_000, 1_100_000, flows, start, end)
+
+    assert math.isclose(r, 0.0, abs_tol=1e-9)
+
+
+def test_deposit_weighted_by_time_present_in_the_portfolio():
+    # Money that arrived halfway through only had half the period to work,
+    # so it counts half in the denominator.
+    start = pd.Timestamp("2025-01-01")
+    end   = pd.Timestamp("2026-01-01")
+    flows = [{"date": pd.Timestamp("2025-07-02"), "amount_sek": 100_000.0}]
+
+    r = portfolio.modified_dietz_return(1_000_000, 1_200_000, flows, start, end)
+
+    days = (end - start).days
+    w    = (end - pd.Timestamp("2025-07-02")).days / days
+    assert math.isclose(r, 100_000 / (1_000_000 + 100_000 * w), rel_tol=1e-9)
+    assert 0.09 < r < 0.10  # ~9.5%, not the 20% raw wealth growth suggests
+
+
+def test_withdrawal_raises_the_measured_return():
+    # Taking money out must not read as a loss.
+    start = pd.Timestamp("2025-01-01")
+    end   = pd.Timestamp("2026-01-01")
+    flows = [{"date": pd.Timestamp("2025-01-01"), "amount_sek": -100_000.0}]
+
+    r = portfolio.modified_dietz_return(1_000_000, 950_000, flows, start, end)
+
+    assert r > 0
+
+
+def test_empty_ledger_reports_unadjusted_and_suppresses_projection(monkeypatch, tmp_path):
+    # No ledger must mean "unknown", never a fabricated return from the
+    # 6,000 kr/mo planning assumption.
+    monkeypatch.setattr(portfolio, "_load_portfolio_config", lambda: _FI_CFG)
+    monkeypatch.setattr(portfolio, "snapshot",
+                        lambda data_dir=None: _snap([{"name": "X", "shares": 1,
+                                                      "value_sek": 1_500_000.0}]))
+
+    fi = portfolio.fi_pace(tmp_path)
+
+    assert fi["return_basis"] == "unadjusted"
+    assert fi["awar"] is None
+    assert fi["projected_sek"] is None
+    assert fi["on_pace"] is None
+    assert fi["wealth_growth"] > 0  # still reported, just not as a return
+
+
+def test_populated_ledger_produces_an_adjusted_return(monkeypatch, tmp_path):
+    cfg = {**_FI_CFG, "deposits": [{"date": "2025-08-01", "amount_sek": 200_000}]}
+    monkeypatch.setattr(portfolio, "_load_portfolio_config", lambda: cfg)
+    monkeypatch.setattr(portfolio, "snapshot",
+                        lambda data_dir=None: _snap([{"name": "X", "shares": 1,
+                                                      "value_sek": 1_500_000.0}]))
+
+    fi = portfolio.fi_pace(tmp_path)
+
+    assert fi["return_basis"] == "modified_dietz"
+    assert fi["awar"] is not None
+    # Deposits stripped out, so the adjusted return must sit BELOW the raw
+    # wealth growth that counts them as performance.
+    assert fi["awar"] < fi["wealth_growth"]
+    assert fi["projected_sek"] is not None
+
+
+def test_zero_weighted_base_returns_zero_rather_than_dividing():
+    start = pd.Timestamp("2025-01-01")
+    end   = pd.Timestamp("2026-01-01")
+    flows = [{"date": pd.Timestamp("2025-01-01"), "amount_sek": -1_000_000.0}]
+
+    assert portfolio.modified_dietz_return(1_000_000, 0, flows, start, end) == 0.0
