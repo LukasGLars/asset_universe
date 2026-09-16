@@ -724,6 +724,17 @@ try:
 except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")
 
+# ── Sightline (hold-or-cut on each thesis holding's disclosed observable) ──
+# Readings are entered by hand after each release (record_sightline.py);
+# this only re-derives the state from them. Deliberately no link to the
+# rebalance / contribution blocks below -- Sightline never resizes.
+try:
+    from sightline import format_dashboard_lines
+    print()
+    print("\n".join(format_dashboard_lines()))
+except Exception as _e:
+    print(f"\n  Sightline : [unavailable — {_e}]")
+
 # ── Opportunistic sleeve (war-chest tactical layer, separate from base) ─────
 try:
     import run_entry_screen
