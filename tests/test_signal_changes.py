@@ -724,3 +724,88 @@ def test_crypto_missing_section_does_not_alert():
     curr = extract_fingerprint(_crypto("100%", "100%"))
     result = build_actionable_message(prev, curr)
     assert result is None or "sleeve ->" not in result[0]
+
+
+# -- Sightline -----------------------------------------------------------------
+
+def _sightline(avgo_state="HOLD", lly_state="HOLD",
+               avgo_latest="FY26Q3: 16.7 (+221% YoY)",
+               lly_latest="2026Q2: 14.8 (+72% YoY)"):
+    return FIXTURE_BASE + f"""
+  Sightline  [hold-or-cut only -- never resizes]
+    AVGO (Broadcom)
+      Observable : AI semiconductor revenue, as stated by management each quarter
+      Latest     : {avgo_latest}
+      State      : {avgo_state}
+      Eroding    : YoY < 0 in any quarter
+      Action     : CUT: sell the full position
+    LLY (Eli Lilly)
+      Observable : Mounjaro + Zepbound combined worldwide revenue
+      Latest     : {lly_latest}
+      State      : {lly_state}
+      Eroding    : YoY < 0 in any quarter, OR an FDA boxed warning
+      Action     : CUT: sell the full position
+    gold: EXEMPT -- strategic anchor
+"""
+
+
+def test_sightline_fingerprint_reads_each_holding_separately():
+    fp = extract_fingerprint(_sightline("HOLD", "CUT"))
+    assert fp["sightline_avgo_state"] == "HOLD"
+    assert fp["sightline_lly_state"] == "CUT"
+    assert fp["sightline_avgo_observable"].startswith("AI semiconductor revenue")
+    assert fp["sightline_lly_action"] == "CUT: sell the full position"
+
+
+def test_sightline_live_block_is_parseable():
+    """Label contract between sightline.format_dashboard_lines and this
+    module -- the real block, not a hand-typed copy."""
+    from sightline import format_dashboard_lines
+    fp = extract_fingerprint(FIXTURE_BASE + "\n" + "\n".join(format_dashboard_lines()))
+    for key in ("sightline_avgo_state", "sightline_avgo_latest", "sightline_avgo_observable",
+                "sightline_avgo_action", "sightline_lly_state", "sightline_lly_latest",
+                "sightline_lly_observable", "sightline_lly_action"):
+        assert fp[key] != "unknown", f"{key} did not parse -- label contract broken"
+
+
+def test_sightline_cut_fires_with_verbatim_action():
+    prev = extract_fingerprint(_sightline("HOLD", "HOLD"))
+    curr = extract_fingerprint(_sightline("CUT", "HOLD", avgo_latest="FY27Q1: 4 (-52% YoY)"))
+    subject, body = build_actionable_message(prev, curr)
+    assert "Sightline AVGO CUT" in subject
+    assert "SIGHTLINE AVGO: ERODING -- FY27Q1: 4 (-52% YoY)" in body
+    assert "ACTION: CUT: sell the full position" in body
+    assert "LLY" not in subject
+
+
+def test_sightline_requalified_is_explicitly_not_a_buy():
+    prev = extract_fingerprint(_sightline("CUT", "HOLD"))
+    curr = extract_fingerprint(_sightline("REQUALIFIED", "HOLD"))
+    subject, body = build_actionable_message(prev, curr)
+    assert "Sightline AVGO REQUALIFIED" in subject
+    assert "CUT -> REQUALIFIED" in body
+    assert "not a buy" in body
+
+
+def test_sightline_unchanged_is_silent():
+    fp = extract_fingerprint(_sightline())
+    assert build_actionable_message(fp, fp) is None
+
+
+def test_sightline_missing_section_does_not_alert():
+    prev = extract_fingerprint(FIXTURE_BASE)
+    curr = extract_fingerprint(_sightline())
+    result = build_actionable_message(prev, curr)
+    assert result is None or "Sightline" not in result[0]
+
+
+def test_earnings_reminder_names_the_sightline_observable():
+    base = _sightline()
+    prev = extract_fingerprint(base)
+    curr = extract_fingerprint(base.replace(
+        "Next earnings  : 2026-09-03\n    Reminder       : not_due",
+        "Next earnings  : 2026-09-03\n    Reminder       : DUE",
+    ))
+    _, body = build_actionable_message(prev, curr)
+    assert "SIGHTLINE: record AI semiconductor revenue" in body
+    assert "record_sightline.py AVGO" in body

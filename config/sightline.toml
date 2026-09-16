@@ -1,0 +1,101 @@
+# Sightline -- hold-or-cut framework, one entry per thesis holding.
+#
+# Five fields per holding: a DISCLOSED observable (a figure the company
+# itself reports -- never price), an eroding trigger, a constructive
+# trigger, a check cadence, and a pre-committed action. Sightline answers
+# hold-or-cut ONLY: it never resizes the portfolio or moves the mission.
+# It also runs the entry test for new candidates -- if these five fields
+# can't be written for a name, there is no buy.
+#
+# The rules themselves (eroding = YoY < 0; constructive = YoY > 0 for two
+# consecutive quarters after a CUT) are implemented in sightline.py; the
+# text here is the human record of the same rule. State is derived from
+# the readings, not stored.
+#
+# Readings are appended via:
+#   python record_sightline.py AVGO FY26Q3 16.7
+#   python record_sightline.py LLY  2026Q2 14.8
+#
+# Quarter labels: AVGO uses fiscal quarters (FY26Q3 = quarter ended
+# 2026-08-02); LLY uses calendar quarters (2026Q2). YoY compares against
+# the same-numbered quarter one year earlier, so labels must be consistent
+# within a ticker.
+
+[AVGO]
+name         = "Broadcom"
+observable   = "AI semiconductor revenue, as stated by management each quarter"
+unit         = "USD bn"
+eroding      = "YoY < 0 in any quarter"
+constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
+cadence      = "earnings release, ~5 weeks after fiscal quarter end"
+action       = "CUT: sell the full position"
+
+[[AVGO.readings]]
+quarter = "FY25Q1"
+value   = 4.1
+
+[[AVGO.readings]]
+quarter = "FY25Q2"
+value   = 4.4
+
+[[AVGO.readings]]
+quarter = "FY25Q3"
+value   = 5.2
+
+[[AVGO.readings]]
+quarter = "FY25Q4"
+value   = 6.5
+
+[[AVGO.readings]]
+quarter = "FY26Q1"
+value   = 8.4
+
+[[AVGO.readings]]
+quarter = "FY26Q2"
+value   = 10.8
+
+[[AVGO.readings]]
+quarter = "FY26Q3"
+value   = 16.7
+
+[LLY]
+name         = "Eli Lilly"
+observable   = "Mounjaro + Zepbound combined worldwide revenue"
+unit         = "USD bn"
+eroding      = "YoY < 0 in any quarter, OR an FDA boxed warning / market withdrawal for tirzepatide (permanent, no constructive path)"
+constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
+cadence      = "earnings release, ~5 weeks after calendar quarter end"
+action       = "CUT: sell the full position"
+
+[[LLY.readings]]
+quarter = "2025Q1"
+value   = 6.2
+
+[[LLY.readings]]
+quarter = "2025Q2"
+value   = 8.6
+
+[[LLY.readings]]
+quarter = "2025Q3"
+value   = 10.1
+
+[[LLY.readings]]
+quarter = "2025Q4"
+value   = 11.6
+
+[[LLY.readings]]
+quarter = "2026Q1"
+value   = 12.8
+
+[[LLY.readings]]
+quarter = "2026Q2"
+value   = 14.8
+
+# Holdings Sightline does NOT govern. Stated explicitly so an absent entry
+# reads as a decision, not a gap.
+
+[exemptions.gold]
+reason = "Strategic anchor, held for a portfolio-level reason. No disclosed observable exists. Exit only on a mission change, which is outside Sightline's scope by construction."
+
+[exemptions.crypto_sleeve]
+reason = "Mechanical sleeve (BTC + staked ETH ETPs): hold-or-cut is delegated to its own MA50/100/200 ensemble rule and the 3-losing-cycles kill switch. No disclosed observable exists."

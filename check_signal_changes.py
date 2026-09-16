@@ -102,6 +102,16 @@ def extract_fingerprint(text: str) -> dict:
         "lly_eps_actual_vs_est": _find(r"LLY Earnings Checkpoint.*?Latest qtr EPS \(actual vs est\.\)\s*:\s*([^\n]+)", text),
         "lly_revenue_actual": _find(r"LLY Earnings Checkpoint.*?Revenue \(latest qtr, actual\)\s*:\s*([^\n]+)", text),
         "lly_revenue_next_q": _find(r"LLY Earnings Checkpoint.*?Next-qtr revenue consensus\s*:\s*([^\n]+)", text),
+        # Sightline: state is the trigger, the other three are quoted in the
+        # message so observable and action can never drift from config.
+        "sightline_avgo_state": _find(r"Sightline.*?AVGO \(.*?State\s*:\s*(\S+)", text),
+        "sightline_avgo_latest": _find(r"Sightline.*?AVGO \(.*?Latest\s*:\s*([^\n]+)", text),
+        "sightline_avgo_observable": _find(r"Sightline.*?AVGO \(.*?Observable\s*:\s*([^\n]+)", text),
+        "sightline_avgo_action": _find(r"Sightline.*?AVGO \(.*?Action\s*:\s*([^\n]+)", text),
+        "sightline_lly_state": _find(r"Sightline.*?LLY \(.*?State\s*:\s*(\S+)", text),
+        "sightline_lly_latest": _find(r"Sightline.*?LLY \(.*?Latest\s*:\s*([^\n]+)", text),
+        "sightline_lly_observable": _find(r"Sightline.*?LLY \(.*?Observable\s*:\s*([^\n]+)", text),
+        "sightline_lly_action": _find(r"Sightline.*?LLY \(.*?Action\s*:\s*([^\n]+)", text),
         "rebal_gold_status": _find(r"AVGO Rebalance Check.*?Gold status:\s*(\S+)", text),
         "rebal_avgo_status": _find(r"AVGO Rebalance Check.*?AVGO status:\s*(\S+)", text),
         "rebal_lly_status": _find(r"AVGO Rebalance Check.*?LLY status:\s*(\S+)", text),
@@ -121,6 +131,8 @@ LABELS = {
     "crypto_btc_exposure": "Crypto sleeve BTC",
     "crypto_eth_exposure": "Crypto sleeve ETH",
     "regime_flip": "Regime",
+    "sightline_avgo_state": "Sightline AVGO",
+    "sightline_lly_state": "Sightline LLY",
 }
 
 
@@ -277,7 +289,9 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
         blocks.append(
             "AVGO EARNINGS due within the next 7 days.\n"
             "ACTION: after the print, check AI revenue against management's CURRENT guided "
-            "pace -- don't assume prior guidance still holds."
+            "pace -- don't assume prior guidance still holds.\n"
+            f"SIGHTLINE: record {curr['sightline_avgo_observable']} -- "
+            "python record_sightline.py AVGO <FYyyQn> <USD bn>"
         )
         subject_parts.append("AVGO earnings due")
 
@@ -285,7 +299,9 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and "unknown" not in (prev["lly_earnings_reminder"], curr["lly_earnings_reminder"])):
         blocks.append(
             "LLY EARNINGS due within the next 7 days.\n"
-            "ACTION: after the print, check the growth trajectory against guidance."
+            "ACTION: after the print, check the growth trajectory against guidance.\n"
+            f"SIGHTLINE: record {curr['sightline_lly_observable']} -- "
+            "python record_sightline.py LLY <yyyyQn> <USD bn>"
         )
         subject_parts.append("LLY earnings due")
 
@@ -314,6 +330,29 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             f"EPS beat streak: {curr['lly_beat_streak']} | Guidance: {curr['lly_guidance_trend']}"
         )
         subject_parts.append("LLY earnings reported")
+
+    # Sightline: fires on any state change. HOLD -> CUT is the one that
+    # matters and is the pre-committed action, so the message quotes it
+    # verbatim from config rather than paraphrasing. CUT -> REQUALIFIED
+    # only re-opens the entry test -- said explicitly so it can't be read
+    # as a buy.
+    for _tkr in ("avgo", "lly"):
+        _prev, _curr = prev[f"sightline_{_tkr}_state"], curr[f"sightline_{_tkr}_state"]
+        if _prev != _curr and "unknown" not in (_prev, _curr):
+            _label = _tkr.upper()
+            if _curr == "CUT":
+                blocks.append(
+                    f"SIGHTLINE {_label}: ERODING -- {curr[f'sightline_{_tkr}_latest']}\n"
+                    f"Observable: {curr[f'sightline_{_tkr}_observable']}\n"
+                    f"ACTION: {curr[f'sightline_{_tkr}_action']}"
+                )
+                subject_parts.append(f"Sightline {_label} CUT")
+            else:
+                blocks.append(
+                    f"SIGHTLINE {_label}: {_prev} -> {_curr} -- {curr[f'sightline_{_tkr}_latest']}\n"
+                    "No action: this only re-opens the entry test, it is not a buy."
+                )
+                subject_parts.append(f"Sightline {_label} {_curr}")
 
     # AVGO Rebalance Check (2026-08-17): fires only on the HOLD -> SELL/BUY
     # transition (an asset NEWLY drifting out of the vol-target band), not on

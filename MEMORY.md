@@ -7,6 +7,57 @@ sleeve tests that were tried and closed, correlation analysis, etc.) lives in
 the operator's personal memory file, not in this repo — ask if you need it;
 this file is meant to be self-contained for day-to-day continuation.
 
+## Sightline: hold-or-cut on a disclosed observable (2026-09-16)
+
+Sightline is the operator's hold-or-cut framework. One entry per thesis
+holding, five fields: a **disclosed observable** (a figure the company
+itself reports -- never price), an eroding trigger, a constructive
+trigger, a check cadence, and a pre-committed action. It answers
+hold-or-cut ONLY -- by construction it never resizes, never touches
+rebalancing or contribution routing. It is also the entry test for new
+names: if the five fields can't be written, there is no buy.
+
+### What shipped
+- `config/sightline.toml` -- the entries plus reading history. AVGO:
+  AI semiconductor revenue (mgmt-stated, fiscal quarters `FY26Q3`);
+  LLY: Mounjaro + Zepbound combined revenue (calendar quarters `2026Q2`).
+  Seeded with 6-7 quarters each from the releases so YoY works from the
+  first new reading. Gold and the crypto sleeve are listed under
+  `[exemptions]` with the reason -- an absent entry must read as a
+  decision, not a gap.
+- `sightline.py` -- rules: eroding = YoY < 0 in any quarter -> CUT;
+  constructive = YoY > 0 for two consecutive quarters after a CUT ->
+  REQUALIFIED (re-opens the entry test only, never a re-buy). State is
+  derived from the readings every time, never stored.
+- `record_sightline.py AVGO FY26Q3 16.7` -- the manual step after each
+  release. No API exposes segment revenue (re-confirmed), so the number
+  is read from the release and typed in.
+- Dashboard block in `fi_tracker.py` after the LLY earnings checkpoint;
+  `check_signal_changes.py` alerts on any state change (CUT quotes the
+  action verbatim from config) and the existing earnings-due reminder
+  now names the observable to record.
+
+### Decisions and why
+- Revenue, not earnings: earnings can fall while the franchise grows
+  (tax, amortisation, a low-margin ramp) and rise while it shrinks
+  (cost cuts, buybacks). Segment revenue is the demand itself.
+- No megatrend input to the entry test. A trend that is real shows up
+  in a disclosed line; if it doesn't, it's a story. Megatrends belong in
+  candidate sourcing, not the gate.
+- Both rules are deliberately *lagging* confirmations. The alternative
+  (guide cuts, margin thresholds) is where the false positives live; the
+  drift band and trend rules handle the earlier, noisier signal.
+- Known LLY false-positive: a deliberate price cut with volume still
+  growing could print YoY < 0. Accepted -- if volume can't outrun price
+  the franchise is commoditising, which IS the break. Q2 26 shows the
+  gap is huge today (+72% combined despite lower realised prices).
+- `earnings_verdict.py` overlaps (free-text CLEARED/NOT_CLEARED) and
+  was left in place; retiring it is a separate call.
+
+### Next readings
+LLY 2026Q3 after the ~2026-10-29 report; AVGO FY26Q4 after 2026-12-09
+(guided $21.7B AI revenue).
+
 ## Sync failure alerting (2026-09-09)
 
 `Notify on signal change` is the second-to-last step of `sync.yml`, so any
