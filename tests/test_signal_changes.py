@@ -809,3 +809,44 @@ def test_earnings_reminder_names_the_sightline_observable():
     _, body = build_actionable_message(prev, curr)
     assert "SIGHTLINE: record AI semiconductor revenue" in body
     assert "record_sightline.py AVGO" in body
+
+
+def _sightline_auto(avgo_auto, avgo_state="HOLD", avgo_latest="FY26Q3: 16.7 (+221% YoY)"):
+    return _sightline(avgo_state, "HOLD", avgo_latest=avgo_latest).replace(
+        "      Action     : CUT: sell the full position\n    LLY (Eli Lilly)",
+        f"      Action     : CUT: sell the full position\n      Auto-read  : {avgo_auto}\n    LLY (Eli Lilly)",
+    )
+
+
+def test_sightline_autoread_recorded_reports_number_and_verdict():
+    prev = extract_fingerprint(_sightline_auto("recorded FY26Q3 (8-K 2026-09-02)"))
+    curr = extract_fingerprint(_sightline_auto("recorded FY26Q4 (8-K 2026-12-09)",
+                                               avgo_latest="FY26Q4: 21.7 (+234% YoY)"))
+    subject, body = build_actionable_message(prev, curr)
+    assert "Sightline AVGO HOLD" in subject
+    assert "SIGHTLINE AVGO: FY26Q4: 21.7 (+234% YoY) -> HOLD" in body
+
+
+def test_sightline_autoread_cut_is_reported_once_with_the_action():
+    prev = extract_fingerprint(_sightline_auto("recorded FY27Q3 (8-K 2027-09-01)"))
+    curr = extract_fingerprint(_sightline_auto("recorded FY27Q4 (8-K 2027-12-08)",
+                                               avgo_state="CUT", avgo_latest="FY27Q4: 19.1 (-12% YoY)"))
+    subject, body = build_actionable_message(prev, curr)
+    assert subject.count("Sightline AVGO") == 1
+    assert "ERODING -- FY27Q4: 19.1 (-12% YoY)" in body
+    assert "ACTION: CUT: sell the full position" in body
+
+
+def test_sightline_autoread_parse_failed_asks_for_manual_reading():
+    prev = extract_fingerprint(_sightline_auto("recorded FY26Q3 (8-K 2026-09-02)"))
+    curr = extract_fingerprint(_sightline_auto("parse_failed 8-K 2026-12-09 -- record manually"))
+    subject, body = build_actionable_message(prev, curr)
+    assert "needs manual reading" in subject
+    assert "record_sightline.py AVGO" in body
+
+
+def test_sightline_autoread_unchanged_and_fetch_failed_are_silent():
+    fp = extract_fingerprint(_sightline_auto("recorded FY26Q3 (8-K 2026-09-02)"))
+    assert build_actionable_message(fp, fp) is None
+    curr = extract_fingerprint(_sightline_auto("fetch_failed -- timeout"))
+    assert build_actionable_message(fp, curr) is None

@@ -112,6 +112,10 @@ def extract_fingerprint(text: str) -> dict:
         "sightline_lly_latest": _find(r"Sightline.*?LLY \(.*?Latest\s*:\s*([^\n]+)", text),
         "sightline_lly_observable": _find(r"Sightline.*?LLY \(.*?Observable\s*:\s*([^\n]+)", text),
         "sightline_lly_action": _find(r"Sightline.*?LLY \(.*?Action\s*:\s*([^\n]+)", text),
+        # Whole line: sightline_reader makes it unique per filing and
+        # constant between filings, so a plain != is the new-filing test.
+        "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
+        "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "rebal_gold_status": _find(r"AVGO Rebalance Check.*?Gold status:\s*(\S+)", text),
         "rebal_avgo_status": _find(r"AVGO Rebalance Check.*?AVGO status:\s*(\S+)", text),
         "rebal_lly_status": _find(r"AVGO Rebalance Check.*?LLY status:\s*(\S+)", text),
@@ -330,6 +334,32 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             f"EPS beat streak: {curr['lly_beat_streak']} | Guidance: {curr['lly_guidance_trend']}"
         )
         subject_parts.append("LLY earnings reported")
+
+    # Sightline auto-read: a new filing was parsed (report the number and
+    # the verdict it produced -- the CUT block below adds the action if the
+    # state flipped) or couldn't be (the one case that still needs a hand).
+    # fetch_failed is transient and deliberately silent.
+    for _tkr in ("avgo", "lly"):
+        _prev, _curr = prev[f"sightline_{_tkr}_autoread"], curr[f"sightline_{_tkr}_autoread"]
+        if _prev == _curr or "unknown" in (_prev, _curr) or _curr.startswith("fetch_failed"):
+            continue
+        _label = _tkr.upper()
+        if _curr.startswith("recorded"):
+            if prev[f"sightline_{_tkr}_state"] != curr[f"sightline_{_tkr}_state"]:
+                continue  # the state-change block below carries it, with the action
+            blocks.append(
+                f"SIGHTLINE {_label}: {curr[f'sightline_{_tkr}_latest']} -> "
+                f"{curr[f'sightline_{_tkr}_state']}\n"
+                f"Observable: {curr[f'sightline_{_tkr}_observable']}"
+            )
+            subject_parts.append(f"Sightline {_label} {curr[f'sightline_{_tkr}_state']}")
+        elif _curr.startswith("parse_failed"):
+            blocks.append(
+                f"SIGHTLINE {_label}: could not read {curr[f'sightline_{_tkr}_observable']} "
+                f"from the new 8-K.\n"
+                f"Record manually: python record_sightline.py {_label} <quarter> <USD bn>"
+            )
+            subject_parts.append(f"Sightline {_label} needs manual reading")
 
     # Sightline: fires on any state change. HOLD -> CUT is the one that
     # matters and is the pre-committed action, so the message quotes it
