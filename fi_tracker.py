@@ -725,13 +725,21 @@ except Exception as _e:
     print(f"\n  LLY Earnings Checkpoint : [unavailable — {_e}]")
 
 # ── Sightline (hold-or-cut on each thesis holding's disclosed observable) ──
-# Readings are entered by hand after each release (record_sightline.py);
-# this only re-derives the state from them. Deliberately no link to the
-# rebalance / contribution blocks below -- Sightline never resizes.
+# Readings come from the earnings 8-K on EDGAR when the phrasing parses
+# (sightline_reader.py) and from record_sightline.py when it doesn't;
+# the state is re-derived from them either way. Deliberately no link to
+# the rebalance / contribution blocks below -- Sightline never resizes.
 try:
     from sightline import format_dashboard_lines
+    from sightline_reader import auto_read, format_auto_line
+    _auto_lines = {}
+    for _tkr in ("AVGO", "LLY"):
+        try:
+            _auto_lines[_tkr] = format_auto_line(auto_read(_tkr))
+        except Exception as _e:
+            _auto_lines[_tkr] = f"fetch_failed -- {str(_e)[:60]}"
     print()
-    print("\n".join(format_dashboard_lines()))
+    print("\n".join(format_dashboard_lines(auto_lines=_auto_lines)))
 except Exception as _e:
     print(f"\n  Sightline : [unavailable — {_e}]")
 

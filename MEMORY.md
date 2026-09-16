@@ -29,9 +29,16 @@ names: if the five fields can't be written, there is no buy.
   constructive = YoY > 0 for two consecutive quarters after a CUT ->
   REQUALIFIED (re-opens the entry test only, never a re-buy). State is
   derived from the readings every time, never stored.
-- `record_sightline.py AVGO FY26Q3 16.7` -- the manual step after each
-  release. No API exposes segment revenue (re-confirmed), so the number
-  is read from the release and typed in.
+- `sightline_reader.py` -- the daily sync reads the figure out of the
+  earnings 8-K on EDGAR (item 2.02 identifies the filing; every .htm in
+  it is scanned, since LLY's exhibit isn't named ex99). Parsers anchor on
+  the reported quarter so a guidance sentence can never be taken for the
+  actual; verified against 5 AVGO + 3 LLY releases (7/8 parse; Q4 FY25
+  AVGO genuinely had no actual in the release text). `auto_last_*` in the
+  toml tracks the last filing handled, so the daily cost is one
+  submissions call per ticker. sync.yml commits the toml.
+- `record_sightline.py AVGO FY26Q3 16.7` -- the fallback when the alert
+  says `parse_failed`. A manual reading is never overwritten by auto-read.
 - Dashboard block in `fi_tracker.py` after the LLY earnings checkpoint;
   `check_signal_changes.py` alerts on any state change (CUT quotes the
   action verbatim from config) and the existing earnings-due reminder
@@ -54,9 +61,15 @@ names: if the five fields can't be written, there is no buy.
 - `earnings_verdict.py` overlaps (free-text CLEARED/NOT_CLEARED) and
   was left in place; retiring it is a separate call.
 
+### Operator's chain of actions
+Read Telegram. `SIGHTLINE AVGO: ... -> HOLD` means nothing to do;
+`ERODING ... ACTION: CUT` means sell; `needs manual reading` means run
+record_sightline.py with the number from the release. That is the whole
+loop.
+
 ### Next readings
 LLY 2026Q3 after the ~2026-10-29 report; AVGO FY26Q4 after 2026-12-09
-(guided $21.7B AI revenue).
+(guided $21.7B AI revenue). Both should arrive via auto-read.
 
 ## Sync failure alerting (2026-09-09)
 

@@ -114,6 +114,16 @@ def record_reading(ticker: str, quarter: str, value: float,
     return derive_state(cfg[ticker]["readings"])
 
 
+def save_auto_state(ticker: str, accession: str, status: str,
+                    path: Path = CONFIG_PATH) -> None:
+    """Persists sightline_reader's last-seen filing + outcome so the daily
+    run can skip filings it has already handled."""
+    cfg = load_config(path)
+    cfg[ticker]["auto_last_accession"] = accession
+    cfg[ticker]["auto_last_status"] = status
+    _write(cfg, path)
+
+
 def _escape(s: str) -> str:
     return s.replace("\\", "\\\\").replace('"', '\\"')
 
@@ -123,14 +133,16 @@ def _write(cfg: dict, path: Path) -> None:
     header = ""
     if path.exists():
         text = path.read_text(encoding="utf-8")
-        if "\n[" in text:
-            header = text[: text.find("\n[")].rstrip() + "\n"
+        m = re.search(r"^\[", text, re.M)
+        if m and m.start() > 0:
+            header = text[: m.start()].rstrip() + "\n"
     lines = [header]
     for ticker, entry in cfg.items():
         if ticker == "exemptions":
             continue
         lines.append(f"[{ticker}]")
-        for k in ("name", "observable", "unit", "eroding", "constructive", "cadence", "action"):
+        for k in ("name", "observable", "unit", "eroding", "constructive", "cadence", "action",
+                  "auto_last_accession", "auto_last_status"):
             if k in entry:
                 lines.append(f'{k:<12} = "{_escape(entry[k])}"')
         lines.append("")
@@ -150,10 +162,13 @@ def _write(cfg: dict, path: Path) -> None:
     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
-def format_dashboard_lines(cfg: dict | None = None) -> list[str]:
+def format_dashboard_lines(cfg: dict | None = None,
+                           auto_lines: dict[str, str] | None = None) -> list[str]:
     """The block fi_tracker.py prints. Field labels are what
-    check_signal_changes.py greps, so keep them stable."""
+    check_signal_changes.py greps, so keep them stable. `auto_lines` is
+    sightline_reader's per-ticker 'Auto-read' text, if it ran."""
     cfg = cfg if cfg is not None else load_config()
+    auto_lines = auto_lines or {}
     out = ["  Sightline  [hold-or-cut only -- never resizes]"]
     for ticker, entry in cfg.items():
         if ticker == "exemptions":
@@ -165,6 +180,8 @@ def format_dashboard_lines(cfg: dict | None = None) -> list[str]:
         out.append(f"      State      : {state}")
         out.append(f"      Eroding    : {entry['eroding']}")
         out.append(f"      Action     : {entry['action']}")
+        if ticker in auto_lines:
+            out.append(f"      Auto-read  : {auto_lines[ticker]}")
     for name, ex in cfg.get("exemptions", {}).items():
         out.append(f"    {name}: EXEMPT -- {ex['reason']}")
     return out

@@ -193,3 +193,13 @@ def test_live_config_parses_and_both_holdings_hold():
         state, _ = derive_state(cfg[tkr]["readings"])
         assert state == HOLD
     assert set(cfg["exemptions"]) == {"gold", "crypto_sleeve"}
+
+
+def test_record_works_on_a_file_with_no_header_comment(tmp_path):
+    """Regression: the header-preserving rewrite once treated '[AVGO]' on
+    line 1 as part of the header and emitted the table twice."""
+    path = tmp_path / "sightline.toml"
+    path.write_text(FIXTURE[FIXTURE.index("[AVGO]"):], encoding="utf-8")
+    record_reading("AVGO", "FY26Q4", 21.7, path)
+    cfg = load_config(path)  # raises on a duplicated table
+    assert len(cfg["AVGO"]["readings"]) == 3

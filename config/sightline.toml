@@ -12,7 +12,10 @@
 # text here is the human record of the same rule. State is derived from
 # the readings, not stored.
 #
-# Readings are appended via:
+# Readings are appended by the daily sync, which reads each figure out of
+# the earnings 8-K on EDGAR (sightline_reader.py; auto_last_* fields track
+# the last filing handled). When the release phrasing doesn't parse, the
+# alert says so and the reading is typed in instead:
 #   python record_sightline.py AVGO FY26Q3 16.7
 #   python record_sightline.py LLY  2026Q2 14.8
 #
@@ -29,6 +32,8 @@ eroding      = "YoY < 0 in any quarter"
 constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
 cadence      = "earnings release, ~5 weeks after fiscal quarter end"
 action       = "CUT: sell the full position"
+auto_last_accession = "0001730168-26-000076"
+auto_last_status = "already_recorded FY26Q3 (8-K 2026-09-02)"
 
 [[AVGO.readings]]
 quarter = "FY25Q1"
@@ -66,6 +71,8 @@ eroding      = "YoY < 0 in any quarter, OR an FDA boxed warning / market withdra
 constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
 cadence      = "earnings release, ~5 weeks after calendar quarter end"
 action       = "CUT: sell the full position"
+auto_last_accession = "0000059478-26-000077"
+auto_last_status = "already_recorded 2026Q2 (8-K 2026-08-05)"
 
 [[LLY.readings]]
 quarter = "2025Q1"
