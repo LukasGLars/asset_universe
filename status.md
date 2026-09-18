@@ -3,52 +3,52 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     243     827 kr   201,076 kr  18.6%  20.0%   -1.4%
+  Gold                     243     836 kr   203,232 kr  18.8%  20.0%   -1.2%
   Silver                     -     589 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  11,354 kr   215,731 kr  20.0%  20.0%   -0.0%
+  Eli Lilly                 19  11,354 kr   215,731 kr  19.9%  20.0%   -0.1%
   Walmart                    -   1,052 kr         0 kr   0.0%   0.0%   +0.0%
   Cameco                     -     914 kr         0 kr   0.0%   0.0%   +0.0%
   Vertiv                     -   2,379 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  65   3,422 kr   222,413 kr  20.6%  20.0%   +0.6%
+  Broadcom                  65   3,422 kr   222,413 kr  20.5%  20.0%   +0.5%
   Howmet Aerospace           -   2,224 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond    1,307.31     153 kr   199,417 kr  18.5%   0.0%  +18.5%
+  Spiltan Räntefond    1,307.31     153 kr   199,417 kr  18.4%   0.0%  +18.4%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
-  Reactor Core Cash          -     manual   187,520 kr  17.4%  10.0%   +7.4%
-  Virtune Bitcoin          218     124 kr    27,032 kr   2.5%   2.5%   +0.0%
-  Virtune Staked ETH       470      57 kr    26,705 kr   2.5%   2.5%   -0.0%
-  LF Global Index            -     601 kr         0 kr   0.0%  25.0%  -25.0%
+  Reactor Core Cash          -     manual   187,520 kr  17.3%  10.0%   +7.3%
+  Virtune Bitcoin          218     127 kr    27,725 kr   2.6%   2.5%   +0.1%
+  Virtune Staked ETH       470      59 kr    27,636 kr   2.6%   2.5%   +0.1%
+  LF Global Index            -     610 kr         0 kr   0.0%  25.0%  -25.0%
 ------------------------------------------------------------------------------
-  TPV                                        1,079,914 kr
-    Reactor Core            639,220 kr  (59.2%)   target 60.0%  drift -0.8%
+  TPV                                        1,083,693 kr
+    Reactor Core            641,376 kr  (59.2%)   target 60.0%  drift -0.8%
     Global Index                  0 kr  ( 0.0%)   target 25.0%  drift -25.0%
-    Home Base               386,937 kr  (35.8%)   target 10.0%  drift +25.8%
-    Crypto Sleeve            53,737 kr  ( 5.0%)   target  5.0%  drift -0.0%
+    Home Base               386,937 kr  (35.7%)   target 10.0%  drift +25.7%
+    Crypto Sleeve            55,361 kr  ( 5.1%)   target  5.0%  drift +0.1%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,079,914 kr
+  Now                     :     1,083,693 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,378,380 kr
+  Trigger now             :    16,379,268 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +14.2%
+  AWAR (trailing)         :  +14.5%
   Required CAGR           :  +25.2%
-  Status                  :  BEHIND  (-11.0% margin)
+  Status                  :  BEHIND  (-10.7% margin)
 
-  Projected @ AWAR        :     7,520,653 kr
-  vs target               :   -13,277,801 kr  (deficit)
+  Projected @ AWAR        :     7,759,128 kr
+  vs target               :   -13,039,326 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,046,878 kr       ~2056
-  Conservative   +15%       8,109,862 kr       ~2046
-  Base           +20%      12,935,362 kr       ~2042
-  Current AWAR   +14%       7,520,653 kr       ~2047
-  Bull           +30%      31,889,262 kr       ~2037
+  Bear           +10%       5,057,295 kr       ~2056
+  Conservative   +15%       8,126,958 kr       ~2046
+  Base           +20%      12,962,790 kr       ~2042
+  Current AWAR   +15%       7,759,128 kr       ~2047
+  Bull           +30%      31,955,667 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -78,13 +78,13 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           18.6%    LOW   MID     +1.0%     +1.0%   63%    57  
+  Gold           18.8%    LOW   MID     +1.0%     +1.0%   63%    57  
   Silver          0.0%    MID   MID     +0.2%     +0.2%   54%    76  
-  Eli Lilly      20.0%    LOW   MID     -0.1%     -0.1%   49%    43  
+  Eli Lilly      19.9%    LOW   MID     -0.1%     -0.1%   49%    43  
   Walmart         0.0%    LOW   LOW     +1.0%     +1.0%   62%    90  
   Cameco          0.0%    MID   LOW     -2.1%     -1.8%   43%   570  ~base fallback
   Vertiv          0.0%    LOW   LOW     +2.5%     +2.5%   61%    96  
-  Broadcom       20.6%    LOW   LOW     +0.9%     +0.9%   61%   109  
+  Broadcom       20.5%    LOW   LOW     +0.9%     +0.9%   61%   109  
 
 ==============================================================
 TACTICAL RULES
@@ -160,7 +160,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : GM (General Motors Company)  $86.62  (ext +2.2%, 21d med +0.9%, ave +2.0%, win 57.4%, div THIN, drift -0.0%)
+    Best candidate : GM (General Motors Company)  $86.62  (ext +2.2%, 21d med +0.9%, ave +2.0%, win 57.4%, div THIN, drift -0.4%)
     Plan           : buy near $86.62, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open GM <fill_price> <shares> <capital_sek>
     VIX review     : 15.44  (34% percentile, falling) -- for review, not a gate
@@ -185,16 +185,16 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 34.8%
+    Current wt (of Reactor Core) : 34.7%
     Target wt (current regime)   : 40.0%
-    Gap                          : +5.2%
+    Gap                          : +5.3%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
   AVGO Rebalance Check  [existing capital, band: 10%]
-    Gold status: HOLD  (31.5% actual vs 25.0% target, gap -6.5%)
-    AVGO status: HOLD  (34.8% actual vs 40.0% target, gap +5.2%)
-    LLY status: HOLD  (33.7% actual vs 35.0% target, gap +1.3%)
+    Gold status: HOLD  (31.7% actual vs 25.0% target, gap -6.7%)
+    AVGO status: HOLD  (34.7% actual vs 40.0% target, gap +5.3%)
+    LLY status: HOLD  (33.6% actual vs 35.0% target, gap +1.4%)
 
   Idle Reactor Core Cash
     Uninvested     : 0 kr  (0.0% of Reactor Core)
@@ -232,8 +232,8 @@ Computing capped 252d distributions for 51 candidates ...
   CIEN      N=1269  mu= +22.3%  sigma= 28.2%  hist=27yr  [ROBUST]
   CMI       N=1269  mu= +25.0%  sigma= 29.2%  hist=27yr  [ROBUST]
   FOXA      hist=8yr  (below min 10yr, skipped)
-  CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
   PHAG.L    no data
+  CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
   WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
   CEG       hist=5yr  (below min 10yr, skipped)
   GS        N=1269  mu= +12.7%  sigma= 23.4%  hist=27yr  [ROBUST]
@@ -289,7 +289,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-17
+AVGO peer valuation snapshot -- 2026-09-18
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
