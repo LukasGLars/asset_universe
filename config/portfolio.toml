@@ -66,7 +66,7 @@ war_chest     = 0.00
 [[positions]]
 name     = "Gold"
 ticker   = "1634504"
-shares   = 234
+shares   = 243
 currency = "EUR"
 category = "avanza"
 bucket   = "reactor_core"
@@ -170,7 +170,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 46746
+value_sek = 187520
 
 # ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
 # Manual value_sek, updated from the Google Sheet like Spiltan/War Chest --
@@ -182,7 +182,7 @@ target_weight = 0.1
 [[positions]]
 name      = "Virtune Bitcoin"
 ticker    = "1639655"
-shares    = 193
+shares    = 218
 currency  = "SEK"
 category  = "avanza"
 bucket    = "crypto_sleeve"
@@ -191,7 +191,7 @@ target_weight = 0.025
 [[positions]]
 name      = "Virtune Staked ETH"
 ticker    = "1623064"
-shares    = 432
+shares    = 470
 currency  = "SEK"
 category  = "avanza"
 bucket    = "crypto_sleeve"
@@ -204,7 +204,7 @@ target_weight = 0.025
 [[positions]]
 name      = "LF Global Index"
 ticker    = "417655"
-shares    = 397.844
+shares    = 0
 currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
