@@ -1,0 +1,52 @@
+name: tech-panel
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: master }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11', cache: pip }
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+      - run: pip install -e .
+      - run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Technical panel
+        run: |
+          python - <<'PY'
+          import sys; sys.path.insert(0,"src")
+          import pandas as pd, numpy as np
+          from asset_universe import config
+          from asset_universe.store import reader
+          d = config.raw_data_dir()
+          HOLD = [("Gold","commodities","GC_F"),("AVGO","equities","AVGO"),
+                  ("LLY","equities","LLY")]
+          def rsi(s, n=14):
+              delta = s.diff(); up = delta.clip(lower=0); dn = -delta.clip(upper=0)
+              rs = up.ewm(alpha=1/n, adjust=False).mean() / dn.ewm(alpha=1/n, adjust=False).mean()
+              return 100 - 100/(1+rs)
+          print(f"{'':6}{'last':>10}{'MA50':>10}{'vsMA50':>9}{'MA200':>10}{'vsMA200':>9}"
+                f"{'5dROC':>8}{'21dROC':>8}{'RSI14':>7}{'52w%':>7}{'vol21':>7}")
+          for name, cat, tk in HOLD:
+              df = pd.read_parquet(reader.ticker_path(d, cat, tk))
+              df["date"] = pd.to_datetime(df["date"])
+              s = df.set_index("date")["close"].sort_index().dropna()
+              last = float(s.iloc[-1]); ma50 = float(s.rolling(50).mean().iloc[-1])
+              ma200 = float(s.rolling(200).mean().iloc[-1])
+              r5 = float(s.iloc[-1]/s.iloc[-6]-1); r21 = float(s.iloc[-1]/s.iloc[-22]-1)
+              w52 = s.iloc[-252:]; pos = float((last-w52.min())/(w52.max()-w52.min()))
+              vol = float(s.pct_change().iloc[-21:].std()*np.sqrt(252))
+              print(f"{name:6}{last:>10,.2f}{ma50:>10,.2f}{last/ma50-1:>8.1%}"
+                    f"{ma200:>10,.2f}{last/ma200-1:>8.1%}{r5:>8.1%}{r21:>8.1%}"
+                    f"{float(rsi(s).iloc[-1]):>7.0f}{pos:>7.0%}{vol:>7.0%}")
+          print(f"\nlast bar: {s.index[-1].date()}")
+          PY
