@@ -160,9 +160,9 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : CF (CF Industries Holdings, Inc.)  $127.70  (ext +1.9%, 21d med +1.9%, ave +2.7%, win 58.3%, div ROBUST, drift -0.6%)
-    Plan           : buy near $127.70, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open CF <fill_price> <shares> <capital_sek>
+    Best candidate : PLTR (Palantir Technologies Inc.)  $177.64  (ext +12.2%, 21d med +3.6%, ave +5.5%, win 59.4%, div THIN, drift +0.6%)
+    Plan           : buy near $177.64, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open PLTR <fill_price> <shares> <capital_sek>
     VIX review     : 14.81  (30% percentile, falling) -- for review, not a gate
     Basket-crash   : none eligible today
 
