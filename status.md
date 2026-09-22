@@ -3,7 +3,7 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     243     830 kr   201,754 kr  20.0%  20.0%   -0.0%
+  Gold                     243     824 kr   200,245 kr  19.8%  20.0%   -0.2%
   Silver                     -     591 kr         0 kr   0.0%   0.0%   +0.0%
   Eli Lilly                 19  11,457 kr   217,674 kr  21.5%  20.0%   +1.5%
   Walmart                    -   1,057 kr         0 kr   0.0%   0.0%   +0.0%
@@ -11,44 +11,44 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
   Vertiv                     -   2,467 kr         0 kr   0.0%   0.0%   +0.0%
   Broadcom                  65   3,567 kr   231,836 kr  22.9%  20.0%   +2.9%
   Howmet Aerospace           -   2,236 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond     738.53     153 kr   112,663 kr  11.1%   0.0%  +11.1%
+  Spiltan Räntefond     738.53     153 kr   112,692 kr  11.2%   0.0%  +11.2%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
   Reactor Core Cash          -     manual   187,520 kr  18.6%  10.0%   +8.6%
-  Virtune Bitcoin          218     137 kr    29,788 kr   2.9%   2.5%   +0.4%
-  Virtune Staked ETH       470      63 kr    29,601 kr   2.9%   2.5%   +0.4%
-  LF Global Index            -     610 kr         0 kr   0.0%  25.0%  -25.0%
+  Virtune Bitcoin          218     140 kr    30,468 kr   3.0%   2.5%   +0.5%
+  Virtune Staked ETH       470      64 kr    30,047 kr   3.0%   2.5%   +0.5%
+  LF Global Index            -     619 kr         0 kr   0.0%  25.0%  -25.0%
 ------------------------------------------------------------------------------
-  TPV                                        1,010,853 kr
-    Reactor Core            838,783 kr  (83.0%)   target 60.0%  drift +23.0%
+  TPV                                        1,010,501 kr
+    Reactor Core            837,275 kr  (82.9%)   target 60.0%  drift +22.9%
     Global Index                  0 kr  ( 0.0%)   target 25.0%  drift -25.0%
-    Home Base               112,663 kr  (11.1%)   target 10.0%  drift +1.1%
-    Crypto Sleeve            59,388 kr  ( 5.9%)   target  5.0%  drift +0.9%
+    Home Base               112,692 kr  (11.2%)   target 10.0%  drift +1.2%
+    Crypto Sleeve            60,515 kr  ( 6.0%)   target  5.0%  drift +1.0%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,010,853 kr
+  Now                     :     1,010,501 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,381,932 kr
+  Trigger now             :    16,382,820 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.1
 
-  AWAR (trailing)         :  +7.8%
+  AWAR (trailing)         :  +7.7%
   Required CAGR           :  +25.8%
-  Status                  :  BEHIND  (-18.0% margin)
+  Status                  :  BEHIND  (-18.1% margin)
 
-  Projected @ AWAR        :     3,912,076 kr
-  vs target               :   -16,886,378 kr  (deficit)
+  Projected @ AWAR        :     3,891,375 kr
+  vs target               :   -16,907,080 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,822,963 kr       ~2057
-  Conservative   +15%       7,724,378 kr       ~2047
-  Base           +20%      12,286,930 kr       ~2042
-  Current AWAR   +8%       3,912,076 kr       ~2066
-  Bull           +30%      30,165,062 kr       ~2037
+  Bear           +10%       4,820,395 kr       ~2057
+  Conservative   +15%       7,719,326 kr       ~2047
+  Base           +20%      12,277,427 kr       ~2042
+  Current AWAR   +8%       3,891,375 kr       ~2066
+  Bull           +30%      30,134,879 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -78,7 +78,7 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           20.0%    LOW  HIGH     +0.4%     +0.4%   62%    53  
+  Gold           19.8%    LOW  HIGH     +0.4%     +0.4%   62%    53  
   Silver          0.0%    LOW   MID     +0.9%     +0.9%   60%    57  
   Eli Lilly      21.5%    LOW   MID     -0.1%     -0.1%   49%    43  
   Walmart         0.0%   HIGH   LOW     +0.5%     +1.6%   59%   573  ~base fallback
@@ -160,7 +160,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : ANET (Arista Networks, Inc.)  $205.42  (ext +9.3%, 21d med +2.8%, ave +3.1%, win 65.0%, div THIN, drift +0.0%)
+    Best candidate : ANET (Arista Networks, Inc.)  $205.42  (ext +9.3%, 21d med +2.8%, ave +3.1%, win 65.0%, div THIN, drift -0.1%)
     Plan           : buy near $205.42, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open ANET <fill_price> <shares> <capital_sek>
     VIX review     : 14.87  (30% percentile, falling) -- for review, not a gate
@@ -185,16 +185,16 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 35.6%
+    Current wt (of Reactor Core) : 35.7%
     Target wt (current regime)   : 40.0%
-    Gap                          : +4.4%
+    Gap                          : +4.3%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
   AVGO Rebalance Check  [existing capital, band: 10%]
-    Gold status: HOLD  (31.0% actual vs 25.0% target, gap -6.0%)
-    AVGO status: HOLD  (35.6% actual vs 40.0% target, gap +4.4%)
-    LLY status: HOLD  (33.4% actual vs 35.0% target, gap +1.6%)
+    Gold status: HOLD  (30.8% actual vs 25.0% target, gap -5.8%)
+    AVGO status: HOLD  (35.7% actual vs 40.0% target, gap +4.3%)
+    LLY status: HOLD  (33.5% actual vs 35.0% target, gap +1.5%)
 
   Idle Reactor Core Cash
     Uninvested     : 187,520 kr  (22.4% of Reactor Core)
@@ -227,8 +227,8 @@ Computing capped 252d distributions for 51 candidates ...
   STLD      N=1269  mu= +15.3%  sigma= 30.3%  hist=27yr  [ROBUST]
   CF        excluded (see EXCLUDE_TICKERS)
   BKNG      N=1269  mu= +32.5%  sigma= 47.4%  hist=27yr  [ROBUST]
-  EXV1.DE   no data
   GM        N= 630  mu=  +7.4%  sigma= 12.9%  hist=16yr  [SINGLE]
+  EXV1.DE   no data
   CIEN      N=1269  mu= +22.3%  sigma= 28.2%  hist=27yr  [ROBUST]
   CMI       N=1269  mu= +25.0%  sigma= 29.2%  hist=27yr  [ROBUST]
   FOXA      hist=8yr  (below min 10yr, skipped)
@@ -289,7 +289,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-09-21
+AVGO peer valuation snapshot -- 2026-09-22
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
