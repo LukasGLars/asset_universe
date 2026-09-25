@@ -3,25 +3,25 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     243     826 kr   200,635 kr  19.9%  20.0%   -0.1%
-  Silver                     -     570 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  11,719 kr   222,652 kr  22.1%  20.0%   +2.1%
-  Walmart                    -   1,067 kr         0 kr   0.0%   0.0%   +0.0%
-  Cameco                     -     874 kr         0 kr   0.0%   0.0%   +0.0%
-  Vertiv                     -   2,432 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  65   3,474 kr   225,800 kr  22.4%  20.0%   +2.4%
-  Howmet Aerospace           -   2,274 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond     738.53     153 kr   112,700 kr  11.2%   0.0%  +11.2%
+  Gold                     243     826 kr   200,794 kr  19.9%  20.0%   -0.1%
+  Silver                     -     579 kr         0 kr   0.0%   0.0%   +0.0%
+  Eli Lilly                 19  11,733 kr   222,935 kr  22.0%  20.0%   +2.0%
+  Walmart                    -   1,071 kr         0 kr   0.0%   0.0%   +0.0%
+  Cameco                     -     873 kr         0 kr   0.0%   0.0%   +0.0%
+  Vertiv                     -   2,511 kr         0 kr   0.0%   0.0%   +0.0%
+  Broadcom                  65   3,498 kr   227,366 kr  22.5%  20.0%   +2.5%
+  Howmet Aerospace           -   2,305 kr         0 kr   0.0%   0.0%   +0.0%
+  Spiltan Räntefond     738.53     153 kr   112,700 kr  11.1%   0.0%  +11.1%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
-  Reactor Core Cash          -     manual   187,520 kr  18.6%  10.0%   +8.6%
+  Reactor Core Cash          -     manual   187,520 kr  18.5%  10.0%   +8.5%
   Virtune Bitcoin          218     138 kr    30,145 kr   3.0%   2.5%   +0.5%
-  Virtune Staked ETH       470      63 kr    29,793 kr   3.0%   2.5%   +0.5%
+  Virtune Staked ETH       470      63 kr    29,793 kr   2.9%   2.5%   +0.4%
   LF Global Index            -     619 kr         0 kr   0.0%  25.0%  -25.0%
 ------------------------------------------------------------------------------
-  TPV                                        1,009,264 kr
-    Reactor Core            836,607 kr  (82.9%)   target 60.0%  drift +22.9%
+  TPV                                        1,011,272 kr
+    Reactor Core            838,615 kr  (82.9%)   target 60.0%  drift +22.9%
     Global Index                  0 kr  ( 0.0%)   target 25.0%  drift -25.0%
-    Home Base               112,700 kr  (11.2%)   target 10.0%  drift +1.2%
+    Home Base               112,700 kr  (11.1%)   target 10.0%  drift +1.1%
     Crypto Sleeve            59,938 kr  ( 5.9%)   target  5.0%  drift +0.9%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
@@ -29,26 +29,26 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,009,264 kr
+  Now                     :     1,011,272 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
   Trigger now             :    16,385,485 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.0
 
-  AWAR (trailing)         :  +7.6%
+  AWAR (trailing)         :  +7.8%
   Required CAGR           :  +25.8%
-  Status                  :  BEHIND  (-18.3% margin)
+  Status                  :  BEHIND  (-18.1% margin)
 
-  Projected @ AWAR        :     3,824,238 kr
-  vs target               :   -16,974,216 kr  (deficit)
+  Projected @ AWAR        :     3,895,359 kr
+  vs target               :   -16,903,095 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,812,133 kr       ~2057
-  Conservative   +15%       7,703,220 kr       ~2047
-  Base           +20%      12,247,350 kr       ~2042
-  Current AWAR   +8%       3,824,238 kr       ~2067
-  Bull           +30%      30,040,281 kr       ~2037
+  Bear           +10%       4,818,459 kr       ~2057
+  Conservative   +15%       7,714,025 kr       ~2047
+  Base           +20%      12,265,390 kr       ~2042
+  Current AWAR   +8%       3,895,359 kr       ~2066
+  Bull           +30%      30,087,582 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -56,19 +56,19 @@ MACRO REGIME
 
   Feature                 Value   Regime  
   ------------------------------------------
-  Nominal 10Y             5.11%   HIGH
-  Real Yield             +2.76%   HIGH  ^
-  Breakeven               2.33%   MID
-  HY OAS                273 bps   TIGHT
+  Nominal 10Y             5.18%   HIGH
+  Real Yield             +2.85%   HIGH  ^
+  Breakeven               2.34%   HIGH
+  HY OAS                280 bps   TIGHT
   IG Credit               1.39%   TIGHT
-  Curve 10Y-3M          +94 bps   MID
-  Curve 10Y-2Y          +31 bps   LOW
+  Curve 10Y-3M          +93 bps   MID
+  Curve 10Y-2Y          +36 bps   LOW
   SE 10Y                  3.02%   MID
   USD                     119.5   STRONG
 
-  HY 20d delta  : +6 bps  (widening)
-  Confidence    : HIGH
-  Data through  : 2026-09-24
+  HY 20d delta  : +17 bps  (widening)
+  Confidence    : UNCERTAIN
+  Data through  : 2026-09-25
 
 ==============================================================
 PORTFOLIO SIGNALS
@@ -79,39 +79,39 @@ PORTFOLIO SIGNALS
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
   Gold           19.9%    LOW   MID     +0.9%     +0.9%   62%    58  
-  Silver          0.0%    LOW   MID     +0.5%     +0.5%   57%    54  
-  Eli Lilly      22.1%    LOW   MID     -0.1%     -0.1%   49%    41  
-  Walmart         0.0%    MID   LOW     +0.4%     +2.1%   62%   562  ~base fallback
+  Silver          0.0%    LOW  HIGH     +2.6%     +3.3%   68%   563  ~base fallback
+  Eli Lilly      22.0%    MID   LOW     +0.1%     +0.1%   51%    45  
+  Walmart         0.0%   HIGH   LOW     +0.3%     +2.1%   62%   563  ~base fallback
   Cameco          0.0%    LOW   LOW     +1.7%     +1.7%   63%   105  
   Vertiv          0.0%    LOW   LOW     +2.1%     +2.1%   56%    94  
-  Broadcom       22.4%    LOW   LOW     +0.6%     +0.6%   59%   114  
+  Broadcom       22.5%    LOW   LOW     +0.6%     +0.6%   59%   114  
 
 ==============================================================
 TACTICAL RULES
 ==============================================================
 
   Silver GSR Tactical
-    GSR now        : 67.10  (as of 2026-09-24)
+    GSR now        : 66.77  (as of 2026-09-25)
     60d GSR peak   : 71.56
-    Fall from peak : 6.2%  (yes)
+    Fall from peak : 6.7%  (yes)
     T1 threshold   : 83.36  |  T2: 86.45  |  Exit: 62.56
     Signal         : INACTIVE
     Action         : No action -- hold base
 
   AVGO Trend Diagnostic  [guard RETIRED as a rotation rule -- PR #88]
-    AVGO now       : $350.36  (as of 2026-09-24)
-    200d SMA       : $367.92  (-4.8% gap)
-    5d ROC         : +0.9%  (gap-down buy level: -10%)
+    AVGO now       : $352.81  (as of 2026-09-25)
+    200d SMA       : $367.69  (-4.0% gap)
+    5d ROC         : -1.3%  (gap-down buy level: -10%)
     Signal         : DEFENSIVE  (trigger: MA)  -- informational, no rotation
-    LLY stress     : inactive  ($1181.89 vs 200d SMA $1067.83, 5d ROC +2.6%)
+    LLY stress     : inactive  ($1183.46 vs 200d SMA $1068.77, 5d ROC +2.6%)
     Joint stress   : inactive  -- retired alongside the guard, shown for continuity only
     Action         : No action -- guard retired as a rotation rule (see PR #88); reading is diagnostic only
 
   AVGO Volatility-Targeted Weight  [RETIRED 2026-08-18 -- diagnostic only]
-    Trailing 21d vol : 33.7% (annualized)
+    Trailing 21d vol : 33.8% (annualized)
     Long-run avg vol : 35.4% (annualized)
     Scalar           : 1.05x  (clipped to [0.30x, 1.30x])
-    Would-be weights : Gold 24.2%  AVGO 41.9%  LLY 33.9%
+    Would-be weights : Gold 24.2%  AVGO 41.8%  LLY 33.9%
     NOT ACTED ON     : routing + rebalance use the static base (see MEMORY.md)
 
   AVGO Earnings Checkpoint
@@ -160,21 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
+    Best candidate : ANET (Arista Networks, Inc.)  $206.55  (ext +8.6%, 21d med +2.9%, ave +3.1%, win 65.2%, div THIN, drift -0.0%)
+    Plan           : buy near $206.55, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open ANET <fill_price> <shares> <capital_sek>
+    VIX review     : 14.87  (30% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $84,420  (as of 2026-09-24)
+    Bitcoin (BTC-USD)  $84,078  (as of 2026-09-25)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $72,120, flat below $70,677)
-      MA100        : LONG (MA $69,918, flat below $68,519)
-      MA200        : LONG (MA $73,585, flat below $72,114)
+      MA50         : LONG (MA $72,523, flat below $71,073)
+      MA100        : LONG (MA $69,957, flat below $68,557)
+      MA200        : LONG (MA $73,565, flat below $72,094)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,692  (as of 2026-09-24)
+    Ethereum (ETH-USD)  $2,693  (as of 2026-09-25)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,219, flat below $2,174)
-      MA100        : LONG (MA $2,041, flat below $2,001)
-      MA200        : LONG (MA $2,233, flat below $2,188)
+      MA50         : LONG (MA $2,236, flat below $2,191)
+      MA100        : LONG (MA $2,045, flat below $2,004)
+      MA200        : LONG (MA $2,231, flat below $2,187)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -182,26 +185,26 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Broadcom (AVGO)
-    Current wt (of Reactor Core) : 34.8%
+    Current wt (of Reactor Core) : 34.9%
     Target wt (current regime)   : 40.0%
-    Gap                          : +5.2%
+    Gap                          : +5.1%
     Gate                         : OPEN
     Note: Silver excluded -- funded by its own GSR trigger, not new contributions
 
   AVGO Rebalance Check  [existing capital, band: 10%]
-    Gold status: HOLD  (30.9% actual vs 25.0% target, gap -5.9%)
-    AVGO status: HOLD  (34.8% actual vs 40.0% target, gap +5.2%)
-    LLY status: HOLD  (34.3% actual vs 35.0% target, gap +0.7%)
+    Gold status: HOLD  (30.8% actual vs 25.0% target, gap -5.8%)
+    AVGO status: HOLD  (34.9% actual vs 40.0% target, gap +5.1%)
+    LLY status: HOLD  (34.2% actual vs 35.0% target, gap +0.8%)
 
   Idle Reactor Core Cash
     Uninvested     : 187,520 kr  (22.4% of Reactor Core)
-    Action         : deploy -> Broadcom (AVGO)  (~53 shares at 3,474 kr)
+    Action         : deploy -> Broadcom (AVGO)  (~53 shares at 3,498 kr)
 
 ==============================================================
-  Regime check (2026-09-24): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
+  Regime check (2026-09-25): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 Building regime labels ...
   Conditions    : {'ry_regime': 'HIGH', 'baa10y_regime': 'TIGHT'}
-  Matched dates : 1420  (2004-05-07 - 2026-09-24)  MODERATE
+  Matched dates : 1421  (2004-05-07 - 2026-09-25)  MODERATE
 
 Computing capped 252d distributions for 51 candidates ...
   SNDK      hist=2yr  (below min 10yr, skipped)
@@ -248,8 +251,8 @@ Computing capped 252d distributions for 51 candidates ...
   FIX       N=1269  mu= +20.7%  sigma= 27.9%  hist=27yr  [ROBUST]
   TEL2-B.ST  no data
   APH       N=1269  mu= +16.8%  sigma= 24.3%  hist=27yr  [ROBUST]
-  FSLR      N= 864  mu= +23.6%  sigma= 53.3%  hist=20yr  [MODERATE]
   SSAB-B.ST  no data
+  FSLR      N= 864  mu= +23.6%  sigma= 53.3%  hist=20yr  [MODERATE]
   SI_F      N=1269  mu= +11.8%  sigma= 22.5%  hist=26yr  [ROBUST]
   PM        N= 630  mu= +10.8%  sigma= 13.7%  hist=18yr  [SINGLE]
   AAPL      N=1269  mu= +19.6%  sigma= 28.6%  hist=27yr  [ROBUST]
@@ -265,7 +268,7 @@ Optimizing (50 restarts, 30 candidates) ...
 PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
 ========================================================================
   Universe       : top 50 screen candidates + GC_F
-  Matched dates  : 1420  MODERATE
+  Matched dates  : 1421  MODERATE
   Shrinkage      : lambda=100  prior=+18.1%
 
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
@@ -290,15 +293,15 @@ AVGO peer valuation snapshot -- 2026-09-25
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU        $1,080.53    $45.12   $159.12      3.53x        +253%     6.79x      0.03
-AMD         $629.26     $5.76    $15.57      2.70x        +170%    40.41x      0.24
-NVDA        $224.58     $7.01    $15.68      2.24x        +124%    14.32x      0.12
-MRVL        $258.95     $3.30     $6.76      2.05x        +105%    38.32x      0.37
-AVGO*       $350.36     $9.76    $19.38      1.99x         +99%    18.08x      0.18
-ASML      $1,722.50    $27.56    $51.72      1.88x         +88%    33.30x      0.38
-TSM         $451.15    $13.86    $21.93      1.58x         +58%    20.58x      0.35
-ANET        $205.70     $3.46     $5.19      1.50x         +50%    39.65x      0.79
-QCOM        $194.26    $11.36    $10.18      0.90x         -10%    19.09x       n/a
+MU        $1,082.28    $45.12   $159.49      3.53x        +253%     6.79x      0.03
+AMD         $630.63     $5.76    $15.58      2.70x        +170%    40.48x      0.24
+NVDA        $225.07     $7.01    $15.68      2.24x        +124%    14.35x      0.12
+MRVL        $261.94     $3.30     $6.76      2.05x        +105%    38.76x      0.37
+AVGO*       $352.81     $9.76    $19.38      1.99x         +99%    18.20x      0.18
+ASML      $1,743.94    $27.56    $51.72      1.88x         +88%    33.72x      0.38
+TSM         $450.61    $13.86    $21.93      1.58x         +58%    20.55x      0.35
+ANET        $206.55     $3.46     $5.19      1.50x         +50%    39.82x      0.80
+QCOM        $201.97    $11.36    $10.18      0.90x         -10%    19.85x       n/a
 
 * = AVGO
 
