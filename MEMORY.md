@@ -5539,3 +5539,76 @@ would happen, not to act -- this is a report, not an executed decision.**
 
 Script, tests and workflow deleted after logging, per repo convention;
 recoverable from commit 185aa94.
+
+---
+
+## config/portfolio.toml is NOT the source of truth -- the Google Sheet is (2026-09-27)
+
+**Editing `config/portfolio.toml` directly does not stick. `sync_sheet.py`
+runs every 2 hours (`.github/workflows/sync_sheet.yml`, cron `0 */2 * * *`)
+and patches the file from the Google Sheet's `config` tab.** Any hand edit to
+a `shares` or `value_sek` field is silently overwritten within two hours.
+
+**This was learned the hard way.** PR #116 (2026-09-19, merged) reconciled six
+positions against broker screenshots. Within hours, five of the six had
+reverted. What survived was exactly what the sheet does not manage:
+- `Spiltan` shares -- survived only because the sheet was ALSO edited
+- `Reactor Core Cash` `bucket` -- survived because sync_sheet never touches
+  `bucket`, only `shares` and `value`
+
+Everything else -- Gold, Virtune BTC, Virtune ETH, LF Global Index shares and
+the Cash `value_sek` -- snapped back to the sheet's stale numbers. The PR was
+reported as done. It was not. **Check what writes a file before editing it.**
+
+**What sync_sheet actually reads.** `csv.DictReader` over the exported CSV,
+using only the `Asset`, `shares` and `value` columns, with `ASSET_MAP`
+prefix-matching sheet labels to `[[positions]]` names. **The fourth column
+(the "Reactor Core" / "Home Base" label) is NOT read** -- it is decoration.
+Buckets live in `portfolio.toml` and only there. A blank or wrong label in
+that column has no effect; an earlier guess that LF's blank label was why it
+never appeared was wrong -- the cause was `shares = 0`.
+
+Sheet: ID `1pnwGgNGblXw5X4x7CFmngksQZpL1MIbMJnJvZdsJCRs`, GID `1133887937`,
+shared "anyone with the link -> Viewer". Readable here via the Google Drive
+connector (`download_file_content`, export `text/csv`). **NOT writable from
+this session**: the Drive connector's `update_file` changes only title and
+parent, there is no cell-level Sheets write, and uploading a replacement CSV
+would flatten a ~20-tab workbook. Cell edits are a human step.
+
+**Reconciled holdings, verified against Avanza screenshots 2026-09-19.** Six
+of nine rows in the sheet were wrong, in both directions, which is why nothing
+in `status.md` looked obviously broken -- the errors partly cancelled:
+
+| Asset (sheet label) | sheet had | correct | bucket (in TOML) |
+|---|---|---|---|
+| PPFB.DE (iShares Phys. Gold) | 243 | **234** | reactor_core |
+| Eli Lilly | 19 | 19 ok | reactor_core |
+| Broadcom | 65 | 65 ok | reactor_core |
+| Cash | 187 520 kr | **46 746 kr** | reactor_core |
+| Virtune Bitcoin | 218 | **193** | crypto_sleeve |
+| Virtune Staked Ethereum ETP | 470 | **432** | crypto_sleeve |
+| Lansforsakringar Global Index | 0 | **397.844** | global_index |
+| Spiltan Rantefond Sverige | 199 352 kr | **112 995 kr** | home_base |
+| War Chest | 19 kr | 19 kr ok | war_chest |
+
+**Spiltan is the ONLY home_base allocation.** War Chest is its own bucket; the
+sheet's label calling it "Home Base" is the decorative column and is wrong.
+Virtune BTC/ETH are labelled "Reactor Core" there too -- also decorative, also
+wrong; they are `crypto_sleeve`.
+
+**`Reactor Core Cash` was mis-bucketed to `home_base`** despite its own comment
+describing it as cash inside the Reactor Core account. Fixed to `reactor_core`
+in PR #116 and that part held. Before the fix it put 187k of phantom cash into
+Home Base, which is most of the fake "+25.5% Home Base overweight".
+
+**Scale of the distortion while wrong.** `status.md` 2026-09-25 reported
+Reactor Core 82.9% (target 60%), Global Index 0.0% (target 25%), TPV
+1,011,272 kr. Real buckets land within ~3pp of target on every line and TPV is
+~1,092,000 kr. Every weight, the drift bands, the contribution routing and the
+FI@50 AWAR / BEHIND margin were computed off the wrong denominator for weeks.
+
+**Standing rule from this:** the Sheet's `config` tab is the single source of
+truth for share counts and manual values. Fix numbers there, never in the TOML.
+`sync_sheet.py` self-verifies after writing and exits non-zero if a
+substitution did not apply, so a malformed cell fails loudly rather than
+silently.
