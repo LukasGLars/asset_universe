@@ -1,0 +1,51 @@
+name: policy-gap
+on: { workflow_dispatch: }
+permissions: { contents: read }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: master }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11', cache: pip }
+      - run: pip install -e .
+      - env: { FRED_API_KEY: "${{ secrets.FRED_API_KEY }}" }
+        run: |
+          python - <<'PY'
+          import os, pandas as pd
+          from fredapi import Fred
+          f = Fred(api_key=os.environ["FRED_API_KEY"])
+          def g(k, start="2024-01-01"):
+              try: return f.get_series(k, observation_start=start).dropna()
+              except Exception as e: print(f"  {k} FAILED {e}"); return None
+          ff   = g("DFF")          # effective fed funds, daily
+          pce  = g("PCEPILFE")     # core PCE index, monthly
+          cpi  = g("CPILFESL")     # core CPI index, monthly
+          y2   = g("DGS2"); y10 = g("DGS10"); r10 = g("DFII10"); be = g("T10YIE")
+          print("POLICY SNAPSHOT")
+          print("="*56)
+          if ff is not None:
+              print(f"  Effective fed funds      {ff.iloc[-1]:.2f}%   ({ff.index[-1].date()})")
+          for nm, s in (("Core PCE YoY", pce), ("Core CPI YoY", cpi)):
+              if s is not None and len(s) > 12:
+                  yoy = (s.iloc[-1]/s.iloc[-13]-1)*100
+                  print(f"  {nm:<24} {yoy:.2f}%   ({s.index[-1].date()})")
+          if ff is not None and pce is not None and len(pce) > 12:
+              core = (pce.iloc[-1]/pce.iloc[-13]-1)*100
+              print(f"\n  REAL fed funds now       {ff.iloc[-1]-core:+.2f}%   "
+                    f"(nominal {ff.iloc[-1]:.2f}% - core PCE {core:.2f}%)")
+              print(f"  Neutral real (r*) approx  +0.50 to +1.00%  -> policy is "
+                    f"{'RESTRICTIVE' if ff.iloc[-1]-core > 1.0 else 'near neutral' if ff.iloc[-1]-core > 0.3 else 'ACCOMMODATIVE'}")
+          print("\nWHAT THE MARKET PRICES")
+          print("="*56)
+          if y2 is not None and ff is not None:
+              print(f"  2Y nominal               {y2.iloc[-1]:.2f}%")
+              d = (y2.iloc[-1]-ff.iloc[-1])*100
+              print(f"  vs fed funds             {d:+.0f}bp  -> market prices "
+                    f"{'HIKES' if d > 15 else 'CUTS' if d < -15 else 'roughly on hold'}"
+                    f" over the next 2yrs")
+          if all(x is not None for x in (y10, r10, be)):
+              print(f"\n  10Y nominal {y10.iloc[-1]:.2f}%  = real {r10.iloc[-1]:.2f}% "
+                    f"+ breakeven {be.iloc[-1]:.2f}%")
+          PY
