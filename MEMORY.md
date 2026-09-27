@@ -5612,3 +5612,59 @@ truth for share counts and manual values. Fix numbers there, never in the TOML.
 `sync_sheet.py` self-verifies after writing and exits non-zero if a
 substitution did not apply, so a malformed cell fails loudly rather than
 silently.
+
+---
+
+## Target allocation, operator-stated (2026-09-27) -- RECORDED, NOT IMPLEMENTED
+
+Stated directly by the operator. **Percentages are of the REACTOR CORE
+ACCOUNT, not of TPV** -- confirmed against the live account: Gold 19.9%,
+Index 24.8%, Crypto 5.3% against the 20/25/5 below.
+
+| Role | Holding | Weight |
+|------|---------|--------|
+| Concentrated growth | AVGO | 20% |
+| Concentrated growth | LLY | 20% |
+| Broad growth | Index (LF Global Index) | 25% |
+| Ballast | Gold | 20% |
+| Dry powder | Cash | 10% |
+| Opp sleeve | BTC/ETH trend | 5% |
+
+Sums to 100%. **All six are inside the Reactor Core account** (the Avanza ISK
+literally named "Reactor Core 85%"). Spiltan sits outside, in the separate
+Home Base ISK.
+
+**This is a restructure, not a weight tweak.** `config/portfolio.toml`
+currently carries four TPV-level buckets -- `reactor_core` 0.60,
+`global_index` 0.25, `home_base` 0.10, `crypto_sleeve` 0.05 -- with the Core
+split Gold 25 / AVGO 40 / LLY 35. The target collapses `global_index` and
+`crypto_sleeve` INTO `reactor_core` and gives every position a weight within
+it.
+
+**Two consequences worth keeping:**
+
+1. **The Core split becomes equal thirds.** AVGO 20 / LLY 20 / Gold 20 is
+   33/33/33 within the 60% that is Gold+AVGO+LLY, against today's 25/40/35.
+   That matters because 25/40/35 was the mix that WON the worst-sub-period
+   ranking (-23.41% MaxDD, 1.034 Calmar, vs the previous 25/55/20 at -29.82%
+   / 0.867). Equal thirds was never in that comparison. Raising Gold and
+   cutting AVGO moves toward the shallower-drawdown region found in the
+   2026-08-31 allocation work, so it probably tests fine -- but it is
+   untested as stated, and this repo's rule is to rank on the worst
+   sub-period before believing any weight.
+
+2. **The 2026-08-31 drawdown analysis is stale against this target.** It
+   modelled the non-Core portion as Home Base (low-vol bonds), because LF
+   Global Index was `shares = 0` and therefore invisible. Under this target
+   ~25% of the Core is global equities. The "-25% tolerance needs Core at
+   75-80%" conclusion was computed on a portfolio that held no index fund and
+   understates the real drawdown.
+
+**OPEN, blocking implementation: where Spiltan sits in the TPV maths.**
+Either `reactor_core` 90% / `home_base` 10% with the six weights nested
+inside the Core (keeps the FI@50 tracker counting all the money), or Reactor
+Core becomes the whole modelled portfolio and Spiltan drops out of the config
+(makes these six the only thing tracked). Not decided.
+
+**Nothing written to config. No PR opened.** Recorded at the operator's
+request pending that decision.
