@@ -164,17 +164,17 @@ TACTICAL RULES
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $84,078  (as of 2026-09-25)
+    Bitcoin (BTC-USD)  $83,503  (as of 2026-09-28)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $72,523, flat below $71,073)
-      MA100        : LONG (MA $69,957, flat below $68,557)
-      MA200        : LONG (MA $73,565, flat below $72,094)
+      MA50         : LONG (MA $72,889, flat below $71,431)
+      MA100        : LONG (MA $69,974, flat below $68,575)
+      MA200        : LONG (MA $73,540, flat below $72,069)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,693  (as of 2026-09-25)
+    Ethereum (ETH-USD)  $2,689  (as of 2026-09-28)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,236, flat below $2,191)
-      MA100        : LONG (MA $2,045, flat below $2,004)
-      MA200        : LONG (MA $2,231, flat below $2,187)
+      MA50         : LONG (MA $2,251, flat below $2,206)
+      MA100        : LONG (MA $2,049, flat below $2,008)
+      MA200        : LONG (MA $2,230, flat below $2,185)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -228,11 +228,11 @@ Computing capped 252d distributions for 51 candidates ...
   GM        N= 630  mu=  +7.4%  sigma= 12.9%  hist=16yr  [SINGLE]
   EXV1.DE   no data
   CMI       N=1269  mu= +25.0%  sigma= 29.2%  hist=27yr  [ROBUST]
-  PHAG.L    no data
   WDC       N=1269  mu= +22.5%  sigma= 39.0%  hist=27yr  [ROBUST]
+  PHAG.L    no data
   FOXA      hist=8yr  (below min 10yr, skipped)
-  CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
   DELL      N= 630  mu=  +4.5%  sigma= 18.4%  hist=10yr  [SINGLE]
+  CFG       N= 630  mu= +14.7%  sigma= 13.7%  hist=12yr  [SINGLE]
   CEG       hist=5yr  (below min 10yr, skipped)
   GS        N=1269  mu= +12.7%  sigma= 23.4%  hist=27yr  [ROBUST]
   TPR       N=1269  mu= +18.6%  sigma= 31.1%  hist=26yr  [ROBUST]
@@ -290,15 +290,15 @@ AVGO peer valuation snapshot -- 2026-09-29
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU        $1,053.98    $45.12   $160.19      3.55x        +255%     6.58x      0.03
+MU        $1,053.98    $45.12   $161.09      3.57x        +257%     6.54x      0.03
 AMD         $607.87     $5.76    $15.58      2.70x        +170%    39.02x      0.23
 NVDA        $228.86     $7.01    $15.68      2.24x        +124%    14.59x      0.12
-MRVL        $251.90     $3.30     $6.76      2.05x        +105%    37.28x      0.36
+MRVL        $251.90     $3.30     $6.77      2.05x        +105%    37.21x      0.35
 AVGO*       $349.57     $9.76    $19.38      1.99x         +99%    18.04x      0.18
 ASML      $1,771.41    $27.56    $51.72      1.88x         +88%    34.25x      0.39
 TSM         $452.88    $13.86    $21.93      1.58x         +58%    20.66x      0.35
 ANET        $204.92     $3.46     $5.19      1.50x         +50%    39.50x      0.79
-QCOM        $187.48    $11.36    $10.18      0.90x         -10%    18.42x       n/a
+QCOM        $187.48    $11.36    $10.20      0.90x         -10%    18.37x       n/a
 
 * = AVGO
 
