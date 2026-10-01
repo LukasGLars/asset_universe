@@ -160,24 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : ANET (Arista Networks, Inc.)  $203.59  (ext +5.9%, 21d med +3.0%, ave +3.1%, win 65.4%, div THIN, drift +0.0%)
+    Best candidate : ANET (Arista Networks, Inc.)  $203.59  (ext +5.9%, 21d med +3.0%, ave +3.1%, win 65.4%, div THIN, drift +0.9%)
     Plan           : buy near $203.59, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open ANET <fill_price> <shares> <capital_sek>
     VIX review     : 16.34  (41% percentile, spiking) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $83,622  (as of 2026-09-29)
+    Bitcoin (BTC-USD)  $83,554  (as of 2026-09-30)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $73,231, flat below $71,766)
-      MA100        : LONG (MA $70,006, flat below $68,606)
-      MA200        : LONG (MA $73,521, flat below $72,051)
+      MA50         : LONG (MA $73,580, flat below $72,109)
+      MA100        : LONG (MA $70,049, flat below $68,648)
+      MA200        : LONG (MA $73,501, flat below $72,031)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,677  (as of 2026-09-29)
+    Ethereum (ETH-USD)  $2,684  (as of 2026-09-30)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,266, flat below $2,221)
-      MA100        : LONG (MA $2,053, flat below $2,012)
-      MA200        : LONG (MA $2,228, flat below $2,184)
+      MA50         : LONG (MA $2,281, flat below $2,236)
+      MA100        : LONG (MA $2,057, flat below $2,016)
+      MA200        : LONG (MA $2,227, flat below $2,182)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -255,8 +255,8 @@ Computing capped 252d distributions for 51 candidates ...
   PM        N= 620  mu= +10.6%  sigma= 13.7%  hist=19yr  [SINGLE]
   AAPL      N=1251  mu= +20.0%  sigma= 28.5%  hist=27yr  [ROBUST]
   SI_F      N=1251  mu= +11.5%  sigma= 22.4%  hist=26yr  [ROBUST]
-  4GLD.DE   no data
   SSAB-B.ST  no data
+  4GLD.DE   no data
   GC_F      N=1251  mu=  +9.7%  sigma= 11.2%  hist=26yr  [ROBUST]
 
 Cross-sectional prior mu : +18.2%  (shrinkage target)
@@ -294,7 +294,7 @@ AVGO peer valuation snapshot -- 2026-10-01
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
 AMD         $611.76     $5.76    $15.58      2.70x        +170%    39.27x      0.23
-MU        $1,065.11    $75.51   $181.98      2.41x        +141%     5.85x      0.04
+MU        $1,065.11    $75.51   $189.62      2.51x        +151%     5.62x      0.04
 NVDA        $228.38     $7.01    $15.68      2.24x        +124%    14.56x      0.12
 MRVL        $264.21     $3.30     $6.77      2.05x        +105%    39.03x      0.37
 AVGO*       $351.19     $9.76    $19.38      1.99x         +99%    18.12x      0.18
