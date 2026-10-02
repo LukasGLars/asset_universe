@@ -5668,3 +5668,99 @@ Core becomes the whole modelled portfolio and Spiltan drops out of the config
 
 **Nothing written to config. No PR opened.** Recorded at the operator's
 request pending that decision.
+
+## Cash-tranche laddering: DO NOT LADDER, deploy the whole sleeve at the trigger (2026-10-02)
+
+**Question:** the target allocation carries a standing 10% cash position as dry
+powder for growth-sleeve drawdowns. How should it be spent -- all at the crash
+trigger, or laddered into deeper levels?
+
+**Answer: all of it at the trigger. Every ladder tested loses, and loses
+monotonically in how much it defers.** `run_cash_tranche_ladder.py`, n=31
+declustered AVGO triggers (2010-2026) and n=18 LLY (2000-2025), same
+5d-ROC <= -10% trigger and 21-day declustering as the 2026-08-14 event study.
+
+This is NOT a re-run of "Contribution-splitting to dip-buy" (2026-08-18). That
+rejected MANUFACTURING cash by diverting contributions. Here the 10% is a
+standing operator-chosen target, so the idle drag is sunk and not a variable --
+only the deployment schedule was open. The prior entry's closing line
+("deploying capital you already have at a trigger is still good") is exactly
+what this tests, and it holds.
+
+**Ranked on the worst date-third, AVGO:**
+
+| Ladder | 63d | 126d | 252d | deployed |
+|---|---|---|---|---|
+| A  all-in at trigger | **+11.2%** | **+24.1%** | **+45.5%** | 100% |
+| F  60/40 @0/-15 | +7.9% | +14.9% | +28.1% | 59% |
+| B  50/50 @0/-10 | +7.6% | +12.6% | +23.8% | 66% |
+| C  40/30/30 @0/-10/-20 | +6.2% | +10.2% | +19.4% | 48% |
+| D  34/33/33 @0/-7/-15 | +5.8% | +10.4% | +16.8% | 55% |
+| E  25x4 @0/-5/-10/-20 | +4.3% | +7.0% | +12.9% | 49% |
+| G  wait-for--15 (control) | +0.5% | +1.0% | +2.0% | 18% |
+
+**A wins the worst third at 6 of 6 cells (3 horizons x 2 tickers).** Not one
+sub-period prefers a ladder. This is the opposite shape to the SAAB beta and
+the LLY weight grid, where a single regime carried the whole number.
+
+**Why -- the conditional drawdown distribution is the whole answer.** Given the
+trigger has fired, AVGO's median further drawdown over the next 126 sessions is
+only **-6.7%** (p25 -13.9%, p75 -0.8%, median 19 days to trough). LLY: -7.3%.
+Fraction of episodes reaching each additional depth, AVGO:
+
+| further | reached |
+|---|---|
+| -5% | 55% (16/29) |
+| -10% | 38% (11/29) |
+| -15% | 21% (6/29) |
+| -20% | 10% (3/29) |
+| -25% | 10% (3/29) |
+| -30% | 3% (1/29) |
+
+The trigger already captures most of the discount there is. A tranche parked at
+-10% sits in cash ~62% of the time; at -20%, ~90%.
+
+**The deep levels ARE better entries -- just not often enough.** AVGO 252d
+median from each fill: at trigger +60.7%, -10% **+103.3%**, -15% +88.6%. Buying
+lower pays more when it fills. But hit-rate x median collapses monotonically:
+**+60.7% / +42.2% / +40.5% / +36.9% / +19.0%** at 0/-5/-7/-10/-15%. The hit
+rate falls faster than the conditional return rises. Reading the conditional
+median alone makes every deep level look free; that column is the error this
+test was built to avoid.
+
+AVGO -20% and -25% are both 3/29 -- the three episodes that broke -20% all
+broke -25%. Crash depth is closer to all-or-nothing than to a smooth ladder,
+which is itself an argument against intermediate rungs.
+
+**The one real point for laddering, and why it loses anyway.** Ladders do cut
+the worst single episode: LLY 63d worst is -17.3% for A vs -7.2% for E; 252d
+-9.1% vs +1.1%. But that cushion applies to a 10% sleeve, so ~10pp of avoided
+loss on it is ~1pp of account -- bought by giving up 20-30pp of median on the
+same 10%. Bad trade.
+
+Control G (wait for -15% or stay in cash) returns the cash rate at the median
+at every horizon, because its median episode never fills. Its average is
+respectable (+21.6% at 252d) purely from the minority that do -- a clean
+illustration of why averages are the wrong statistic here.
+
+**Operational consequence, not yet decided:** the sleeve is spent in one go, so
+after a trigger there is no dry powder until it is refilled. Where the refill
+comes from (contributions, trimming gold, or simply waiting) is a separate
+question this test says nothing about. Triggers fired 31 times in 17 years,
+~1.8/yr, so this will recur.
+
+Guards: fills at close(signal+1) or later, so the signal day's own close is
+never tradable; touch detection and fills both on CLOSES (no intraday low
+assumed, conservative for deep rungs); undeployed tranches charged 2%/yr cash,
+generous for an Avanza balance at ~0% and therefore flattering to the deep
+ladders, not penalising; ladders compared on a common episode set per horizon
+so none can win by dropping its hard episodes. 17 accounting tests on the cash
+charge, fill-price integrity and the no-lookahead boundaries.
+
+Caveat that bounds all of it: episodes are declustered 21 days but their
+126/252d windows still overlap inside the 2008/2020/2022 clusters, so n is not
+n independent draws. The result's consistency across both tickers and all three
+date-thirds is what carries it, not the sample size.
+
+Script, tests and workflow deleted after logging, per the temp-diagnostic
+convention.
