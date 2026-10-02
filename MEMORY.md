@@ -5764,3 +5764,58 @@ date-thirds is what carries it, not the sample size.
 
 Script, tests and workflow deleted after logging, per the temp-diagnostic
 convention.
+
+## The sync "failures" were a holiday-blind freshness gate -- FIXED (2026-10-02, PR #117)
+
+**Diagnosed 2026-09-27 when the operator asked "synch failed, why". Logged only
+now, because the diagnosis went into the conversation and never into this file
+-- the same gap that let the bug itself live for months.**
+
+`check_local_data_freshness.py` derived the last expected NYSE session by
+stepping back over weekends only. On the morning after **every** market
+holiday it therefore required a close that never existed:
+
+1. check fails
+2. forces a pointless `python -m asset_universe.update`
+3. the market still has no newer close, so it fails again
+4. exit 1, `sync.yml` goes red, failure notification sent
+
+Then the next session produced a real close and it healed itself. That
+self-healing is precisely why it was never fixed: nothing stayed broken long
+enough to investigate. **~9 false failures a year, roughly one per NYSE
+closure**, which trained the operator to ignore the alert. The cost was never
+the lost run; it was the lost credibility of the signal.
+
+**Fix:** an NYSE closure calendar built from `pandas.tseries.holiday` rules, so
+no new dependency. `nearest_workday` is the exchange's real observance rule
+(Saturday holiday taken the Friday before, Sunday holiday the Monday after).
+Verified exact against all 10 actual closures in each of 2025 and 2026 before
+being wired in.
+
+**Second bug found beside it:** `MAX_STALE_TRADING_DAYS` is named in *trading*
+days, but the code subtracted **calendar** days from the last session. A no-op
+at the current value of 1, silently wrong at any other value -- a trap for
+whoever next tried to loosen the tolerance. Now steps back session by session.
+
+**Deliberately still fails:** ad-hoc closures (presidential funerals, Hurricane
+Sandy) cannot be expressed as rules. Those should get a human's attention, so
+they still exit non-zero; the message now names that possibility rather than
+blaming yfinance alone.
+
+**One pre-existing test asserted the bug.** It expected 2026-07-03 as the last
+session before that weekend -- which was the observed Independence Day closure,
+not a session. A test can encode the defect it was meant to prevent, and a
+green suite says nothing about whether the assertion was ever right. Corrected,
+with the reason recorded in the test body.
+
+Now covered: the day after each of nine 2026 closures resolving back past it,
+Juneteenth not being a closure before 2022, the per-year holiday set working
+across the New Year boundary, and the half-day sessions that must NOT be
+skipped (the Friday after Thanksgiving, Christmas Eve). 19 tests in that file,
+526 in the suite.
+
+**Reusable lesson, third instance of the same shape in this project:** a bug
+that repairs itself on the next cycle is harder to kill than one that stays
+broken, because nothing ever forces the investigation. The other two were the
+delisted-ticker refresh failure (2026-08-19) and the cash-in-denominator
+rebalance band (2026-08-19). Self-healing is not the same as harmless.
