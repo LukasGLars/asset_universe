@@ -5819,3 +5819,73 @@ that repairs itself on the next cycle is harder to kill than one that stays
 broken, because nothing ever forces the investigation. The other two were the
 delisted-ticker refresh failure (2026-08-19) and the cash-in-denominator
 rebalance band (2026-08-19). Self-healing is not the same as harmless.
+
+## basket_crash PASSES its sub-period + control test (2026-10-02)
+
+**The run completed 2026-09-17 and its verdict was never read. That is the
+finding behind the finding: a test built specifically to settle a retirement
+decision sat finished and unexamined for two weeks while the script, tests and
+workflow stayed on master uncleaned.** Re-dispatched and read today.
+
+**VERDICT: PASS on both pre-committed criteria.**
+
+| Criterion | Threshold | Result |
+|---|---|---|
+| 1. basket-over-solo edge positive in majority of non-COVID eras at 21d | >half | **4/4** |
+| 2. date-matched excess at 21d | >1.00pp | **+1.89%** |
+
+Era edges at 21d: 2009-2012 **+5.74%**, 2013-2015 **+6.51%**, 2016-2018
+**+4.16%**, 2019-2021 **-0.15%** (excluded), 2022-2026 **+2.60%**.
+
+Date-matched control (bucket median minus the ENTIRE universe's median forward
+return on the same entry dates), n=297 basket / 995 solo:
+
+| Horizon | bucket | raw | universe | excess | excess-win |
+|---|---|---|---|---|---|
+| 21d | basket | +4.03% | +2.22% | **+1.89%** | 57.6% |
+| 21d | solo | +1.21% | +1.29% | +0.58% | 52.1% |
+| 90d | basket | +8.66% | +5.39% | +2.35% | 57.8% |
+| 90d | solo | +5.40% | +4.40% | +2.08% | 53.1% |
+
+**What this changes.** The opportunistic sleeve was retired 2026-09-04 on
+evidence in which **none of the 13 closed trades were basket_crash** -- 20 of 21
+live recommendations were extension. That retirement therefore rested on a
+sample that excluded the one entry type which survives its own test. The
+decision was made on less than it appeared to be made on.
+
+**Five reasons this is still not a green light, and they matter more than the
+PASS:**
+
+1. **The edge decays monotonically**: +5.74 / +6.51 / +4.16 / +2.60 across eras.
+   The most recent and most relevant era is the weakest, at +2.60% median at 21d
+   before spread, slippage and the ISK drag on a 30-name screen.
+2. **The one excluded era is the only failing one.** The exclusion was
+   pre-committed and justified as "excluding 2020", but the bucket actually
+   excluded is three years wide (2019-2021). Removing one event by deleting
+   three years is wider than the stated reason, and it happens to delete the
+   single negative. Honest reading: the criterion passed as written, and as
+   written it was looser than it sounded.
+3. **It is a crisis-only strategy.** 169 of 297 basket entries fall in four
+   years (2008: 45, 2011: 29, 2020: 40, 2022: 55). 2013, 2023 and 2024 produced
+   **zero**. It will sit idle for years and then fire in clusters, which is also
+   why n=297 is not 297 independent draws.
+4. **The advantage over solo nearly vanishes at 90d** (+2.35% vs +2.08%). The
+   effect lives at 21 days, which reads as short-horizon oversold
+   mean-reversion, not the sector-peer stock selection the screen claims to
+   find.
+5. **solo_crash is not zero either** (+0.58% at 21d, +2.08% at 90d). The
+   2026-07-29 reconstruction's claim that the whole effect sits in ">=2
+   same-sector peers also crashing" is weaker than it looked -- the gap narrows
+   considerably once both legs are measured against a date-matched control
+   rather than against each other.
+
+**Nothing reinstated. No gate rebuilt, no sleeve reopened.** What the evidence
+supports is narrower than the sleeve that was retired: a 21-day, crisis-window,
+~2pp-excess entry whose edge is shrinking. Whether that is worth rebuilding as a
+standalone narrow entry is the operator's call, not this test's.
+
+Live relevance: the WDC and LITE alerts of 2026-09-17 were basket_crash alerts,
+so this is the entry type currently firing in production.
+
+Script, tests and workflow deleted after logging, per the temp-diagnostic
+convention -- two weeks late.
