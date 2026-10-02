@@ -160,24 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : HOOD (Robinhood Markets, Inc.)  $111.15  (ext +5.7%, 21d med +4.0%, ave +5.4%, win 59.6%, div THIN, drift -0.0%)
-    Plan           : buy near $111.15, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open HOOD <fill_price> <shares> <capital_sek>
+    Best candidate : DELL (Dell Technologies Inc.)  $541.74  (ext +11.4%, 21d med +3.4%, ave +5.0%, win 61.6%, div THIN, drift +0.8%)
+    Plan           : buy near $541.74, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open DELL <fill_price> <shares> <capital_sek>
     VIX review     : 16.39  (41% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $83,554  (as of 2026-09-30)
+    Bitcoin (BTC-USD)  $84,853  (as of 2026-10-01)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $73,580, flat below $72,109)
-      MA100        : LONG (MA $70,049, flat below $68,648)
-      MA200        : LONG (MA $73,501, flat below $72,031)
+      MA50         : LONG (MA $73,976, flat below $72,497)
+      MA100        : LONG (MA $70,087, flat below $68,685)
+      MA200        : LONG (MA $73,489, flat below $72,019)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,684  (as of 2026-09-30)
+    Ethereum (ETH-USD)  $2,706  (as of 2026-10-01)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,281, flat below $2,236)
-      MA100        : LONG (MA $2,057, flat below $2,016)
-      MA200        : LONG (MA $2,227, flat below $2,182)
+      MA50         : LONG (MA $2,298, flat below $2,252)
+      MA100        : LONG (MA $2,061, flat below $2,020)
+      MA200        : LONG (MA $2,226, flat below $2,182)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
