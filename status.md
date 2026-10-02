@@ -160,9 +160,9 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : DELL (Dell Technologies Inc.)  $541.74  (ext +11.4%, 21d med +3.4%, ave +5.0%, win 61.6%, div THIN, drift +0.8%)
-    Plan           : buy near $541.74, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open DELL <fill_price> <shares> <capital_sek>
+    Best candidate : PLTR (Palantir Technologies Inc.)  $190.04  (ext +12.8%, 21d med +3.6%, ave +5.5%, win 59.7%, div THIN, drift +0.8%)
+    Plan           : buy near $190.04, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
+    Open           : run_entry_screen.py --open PLTR <fill_price> <shares> <capital_sek>
     VIX review     : 16.39  (41% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
