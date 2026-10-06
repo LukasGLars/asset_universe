@@ -5889,3 +5889,39 @@ so this is the entry type currently firing in production.
 
 Script, tests and workflow deleted after logging, per the temp-diagnostic
 convention -- two weeks late.
+
+## HOOD screened on technicals: nothing to act on (2026-10-06)
+
+Asked whether Robinhood is interesting technically. **No.** Snapshot at
+2026-10-05 close, 114.11:
+
+| | HOOD | SPY | AVGO | LLY |
+|---|---|---|---|---|
+| vs 50d / 100d / 200d | +7.9 / +13.5 / **+21.0%** | +1.4 / +2.7 / +7.7 | -2.8 / -6.1 / -1.2 | -2.8 / -0.8 / +6.5 |
+| 200d slope (21d) | **-0.8%** | +1.4% | -0.5% | +1.1% |
+| 21d / 63d / 252d | -8.5 / +1.1 / **-21.7%** | +0.2 / +3.6 / +16.7 | +1.5 / -2.2 / +7.8 | -1.4 / -7.5 / +40.1 |
+| RSI14 | 51 | 59 | 52 | 43 |
+| 52w position | 56% | 98% | 37% | 72% |
+| from 52w high | -25.2% | -0.4% | -24.6% | -10.7% |
+| 60d realised vol | **+71.5%** | +11.2% | +38.2% | +29.2% |
+| rel. strength vs SPY 21/63/252d | -8.7 / -2.5 / **-32.9%** | -- | +1.3 / -5.7 / -7.7 | -1.6 / -10.7 / +20.0 |
+
+**The one bullish-looking number is an artifact.** Being +21% over the 200d
+average while -21.7% over 252 days is not a trend -- the average is still
+catching down from a crash inside the window. The 200d slope has already
+turned negative, RSI is neutral at 51, and it sits mid-range. There is no
+clean trend in either direction to trade.
+
+**It has underperformed SPY at every horizon**, by 32.9pp over a year.
+
+**Risk class is the disqualifier, not the chart.** 60d realised vol of 71.5%
+is 6x SPY and ~2x AVGO, and the max drawdown since listing is **-90.2%**
+(trough 2022-06-16) on only 5.2 years of history -- no full cycle. For a
+portfolio whose stated objective is drawdown control and whose Core already
+failed to reach a -25% floor without help, that is a different asset class
+from AVGO/LLY, not a comparable growth name.
+
+Technicals only. No fundamental view was formed or requested, and this says
+nothing about the business.
+
+Script, tests and workflow deleted after logging.
