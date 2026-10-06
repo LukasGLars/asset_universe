@@ -39,7 +39,7 @@ print("=" * 74)
 
 ath = df["close"].idxmax()
 print(f"  all-time closing high : {df['close'].max():.2f}  ({ath.date()})")
-y = df.last("365D")
+y = df.loc[df.index[-1] - pd.Timedelta(days=365):]
 print(f"  52w high close        : {y['close'].max():.2f}  ({y['close'].idxmax().date()})")
 print(f"  52w low close         : {y['close'].min():.2f}  ({y['close'].idxmin().date()})")
 print(f"  now                   : {df['close'].iloc[-1]:.2f}")
@@ -89,7 +89,7 @@ def swings(s: pd.Series, k: int = 10) -> list[tuple]:
             merged.append(p)
     return merged
 
-d2 = df["close"].last("540D")
+d2 = df["close"].loc[df.index[-1] - pd.Timedelta(days=540):]
 print("\n" + "-" * 74)
 print("SWING POINTS (daily closes, 10-session pivots, last ~18 months)")
 print("-" * 74)
