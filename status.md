@@ -160,24 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : ANET (Arista Networks, Inc.)  $206.90  (ext +6.6%, 21d med +3.0%, ave +3.1%, win 65.6%, div THIN, drift +0.0%)
+    Best candidate : ANET (Arista Networks, Inc.)  $206.90  (ext +6.6%, 21d med +3.0%, ave +3.1%, win 65.6%, div THIN, drift +0.8%)
     Plan           : buy near $206.90, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open ANET <fill_price> <shares> <capital_sek>
     VIX review     : 15.52  (35% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $84,497  (as of 2026-10-02)
+    Bitcoin (BTC-USD)  $85,787  (as of 2026-10-05)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $74,384, flat below $72,897)
-      MA100        : LONG (MA $70,141, flat below $68,738)
-      MA200        : LONG (MA $73,475, flat below $72,006)
+      MA50         : LONG (MA $74,825, flat below $73,329)
+      MA100        : LONG (MA $70,229, flat below $68,825)
+      MA200        : LONG (MA $73,468, flat below $71,999)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,668  (as of 2026-10-02)
+    Ethereum (ETH-USD)  $2,711  (as of 2026-10-05)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,314, flat below $2,268)
-      MA100        : LONG (MA $2,066, flat below $2,024)
-      MA200        : LONG (MA $2,225, flat below $2,180)
+      MA50         : LONG (MA $2,330, flat below $2,284)
+      MA100        : LONG (MA $2,072, flat below $2,030)
+      MA200        : LONG (MA $2,224, flat below $2,179)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -293,7 +293,7 @@ AVGO peer valuation snapshot -- 2026-10-06
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-AMD         $631.75     $5.76    $15.63      2.71x        +171%    40.42x      0.24
+AMD         $631.75     $5.76    $15.72      2.73x        +173%    40.18x      0.23
 NVDA        $238.90     $7.01    $15.80      2.25x        +125%    15.12x      0.12
 MRVL        $271.25     $3.30     $6.75      2.05x        +105%    40.19x      0.38
 AVGO*       $362.51     $9.76    $19.39      1.99x         +99%    18.69x      0.19
@@ -301,7 +301,7 @@ ASML      $1,859.86    $27.56    $51.73      1.88x         +88%    35.95x      0
 TSM         $485.80    $13.86    $22.03      1.59x         +59%    22.05x      0.37
 ANET        $206.90     $3.46     $5.20      1.50x         +50%    39.77x      0.79
 QCOM        $180.79    $11.36    $10.20      0.90x         -10%    17.73x       n/a
-MU        $1,063.96       n/a   $205.95        n/a          n/a       n/a       n/a
+MU        $1,063.96       n/a   $206.68        n/a          n/a       n/a       n/a
 
 * = AVGO
 
