@@ -5925,3 +5925,67 @@ Technicals only. No fundamental view was formed or requested, and this says
 nothing about the business.
 
 Script, tests and workflow deleted after logging.
+
+## AVGO breakout + volume is NOT an overweight signal (2026-10-06)
+
+**Question:** the operator is bullish AVGO and asked for a signal marking when
+to overweight. Shape specified by the operator: price clears the resistance
+capping it, on volume above its own average.
+
+**VERDICT: NO SIGNAL.** Failed the pre-committed criteria, and the full grid is
+worse than the single failure reads.
+
+`run_avgo_breakout_signal.py`. Breakout = close > the highest close of the
+prior N sessions, that bar excluded. Volume = bar volume / its own trailing
+50-session mean, bar excluded. Entry close(signal+1), declustered 21 sessions.
+Swept N = 20/40/60 against volume >= none/1.0/1.25/1.5/2.0. 2009-2026, 4317
+sessions.
+
+**The bar was beating HOLDING, not being positive.** AVGO is already at a 20%
+target, so the unconditional forward return from a random session is the only
+comparison that matters for an overweight. Unconditional AVGO medians: 21d
++3.0%, 63d **+9.4%**, 126d +19.3%, 252d +42.3%.
+
+**Edge over holding at 63d, all 15 cells NEGATIVE:**
+
+| lookback | no filter | >=1.0 | >=1.25 | >=1.5 | >=2.0 |
+|---|---|---|---|---|---|
+| 20 | -1.3% | **-0.6%** | -0.8% | -2.0% | -1.9% |
+| 40 | -1.1% | -1.2% | -0.9% | -2.1% | -2.0% |
+| 60 | -1.0% | -1.2% | -2.0% | -2.0% | -2.0% |
+
+Breakouts return +7.3% to +8.8% at 63d against a +9.4% baseline. **Buying AVGO
+on a breakout has been slightly worse than buying it on a random day**, at
+every lookback and every volume threshold. Same picture at 21d (all negative).
+
+**Volume confirmation actively hurts.** Best add over no filter is +0.7pp
+(N=20, vol>=1.0), under the +1pp bar. 8 of 12 volume cells are NEGATIVE adds,
+and the stricter the filter the worse it gets: vol>=1.5 and >=2.0 subtract
+0.6-1.1pp. **This directly contradicts the conventional "wait for volume
+confirmation" reading, which was stated to the operator as untested convention
+one exchange earlier and is now tested and wrong for this name.**
+
+**The trap in this test, and why criterion 3 exists.** Date-matched excess vs
+SPY is large and consistent -- **+4.7% to +6.7% at 63d and +22% to +33% at
+252d, positive in all 15 cells.** Read alone that looks like a strong signal.
+It is not: it measures AVGO beating SPY, which the operator already captures by
+holding AVGO at 20%. It carries no information about WHEN. Criterion 3 passed
+and is the least informative of the three.
+
+Sub-periods on the best cell (N=20, vol>=1.0, n=93): vs holding **+3.1% /
+-1.2% / +0.9%**. Criterion 1 passed 2/3 on magnitudes small enough to be noise.
+
+**Dead end -- do not re-test.** Joins VIX >90th pct buying, SPY/QQQ/IWM
+drawdown-from-60d-high buying, BTC/ETH dip buying, and trend-following on
+SPY/QQQ/GLD/SLV/USO.
+
+**What still stands as the only validated AVGO entry:** the 5d ROC <= -10%
+crash trigger (n=32, 2026-08-14). Breakouts are the opposite shape -- buying
+strength -- and it does not work on this name.
+
+Bound: 2009-2026 is one long semiconductor bull market with no 2000-02
+analogue, and breakouts cluster in uptrends so declustered episodes still
+overlap. The negative result is robust in the sense that it is negative in
+every cell rather than marginal in one.
+
+Script, tests and workflow deleted after logging.
