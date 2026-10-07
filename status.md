@@ -160,24 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : PLTR (Palantir Technologies Inc.)  $192.07  (ext +11.5%, 21d med +3.7%, ave +5.5%, win 59.9%, div THIN, drift -0.0%)
+    Best candidate : PLTR (Palantir Technologies Inc.)  $192.07  (ext +11.5%, 21d med +3.7%, ave +5.5%, win 59.9%, div THIN, drift -0.2%)
     Plan           : buy near $192.07, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open PLTR <fill_price> <shares> <capital_sek>
     VIX review     : 15.01  (31% percentile, falling) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $85,787  (as of 2026-10-05)
+    Bitcoin (BTC-USD)  $85,558  (as of 2026-10-06)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $74,825, flat below $73,329)
-      MA100        : LONG (MA $70,229, flat below $68,825)
-      MA200        : LONG (MA $73,468, flat below $71,999)
+      MA50         : LONG (MA $75,259, flat below $73,754)
+      MA100        : LONG (MA $70,317, flat below $68,911)
+      MA200        : LONG (MA $73,454, flat below $71,985)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,711  (as of 2026-10-05)
+    Ethereum (ETH-USD)  $2,698  (as of 2026-10-06)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,330, flat below $2,284)
-      MA100        : LONG (MA $2,072, flat below $2,030)
-      MA200        : LONG (MA $2,224, flat below $2,179)
+      MA50         : LONG (MA $2,346, flat below $2,299)
+      MA100        : LONG (MA $2,078, flat below $2,036)
+      MA200        : LONG (MA $2,222, flat below $2,178)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
