@@ -130,7 +130,7 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.59
+    Forward EPS (+1yr est.)    : $47.61
     Fwd/Trail ratio (normalized): 1.51x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
     Next-qtr revenue consensus : $22.36B (implied YoY +27.1%)
@@ -160,7 +160,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : PLTR (Palantir Technologies Inc.)  $192.07  (ext +11.5%, 21d med +3.7%, ave +5.5%, win 59.9%, div THIN, drift -0.2%)
+    Best candidate : PLTR (Palantir Technologies Inc.)  $192.07  (ext +11.5%, 21d med +3.7%, ave +5.5%, win 59.9%, div THIN, drift +0.2%)
     Plan           : buy near $192.07, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open PLTR <fill_price> <shares> <capital_sek>
     VIX review     : 15.01  (31% percentile, falling) -- for review, not a gate
@@ -294,8 +294,8 @@ AVGO peer valuation snapshot -- 2026-10-07
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
 AMD         $649.42     $5.76    $15.72      2.73x        +173%    41.31x      0.24
-NVDA        $239.24     $7.01    $15.80      2.25x        +125%    15.14x      0.12
-MRVL        $287.01     $3.30     $6.75      2.05x        +105%    42.52x      0.41
+NVDA        $239.24     $7.01    $15.91      2.27x        +127%    15.03x      0.12
+MRVL        $287.01     $3.30     $7.21      2.18x        +118%    39.82x      0.34
 AVGO*       $375.81     $9.76    $19.39      1.99x         +99%    19.38x      0.20
 ASML      $1,834.10    $27.56    $51.92      1.88x         +88%    35.32x      0.40
 TSM         $482.30    $13.86    $22.05      1.59x         +59%    21.87x      0.37
