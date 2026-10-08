@@ -130,7 +130,7 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.61
+    Forward EPS (+1yr est.)    : $47.60
     Fwd/Trail ratio (normalized): 1.51x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
     Next-qtr revenue consensus : $22.36B (implied YoY +27.1%)
@@ -160,24 +160,21 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : PLTR (Palantir Technologies Inc.)  $194.12  (ext +11.7%, 21d med +3.7%, ave +5.5%, win 59.9%, div THIN, drift +0.0%)
-    Plan           : buy near $194.12, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open PLTR <fill_price> <shares> <capital_sek>
-    VIX review     : 15.08  (32% percentile, falling) -- for review, not a gate
+    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $85,558  (as of 2026-10-06)
+    Bitcoin (BTC-USD)  $83,276  (as of 2026-10-07)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $75,259, flat below $73,754)
-      MA100        : LONG (MA $70,317, flat below $68,911)
-      MA200        : LONG (MA $73,454, flat below $71,985)
+      MA50         : LONG (MA $75,647, flat below $74,134)
+      MA100        : LONG (MA $70,375, flat below $68,968)
+      MA200        : LONG (MA $73,433, flat below $71,964)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,698  (as of 2026-10-06)
+    Ethereum (ETH-USD)  $2,574  (as of 2026-10-07)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,346, flat below $2,299)
-      MA100        : LONG (MA $2,078, flat below $2,036)
-      MA200        : LONG (MA $2,222, flat below $2,178)
+      MA50         : LONG (MA $2,359, flat below $2,312)
+      MA100        : LONG (MA $2,082, flat below $2,040)
+      MA200        : LONG (MA $2,220, flat below $2,176)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -295,7 +292,7 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 -----------------------------------------------------------------------------------
 AMD         $645.86     $5.76    $15.72      2.73x        +173%    41.08x      0.24
 NVDA        $237.47     $7.01    $15.91      2.27x        +127%    14.92x      0.12
-MRVL        $284.68     $3.30     $7.21      2.18x        +118%    39.49x      0.33
+MRVL        $284.68     $3.30     $7.28      2.21x        +121%    39.09x      0.32
 AVGO*       $376.51     $9.76    $19.39      1.99x         +99%    19.41x      0.20
 ASML      $1,804.96    $27.56    $51.92      1.88x         +88%    34.76x      0.39
 TSM         $472.20    $13.86    $22.05      1.59x         +59%    21.42x      0.36
