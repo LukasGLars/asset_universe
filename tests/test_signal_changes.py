@@ -44,21 +44,33 @@ FIXTURE_BASE = """
 
   Regime check (2026-06-30): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 
-  AVGO Rebalance Check  [existing capital, band: 5%]
-    Gold status: HOLD  (27.7% actual vs 27.7% target, gap +0.0%)
-    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)
-    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)
+  Rebalance Check  [existing capital, band: 10pp absolute gap to target]
+    Broadcom status: HOLD  (23.6% actual vs 20.0% target, gap -3.6%)
+    Eli Lilly status: HOLD  (22.4% actual vs 20.0% target, gap -2.4%)
+    Gold status: HOLD  (18.8% actual vs 20.0% target, gap +1.2%)
+    LF Global Index status: HOLD  (25.2% actual vs 25.0% target, gap -0.2%)
+    Reactor Core Cash status: HOLD  (4.8% actual vs 10.0% target, gap +5.2%)
 """
 
 FIXTURE_REBAL_AVGO_SELL = FIXTURE_BASE.replace(
-    "    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)",
-    "    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,382 kr)",
+    "    Broadcom status: HOLD  (23.6% actual vs 20.0% target, gap -3.6%)",
+    "    Broadcom status: SELL  (31.0% actual vs 20.0% target, gap -11.0%) -- ~21 shares (~75,000 kr)",
 )
 
 FIXTURE_REBAL_LLY_BUY = FIXTURE_BASE.replace(
-    "    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)",
-    "    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,499 kr)",
+    "    Eli Lilly status: HOLD  (22.4% actual vs 20.0% target, gap -2.4%)",
+    "    Eli Lilly status: BUY  (8.0% actual vs 20.0% target, gap +12.0%) -- ~10 shares (~119,000 kr)",
 )
+
+# The heading and row format fi_tracker used BEFORE PR #119/#120. A previous
+# status.md on disk is still in this shape the first time the new code runs,
+# so the parser has to keep reading it or the first comparison is spurious.
+FIXTURE_REBAL_LEGACY_FORMAT = """
+  AVGO Rebalance Check  [existing capital, band: 10%]
+    Gold status: HOLD  (29.8% actual vs 25.0% target, gap -4.8%)
+    AVGO status: HOLD  (36.0% actual vs 40.0% target, gap +4.0%)
+    LLY status: HOLD  (34.2% actual vs 35.0% target, gap +0.8%)
+"""
 
 # Guard retired as a rotation rule 2026-08-16 (PR #88). The CRASH trigger
 # survives as a gap-down BUY signal -- that rests on the gap-down forward-
@@ -597,11 +609,62 @@ def test_live_dashboard_labels_are_parseable():
 
 
 def test_extract_fingerprint_parses_rebalance_check_fields():
-    fp = extract_fingerprint(FIXTURE_BASE)
-    assert fp["rebal_gold_status"] == "HOLD"
-    assert fp["rebal_avgo_status"] == "HOLD"
-    assert fp["rebal_lly_status"] == "HOLD"
-    assert fp["rebal_avgo_detail"] == "(35.0% actual vs 33.5% target, gap -1.5%)"
+    rows = extract_fingerprint(FIXTURE_BASE)["rebal_rows"]
+    assert set(rows) == {"Broadcom", "Eli Lilly", "Gold",
+                         "LF Global Index", "Reactor Core Cash"}
+    assert all(r["status"] == "HOLD" for r in rows.values())
+    assert rows["Broadcom"]["detail"] == "(23.6% actual vs 20.0% target, gap -3.6%)"
+
+
+def test_rebalance_block_is_a_parsing_contract():
+    """Companion to the AVGO label-contract test above, added 2026-10-09
+    after exactly that failure recurred here.
+
+    PR #119 renamed the heading from "AVGO Rebalance Check" to "Rebalance
+    Check" and changed the row layout. The three hardcoded regexes anchored
+    on the old strings degraded to "unknown", and the unknown-guard then
+    suppressed the alert -- so a dead drift alert was indistinguishable from
+    a quiet market. Nothing failed; it just went silent.
+
+    Any row the block prints must parse, with a real status."""
+    rows = extract_fingerprint(FIXTURE_BASE)["rebal_rows"]
+    assert rows, "rebalance block did not parse at all -- format contract broken"
+    for name, row in rows.items():
+        assert row["status"] in ("HOLD", "SELL", "BUY"), f"{name}: {row['status']!r}"
+        assert row["detail"].startswith("("), f"{name} detail did not parse"
+
+
+def test_legacy_rebalance_format_still_parses():
+    """The previous status.md on disk is in the pre-PR-119 shape the first
+    time the new code runs. If it failed to parse, every position would look
+    like a fresh row with no baseline."""
+    rows = extract_fingerprint(FIXTURE_REBAL_LEGACY_FORMAT)["rebal_rows"]
+    assert set(rows) == {"Gold", "AVGO", "LLY"}
+    assert rows["AVGO"]["status"] == "HOLD"
+
+
+def test_a_renamed_row_does_not_fire_a_spurious_alert():
+    """Broadcom/Eli Lilly replaced AVGO/LLY as row names. A position present
+    in curr but absent from prev has no baseline and must be skipped, not
+    treated as a transition."""
+    assert build_actionable_message(
+        extract_fingerprint(FIXTURE_REBAL_LEGACY_FORMAT),
+        extract_fingerprint(FIXTURE_BASE),
+    ) is None
+
+
+def test_non_core_positions_can_also_fire():
+    """The old loop was hardcoded to Gold/AVGO/LLY, so the index leg and cash
+    could never have alerted however far they drifted."""
+    drifted = FIXTURE_BASE.replace(
+        "    LF Global Index status: HOLD  (25.2% actual vs 25.0% target, gap -0.2%)",
+        "    LF Global Index status: BUY  (12.0% actual vs 25.0% target, gap +13.0%) -- ~200 shares (~126,000 kr)",
+    )
+    msg = build_actionable_message(extract_fingerprint(FIXTURE_BASE),
+                                    extract_fingerprint(drifted))
+    assert msg is not None
+    assert "LF Global Index rebalance -> BUY" in msg[0]
+    assert "126,000 kr" in msg[1]
 
 
 def test_rebalance_hold_to_sell_fires_with_action():
@@ -610,9 +673,9 @@ def test_rebalance_hold_to_sell_fires_with_action():
     result = build_actionable_message(prev, curr)
     assert result is not None
     subject, body = result
-    assert "AVGO rebalance" in subject
+    assert "Broadcom rebalance" in subject
     assert "ACTION:" in body
-    assert "~29 shares" in body
+    assert "~21 shares" in body
 
 
 def test_rebalance_hold_to_buy_fires_with_action():
@@ -621,8 +684,8 @@ def test_rebalance_hold_to_buy_fires_with_action():
     result = build_actionable_message(prev, curr)
     assert result is not None
     subject, body = result
-    assert "LLY rebalance" in subject
-    assert "~12 shares" in body
+    assert "Eli Lilly rebalance" in subject
+    assert "~10 shares" in body
 
 
 def test_rebalance_still_out_of_band_does_not_refire():
@@ -645,17 +708,17 @@ def test_rebalance_snapshot_lists_only_out_of_band_assets():
     from check_signal_changes import build_rebalance_snapshot_message
 
     text = FIXTURE_BASE.replace(
-        "    AVGO status: HOLD  (35.0% actual vs 33.5% target, gap -1.5%)",
-        "    AVGO status: SELL  (46.8% actual vs 33.5% target, gap -13.3%) -- ~29 shares (~107,382 kr)",
+        "    Broadcom status: HOLD  (23.6% actual vs 20.0% target, gap -3.6%)",
+        "    Broadcom status: SELL  (31.0% actual vs 20.0% target, gap -11.0%) -- ~21 shares (~75,000 kr)",
     ).replace(
-        "    LLY status: HOLD  (37.3% actual vs 38.8% target, gap +1.5%)",
-        "    LLY status: BUY  (22.3% actual vs 38.8% target, gap +16.5%) -- ~12 shares (~133,499 kr)",
+        "    Eli Lilly status: HOLD  (22.4% actual vs 20.0% target, gap -2.4%)",
+        "    Eli Lilly status: BUY  (8.0% actual vs 20.0% target, gap +12.0%) -- ~10 shares (~119,000 kr)",
     )
     result = build_rebalance_snapshot_message(text)
     assert result is not None
     subject, body = result
-    assert "AVGO" in body and "SELL" in body and "~29 shares" in body
-    assert "LLY" in body and "BUY" in body and "~12 shares" in body
+    assert "Broadcom" in body and "SELL" in body and "~21 shares" in body
+    assert "Eli Lilly" in body and "BUY" in body and "~10 shares" in body
     # Gold stayed HOLD -- must not appear as an actionable block.
     assert "Gold is out of band" not in body
 
