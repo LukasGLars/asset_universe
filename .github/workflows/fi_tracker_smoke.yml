@@ -1,0 +1,60 @@
+name: fi-tracker-smoke
+
+# Manual-only, TEMPORARY (2026-10-09): runs fi_tracker.py against the real
+# store to verify the reworked contribution routing / rebalance / cash blocks
+# render correctly on live data. Read-only -- does NOT commit status.md and
+# does NOT run notify_signal_changes.py, so no alert can fire from it.
+#
+# Delete once the routing change is verified and merged.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Restore parquet cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: parquet-${{ github.run_id }}
+          restore-keys: parquet-
+      - name: Install dependencies
+        run: pip install -e . pytest
+      - name: Ensure local data is fresh
+        run: python check_local_data_freshness.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Unit tests for the routing helpers
+        run: python -m pytest tests/test_next_contribution.py tests/test_vol_target.py -q
+      - name: Run fi_tracker (stdout only, nothing committed)
+        run: |
+          set -o pipefail
+          python fi_tracker.py 2>&1 | tee smoke.md
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Fail if any section rendered as unavailable
+        run: |
+          if grep -nE "unavailable|Traceback" smoke.md; then
+            echo "::error::a dashboard section failed to render"
+            exit 1
+          fi
+          echo "all sections rendered"
+      - name: Show the reworked blocks
+        run: |
+          sed -n '/NEXT CONTRIBUTION/,/^=\{10,\}$/p' smoke.md
+      - name: Step summary
+        run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed -n '/REACTOR CORE/,/FI@50/p' smoke.md >> $GITHUB_STEP_SUMMARY
+          sed -n '/NEXT CONTRIBUTION/,$p' smoke.md >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
