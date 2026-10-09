@@ -175,7 +175,11 @@ def rebalance_instructions(
     share count, not never surfacing a real gap.
     """
     result: dict[str, dict] = {}
-    for tkr in ("GC_F", "AVGO", "LLY"):
+    # Iterates the targets it was handed, not a hardcoded triple: the live
+    # target is per-asset across the whole Reactor Core account since the
+    # 2026-09-27 restructure, so the set is no longer Gold/AVGO/LLY. Passing a
+    # 3-key dict still behaves exactly as before.
+    for tkr in sorted(target_weights):
         cur = current_weights.get(tkr, 0.0)
         tgt = target_weights.get(tkr, 0.0)
         gap = tgt - cur
