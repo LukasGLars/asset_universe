@@ -78,6 +78,22 @@ jobs:
           print(f"all {len(must_parse)} alert fields parsed")
           EOF
 
+      # Added after the same rename broke this too. The smoke run checked the
+      # ALERT parser but not the sync-health validator, so a third consumer of
+      # the heading went unverified and every daily sync failed. Content check
+      # only -- check_freshness reads status.md's git commit time, which says
+      # nothing about a panel generated in this job.
+      - name: Sync-health content check against the real panel
+        run: |
+          python - <<'EOF'
+          from check_sync_health import check_content, REQUIRED_SECTIONS
+          problems = check_content(open("smoke.md").read())
+          for p in problems:
+              print(f"PROBLEM: {p}")
+          assert not problems, f"{len(problems)} sync-health problem(s)"
+          print(f"sync-health content OK ({len(REQUIRED_SECTIONS)} sections present)")
+          EOF
+
       - name: Show the reworked blocks
         run: |
           sed -n '/NEXT CONTRIBUTION/,/^=\{10,\}$/p' smoke.md
