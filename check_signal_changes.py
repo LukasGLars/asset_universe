@@ -40,9 +40,24 @@ import re
 import sys
 
 
+# HY credit OAS push level, requested by the operator 2026-10-09. HY was
+# 309 bps and had widened 38 bps over 20 sessions while IG stayed TIGHT --
+# the one credit series currently deteriorating, so the one worth a push.
+HY_OAS_ALERT_BPS = 400
+
+
 def _find(pattern: str, text: str, default: str = "unknown") -> str:
     m = re.search(pattern, text, re.DOTALL)
     return m.group(1).strip() if m else default
+
+
+def _as_int(value: str) -> int | None:
+    """Parsed integer, or None for "unknown"/garbage. Keeps the threshold
+    comparison from throwing on a status.md that failed to render."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def extract_fingerprint(text: str) -> dict:
@@ -87,6 +102,13 @@ def extract_fingerprint(text: str) -> dict:
         "crypto_eth_exposure": _find(r"Crypto Trend Sleeve.*?ETH-USD.*?Target\s*:\s*(\S+)", text),
         "crypto_btc_target": _find(r"Crypto Trend Sleeve.*?BTC-USD.*?Target\s*:\s*([^\n]+)", text),
         "crypto_eth_target": _find(r"Crypto Trend Sleeve.*?ETH-USD.*?Target\s*:\s*([^\n]+)", text),
+        # HY credit OAS. Same split as the crypto sleeve above: the bare
+        # integer drives the threshold comparison, the full line is what the
+        # message quotes, so the printed spread is always the one fi_tracker
+        # computed rather than restated here.
+        "hy_oas": _find(r"HY OAS\s+(\d+)\s*bps", text),
+        "hy_oas_line": _find(r"(HY OAS\s+\d+\s*bps[^\n]*)", text),
+        "hy_20d_delta": _find(r"HY 20d delta\s*:\s*([^\n]+)", text),
         "regime_flip": "FLIP" if re.search(r"REGIME CHANGE ALERT", text) else "stable",
         "avgo_earnings_reminder": _find(r"AVGO Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
         "lly_earnings_reminder": _find(r"LLY Earnings Checkpoint.*?Reminder\s*:\s*(\S+)", text),
@@ -135,6 +157,7 @@ LABELS = {
     "crypto_btc_exposure": "Crypto sleeve BTC",
     "crypto_eth_exposure": "Crypto sleeve ETH",
     "regime_flip": "Regime",
+    "hy_oas": "HY credit OAS",
     "sightline_avgo_state": "Sightline AVGO",
     "sightline_lly_state": "Sightline LLY",
 }
@@ -172,6 +195,30 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             f"ACTION: {curr['avgo_action']}"
         )
         subject_parts.append("AVGO gap-down trigger")
+
+    # HY credit OAS crossing its push level.
+    #
+    # Fires on the CROSSING -- previous reading below the level, current at
+    # or above -- not on every day spent above it, so a sustained widening
+    # alerts once rather than daily. The accepted cost: a spread oscillating
+    # around the level re-alerts on each upward cross. Suppressing that would
+    # need persistent armed-state, and this script is a stateless prev/curr
+    # diff with nowhere to keep it. A re-cross of the level is informative
+    # anyway.
+    #
+    # The spread is NEVER restated in prose here -- the message quotes
+    # fi_tracker's own line and interpolates the same constant the
+    # comparison uses, so the two cannot drift (CLAUDE.md, PR #100).
+    hy_prev, hy_curr = _as_int(prev["hy_oas"]), _as_int(curr["hy_oas"])
+    if hy_prev is not None and hy_curr is not None and hy_prev < HY_OAS_ALERT_BPS <= hy_curr:
+        blocks.append(
+            f"HY CREDIT OAS crossed {HY_OAS_ALERT_BPS} bps\n"
+            f"  {curr['hy_oas_line']}\n"
+            f"  20d change: {curr['hy_20d_delta']}\n"
+            f"ACTION: review only -- no rule fires on this. Credit widening is "
+            f"context for the growth sleeve, not a trade."
+        )
+        subject_parts.append(f"HY OAS {hy_curr} bps")
 
     if prev["silver_signal"] != curr["silver_signal"] and "unknown" not in (prev["silver_signal"], curr["silver_signal"]):
         blocks.append(

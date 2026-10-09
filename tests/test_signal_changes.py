@@ -850,3 +850,104 @@ def test_sightline_autoread_unchanged_and_fetch_failed_are_silent():
     assert build_actionable_message(fp, fp) is None
     curr = extract_fingerprint(_sightline_auto("fetch_failed -- timeout"))
     assert build_actionable_message(fp, curr) is None
+
+
+# ── HY credit OAS push level (2026-10-09) ────────────────────────────────────
+# Operator asked to be alerted when HY OAS reaches 400 bps. Fires on the
+# upward crossing, not on every day above the level.
+
+HY_MACRO = """
+  Feature                 Value   Regime
+  ------------------------------------------
+  Nominal 10Y             5.28%   HIGH
+  HY OAS                {oas} bps   MID
+  IG Credit               1.46%   TIGHT
+
+  HY 20d delta  : {delta}  (widening)
+"""
+
+
+def _with_hy(oas, delta="+38 bps"):
+    return FIXTURE_BASE + HY_MACRO.format(oas=oas, delta=delta)
+
+
+def test_extract_fingerprint_parses_hy_oas():
+    f = extract_fingerprint(_with_hy(309))
+    assert f["hy_oas"] == "309"
+    assert "309 bps" in f["hy_oas_line"]
+    assert f["hy_20d_delta"].startswith("+38 bps")
+
+
+def test_hy_oas_fires_on_the_upward_crossing():
+    msg = build_actionable_message(
+        extract_fingerprint(_with_hy(395)),
+        extract_fingerprint(_with_hy(412)),
+    )
+    assert msg is not None
+    subject, body = msg
+    assert "HY OAS 412 bps" in subject
+    assert "crossed 400 bps" in body
+    assert "412 bps" in body, "must quote fi_tracker's own line"
+    assert "+38 bps" in body, "must carry the 20d change"
+
+
+def test_hy_oas_fires_exactly_at_the_level():
+    msg = build_actionable_message(
+        extract_fingerprint(_with_hy(399)),
+        extract_fingerprint(_with_hy(400)),
+    )
+    assert msg is not None and "HY OAS 400 bps" in msg[0]
+
+
+def test_hy_oas_silent_while_below_the_level():
+    assert build_actionable_message(
+        extract_fingerprint(_with_hy(309)),
+        extract_fingerprint(_with_hy(380)),
+    ) is None
+
+
+def test_hy_oas_does_not_refire_while_it_stays_above():
+    """The crossing already alerted. Staying wide must be silent, or every
+    daily sync re-pushes for the duration of the widening."""
+    assert build_actionable_message(
+        extract_fingerprint(_with_hy(412)),
+        extract_fingerprint(_with_hy(455)),
+    ) is None
+
+
+def test_hy_oas_silent_on_the_way_back_down():
+    assert build_actionable_message(
+        extract_fingerprint(_with_hy(430)),
+        extract_fingerprint(_with_hy(310)),
+    ) is None
+
+
+def test_hy_oas_does_not_alert_on_ordinary_daily_drift():
+    """The spread moves every day. It must not be part of the generic
+    'something changed' fingerprint -- only the crossing is actionable."""
+    for a, b in ((309, 312), (312, 309), (250, 390), (390, 250)):
+        assert build_actionable_message(
+            extract_fingerprint(_with_hy(a)),
+            extract_fingerprint(_with_hy(b)),
+        ) is None, f"{a} -> {b} should be silent"
+
+
+def test_hy_oas_unparseable_does_not_crash_or_alert():
+    """A status.md that failed to render must degrade quietly -- the
+    threshold comparison cannot throw on 'unknown'."""
+    broken = FIXTURE_BASE + "\n  HY OAS                  -- bps   MID\n"
+    f = extract_fingerprint(broken)
+    assert f["hy_oas"] == "unknown"
+    assert build_actionable_message(f, extract_fingerprint(_with_hy(450))) is None
+    assert build_actionable_message(extract_fingerprint(_with_hy(395)), f) is None
+
+
+def test_hy_oas_message_states_it_is_review_only():
+    """No rule fires on credit. The alert must not read as a trade
+    instruction -- every other block in this file leads with an action."""
+    msg = build_actionable_message(
+        extract_fingerprint(_with_hy(395)),
+        extract_fingerprint(_with_hy(401)),
+    )
+    assert msg is not None
+    assert "review only" in msg[1]
