@@ -151,3 +151,50 @@ def test_freshness_uses_git_commit_time_not_checkout_mtime(tmp_path):
     now = dt.datetime(2026, 7, 6, 10, 0, tzinfo=dt.timezone.utc)
     problems = run_health_check(status_path, now)
     assert any("last modified" in p for p in problems)
+
+
+# ── REQUIRED_SECTIONS must match what fi_tracker actually emits ──────────────
+# Added 2026-10-09. PR #119 renamed the "AVGO Rebalance Check" heading to
+# "Rebalance Check"; this list still demanded the old string, so every daily
+# sync failed on a missing-section problem until it was noticed. Three
+# separate consumers of that heading broke (the alert parser, the snapshot
+# resend, and this validator) and nothing tied any of them to the real file.
+
+from pathlib import Path
+
+import check_sync_health as _csh
+
+_REPO_STATUS = Path(__file__).resolve().parents[1] / "status.md"
+
+
+def test_required_sections_all_appear_in_the_committed_status_md():
+    """The committed status.md is real fi_tracker output. If a required
+    section is not in it, the validator is demanding a heading the dashboard
+    does not print, and every sync fails."""
+    if not _REPO_STATUS.exists():
+        import pytest
+        pytest.skip("status.md not present in this checkout")
+    text = _REPO_STATUS.read_text(encoding="utf-8", errors="replace")
+    missing = [s for s in _csh.REQUIRED_SECTIONS if s not in text]
+    assert not missing, (
+        f"REQUIRED_SECTIONS demands heading(s) fi_tracker does not print: {missing}"
+    )
+
+
+def test_committed_status_md_passes_the_content_check():
+    """End-to-end: the real panel must satisfy the real validator."""
+    if not _REPO_STATUS.exists():
+        import pytest
+        pytest.skip("status.md not present in this checkout")
+    problems = _csh.check_content(
+        _REPO_STATUS.read_text(encoding="utf-8", errors="replace"))
+    assert not problems, f"committed status.md fails content check: {problems}"
+
+
+def test_rebalance_section_matches_both_old_and_new_headings():
+    """The shortened substring has to keep reading a pre-PR-119 status.md,
+    since the previous file on disk is in the old shape."""
+    assert "Rebalance Check" in _csh.REQUIRED_SECTIONS
+    for heading in ("  Rebalance Check  [existing capital, band: 10pp absolute gap to target]",
+                    "  AVGO Rebalance Check  [existing capital, band: 10%]"):
+        assert not [s for s in ("Rebalance Check",) if s not in heading]

@@ -51,11 +51,17 @@ SCHEDULED_RUN_TIMES_UTC = [
 # weekend, ~60h away).
 GRACE_PERIOD = dt.timedelta(hours=3)
 
+# Substrings, matched against the whole file. Keep them as SHORT as the
+# section can be identified by: PR #119 renamed the heading "AVGO Rebalance
+# Check" to "Rebalance Check" (it covers every targeted position now, not
+# just AVGO), and this list still demanded the old string, so every daily
+# sync failed on a missing-section problem. The shorter form matches both
+# the old and the new heading.
 REQUIRED_SECTIONS = [
     "Silver GSR Tactical",
     "AVGO Trend Diagnostic",
     "AVGO Volatility-Targeted Weight",
-    "AVGO Rebalance Check",
+    "Rebalance Check",
     "AVGO Earnings Checkpoint",
     "LLY Earnings Checkpoint",
 ]
