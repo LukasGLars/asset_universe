@@ -886,7 +886,20 @@ try:
     _rebal = rebalance_instructions(_current_weights, _target_weights,
                                      _rebal_prices, _target_denom)
 
-    print(f"\n  Rebalance Check  [existing capital, band: {REBAL_BAND:.0%}]")
+    # Band printed in the units it actually USES. REBAL_BAND is an absolute
+    # percentage-point gap (vol_target.py:88 -- "10% band -> AVGO can reach
+    # ~50% of Reactor Core" against the then-40% target), not a fraction of
+    # target. Printing it as "10%" invited reading it as 10% relative, i.e. a
+    # 22% trim line on a 20% target, when the real line is 30%.
+    #
+    # NOT changed here: the 2026-09-27 restructure halved the per-asset
+    # targets, so a constant absolute band is now proportionally twice as
+    # loose as the backtest that chose it -- and that backtest picked 10 over
+    # 15 partly to LIMIT AVGO concentration. Whether the band should become
+    # relative is a real open decision with a backtest behind the current
+    # value; it is not something to reinterpret silently in a display fix.
+    print(f"\n  Rebalance Check  [existing capital, band: "
+          f"{REBAL_BAND * 100:.0f}pp absolute gap to target]")
     for _tkr in sorted(_target_weights):
         _r = _rebal[_tkr]
         _detail = (f" -- ~{_r['shares']} shares (~{abs(_r['gap_kr']):,.0f} kr)"
