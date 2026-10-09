@@ -763,70 +763,70 @@ except Exception as _e:
 # excluded by design, it has its own GSR trigger and its own funding
 # mechanism, not new contributions (see MEMORY.md backlog).
 try:
-    from run_combined_system import WEIGHTS
     from next_contribution import next_contribution_target
 
-    # Denominator is INVESTED Reactor Core capital only -- share positions,
-    # excluding the manual no-ticker cash row. Idle cash used to sit in this
-    # denominator, which scaled every leg weight by (1 - cash%) and so
-    # widened every reported gap by that factor. On 2026-08-19 that was the
-    # sole reason AVGO read -10.9% (band 10%, BUY ~98,552 kr) when its real
-    # drift against the invested book was -9.7%, i.e. inside the band: the
-    # alert was firing on the cash balance, not on drift, and would have
-    # fired on all three legs at once had cash grown further.
+    # ── Targets and denominator (reworked 2026-10-09) ────────────────────
     #
-    # Cash is not thereby ignored -- it is reported as its own deployable
-    # figure below. Drift rebalancing and cash deployment are two different
-    # actions and conflating them in one number made both harder to read.
-    _rc_rows      = snap[snap["bucket"] == "reactor_core"]
-    _rc_total     = _rc_rows["value_sek"].sum()
-    _rc_invested  = _rc_rows[_rc_rows["ticker"] != ""]["value_sek"].sum()
-    _rc_cash      = _rc_total - _rc_invested
-
-    def _rc_weight(name):
-        row = snap[snap["name"] == name]
-        if row.empty or not _rc_invested:
-            return 0.0
-        return float(row["value_sek"].iloc[0]) / _rc_invested
-
-    _current_weights = {
-        "GC_F": _rc_weight("Gold"),
-        "AVGO": _rc_weight("Broadcom"),
-        "LLY":  _rc_weight("Eli Lilly"),
+    # Was: run_combined_system.WEIGHTS[(False, silver)] -- the legacy 3-asset
+    # base of Gold 25 / AVGO 40 / LLY 35, measured against INVESTED Reactor
+    # Core share positions only. After the 2026-09-27 restructure that base is
+    # not what the portfolio runs: the live target is per-asset across the
+    # whole Reactor Core account (AVGO 20 / LLY 20 / Gold 20 / Index 25 /
+    # Cash 10 / BTC 2.5 / ETH 2.5). Consequences of the old reading, all live
+    # until today: the index leg and cash were invisible to routing, the other
+    # three were scored against a denominator that excluded both, and the
+    # printed answer was a gap against a retired base.
+    #
+    # Targets are now READ from config/portfolio.toml's per-asset
+    # target_weight -- the same field sync_sheet.py maintains -- so they
+    # cannot drift from the configured portfolio. Nothing is restated here.
+    #
+    # The denominator is the set of positions that HAVE a target. That is
+    # self-maintaining: add a target to a position and it joins both the
+    # numerator and the denominator. Spiltan (target 0, sits outside the
+    # Reactor Core account by the operator's instruction) and War Chest
+    # (target 0) are excluded by construction rather than by name.
+    _pf_cfg = portfolio._load_portfolio_config()
+    _targets_cfg = {
+        p["name"]: float(p.get("target_weight") or 0.0)
+        for p in _pf_cfg["positions"]
+        if float(p.get("target_weight") or 0.0) > 0.0
     }
 
-    _silver_state = ("T2" if _silver_signal == "T2 ACTIVE"
-                      else "T1" if _silver_signal == "T1 ACTIVE"
-                      else "INACTIVE")
-    _silver_pct = {"INACTIVE": 0.0, "T1": 0.12, "T2": 0.17}[_silver_state]
+    def _valued(name):
+        row = snap[snap["name"] == name]
+        if row.empty:
+            return 0.0
+        v = row["value_sek"].iloc[0]
+        return 0.0 if pd.isna(v) else float(v)
 
-    # Guard RETIRED as a rotation rule (PR #89) -- routing must never consult
-    # it. Previously this read WEIGHTS[(_guard_active, ...)] with a
-    # JOINT_WEIGHTS override, so a 200d breach silently redirected every
-    # future contribution away from AVGO (target 0%, gate closed) -- and after
-    # #89 removed the alert, it would have done so with nothing telling the
-    # operator. Always the base row now.
-    #
-    # Vol-targeting RETIRED 2026-08-18 -- routing must never consult it, same
-    # reasoning as the retired guard above. It briefly (2026-08-17 to
-    # 2026-08-18) supplied AVGO's slice of the base row here, on a backtest
-    # result that did not replicate: a self-checked rebuild found it LOSES to
-    # the static base in every sub-period, in 0/30 parameter-grid cells, and
-    # under identical realistic-drift mechanics -- while making stress-window
-    # drawdown worse, not better. See vol_target.py's header and MEMORY.md.
-    # The dashboard section above still prints the reading as a DIAGNOSTIC.
-    #
-    # WEIGHTS keeps its guard dimension because run_combined_system.py's
-    # backtests still need it to reproduce PR #88's honest comparison; the
-    # live dashboard simply never selects the guard-active rows.
-    _target_weights = WEIGHTS[(False, _silver_state)]
+    _target_denom = sum(_valued(n) for n in _targets_cfg)
+    if _target_denom <= 0:
+        raise ValueError("no valued positions carry a target_weight")
 
-    # No gates. The guard-driven AVGO gate and the LLY-stress gate both existed
-    # only to serve the guard / joint-stress escalation, which are retired.
-    _next_allowed = {"GC_F": True, "AVGO": True, "LLY": True}
+    _target_weights  = dict(_targets_cfg)
+    _current_weights = {n: _valued(n) / _target_denom for n in _targets_cfg}
+
+    # Contributions do not fund these. Silver has its own GSR trigger; the
+    # crypto legs are sized by the trend sleeve's own capital_sek and the
+    # MA ensemble, so pushing new money in would fight that mechanism. Both
+    # still appear in the detail with their real gap -- excluded, not hidden.
+    _no_contrib = {"Silver", "Virtune Bitcoin", "Virtune Staked ETH"}
+    _next_allowed = {n: n not in _no_contrib for n in _targets_cfg}
+
+    # Cash figures, still reported separately from drift: deploying idle cash
+    # and correcting drift are different actions (see the 2026-08-19 bug where
+    # cash in the drift denominator fired the band alert on the cash balance).
+    # Cash now has its OWN 10% target, so only the part ABOVE that target is
+    # deployable -- the old block treated the entire balance as deployable and
+    # would have routed the whole sleeve into AVGO.
+    _cash_name   = "Reactor Core Cash"
+    _rc_cash     = _valued(_cash_name)
+    _cash_target = _targets_cfg.get(_cash_name, 0.0)
+    _cash_excess = max(0.0, _rc_cash - _cash_target * _target_denom)
 
     _next_ticker, _next_detail = next_contribution_target(_current_weights, _target_weights, _next_allowed)
-    _next_name = {"GC_F": "Gold", "AVGO": "Broadcom (AVGO)", "LLY": "Eli Lilly (LLY)"}[_next_ticker]
+    _next_name = _next_ticker
     _next_row  = _next_detail[_next_ticker]
 
     print(f"\n{'='*62}")
@@ -838,10 +838,13 @@ try:
     print(f"{'='*62}")
     print(f"\n  Next kr        -> {_next_name}")
     print(f"    Current wt (of Reactor Core) : {_next_row['current']:.1%}")
-    print(f"    Target wt (current regime)   : {_next_row['target']:.1%}")
+    print(f"    Target wt (config)           : {_next_row['target']:.1%}")
     print(f"    Gap                          : {_next_row['gap']:+.1%}")
     print(f"    Gate                         : {'OPEN' if _next_row['allowed'] else 'CLOSED (fallback)'}")
-    print(f"    Note: Silver excluded -- funded by its own GSR trigger, not new contributions")
+    print(f"    Note: not funded by contributions -- "
+           f"{', '.join(sorted(n for n in _no_contrib if n in _targets_cfg))}")
+    print(f"    Denominator: {_target_denom:,.0f} kr "
+           f"({len(_targets_cfg)} positions carrying a target)")
 
 except Exception as _e:
     print(f"\n  Next Contribution : [unavailable — {_e}]")
@@ -863,23 +866,34 @@ except Exception as _e:
 try:
     from vol_target import REBAL_BAND, rebalance_instructions
 
-    _rebal_prices = {
-        "GC_F": float(snap[snap["name"] == "Gold"]["price_sek"].iloc[0]),
-        "AVGO": float(snap[snap["name"] == "Broadcom"]["price_sek"].iloc[0]),
-        "LLY":  float(snap[snap["name"] == "Eli Lilly"]["price_sek"].iloc[0]),
-    }
-    # Sized off invested capital, matching the weights it is comparing --
-    # passing _rc_total here while the weights were invested-only would
-    # inflate every gap_kr / share count by the cash fraction.
-    _rebal = rebalance_instructions(_current_weights, _target_weights, _rebal_prices, _rc_invested)
-    _rebal_names = {"GC_F": "Gold", "AVGO": "AVGO", "LLY": "LLY"}
+    # Prices by config name, matching the keys the weights use. A position
+    # with no price (cash) gets 0.0, which rebalance_instructions already
+    # handles by reporting the gap in kr and suppressing the share count --
+    # never a wrong share figure.
+    def _px(name):
+        row = snap[snap["name"] == name]
+        if row.empty:
+            return 0.0
+        v = row["price_sek"].iloc[0]
+        return 0.0 if pd.isna(v) else float(v)
 
-    print(f"\n  AVGO Rebalance Check  [existing capital, band: {REBAL_BAND:.0%}]")
-    for _tkr in ("GC_F", "AVGO", "LLY"):
+    _rebal_prices = {n: _px(n) for n in _target_weights}
+
+    # Sized off the SAME denominator the weights use. Previously this passed
+    # invested-Reactor-Core capital against invested-only weights; both have
+    # moved to the account-wide target base, so the two must move together or
+    # every gap_kr is scaled wrong.
+    _rebal = rebalance_instructions(_current_weights, _target_weights,
+                                     _rebal_prices, _target_denom)
+
+    print(f"\n  Rebalance Check  [existing capital, band: {REBAL_BAND:.0%}]")
+    for _tkr in sorted(_target_weights):
         _r = _rebal[_tkr]
         _detail = (f" -- ~{_r['shares']} shares (~{abs(_r['gap_kr']):,.0f} kr)"
+                    if _r["out_of_band"] and _r["shares"] else
+                    f" -- ~{abs(_r['gap_kr']):,.0f} kr"
                     if _r["out_of_band"] else "")
-        print(f"    {_rebal_names[_tkr]} status: {_r['action']}  "
+        print(f"    {_tkr:<20} {_r['action']}  "
               f"({_r['current']:.1%} actual vs {_r['target']:.1%} target, "
               f"gap {_r['gap']:+.1%}){_detail}")
 
@@ -888,15 +902,23 @@ try:
     # deployable whether or not any leg has drifted out of band. Routed to
     # the most underweight leg, which is the same answer NEXT CONTRIBUTION
     # gives for new money -- same question, capital already on hand.
-    print(f"\n  Idle Reactor Core Cash")
-    print(f"    Uninvested     : {_rc_cash:,.0f} kr  ({_rc_cash / _rc_total:.1%} of Reactor Core)")
-    if _rc_cash > 0:
+    print(f"\n  Reactor Core Cash")
+    print(f"    Balance        : {_rc_cash:,.0f} kr  "
+          f"({_rc_cash / _target_denom:.1%} vs {_cash_target:.0%} target)")
+    if _cash_excess > 0:
         _cash_px = _rebal_prices.get(_next_ticker) or 0.0
-        _cash_sh = int(_rc_cash // _cash_px) if _cash_px > 0 else 0
-        print(f"    Action         : deploy -> {_next_name}  "
-              f"(~{_cash_sh} shares at {_cash_px:,.0f} kr)")
+        _cash_sh = int(_cash_excess // _cash_px) if _cash_px > 0 else 0
+        _sh = f" (~{_cash_sh} shares at {_cash_px:,.0f} kr)" if _cash_sh else ""
+        print(f"    Above target   : {_cash_excess:,.0f} kr")
+        print(f"    Action         : deploy -> {_next_name}{_sh}")
     else:
-        print(f"    Action         : none -- fully invested")
+        # Cash is a TARGETED position now, not a residual. Below target it is
+        # the dip sleeve waiting to be refilled, and deploying it is the one
+        # thing that must not be suggested -- the 5d-ROC trigger is what
+        # spends it (MEMORY.md, cash-tranche laddering 2026-10-02).
+        print(f"    Shortfall      : {_cash_target * _target_denom - _rc_cash:,.0f} kr below target")
+        print(f"    Action         : none -- hold. This is the dip sleeve; "
+              f"the AVGO/LLY 5d-ROC trigger spends it, not a contribution.")
 
 except Exception as _e:
     print(f"\n  AVGO Rebalance Check : [unavailable — {_e}]")
