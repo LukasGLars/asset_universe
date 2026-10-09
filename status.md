@@ -130,10 +130,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.61
+    Forward EPS (+1yr est.)    : $47.64
     Fwd/Trail ratio (normalized): 1.51x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.36B (implied YoY +27.1%)
+    Next-qtr revenue consensus : $22.34B (implied YoY +27.0%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
@@ -295,11 +295,11 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 -----------------------------------------------------------------------------------
 AMD         $620.68     $5.76    $15.72      2.73x        +173%    39.48x      0.23
 NVDA        $230.48     $7.01    $15.91      2.27x        +127%    14.48x      0.11
-MRVL        $274.66     $3.30     $7.21      2.18x        +118%    38.10x      0.32
+MRVL        $274.66     $3.30     $7.28      2.21x        +121%    37.71x      0.31
 AVGO*       $360.14     $9.76    $19.39      1.99x         +99%    18.57x      0.19
 ASML      $1,769.79    $27.56    $51.92      1.88x         +88%    34.08x      0.39
 TSM         $457.99    $13.86    $22.05      1.59x         +59%    20.77x      0.35
-ANET        $210.97     $3.46     $5.20      1.50x         +50%    40.56x      0.81
+ANET        $210.97     $3.46     $5.22      1.51x         +51%    40.44x      0.80
 QCOM        $176.01    $11.36    $10.20      0.90x         -10%    17.26x       n/a
 MU        $1,035.84       n/a   $206.33        n/a          n/a       n/a       n/a
 
