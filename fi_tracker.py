@@ -906,7 +906,11 @@ try:
                     if _r["out_of_band"] and _r["shares"] else
                     f" -- ~{abs(_r['gap_kr']):,.0f} kr"
                     if _r["out_of_band"] else "")
-        print(f"    {_tkr:<20} {_r['action']}  "
+        # "<name> status: X" keeps an unambiguous delimiter for
+        # check_signal_changes.py. Column-aligning the name instead left only
+        # a single space before the status for a 20-char name, which is not
+        # something a parser should have to guess at.
+        print(f"    {_tkr} status: {_r['action']}  "
               f"({_r['current']:.1%} actual vs {_r['target']:.1%} target, "
               f"gap {_r['gap']:+.1%}){_detail}")
 

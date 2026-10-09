@@ -60,6 +60,31 @@ def _as_int(value: str) -> int | None:
         return None
 
 
+def _rebal_rows(text: str) -> dict[str, dict[str, str]]:
+    """Every row of the Rebalance Check block, keyed by position name.
+
+    Generic on purpose: the set of positions carrying a target is config-
+    driven since the 2026-09-27 restructure, so LF Global Index and Reactor
+    Core Cash can drift out of band too and the old hardcoded Gold/AVGO/LLY
+    loop could never have alerted on either.
+
+    Matches the older "AVGO Rebalance Check" heading as well, so a previous
+    status.md written before PR #120 still parses.
+    """
+    m = re.search(r"Rebalance Check[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL)
+    if not m:
+        return {}
+    rows: dict[str, dict[str, str]] = {}
+    for line in m.group(1).splitlines():
+        mm = re.match(r"\s+(.+?) status:\s*(\S+)\s*(.*)$", line)
+        if mm:
+            rows[mm.group(1).strip()] = {
+                "status": mm.group(2).strip(),
+                "detail": mm.group(3).strip(),
+            }
+    return rows
+
+
 def extract_fingerprint(text: str) -> dict:
     return {
         "avgo_guard": _find(r"AVGO Trend Diagnostic.*?Signal\s*:\s*(\S+)", text),
@@ -138,12 +163,13 @@ def extract_fingerprint(text: str) -> dict:
         # constant between filings, so a plain != is the new-filing test.
         "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
-        "rebal_gold_status": _find(r"AVGO Rebalance Check.*?Gold status:\s*(\S+)", text),
-        "rebal_avgo_status": _find(r"AVGO Rebalance Check.*?AVGO status:\s*(\S+)", text),
-        "rebal_lly_status": _find(r"AVGO Rebalance Check.*?LLY status:\s*(\S+)", text),
-        "rebal_gold_detail": _find(r"AVGO Rebalance Check.*?Gold status:\s*\S+\s*([^\n]+)", text),
-        "rebal_avgo_detail": _find(r"AVGO Rebalance Check.*?AVGO status:\s*\S+\s*([^\n]+)", text),
-        "rebal_lly_detail": _find(r"AVGO Rebalance Check.*?LLY status:\s*\S+\s*([^\n]+)", text),
+        # Parsed generically from whatever rows the block prints, keyed by
+        # position name -- see _rebal_rows. Was three hardcoded Gold/AVGO/LLY
+        # regexes anchored on the literal "AVGO Rebalance Check" heading;
+        # PR #119 renamed the heading and the row format and those regexes
+        # silently degraded to "unknown", which the unknown-guard then
+        # suppressed. A broken parser looked exactly like a quiet market.
+        "rebal_rows": _rebal_rows(text),
     }
 
 
@@ -438,18 +464,20 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # reverse (SELL/BUY -> HOLD, the gap closing) isn't actionable, so it's
     # deliberately silent too. Quotes fi_tracker.py's own detail line so the
     # trade size can never drift from what the dashboard says.
-    for _asset, _status_key, _detail_key, _label in (
-        ("Gold", "rebal_gold_status", "rebal_gold_detail", "Gold"),
-        ("AVGO", "rebal_avgo_status", "rebal_avgo_detail", "AVGO"),
-        ("LLY", "rebal_lly_status", "rebal_lly_detail", "LLY"),
-    ):
-        if (prev[_status_key] == "HOLD" and curr[_status_key] in ("SELL", "BUY")
-                and "unknown" not in (prev[_status_key], curr[_status_key])):
+    # Iterates whatever positions the block printed, so a target added in
+    # config is covered without touching this file. A position present in
+    # curr but absent from prev (a renamed row, or the first run after a
+    # config change) has no baseline and is skipped rather than alerted on.
+    _prev_rebal, _curr_rebal = prev.get("rebal_rows") or {}, curr.get("rebal_rows") or {}
+    for _name in sorted(_curr_rebal):
+        _p = _prev_rebal.get(_name, {}).get("status")
+        _c = _curr_rebal[_name].get("status")
+        if _p == "HOLD" and _c in ("SELL", "BUY"):
             blocks.append(
-                f"AVGO REBALANCE CHECK: {_label} drifted out of band ({curr[_status_key]}).\n"
-                f"ACTION: {curr[_detail_key]}"
+                f"REBALANCE CHECK: {_name} drifted out of band ({_c}).\n"
+                f"ACTION: {_curr_rebal[_name]['detail']}"
             )
-            subject_parts.append(f"{_label} rebalance -> {curr[_status_key]}")
+            subject_parts.append(f"{_name} rebalance -> {_c}")
 
     if not blocks:
         return None
@@ -476,15 +504,11 @@ def build_rebalance_snapshot_message(text: str) -> tuple[str, str] | None:
     """
     curr = extract_fingerprint(text)
     blocks: list[str] = []
-    for status_key, detail_key, label in (
-        ("rebal_gold_status", "rebal_gold_detail", "Gold"),
-        ("rebal_avgo_status", "rebal_avgo_detail", "AVGO"),
-        ("rebal_lly_status", "rebal_lly_detail", "LLY"),
-    ):
-        if curr[status_key] in ("SELL", "BUY"):
+    for name, row in sorted((curr.get("rebal_rows") or {}).items()):
+        if row.get("status") in ("SELL", "BUY"):
             blocks.append(
-                f"AVGO REBALANCE CHECK: {label} is out of band ({curr[status_key]}).\n"
-                f"ACTION: {curr[detail_key]}"
+                f"REBALANCE CHECK: {name} is out of band ({row['status']}).\n"
+                f"ACTION: {row['detail']}"
             )
 
     if not blocks:

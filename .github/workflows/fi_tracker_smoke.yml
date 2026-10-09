@@ -49,6 +49,35 @@ jobs:
             exit 1
           fi
           echo "all sections rendered"
+      # The gap that let PR #119 ship a dead drift alert: the unit tests pass
+      # against a FIXTURE, so renaming a heading in fi_tracker breaks the
+      # parser while every test stays green and the panel still renders. This
+      # step closes the loop -- the alerter must read what fi_tracker just
+      # printed, not what a fixture says it prints.
+      - name: Parser contract -- the alerter must read the real panel
+        run: |
+          python - <<'EOF'
+          from check_signal_changes import extract_fingerprint
+          fp = extract_fingerprint(open("smoke.md").read())
+
+          rows = fp["rebal_rows"]
+          assert rows, "rebalance block did not parse -- format contract broken"
+          for name, row in rows.items():
+              assert row["status"] in ("HOLD", "SELL", "BUY"), f"{name}: {row['status']!r}"
+          print(f"rebalance rows parsed: {sorted(rows)}")
+
+          must_parse = [
+              "avgo_guard", "avgo_trigger", "avgo_action", "lly_stress",
+              "silver_signal", "sleeve_status", "hy_oas",
+              "sightline_avgo_state", "sightline_lly_state",
+              "crypto_btc_exposure", "crypto_eth_exposure",
+              "avgo_latest_quarter", "lly_latest_quarter",
+          ]
+          dead = [k for k in must_parse if fp[k] == "unknown"]
+          assert not dead, f"fields degraded to 'unknown': {dead}"
+          print(f"all {len(must_parse)} alert fields parsed")
+          EOF
+
       - name: Show the reworked blocks
         run: |
           sed -n '/NEXT CONTRIBUTION/,/^=\{10,\}$/p' smoke.md
