@@ -160,24 +160,24 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : LITE (Lumentum Holdings Inc.)  $995.41  (ext +7.5%, 20d med +4.7%, ave +6.4%, win 62.8%, div THIN, drift +0.0%)
+    Best candidate : LITE (Lumentum Holdings Inc.)  $995.41  (ext +7.5%, 20d med +4.7%, ave +6.4%, win 62.8%, div THIN, drift -0.8%)
     Plan           : buy near $995.41, hold ~20d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open LITE <fill_price> <shares> <capital_sek>
     VIX review     : 15.21  (33% percentile, flat) -- for review, not a gate
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $82,546  (as of 2026-10-09)
+    Bitcoin (BTC-USD)  $81,763  (as of 2026-10-12)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $76,380, flat below $74,853)
-      MA100        : LONG (MA $70,487, flat below $69,078)
-      MA200        : LONG (MA $73,361, flat below $71,893)
+      MA50         : LONG (MA $76,746, flat below $75,211)
+      MA100        : LONG (MA $70,532, flat below $69,122)
+      MA200        : LONG (MA $73,300, flat below $71,834)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,486  (as of 2026-10-09)
+    Ethereum (ETH-USD)  $2,444  (as of 2026-10-12)
       Target       : 100%  = 27 225 kr of 27 225 kr
-      MA50         : LONG (MA $2,383, flat below $2,335)
-      MA100        : LONG (MA $2,090, flat below $2,048)
-      MA200        : LONG (MA $2,214, flat below $2,170)
+      MA50         : LONG (MA $2,395, flat below $2,347)
+      MA100        : LONG (MA $2,093, flat below $2,051)
+      MA200        : LONG (MA $2,211, flat below $2,166)
       Last change  : 2026-08-21 -> 100%
 
 ==============================================================
@@ -240,8 +240,8 @@ Computing capped 252d distributions for 51 candidates ...
   DELL      N= 620  mu=  +5.1%  sigma= 18.8%  hist=10yr  [SINGLE]
   WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
-  PHAG.L    no data
   CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
+  PHAG.L    no data
   FOXA      hist=8yr  (below min 10yr, skipped)
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   TPR       N=1238  mu= +19.0%  sigma= 31.0%  hist=26yr  [MODERATE]
@@ -299,15 +299,15 @@ AVGO peer valuation snapshot -- 2026-10-13
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $989.04    $75.51   $206.33      2.73x        +173%     4.79x      0.03
-AMD         $594.24     $5.76    $15.72      2.73x        +173%    37.80x      0.22
-NVDA        $226.32     $7.01    $15.91      2.27x        +127%    14.22x      0.11
-MRVL        $265.86     $3.30     $7.28      2.21x        +121%    36.51x      0.30
-AVGO*       $354.73     $9.76    $19.39      1.99x         +99%    18.29x      0.19
-ASML      $1,750.24    $27.56    $52.22      1.89x         +89%    33.52x      0.37
-TSM         $444.35    $13.86    $22.32      1.61x         +61%    19.91x      0.33
-ANET        $210.88     $3.46     $5.22      1.51x         +51%    40.42x      0.80
-QCOM        $174.43    $11.36    $10.20      0.90x         -10%    17.11x       n/a
+MU          $948.73    $75.51   $206.33      2.73x        +173%     4.60x      0.03
+AMD         $590.42     $5.76    $15.72      2.73x        +173%    37.55x      0.22
+NVDA        $226.35     $7.01    $15.91      2.27x        +127%    14.22x      0.11
+MRVL        $261.85     $3.30     $7.28      2.21x        +121%    35.95x      0.30
+AVGO*       $355.88     $9.76    $19.39      1.99x         +99%    18.35x      0.19
+ASML      $1,713.21    $27.56    $52.22      1.89x         +89%    32.81x      0.37
+TSM         $442.68    $13.86    $22.32      1.61x         +61%    19.84x      0.33
+ANET        $202.96     $3.46     $5.22      1.51x         +51%    38.90x      0.77
+QCOM        $177.11    $11.36    $10.20      0.90x         -10%    17.37x       n/a
 
 * = AVGO
 
