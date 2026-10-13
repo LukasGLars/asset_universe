@@ -130,10 +130,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
     TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.64
+    Forward EPS (+1yr est.)    : $47.66
     Fwd/Trail ratio (normalized): 1.51x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.35B (implied YoY +27.0%)
+    Next-qtr revenue consensus : $22.44B (implied YoY +27.5%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-06-30
@@ -240,8 +240,8 @@ Computing capped 252d distributions for 51 candidates ...
   DELL      N= 620  mu=  +5.1%  sigma= 18.8%  hist=10yr  [SINGLE]
   WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
-  CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
   PHAG.L    no data
+  CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
   FOXA      hist=8yr  (below min 10yr, skipped)
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   TPR       N=1238  mu= +19.0%  sigma= 31.0%  hist=26yr  [MODERATE]
@@ -305,7 +305,7 @@ NVDA        $226.32     $7.01    $15.91      2.27x        +127%    14.22x      0
 MRVL        $265.86     $3.30     $7.28      2.21x        +121%    36.51x      0.30
 AVGO*       $354.73     $9.76    $19.39      1.99x         +99%    18.29x      0.19
 ASML      $1,750.24    $27.56    $52.22      1.89x         +89%    33.52x      0.37
-TSM         $444.35    $13.86    $22.30      1.61x         +61%    19.92x      0.33
+TSM         $444.35    $13.86    $22.32      1.61x         +61%    19.91x      0.33
 ANET        $210.88     $3.46     $5.22      1.51x         +51%    40.42x      0.80
 QCOM        $174.43    $11.36    $10.20      0.90x         -10%    17.11x       n/a
 
