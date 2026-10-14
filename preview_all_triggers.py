@@ -58,6 +58,19 @@ BASE = """
     Beat streak    : 4
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
+  Crypto Trend Sleeve
+    Bitcoin (BTC-USD)  $83,276  (as of 2026-10-07)
+      Target       : 100%  = 27 225 kr of 27 225 kr
+    Ethereum (ETH-USD)  $2,574  (as of 2026-10-07)
+      Target       : 100%  = 27 225 kr of 27 225 kr
+
+  Feature                 Value   Regime
+  ------------------------------------------
+  HY OAS                309 bps   MID
+  IG Credit               1.46%   TIGHT
+
+  HY 20d delta  : +38 bps  (widening)
+
   Regime check (2026-07-06): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 """
 
@@ -92,14 +105,42 @@ SCENARIOS = [
         "Latest quarter : 2026-03-31\n    Beat streak    : 4",
         "Latest quarter : 2026-08-05\n    Beat streak    : 5",
     )),
+    # Added 2026-10-14. The crypto trend sleeve replaced the opportunistic
+    # sleeve on 2026-09-04 and the HY OAS push shipped 2026-10-09; neither
+    # had a preview scenario, so neither had ever been proven to deliver.
+    # Both legs print an identical Target line, so the ETH edit is scoped to
+    # the text after "Ethereum" rather than using a bare replace -- a bare
+    # one rewrites the BTC line and silently previews the wrong asset.
+    ("Crypto sleeve ETH steps down", BASE[:BASE.index("Ethereum")] + BASE[BASE.index("Ethereum"):].replace(
+        "Target       : 100%  = 27 225 kr of 27 225 kr",
+        "Target       : 67%  = 18 241 kr of 27 225 kr", 1)),
+    ("Crypto sleeve BTC steps down", BASE.replace(
+        "Target       : 100%  = 27 225 kr of 27 225 kr",
+        "Target       : 67%  = 18 241 kr of 27 225 kr", 1)),
+    ("HY OAS crosses 400bp", BASE.replace(
+        "HY OAS                309 bps   MID",
+        "HY OAS                412 bps   MID")),
 ]
 
 
 def main() -> int:
+    """With no argument, previews every scenario. With one or more arguments,
+    previews only the scenarios whose name contains one of them (case
+    insensitive) -- firing ten messages to test one alert is needless noise."""
     prev_fp = extract_fingerprint(BASE)
     failures = 0
 
-    for name, curr_text in SCENARIOS:
+    wanted = [a.lower() for a in sys.argv[1:]]
+    selected = [(n, t) for n, t in SCENARIOS
+                if not wanted or any(w in n.lower() for w in wanted)]
+    if not selected:
+        print(f"no scenario matches {wanted}. available:")
+        for n, _ in SCENARIOS:
+            print(f"  - {n}")
+        return 1
+    print(f"previewing {len(selected)} of {len(SCENARIOS)} scenarios")
+
+    for name, curr_text in selected:
         curr_fp = extract_fingerprint(curr_text)
         result = build_actionable_message(prev_fp, curr_fp)
         if result is None:
@@ -116,7 +157,7 @@ def main() -> int:
             failures += 1
         time.sleep(1)  # avoid tripping Telegram's rate limit across 8 sends
 
-    print(f"\n{len(SCENARIOS) - failures}/{len(SCENARIOS)} triggers fired and delivered.")
+    print(f"\n{len(selected) - failures}/{len(selected)} triggers fired and delivered.")
     return 1 if failures else 0
 
 
