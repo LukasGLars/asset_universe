@@ -1,0 +1,25 @@
+name: semis-now
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11', cache: pip}
+      - uses: actions/cache/restore@v4
+        with: {path: data/, key: parquet-${{ github.run_id }}, restore-keys: parquet-}
+      - run: pip install -e .
+      - run: python check_local_data_freshness.py
+        env: {FRED_API_KEY: "${{ secrets.FRED_API_KEY }}"}
+      - run: |
+          set -o pipefail
+          python run_semis_now.py 2>&1 | tee semis.txt
+        env: {PYTHONIOENCODING: utf-8}
+      - run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat semis.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
