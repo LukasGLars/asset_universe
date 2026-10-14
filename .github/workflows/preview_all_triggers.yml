@@ -10,6 +10,12 @@ name: preview-all-triggers
 
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: 'Substring of a scenario name to preview (blank = all). e.g. "crypto", "eth", "hy"'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -27,7 +33,7 @@ jobs:
           python-version: '3.11'
 
       - name: Send a real Telegram test message for every trigger type
-        run: python preview_all_triggers.py
+        run: python preview_all_triggers.py ${{ inputs.only }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
