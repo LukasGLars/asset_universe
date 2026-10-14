@@ -1,5 +1,6 @@
-"""TEMPORARY (2026-10-14). Current BTC/ETH price against the live trend-sleeve
-rule: the MA50/100/200 ensemble and its 2% hysteresis band. Delete after use."""
+"""TEMPORARY (2026-10-14). Live BTC/ETH state against the trend sleeve's own
+rule. Every number is read from asset_universe.analysis.crypto_trend --
+nothing about the bands is restated here. Delete after use."""
 from __future__ import annotations
 import io, sys
 from pathlib import Path
@@ -12,27 +13,29 @@ from asset_universe import config
 from asset_universe.store import reader
 from asset_universe.analysis import crypto_trend as ct
 
-print("=" * 70)
-print("CRYPTO TREND SLEEVE -- live state")
-print(f"windows {ct.MA_WINDOWS}   hysteresis band {ct.BAND:.0%}")
-print("=" * 70)
+print("=" * 72)
+print(f"CRYPTO TREND SLEEVE -- windows {ct.MA_WINDOWS}, hysteresis {ct.BAND:.0%}")
+print("=" * 72)
 for tick in ("BTC-USD", "ETH-USD"):
-    s = reader.load(reader.ticker_path(config.raw_data_dir(), "crypto", tick))["close"].dropna()
-    wk = ct.weekday_closes(s)
-    px = float(wk.iloc[-1])
-    print(f"\n{tick}   {px:>12,.2f}   as of {wk.index[-1].date()}")
-    print(f"  target exposure : {ct.target_exposure(wk):.0%}")
-    for w in ct.MA_WINDOWS:
-        ma = float(wk.iloc[-w:].mean())
-        flat = ma * (1 - ct.BAND)
-        state = "LONG" if px > ma * (1 + ct.BAND) else ("FLAT" if px < flat else "HOLD-BAND")
-        room = px / flat - 1
-        print(f"  MA{w:<4} {ma:>11,.2f}   {state:<10} flat below {flat:>11,.2f}"
-              f"   room {room:>+7.1%}")
-    ch = ct.last_change(wk)
-    print(f"  last change     : {ch}")
-    dd = s / s.cummax() - 1
+    df = reader.load(reader.ticker_path(config.raw_data_dir(), "crypto", tick))
+    closes = ct.weekday_closes(df)          # takes the DataFrame, not a Series
+    sig = ct.asset_signal(closes)
+    px = sig["close"]
+    print(f"\n{tick}   {px:>12,.2f}   as of {sig['as_of']}")
+    print(f"  target exposure : {sig['exposure']:.0%}")
+    for st in sig["states"]:
+        if st["ma"] is None:
+            print(f"  MA{st['window']:<4} (insufficient history)")
+            continue
+        room = px / st["lower"] - 1
+        print(f"  MA{st['window']:<4} {st['ma']:>11,.2f}   "
+              f"{'LONG' if st['long'] else 'FLAT':<5} "
+              f"flat below {st['lower']:>11,.2f}   room {room:>+7.1%}")
+    lc = sig["last_change"]
+    print(f"  last change     : {lc[0]} -> {lc[1]:.0%}" if lc else "  last change     : none")
+    full = df["close"].dropna()
+    dd = full / full.cummax() - 1
     print(f"  drawdown now    : {float(dd.iloc[-1]):+.1%}   "
           f"median {float(dd.median()):+.1%}   "
           f"deeper on {float((dd < dd.iloc[-1]).mean()):.0%} of sessions")
-print("=" * 70)
+print("=" * 72)
