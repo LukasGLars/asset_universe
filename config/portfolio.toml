@@ -191,7 +191,7 @@ target_weight = 0.025
 [[positions]]
 name      = "Virtune Staked ETH"
 ticker    = "1623064"
-shares    = 432
+shares    = 290
 currency  = "SEK"
 category  = "avanza"
 bucket    = "crypto_sleeve"
