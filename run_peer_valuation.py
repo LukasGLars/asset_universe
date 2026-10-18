@@ -35,7 +35,9 @@ Usage:
 """
 from __future__ import annotations
 
+import csv
 import datetime as dt
+from pathlib import Path
 
 from eps_ratio import normalized_eps_ratio
 
@@ -44,6 +46,94 @@ from eps_ratio import normalized_eps_ratio
 PEER_SET = ["MU", "AMD", "AVGO", "NVDA", "MRVL", "TSM", "ASML", "ANET", "QCOM"]
 
 MARKED_TICKER = "AVGO"
+
+# ── Valuation history (added 2026-10-18) ─────────────────────────────────────
+# The snapshot answers "cheap versus peers TODAY". It cannot answer "cheap
+# versus its OWN past", which is the question that actually supports a
+# decision -- a whole sector can de-rate together and leave every rank
+# unchanged. That needs a time series, and a time series cannot be
+# backfilled: yfinance serves today's forward estimate, not the forward
+# estimate as it stood a year ago. So the only way to have this in a year is
+# to start storing it now.
+#
+# Stores raw metrics only. No rule, no alert, no threshold -- see the module
+# docstring's "Still no alert/trigger of any kind", which remains true.
+#
+# MUST be listed in sync.yml's `git add` path list or the runner's copy is
+# discarded and nothing accumulates.
+HISTORY_CSV = Path(__file__).parent / "comparison_results" / "peer_valuation_history.csv"
+HISTORY_FIELDS = ["date", "ticker", "price", "ttm_eps", "fwd_eps",
+                  "ratio", "growth_pct", "fwd_pe", "peg_1y"]
+
+# Below this many stored observations a percentile is noise, so it is not
+# shown at all rather than shown with a caveat nobody reads.
+MIN_HISTORY_OBS = 60
+
+
+def read_history() -> list[dict]:
+    if not HISTORY_CSV.exists():
+        return []
+    with HISTORY_CSV.open(newline="", encoding="utf-8") as fh:
+        return list(csv.DictReader(fh))
+
+
+def write_history(rows: list[dict]) -> None:
+    HISTORY_CSV.parent.mkdir(parents=True, exist_ok=True)
+    with HISTORY_CSV.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=HISTORY_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def append_history(rows: list[dict], snapshot_date: dt.date,
+                   existing: list[dict] | None = None) -> list[dict]:
+    """One row per ticker per date. Same-date rows are REPLACED, not appended:
+    sync.yml fires twice a day (06:07 and 20:37 UTC), and without this the
+    file would carry two rows per day and silently double-weight every day in
+    any percentile computed from it."""
+    today = str(snapshot_date)
+    kept = [r for r in (existing if existing is not None else read_history())
+            if r.get("date") != today]
+    for r in rows:
+        kept.append({
+            "date": today,
+            "ticker": r["ticker"],
+            "price": r["price"],
+            "ttm_eps": r["ttm_eps"],
+            "fwd_eps": r["fwd_eps"],
+            "ratio": r["ratio"],
+            "growth_pct": r["growth_pct"],
+            "fwd_pe": r["fwd_pe"],
+            "peg_1y": r["peg_1y"],
+        })
+    kept.sort(key=lambda r: (r["date"], r["ticker"]))
+    return kept
+
+
+def own_history_percentile(history: list[dict], ticker: str, field: str,
+                           current: float | None) -> tuple[float | None, int]:
+    """Fraction of this ticker's stored history that was CHEAPER than today.
+
+    Low = cheap. Returns (percentile, n). Today's own row is excluded so the
+    reading is "versus its past", not "versus its past including itself".
+    """
+    if current is None:
+        return None, 0
+    vals = []
+    for r in history:
+        if r.get("ticker") != ticker:
+            continue
+        raw = r.get(field)
+        if raw in (None, "", "None"):
+            continue
+        try:
+            vals.append(float(raw))
+        except ValueError:
+            continue
+    if len(vals) < MIN_HISTORY_OBS:
+        return None, len(vals)
+    cheaper = sum(1 for v in vals if v < current)
+    return cheaper / len(vals), len(vals)
 
 # The historical PEG(0.41) MEMORY.md recorded alongside a 19.4x forward P/E
 # on 2026-07-06 -- kept only to name the discrepancy in the footnote, not
@@ -219,6 +309,24 @@ def print_table(rows: list[dict], snapshot_date: dt.date) -> None:
     )
 
 
+def print_own_history(rows: list[dict], history: list[dict]) -> None:
+    """Where each name sits against its OWN stored past, which the peer ranks
+    above cannot say. Prints the accrual state honestly while it is still
+    filling rather than implying a reading exists."""
+    print(f"\n{MARKED_TICKER} and peers vs their OWN stored history "
+          f"(low percentile = cheap for that name)")
+    print(f"{'Ticker':<8}{'Fwd P/E':>10}{'pctile':>9}{'obs':>6}")
+    for r in sorted(rows, key=lambda x: x["ticker"]):
+        pct, n = own_history_percentile(history, r["ticker"], "fwd_pe", r["fwd_pe"])
+        pct_s = f"{pct:.0%}" if pct is not None else "--"
+        print(f"{r['ticker']:<8}{_fmt(r['fwd_pe'], 'x'):>10}{pct_s:>9}{n:>6}")
+    have = max((own_history_percentile(history, r["ticker"], "fwd_pe",
+                                        r["fwd_pe"])[1] for r in rows), default=0)
+    if have < MIN_HISTORY_OBS:
+        print(f"  accruing -- {have}/{MIN_HISTORY_OBS} observations needed before a "
+              f"percentile is shown. Started 2026-10-18; cannot be backfilled.")
+
+
 def main() -> None:
     snapshot_date = dt.datetime.now(dt.timezone.utc).date()
     rows = []
@@ -226,6 +334,17 @@ def main() -> None:
         snap = fetch_ticker_snapshot(ticker)
         rows.append(build_row(ticker, snap["price"], snap["ttm_quarters"], snap["forward_1y"]))
     print_table(rows, snapshot_date)
+
+    # Persistence must never break the sync. This block is appended to
+    # status.md, and check_sync_health.py fails the whole job on the string
+    # "Traceback" appearing there -- so a disk or CSV problem would take the
+    # pipeline down over a column nobody acts on yet.
+    try:
+        history = read_history()
+        print_own_history(rows, history)
+        write_history(append_history(rows, snapshot_date, history))
+    except Exception as exc:
+        print(f"\n  valuation history unavailable: {type(exc).__name__}: {exc}")
 
 
 if __name__ == "__main__":
