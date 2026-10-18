@@ -6,8 +6,8 @@ customer-funding problem shows up here first, while revenue YoY is still
 strongly positive -- see config/collections.toml for the why and the
 pre-registered thresholds.
 
-States: OK, WARN (informs), BREAK (behaves like a Sightline CUT -- the
-action is read from sightline.toml, never restated here), INSUFFICIENT
+States: OK, WARN (informs), BREAK (a pre-committed REVIEW, not a sell --
+the action text is read from collections.toml), INSUFFICIENT
 (not enough quarters for a baseline). Derived from the filings every run.
 
 Pure logic (`dso_series`, `derive_state`) is separate from the EDGAR fetch
@@ -97,13 +97,12 @@ def fetch_series(ticker: str) -> list[tuple[dt.date, float]]:
     return dso_series(ar, rev)
 
 
-def format_dashboard_lines(states: dict[str, tuple[str, str]],
-                           cfg: dict, sightline_cfg: dict) -> list[str]:
+def format_dashboard_lines(states: dict[str, tuple[str, str]], cfg: dict) -> list[str]:
     """The block fi_tracker prints. 'Collections' and the '<TICKER> DSO'
     labels are what check_signal_changes greps -- keep them stable. Never
     prints "[unavailable" or "Error": check_sync_health fails the sync on
     either, and a transient SEC outage must not do that."""
-    out = ["  Collections  [DSO -- BREAK behaves like a Sightline CUT]"]
+    out = ["  Collections  [DSO -- BREAK triggers a review, never a sell]"]
     for tkr, (state, detail) in states.items():
         c = cfg[tkr]
         out.append(f"    {tkr} DSO")
@@ -111,7 +110,7 @@ def format_dashboard_lines(states: dict[str, tuple[str, str]],
         out.append(f"      State      : {state}")
         out.append(f"      Rule       : warn >{c['warn_multiple']}x, break >{c['break_multiple']}x "
                    f"for {c['confirm_quarters']}Q, vs prior {c['baseline_quarters']}Q median")
-        out.append(f"      Action     : {sightline_cfg.get(tkr, {}).get('action', 'no Sightline action defined')}")
+        out.append(f"      Action     : {c['break_action']}")
     return out
 
 
