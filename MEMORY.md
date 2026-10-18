@@ -5989,3 +5989,197 @@ overlap. The negative result is robust in the sense that it is negative in
 every cell rather than marginal in one.
 
 Script, tests and workflow deleted after logging.
+
+## Holdings in a high-rate regime: LLY is the one that works -- and the uncontrolled read says the opposite (2026-10-18)
+
+**Question:** how do the holdings fare in a high-rate regime like today's
+(`ry=HIGH, nominal_10y=HIGH, baa10y=TIGHT, usd=STRONG`)?
+
+**The first answer was wrong because it had no control.** A bare
+`engine_query` gives a conditional average: Gold +5.01%, AVGO +4.16%, LLY
+-0.54%. On that reading LLY is the laggard. **It inverts once controlled.**
+
+Each regime spell compared against the median of ALL same-length windows in
+that asset's own history, so the number is excess over a length-matched
+baseline rather than "the asset went up":
+
+| | median excess | beat baseline | thirds | **worst third** |
+|---|---|---|---|---|
+| **LLY** | **+6.86%** | 75% | +6.85 / +6.88 / +5.59 | **+5.59%** |
+| Gold | +5.58% | 75% | +3.84 / +6.65 / -4.76 | -4.76% |
+| SPY | +1.17% | 88% | +1.33 / +1.02 / +3.36 | +1.02% |
+| **AVGO** | **+0.57%** | **50%** | +10.15 / -2.27 / -13.33 | **-13.33%** |
+
+**LLY is the only holding positive in every third** -- raw +9.28% per spell
+against its own baseline of +2.78%. **AVGO has no regime edge at all**:
+beats baseline exactly half the time, deteriorating across thirds.
+
+**Decision consequence, acted on:** this reversed in-session advice to fund
+cash by trimming LLY. On regime evidence AVGO was the weaker holding. (Moot
+within days -- AVGO fell from 23.6% to 19.4% of the Core on its own.)
+
+**Bound: 8 usable spells, all since 2023-08.** This regime label has existed
+for three years in the data, so each "third" is 2-3 spells, and the
+2024-10-21 spell (219 sessions) swings everything: Gold +21.18%, LLY
+-28.00%, AVGO +37.72%. Directionally clear, nowhere near settled. Enough to
+change which name to trim; not enough to build a rule on.
+
+## The regime engine's "252d" column is not a 252-day return (2026-10-18)
+
+`engine._forward_return` caps every forward return at the end of the regime
+spell -- *"only measure returns while the regime lasted"*. **No spell in the
+matched history lasted 252 trading days** (0 of 11; only 4 of 11 ran past
+three months). So that column is never actually a one-year return. It is the
+within-spell return, capped. Same for the `W252` win rate.
+
+**How it shows up in status.md:** every row of PORTFOLIO SIGNALS prints
+identical `63d med` and `252d med` (+0.7%/+0.7%, +0.2%/+0.2%). The panel adds
+momentum conditions which cut the sample to n=42-67, and those dates all sit
+in short spells, so both horizons truncate to the same bar and the two
+columns collapse into one number.
+
+The figures are also tiny (+0.2%, +0.7%) for the same reason -- short-spell
+returns, not annual ones. Easy to misread as "LLY returns +0.2%/yr in this
+regime". **Not fixed.** The capping is a deliberate and defensible design
+choice; the labels are what mislead.
+
+## REBAL_BAND is 10 PERCENTAGE POINTS, not 10% of target -- I got this wrong twice (2026-10-09)
+
+`vol_target.REBAL_BAND = 0.10` is compared against an ABSOLUTE weight gap:
+`abs(gap) > band`. Its own derivation says so -- *"10% band -> AVGO can reach
+~50% of Reactor Core"* against the then-40% target.
+
+**On the current 20% targets the trim line is 30%, not 22%.** I told the
+operator "skim above target x 1.10, AVGO above 22%" and repeated "both growth
+names are over the trim line" several times. Wrong both times. Nothing was
+out of band.
+
+**Also corrected: "the restructure made the band twice as loose" is wrong in
+the terms that matter.** True relative-to-target, false in concentration
+terms:
+
+| | old | new |
+|---|---|---|
+| AVGO target | 40% of 3-asset Core, Core 60% of TPV = **24% of TPV** | **20% of account** |
+| AVGO ceiling at the band | 50% x 60% = **~30% of TPV** | **30% of account** |
+
+The concentration ceiling is roughly unchanged and is what the portfolio was
+designed around. **No concentration alert was added** -- a 25% cap was
+floated and withdrawn as an invented number with nothing behind it.
+
+## One cosmetic rename broke three consumers (2026-10-09)
+
+PR #119 renamed the dashboard heading "AVGO Rebalance Check" to "Rebalance
+Check" and changed the row layout. Three separate things read that heading as
+an undeclared string contract:
+
+1. `check_signal_changes.extract_fingerprint` -- three hardcoded Gold/AVGO/LLY
+   regexes degraded to "unknown", and the unknown-guard then SUPPRESSED the
+   drift alert. **A dead alert is indistinguishable from a quiet market.**
+   Nothing failed, nothing logged, every test stayed green.
+2. `build_rebalance_snapshot_message` -- same keys, same silent failure.
+3. `check_sync_health.REQUIRED_SECTIONS` -- demanded the old literal, so every
+   daily sync failed on a missing section and the heartbeat was skipped.
+
+The repo already had a test asserting exactly this contract for the AVGO
+fields, added after the same failure broke the gap-down alert. The rebalance
+block never got one.
+
+**Fixes (PR #120, #121):** parser reads rows generically by position name, so
+the index leg and cash are covered too -- the hardcoded triple could never
+have alerted on either however far they drifted. Required-section string
+shortened to match old and new. Parsing-contract tests for the rebalance
+block. And the smoke workflow now feeds fi_tracker's REAL output back through
+both `extract_fingerprint` and `check_content`, failing if any field reads
+"unknown" -- the unit tests parse a FIXTURE, which is precisely why they
+stayed green while production broke.
+
+**Reusable lesson: a string shared by a producer and N consumers is an API.**
+And run the whole suite, not the one file you touched -- the same partial-run
+mistake also shipped two defects in PR #122 (`main()` reading `sys.argv`, so
+the preview tool was broken for every caller that was not the command line;
+and a scenario count left at a literal 8 after adding three).
+
+## Valuation history started 2026-10-18 -- cannot be backfilled (PR #123)
+
+`run_peer_valuation.py` now appends each day's metrics to
+`comparison_results/peer_valuation_history.csv`. **No rule, no alert, nothing
+resizes.**
+
+**Why it had to start immediately:** the snapshot answers "cheap versus peers
+today" but cannot answer "cheap versus its OWN past" -- and a whole sector can
+de-rate together leaving every peer rank unchanged, which is what semis are
+doing now. yfinance serves today's forward estimate, not last year's, so the
+series cannot be reconstructed. It was the only item on the backlog with a
+cost to delaying.
+
+Percentiles suppressed below 60 observations; usable around 2027-01.
+
+**Two things that would have made it silently useless:** `sync.yml` commits an
+explicit path list, so the CSV had to be added to it or the runner discards it
+-- invisible for months. And the sync fires twice daily (06:07, 20:37 UTC), so
+same-date rows are REPLACED, or every day would be double-weighted in any
+percentile. Persistence is wrapped in try/except because the block lands in
+status.md and `check_sync_health` fails the job on the string "Traceback".
+
+## AVGO: the de-rating is about customer FUNDING, and the risk is unguarded (2026-10-18)
+
+**Two AVGO-specific events in nine days, both about how AI capex gets paid
+for, neither about demand:**
+- **2026-10-08**, fell ~4% on reports of a ~$50bn financing package tied to
+  custom AI processors with OpenAI.
+- **2026-10-16**, fell 4.52% in USD (-5.35% SEK, FX explains the gap) after CEO
+  Hock Tan flagged capital availability as a bottleneck and likened investor
+  expectations to a casino. Marvell -4% on the same story.
+
+**Not a market or rates story.** On 10-16 the LF Global Index was flat, LLY
+-0.44%, and rates EASED (10Y 5.19->5.10, real 2.84->2.78, HY 325->323).
+
+**Why it shows as multiple compression rather than estimate cuts:** the worry
+is orders deferred, not demand destroyed. Forward EPS held at $19.40 while the
+price fell. Guidance trend prints **flat** -- analysts have stopped raising
+into a next-quarter consensus of $34.89B, implied **+93.7% YoY**. That stall
+is the de-rating.
+
+**The unguarded risk.** FY2025 10-K: largest customer **32% of revenue** (21%
+-> 28% -> 32% over three years) and **44% of accounts receivable** (18% -> 44%
+in one year). Named customers include Google, Meta, **Anthropic and OpenAI** --
+the last two raise capital rather than generate it, and they are where the
+growth is. **Neither leg sees this:** Sightline watches AI revenue YoY (+221%,
+nowhere near its YoY<0 cut), valuation watches price. A funding-driven problem
+appears first in collections and revenue YoY stays strongly positive through
+it.
+
+**Proposed, NOT built:** days sales outstanding (`AccountsReceivableNetCurrent
+/ quarterly revenue x 91`), quarterly from 10-Q XBRL, as a monitor beside
+Sightline with two pre-committed thresholds -- a warn that informs and a break
+that behaves like a cut. `sec_edgar.py` already fetches any us-gaap concept, so
+it is cheap; note AR is an INSTANT concept so `reconstruct_quarterly_facts`
+(duration-only) does not apply. **Thresholds deliberately not chosen** --
+picking them after looking at AVGO's history would be fitting.
+
+**Also established on PEG:** AVGO ranks 3 of 9 cheapest on PEG(1y) 0.17, but
+PEG's denominator IS the disputed +99% growth, so it is circular here -- cheap
+only if the ramp lands. Forward P/E (16.95x, 4 of 9) and the fwd/TTM ratio
+(1.99, i.e. half the price rests on earnings not yet earned) are the sturdier
+reads. MU's PEG of 0.02 on a 4.25x forward P/E shows how little the metric's
+spread means at these growth rates.
+
+## Open operational item: ETH held at 67% while the rule says 100% (2026-10-15)
+
+Operator manually cut the Virtune Staked ETH leg to 67% ahead of the trend
+rule, reasoning that it is a momentum trade and momentum had stalled. **Partly
+right:** ETH sits ~0.4% above its MA50, inside the 2% hysteresis band -- it
+reads LONG only by inheriting its previous state, not by confirming. But the
+MA100 and MA200 are +15.8% and +10.9% above their upper bands. **One of three
+windows stalled; 67% is exactly the state a 50d flip produces.**
+
+**Nothing tracks the deviation.** The sleeve alert fires on target CHANGES
+only, and the target is still 100% (unchanged since 2026-08-21). The rebalance
+check covers the crypto legs but its 10pp absolute band against a 2.5% target
+**can never fire** -- maximum possible gap is 2.5pp. And if ETH does close
+below its flat line, the alert will say "set to 67%" when the operator is
+already there, masking the deviation exactly when the rule catches up.
+
+**Unresolved:** either restore to 100%, or cut the sleeve target below 5% so
+the rule runs against a smaller base. The untracked middle is the open item.
