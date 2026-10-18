@@ -15,8 +15,11 @@
 #   WARN  = latest quarter > warn_multiple x median of the prior
 #           baseline_quarters quarters. Informs only.
 #   BREAK = the last confirm_quarters quarters EACH > break_multiple x their
-#           own trailing median. Behaves like a Sightline CUT: the action is
-#           read from sightline.toml's entry for the same ticker.
+#           own trailing median. Triggers break_action -- a REVIEW, not a
+#           sell. Changed from "behaves like a CUT" the same day (2026-10-18):
+#           the signal has never fired, so nothing shows it precedes a loss,
+#           and slower collection can be a deliberate terms choice rather
+#           than a funding failure. A trim is an option, not a rule.
 # Not sticky: state reflects the latest quarters, so a resolved spike clears.
 #
 # Known false-positive path, accepted: an acquisition consolidates the
@@ -28,3 +31,4 @@ warn_multiple     = 1.25
 break_multiple    = 1.5
 baseline_quarters = 8
 confirm_quarters  = 2
+break_action      = "REVIEW: no new contributions to AVGO; read the latest 10-Q for which customer owes the receivables and why. Trimming is an option, not a rule -- this signal is unvalidated."

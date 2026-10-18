@@ -164,7 +164,7 @@ def extract_fingerprint(text: str) -> dict:
         "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
         # Collections (DSO). Same split as Sightline: state triggers, the rest
-        # is quoted so the action can never drift from sightline.toml.
+        # is quoted so the action can never drift from collections.toml.
         "collections_avgo_state": _find(r"Collections.*?AVGO DSO.*?State\s*:\s*(\S+)", text),
         "collections_avgo_latest": _find(r"Collections.*?AVGO DSO.*?Latest\s*:\s*([^\n]+)", text),
         "collections_avgo_action": _find(r"Collections.*?AVGO DSO.*?Action\s*:\s*([^\n]+)", text),
@@ -472,7 +472,8 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
         if _cc == "BREAK":
             blocks.append(
                 f"COLLECTIONS AVGO: BREAK -- {curr['collections_avgo_latest']}\n"
-                "Customers are paying slower than the pre-registered limit for two quarters.\n"
+                "Customers are paying slower than the pre-registered limit for two quarters. "
+                "Not a sell signal.\n"
                 f"ACTION: {curr['collections_avgo_action']}"
             )
             subject_parts.append("Collections AVGO BREAK")

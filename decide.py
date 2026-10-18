@@ -6,7 +6,8 @@ One screen: for every position, OWN or CUT, and how much to buy/sell.
 
 Composes rules that already exist -- adds none:
   - own/cut : Sightline state (config/sightline.toml), plus a collections
-              BREAK (collections_monitor.py), which behaves like a CUT;
+              BREAK (collections_monitor.py) -> REVIEW: no trade, no new
+              contributions, read the 10-Q (unvalidated signal, never a sell);
               exemptions name the
               rule that governs instead. A targeted position with neither is
               printed as NO RULE -- a gap, not a hold.
@@ -43,9 +44,6 @@ NO_CONTRIB = {"Silver", *SLEEVE_ROWS.values()}
 def _governing_rule(pos: dict, sightline_cfg: dict,
                     collections: dict[str, tuple[str, str]] | None = None) -> tuple[str, str, str]:
     """(verdict, rule text, sightline state or '') for one position."""
-    coll = (collections or {}).get(pos["ticker"])
-    if coll and coll[0] == "BREAK":
-        return "CUT", f"Collections BREAK -- {coll[1]}", "BREAK"
     entry = sightline_cfg.get(pos["ticker"]) if pos["ticker"] != "exemptions" else None
     if entry:
         state, detail = derive_state(entry.get("readings", []))
@@ -54,6 +52,11 @@ def _governing_rule(pos: dict, sightline_cfg: dict,
         if state == REQUALIFIED:
             # Re-opens the entry test only -- never a re-buy.
             return "ENTRY", f"Sightline REQUALIFIED -- {detail}", state
+        # Below a Sightline CUT on purpose: a validated cut outranks an
+        # unvalidated review.
+        coll = (collections or {}).get(pos["ticker"])
+        if coll and coll[0] == "BREAK":
+            return "REVIEW", f"Collections BREAK -- {coll[1]}", state
         return "OWN", f"Sightline HOLD -- {detail}", state
     for key in sightline_cfg.get("exemptions", {}):
         if key in (pos["name"].lower(), pos["bucket"]):
@@ -102,6 +105,11 @@ def decide(
         elif verdict == "ENTRY":
             # Re-opens the entry test only -- never an automatic re-buy.
             trade, action = 0.0, "entry test open -- not a buy"
+        elif verdict == "REVIEW":
+            # Collections BREAK has never fired and is unvalidated, so it
+            # stops new money and asks for a read of the 10-Q -- a trim is
+            # the operator's call, not a size this computes.
+            trade, action = 0.0, "REVIEW -- no new kr; trim is an option, not a rule"
         elif name in sleeve_sig:
             t, s = sleeve_sig[name]
             cap = crypto_capital.get(t)
@@ -123,7 +131,7 @@ def decide(
                      "value": value, "weight": r["current"], "target": r["target"],
                      "target_kr": target_kr, "action": action, "trade_kr": trade})
 
-    blocked = cut_names | {r["name"] for r in rows if r["verdict"] == "ENTRY"}
+    blocked = cut_names | {r["name"] for r in rows if r["verdict"] in ("ENTRY", "REVIEW")}
     allowed = {n: n not in NO_CONTRIB and n not in blocked for n in tgt}
     nxt, _ = next_contribution_target(cur, tgt, allowed)
 

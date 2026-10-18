@@ -6231,8 +6231,14 @@ Script and workflow deleted after logging; recoverable from 38e2959.
 quarterly revenue x 91 from XBRL, derived every run. **Thresholds
 pre-registered by the operator before the history was looked at:** WARN at
 latest > 1.25x prior-8Q median; BREAK when the last 2 quarters each > 1.5x.
-BREAK behaves like a Sightline CUT (alert quotes sightline.toml's action;
-`decide.py` -> SELL ALL, contributions blocked). Not sticky.
+~~BREAK behaves like a Sightline CUT~~ -- **REVISED same day (PR #125):
+BREAK = a pre-committed REVIEW, never a sell.** Alert quotes
+`break_action` from collections.toml; `decide.py` shows REVIEW, trades
+nothing, blocks new contributions; a Sightline CUT outranks it. Why: the
+signal has never fired (no BREAK 2018-2026), so nothing shows it precedes a
+loss, and slower collection can be a deliberate terms choice. Operator:
+"maybe reduce position, but that's not confirmed" -- a trim is an option
+named in the alert, not a computed size. Not sticky.
 
 **First real reading: 42 days, 1.21x 8Q median 35 -> OK, just under WARN.**
 History (days): 2018-19 ~50-58, 2021-23 ~25-35, then 29 (2024-11) -> 30 ->

@@ -3,7 +3,8 @@ import datetime as dt
 import collections_monitor as cm
 from check_signal_changes import build_actionable_message, extract_fingerprint
 
-CFG = {"warn_multiple": 1.25, "break_multiple": 1.5, "baseline_quarters": 8, "confirm_quarters": 2}
+CFG = {"warn_multiple": 1.25, "break_multiple": 1.5, "baseline_quarters": 8, "confirm_quarters": 2,
+       "break_action": "REVIEW: read the 10-Q"}
 
 
 def _series(values):
@@ -48,10 +49,9 @@ def test_boundary_is_strict():
     assert cm.derive_state(_series([50] * 8 + [62.5]), CFG)[0] == cm.OK  # exactly 1.25x
 
 
-def _panel(state, action="CUT: sell the full position"):
+def _panel(state):
     lines = cm.format_dashboard_lines(
-        {"AVGO": (state, "2026-08-02: 80 days (1.60x 8Q median 50)")},
-        {"AVGO": CFG}, {"AVGO": {"action": action}})
+        {"AVGO": (state, "2026-08-02: 80 days (1.60x 8Q median 50)")}, {"AVGO": CFG})
     return "\n".join(lines)
 
 
@@ -59,7 +59,7 @@ def test_panel_is_parseable_and_safe_for_sync_health():
     text = _panel("BREAK")
     fp = extract_fingerprint(text)
     assert fp["collections_avgo_state"] == "BREAK"
-    assert fp["collections_avgo_action"] == "CUT: sell the full position"
+    assert fp["collections_avgo_action"] == "REVIEW: read the 10-Q"
     assert "[unavailable" not in text and "Error" not in text
 
 
@@ -69,7 +69,7 @@ def test_fetch_failure_text_is_safe_for_sync_health(monkeypatch):
     monkeypatch.setattr(cm, "fetch_series", boom)
     states = cm.live_states({"AVGO": CFG})
     assert states["AVGO"][0] == "fetch_failed"
-    assert "Error" not in "\n".join(cm.format_dashboard_lines(states, {"AVGO": CFG}, {}))
+    assert "Error" not in "\n".join(cm.format_dashboard_lines(states, {"AVGO": CFG}))
 
 
 def _alert(prev_state, curr_state):
@@ -81,7 +81,8 @@ def _alert(prev_state, curr_state):
 def test_break_alert_quotes_action():
     subject, body = _alert("OK", "BREAK")
     assert "Collections AVGO BREAK" in subject
-    assert "ACTION: CUT: sell the full position" in body
+    assert "ACTION: REVIEW: read the 10-Q" in body
+    assert "SELL" not in body.upper().replace("NOT A SELL", "")
 
 
 def test_fetch_failed_never_alerts():
