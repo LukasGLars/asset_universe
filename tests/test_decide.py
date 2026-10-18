@@ -91,3 +91,18 @@ def test_held_untargeted_cut_is_surfaced():
 def test_sleeve_rows_exist_in_portfolio():
     names = {p["name"] for p in portfolio._load_portfolio_config()["positions"]}
     assert set(decide.SLEEVE_ROWS.values()) <= names
+
+
+def test_collections_break_behaves_like_cut():
+    res = decide.decide(_book(), _cfg(), {}, {},
+                        collections={"AVGO": ("BREAK", "80 days (1.60x)")})
+    r = _rows(res)["Broadcom"]
+    assert r["verdict"] == "CUT"
+    assert r["rule"].startswith("Collections BREAK")
+    assert r["trade_kr"] == -400.0
+    assert res["next"] != "Broadcom"
+
+
+def test_collections_warn_does_not_cut():
+    res = decide.decide(_book(), _cfg(), {}, {}, collections={"AVGO": ("WARN", "x")})
+    assert _rows(res)["Broadcom"]["verdict"] == "OWN"

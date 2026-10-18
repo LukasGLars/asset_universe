@@ -163,6 +163,11 @@ def extract_fingerprint(text: str) -> dict:
         # constant between filings, so a plain != is the new-filing test.
         "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
+        # Collections (DSO). Same split as Sightline: state triggers, the rest
+        # is quoted so the action can never drift from sightline.toml.
+        "collections_avgo_state": _find(r"Collections.*?AVGO DSO.*?State\s*:\s*(\S+)", text),
+        "collections_avgo_latest": _find(r"Collections.*?AVGO DSO.*?Latest\s*:\s*([^\n]+)", text),
+        "collections_avgo_action": _find(r"Collections.*?AVGO DSO.*?Action\s*:\s*([^\n]+)", text),
         # Parsed generically from whatever rows the block prints, keyed by
         # position name -- see _rebal_rows. Was three hardcoded Gold/AVGO/LLY
         # regexes anchored on the literal "AVGO Rebalance Check" heading;
@@ -186,6 +191,7 @@ LABELS = {
     "hy_oas": "HY credit OAS",
     "sightline_avgo_state": "Sightline AVGO",
     "sightline_lly_state": "Sightline LLY",
+    "collections_avgo_state": "Collections AVGO",
 }
 
 
@@ -456,6 +462,26 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
                     "No action: this only re-opens the entry test, it is not a buy."
                 )
                 subject_parts.append(f"Sightline {_label} {_curr}")
+
+    # Collections: fires on any state change between real states.
+    # fetch_failed / INSUFFICIENT are not states of the business, so they
+    # neither fire nor become a baseline (same as the unknown-guard).
+    _cp, _cc = prev["collections_avgo_state"], curr["collections_avgo_state"]
+    _real = ("OK", "WARN", "BREAK")
+    if _cp != _cc and _cp in _real and _cc in _real:
+        if _cc == "BREAK":
+            blocks.append(
+                f"COLLECTIONS AVGO: BREAK -- {curr['collections_avgo_latest']}\n"
+                "Customers are paying slower than the pre-registered limit for two quarters.\n"
+                f"ACTION: {curr['collections_avgo_action']}"
+            )
+            subject_parts.append("Collections AVGO BREAK")
+        else:
+            blocks.append(
+                f"COLLECTIONS AVGO: {_cp} -> {_cc} -- {curr['collections_avgo_latest']}\n"
+                + ("No action: WARN informs only." if _cc == "WARN" else "No action.")
+            )
+            subject_parts.append(f"Collections AVGO {_cc}")
 
     # AVGO Rebalance Check (2026-08-17): fires only on the HOLD -> SELL/BUY
     # transition (an asset NEWLY drifting out of the vol-target band), not on

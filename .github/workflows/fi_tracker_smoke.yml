@@ -35,7 +35,7 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
       - name: Unit tests for the routing helpers
-        run: python -m pytest tests/test_next_contribution.py tests/test_vol_target.py -q
+        run: python -m pytest tests/test_next_contribution.py tests/test_vol_target.py tests/test_collections_monitor.py tests/test_decide.py -q
       - name: Run fi_tracker (stdout only, nothing committed)
         run: |
           set -o pipefail
@@ -72,9 +72,12 @@ jobs:
               "sightline_avgo_state", "sightline_lly_state",
               "crypto_btc_exposure", "crypto_eth_exposure",
               "avgo_latest_quarter", "lly_latest_quarter",
+              "collections_avgo_state",
           ]
           dead = [k for k in must_parse if fp[k] == "unknown"]
           assert not dead, f"fields degraded to 'unknown': {dead}"
+          assert fp["collections_avgo_state"] in ("OK", "WARN", "BREAK", "INSUFFICIENT"), \
+              f"collections did not compute: {fp['collections_avgo_state']!r}"
           print(f"all {len(must_parse)} alert fields parsed")
           EOF
 
@@ -97,6 +100,8 @@ jobs:
       - name: Show the reworked blocks
         run: |
           sed -n '/NEXT CONTRIBUTION/,/^=\{10,\}$/p' smoke.md
+          sed -n '/Collections  \[DSO/,/Action/p' smoke.md
+          python -c "import collections_monitor as c; [print(d, round(v)) for d, v in c.fetch_series('AVGO')]"
       - name: Step summary
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
