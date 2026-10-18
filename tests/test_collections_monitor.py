@@ -78,13 +78,7 @@ def _alert(prev_state, curr_state):
     return build_actionable_message(prev, curr)
 
 
-def test_break_alert_quotes_action():
-    subject, body = _alert("OK", "BREAK")
-    assert "Collections AVGO BREAK" in subject
-    assert "ACTION: REVIEW: read the 10-Q" in body
-    assert "SELL" not in body.upper().replace("NOT A SELL", "")
-
-
-def test_fetch_failed_never_alerts():
-    assert _alert("OK", "fetch_failed") is None
-    assert _alert("fetch_failed", "BREAK") is None
+def test_no_alert_on_any_transition():
+    # Operator decision 2026-10-18: dashboard and decide.py only, no messages.
+    for a, b in [("OK", "WARN"), ("OK", "BREAK"), ("WARN", "BREAK"), ("BREAK", "OK")]:
+        assert _alert(a, b) is None, (a, b)

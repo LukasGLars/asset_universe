@@ -6238,7 +6238,10 @@ nothing, blocks new contributions; a Sightline CUT outranks it. Why: the
 signal has never fired (no BREAK 2018-2026), so nothing shows it precedes a
 loss, and slower collection can be a deliberate terms choice. Operator:
 "maybe reduce position, but that's not confirmed" -- a trim is an option
-named in the alert, not a computed size. Not sticky.
+named in the action text, not a computed size. Not sticky.
+**No Telegram alert** (operator: "No alerts at this time") -- visible on the
+dashboard and in `decide.py` only. The fingerprint still parses the state so
+re-enabling is one block in `check_signal_changes.build_actionable_message`.
 
 **First real reading: 42 days, 1.21x 8Q median 35 -> OK, just under WARN.**
 History (days): 2018-19 ~50-58, 2021-23 ~25-35, then 29 (2024-11) -> 30 ->

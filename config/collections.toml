@@ -21,6 +21,7 @@
 #           and slower collection can be a deliberate terms choice rather
 #           than a funding failure. A trim is an option, not a rule.
 # Not sticky: state reflects the latest quarters, so a resolved spike clears.
+# NO Telegram alert (operator, 2026-10-18): dashboard and decide.py only.
 #
 # Known false-positive path, accepted: an acquisition consolidates the
 # target's receivables before a full quarter of its revenue, inflating DSO
