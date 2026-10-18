@@ -6150,7 +6150,7 @@ nowhere near its YoY<0 cut), valuation watches price. A funding-driven problem
 appears first in collections and revenue YoY stays strongly positive through
 it.
 
-**Proposed, NOT built:** days sales outstanding (`AccountsReceivableNetCurrent
+**BUILT 2026-10-18 (PR #124) -- see "Collections monitor" entry.** Originally proposed: days sales outstanding (`AccountsReceivableNetCurrent
 / quarterly revenue x 91`), quarterly from 10-Q XBRL, as a monitor beside
 Sightline with two pre-committed thresholds -- a warn that informs and a break
 that behaves like a cut. `sec_edgar.py` already fetches any us-gaap concept, so
@@ -6224,3 +6224,26 @@ inside the bar).
   8 spells).
 
 Script and workflow deleted after logging; recoverable from 38e2959.
+
+## Collections monitor LIVE: AVGO DSO beside Sightline (2026-10-18, PR #124)
+
+`collections_monitor.py` + `config/collections.toml`. DSO = AR (instant) /
+quarterly revenue x 91 from XBRL, derived every run. **Thresholds
+pre-registered by the operator before the history was looked at:** WARN at
+latest > 1.25x prior-8Q median; BREAK when the last 2 quarters each > 1.5x.
+BREAK behaves like a Sightline CUT (alert quotes sightline.toml's action;
+`decide.py` -> SELL ALL, contributions blocked). Not sticky.
+
+**First real reading: 42 days, 1.21x 8Q median 35 -> OK, just under WARN.**
+History (days): 2018-19 ~50-58, 2021-23 ~25-35, then 29 (2024-11) -> 30 ->
+34 -> 37 -> 36 -> 40 -> 44 -> 42 (2026-08). VMware close showed as a
+one-quarter 38/40 bump in 2024, absorbed by the 2-quarter confirm.
+
+**Known limit, deliberately not "fixed" after seeing the data:** a relative
+baseline follows a slow drift -- the 29 -> 42 rise never trips because the
+median rises with it. An absolute ceiling would close that, but choosing one
+now would be fitting to this chart. Separate operator decision if wanted.
+
+**Sync-health contract:** the block never prints "[unavailable" or "Error"
+on an SEC outage (state reads `fetch_failed`, which the alerter neither
+fires on nor uses as baseline). Smoke workflow asserts the state parses.
