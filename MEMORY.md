@@ -6183,3 +6183,44 @@ already there, masking the deviation exactly when the rule catches up.
 
 **Unresolved:** either restore to 100%, or cut the sleeve target below 5% so
 the rule runs against a smaller base. The untracked middle is the open item.
+
+## AVGO/LLY split inside the 40% growth leg: 20/20 STANDS; AVGO above 20 is penalised (2026-10-18)
+
+**Question:** should the concentrated-growth leg be split other than 20/20?
+
+**Setup.** Swept AVGO/LLY 0/40..40/0 in 5pp steps; Gold 20 / Index 25 (SPY
+proxy -- no world-index series in the store) / Cash+crypto 15 (at 0%) fixed.
+SEK, daily, live 10pp absolute band, 10bps. 2009-08..2026-10. Ranked on the
+worst of five windows (A 09-13, B 14-18, C 19-22, D 23-now, E 09-22 ex
+melt-up). **Pre-registered noise bar:** replace 20/20 only if a split beats it
+by >= 2pp worst-window MDD AND >= 0.10 worst-window Calmar. Run: Actions
+39124071478.
+
+| AVGO/LLY | full CAGR | worst-window MDD | worst-window Calmar |
+|---|---|---|---|
+| 0/40 | +19.2% | -18.2% | 0.86 |
+| 5/35 | +20.6% | -20.3% | **1.10** |
+| 10/30 | +20.8% | -20.9% | 1.06 |
+| 15/25 | +21.6% | -21.5% | 1.04 |
+| **20/20** | +22.4% | -21.1% | 1.05 |
+| 25/15 | +23.1% | -22.6% | 0.91 |
+| 30/10 | +23.3% | -23.6% | 0.91 |
+| 40/0 | +24.4% | -28.5% | 0.72 |
+
+**Verdict: 20/20 stands** (best 5/35 beats it by 0.05 Calmar, 0.8pp MDD --
+inside the bar).
+
+**Shape that matters:**
+- **5/35..20/20 is a flat plateau** on worst-window Calmar (1.04-1.10). Moving
+  toward LLY inside it trades ~0.4pp CAGR per 5pp for slightly shallower
+  drawdown. A LLY tilt is a free conviction call; the data neither asks for
+  nor forbids it.
+- **Above 20 AVGO falls off the plateau**: worst Calmar 0.91 at 25/15, 0.72
+  at 40/0; worst MDD -28.5% at 40/0 (breaches -25%). **20% is the AVGO
+  ceiling**, not a midpoint.
+- **Windows disagree on the winner** (A favours 20/20, B 10/30, C 0/40, D
+  15/25 or 30/10, E 5/35). No stable optimum -- which is also why a
+  regime-dynamic split was not pursued (see the 2026-10-18 high-rate entry:
+  8 spells).
+
+Script and workflow deleted after logging; recoverable from 38e2959.
