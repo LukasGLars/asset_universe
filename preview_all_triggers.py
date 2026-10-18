@@ -123,14 +123,21 @@ SCENARIOS = [
 ]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """With no argument, previews every scenario. With one or more arguments,
     previews only the scenarios whose name contains one of them (case
-    insensitive) -- firing ten messages to test one alert is needless noise."""
+    insensitive) -- firing eleven messages to test one alert is needless noise.
+
+    `argv` is a parameter rather than a read of sys.argv inside the body:
+    when a caller invokes main() directly -- as the tests do -- reading
+    sys.argv picks up THAT process's arguments. Under pytest those are the
+    pytest flags, which matched no scenario, so main() returned 1 and sent
+    nothing. Shipped in PR #122 and missed by running only one test file.
+    """
     prev_fp = extract_fingerprint(BASE)
     failures = 0
 
-    wanted = [a.lower() for a in sys.argv[1:]]
+    wanted = [a.lower() for a in (argv if argv is not None else [])]
     selected = [(n, t) for n, t in SCENARIOS
                 if not wanted or any(w in n.lower() for w in wanted)]
     if not selected:
@@ -162,4 +169,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
