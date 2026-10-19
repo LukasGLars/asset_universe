@@ -168,7 +168,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : CIEN (Ciena Corporation)  $332.73  (sector Technology, -26.0% 5d, 7 peers crashing, drift +3.2%)
+    Basket-crash   : CIEN (Ciena Corporation)  $332.73  (sector Technology, -26.0% 5d, 7 peers crashing, drift +4.3%)
     Plan           : buy near $332.73, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open CIEN <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
@@ -325,13 +325,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         33.56x       --     0
-ANET        33.89x       --     0
-ASML        29.35x       --     0
-AVGO        16.95x       --     0
-MRVL        31.23x       --     0
-MU           4.25x       --     0
-NVDA        13.45x       --     0
-QCOM        16.89x       --     0
-TSM         17.64x       --     0
-  accruing -- 0/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         33.56x       --     1
+ANET        33.89x       --     1
+ASML        29.35x       --     1
+AVGO        16.95x       --     1
+MRVL        31.23x       --     1
+MU           4.25x       --     1
+NVDA        13.45x       --     1
+QCOM        16.89x       --     1
+TSM         17.64x       --     1
+  accruing -- 1/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
