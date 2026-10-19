@@ -6256,3 +6256,36 @@ now would be fitting to this chart. Separate operator decision if wanted.
 **Sync-health contract:** the block never prints "[unavailable" or "Error"
 on an SEC outage (state reads `fetch_failed`, which the alerter neither
 fires on nor uses as baseline). Smoke workflow asserts the state parses.
+
+## DSO BREAK does NOT predict underperformance -- cross-section, pre-registered (2026-10-19)
+
+**Question:** the collections BREAK had never fired on AVGO, so zero evidence.
+Does the same rule predict anything across the US universe?
+
+**Setup.** collections_monitor rule verbatim (1.25x WARN / 1.5x-for-2Q BREAK
+vs prior-8Q median) on the 505-name universe; 278 names had AR + revenue
+XBRL. Point-in-time: original-filing AR, event = filing date. Onsets only;
+control = every OK company-quarter. Outcome = forward return minus
+equal-weighted universe. Pass bar pre-registered (>= 5pp worse at 252d, every
+sub-period with n>=5, MWU p<0.05). Run: Actions 39204171292.
+
+| | n | 126d median excess | 252d median excess | p (less) |
+|---|---|---|---|---|
+| OK control | 6810 | -2.3% | -5.5% | |
+| **BREAK onset** | 28 | **+2.3%** | **-2.8%** (+2.7pp vs control) | 0.92 |
+| WARN onset | 338 | +0.4% | -3.3% (+2.2pp) | 0.99 |
+
+Sub-periods at 252d, BREAK vs control: 2016-20 +1.5% vs -3.9% (n=10);
+2021-now +5.9% vs -6.5% (n=12). **Wrong sign, not merely weak.**
+
+**Verdict: NOT SHOWN.** Neither BREAK nor WARN precedes underperformance;
+if anything the reverse (rising DSO in growing companies = growth, not
+distress). Survivorship (current constituents) biases AGAINST finding an
+effect, so it could hide some -- but not a reversed sign at 23 events.
+No sector control; 28 events is small.
+
+**Consequence:** the monitor is informational. It cannot justify a sell,
+and on this evidence not a contribution block either -- see the decision
+recorded below this entry if one follows.
+
+Script and workflow deleted after logging; recoverable from ae39842.
