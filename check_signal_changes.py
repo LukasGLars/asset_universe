@@ -163,11 +163,6 @@ def extract_fingerprint(text: str) -> dict:
         # constant between filings, so a plain != is the new-filing test.
         "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
-        # Collections (DSO). Same split as Sightline: state triggers, the rest
-        # is quoted so the action can never drift from collections.toml.
-        "collections_avgo_state": _find(r"Collections.*?AVGO DSO.*?State\s*:\s*(\S+)", text),
-        "collections_avgo_latest": _find(r"Collections.*?AVGO DSO.*?Latest\s*:\s*([^\n]+)", text),
-        "collections_avgo_action": _find(r"Collections.*?AVGO DSO.*?Action\s*:\s*([^\n]+)", text),
         # Parsed generically from whatever rows the block prints, keyed by
         # position name -- see _rebal_rows. Was three hardcoded Gold/AVGO/LLY
         # regexes anchored on the literal "AVGO Rebalance Check" heading;
@@ -461,10 +456,6 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
                     "No action: this only re-opens the entry test, it is not a buy."
                 )
                 subject_parts.append(f"Sightline {_label} {_curr}")
-
-    # Collections (DSO): deliberately NO alert (operator, 2026-10-18). The
-    # state is parsed above so the smoke contract still covers the panel, and
-    # it shows on the dashboard and in decide.py -- but it never messages.
 
     # AVGO Rebalance Check (2026-08-17): fires only on the HOLD -> SELL/BUY
     # transition (an asset NEWLY drifting out of the vol-target band), not on

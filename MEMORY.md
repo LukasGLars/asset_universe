@@ -6289,3 +6289,10 @@ and on this evidence not a contribution block either -- see the decision
 recorded below this entry if one follows.
 
 Script and workflow deleted after logging; recoverable from ae39842.
+
+**RETIRED 2026-10-20 (PR #126).** Operator: "So useless". The collections
+monitor is removed from the dashboard, decide.py, the alert parser and the
+smoke contract (revert of #124/#125; code recoverable from aac9f32/c62f261).
+AVGO's customer-funding concentration remains a real, UNMONITORED risk --
+the cross-section could not test that narrow case, only showed DSO is not a
+general signal.

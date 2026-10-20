@@ -5,10 +5,7 @@ One screen: for every position, OWN or CUT, and how much to buy/sell.
     python decide.py
 
 Composes rules that already exist -- adds none:
-  - own/cut : Sightline state (config/sightline.toml), plus a collections
-              BREAK (collections_monitor.py) -> REVIEW: no trade, no new
-              contributions, read the 10-Q (unvalidated signal, never a sell);
-              exemptions name the
+  - own/cut : Sightline state (config/sightline.toml); exemptions name the
               rule that governs instead. A targeted position with neither is
               printed as NO RULE -- a gap, not a hold.
   - size    : per-asset target_weight (config/portfolio.toml) against the
@@ -41,8 +38,7 @@ SLEEVE_ROWS = {"BTC-USD": "Virtune Bitcoin", "ETH-USD": "Virtune Staked ETH"}
 NO_CONTRIB = {"Silver", *SLEEVE_ROWS.values()}
 
 
-def _governing_rule(pos: dict, sightline_cfg: dict,
-                    collections: dict[str, tuple[str, str]] | None = None) -> tuple[str, str, str]:
+def _governing_rule(pos: dict, sightline_cfg: dict) -> tuple[str, str, str]:
     """(verdict, rule text, sightline state or '') for one position."""
     entry = sightline_cfg.get(pos["ticker"]) if pos["ticker"] != "exemptions" else None
     if entry:
@@ -52,11 +48,6 @@ def _governing_rule(pos: dict, sightline_cfg: dict,
         if state == REQUALIFIED:
             # Re-opens the entry test only -- never a re-buy.
             return "ENTRY", f"Sightline REQUALIFIED -- {detail}", state
-        # Below a Sightline CUT on purpose: a validated cut outranks an
-        # unvalidated review.
-        coll = (collections or {}).get(pos["ticker"])
-        if coll and coll[0] == "BREAK":
-            return "REVIEW", f"Collections BREAK -- {coll[1]}", state
         return "OWN", f"Sightline HOLD -- {detail}", state
     for key in sightline_cfg.get("exemptions", {}):
         if key in (pos["name"].lower(), pos["bucket"]):
@@ -72,7 +63,6 @@ def decide(
     crypto_signals: dict[str, dict],
     crypto_capital: dict[str, float],
     band: float = REBAL_BAND,
-    collections: dict[str, tuple[str, str]] | None = None,
 ) -> dict:
     """positions: [{name, ticker, bucket, value_sek, price_sek, target}].
 
@@ -94,7 +84,7 @@ def decide(
     cut_names = set()
     for p in targeted:
         name, value = p["name"], p["value_sek"] or 0.0
-        verdict, rule, _ = _governing_rule(p, sightline_cfg, collections)
+        verdict, rule, _ = _governing_rule(p, sightline_cfg)
         r = rebal[name]
         target_kr = r["target"] * denom
 
@@ -105,11 +95,6 @@ def decide(
         elif verdict == "ENTRY":
             # Re-opens the entry test only -- never an automatic re-buy.
             trade, action = 0.0, "entry test open -- not a buy"
-        elif verdict == "REVIEW":
-            # Collections BREAK has never fired and is unvalidated, so it
-            # stops new money and asks for a read of the 10-Q -- a trim is
-            # the operator's call, not a size this computes.
-            trade, action = 0.0, "REVIEW -- no new kr; trim is an option, not a rule"
         elif name in sleeve_sig:
             t, s = sleeve_sig[name]
             cap = crypto_capital.get(t)
@@ -131,7 +116,7 @@ def decide(
                      "value": value, "weight": r["current"], "target": r["target"],
                      "target_kr": target_kr, "action": action, "trade_kr": trade})
 
-    blocked = cut_names | {r["name"] for r in rows if r["verdict"] in ("ENTRY", "REVIEW")}
+    blocked = cut_names | {r["name"] for r in rows if r["verdict"] == "ENTRY"}
     allowed = {n: n not in NO_CONTRIB and n not in blocked for n in tgt}
     nxt, _ = next_contribution_target(cur, tgt, allowed)
 
@@ -140,7 +125,7 @@ def decide(
     # A held name with no target can still be a Sightline CUT -- surface it.
     for p in positions:
         if p["target"] <= 0 and (p["value_sek"] or 0.0) > 0:
-            v, rule, _ = _governing_rule(p, sightline_cfg, collections)
+            v, rule, _ = _governing_rule(p, sightline_cfg)
             if v == "CUT":
                 rows.append({"name": p["name"], "verdict": v, "rule": rule,
                              "value": p["value_sek"], "weight": 0.0, "target": 0.0,
@@ -168,7 +153,6 @@ def format_lines(result: dict, stale: str | None = None) -> list[str]:
 
 
 def main() -> None:
-    import collections_monitor
     import run_crypto_trend
     from asset_universe import config, portfolio
     from check_local_data_freshness import check_freshness
@@ -189,8 +173,7 @@ def main() -> None:
                  for _, r in snap.iterrows()]
 
     result = decide(positions, load_config(), run_crypto_trend.signals(data_dir),
-                    run_crypto_trend._sleeve_capital(),
-                    collections=collections_monitor.live_states())
+                    run_crypto_trend._sleeve_capital())
     stale = None if fresh else f"latest bar {latest}, expected since {since}"
     print("\n".join(format_lines(result, stale)))
 
