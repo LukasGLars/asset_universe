@@ -743,20 +743,6 @@ try:
 except Exception as _e:
     print(f"\n  Sightline : [unavailable — {_e}]")
 
-# ── Collections (AVGO DSO beside Sightline, 2026-10-18) ─────────────────────
-# Watches whether customers PAY; Sightline watches whether they BUY. BREAK
-# triggers a pre-committed review, never a sell (unvalidated signal). A fetch failure prints as state
-# fetch_failed, never "[unavailable", which would fail the sync health check
-# on a transient SEC outage.
-try:
-    import collections_monitor
-    _coll_cfg = collections_monitor.load_config()
-    print()
-    print("\n".join(collections_monitor.format_dashboard_lines(
-        collections_monitor.live_states(_coll_cfg), _coll_cfg)))
-except Exception as _e:
-    print(f"\n  Collections : [unavailable — {_e}]")
-
 # ── Opportunistic sleeve (war-chest tactical layer, separate from base) ─────
 try:
     import run_entry_screen
