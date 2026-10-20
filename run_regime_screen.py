@@ -58,11 +58,13 @@ def test(s, spl, cache):
     for a, b in spl:
         i, j = s.index.searchsorted(a), s.index.searchsorted(b)
         if i >= len(s) or j >= len(s) or j <= i:
-            return None
+            continue  # same as run_rate_regime_validated: skip, don't fail
         L = j - i
         if L not in cache:
             cache[L] = float((s.shift(-L) / s - 1).dropna().median())
         ex.append(float(s.iloc[j] / s.iloc[i] - 1) - cache[L])
+    if len(ex) < 6:
+        return None
     e = np.array(ex)
     tm = [np.median(e[t]) for t in np.array_split(np.arange(len(e)), 3)]
     return np.median(e), (e > 0).mean(), min(tm)
