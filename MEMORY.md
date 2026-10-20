@@ -6296,3 +6296,23 @@ smoke contract (revert of #124/#125; code recoverable from aac9f32/c62f261).
 AVGO's customer-funding concentration remains a real, UNMONITORED risk --
 the cross-section could not test that narrow case, only showed DSO is not a
 general signal.
+
+## High-rate regime screen of the whole store: indistinguishable from luck (2026-10-20)
+
+Same method as the 2026-10-18 holdings test (spell vs length-matched own
+baseline), 506 names, 11 spells 2023-08..2026-10. Pass bar = LLY's (median
+excess > 0, beat >= 75%, worst third > 0). **Placebo: same test on 200 sets
+of random spells.** Run: Actions 39487456119.
+
+**Real passes 63; placebo mean 40.6, 95th pct 95.** The real count is inside
+the luck distribution -> the screen finds nothing, and LLY's own pass on
+2026-10-18 must be read the same way (one of ~40 expected chance passes).
+
+Top passes, for the record only: MU, WDC, STX, KLAC, LRCX (memory/semi
+equipment -- the regime's dates coincide with the AI capex boom, so this is
+the boom, not rates), then regional/trust banks PNC, NTRS, FITB, C, TFC
+(the one group with an economic rate story: net interest margin), IBKR.
+
+**Conclusion: the regime label (all spells since 2023-08) has too little
+independent history to pick assets. Do not use it for asset choice.**
+Script and workflow deleted; recoverable from a6d8fe6.
