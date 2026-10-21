@@ -6189,6 +6189,9 @@ ETH $2,456 was -0.2% under its MA50 ($2,460), inside the 2% band. Pre-committed
 exits: a daily close above MA50 x 1.02 (~$2,509, moves with the MA) -> restore
 to 100% (~135 units, ~7,850 kr, to the 2.5% target); a close below MA50 x 0.98
 (~$2,411) -> the rule itself goes to 67% and the deviation ends.
+**CLOSED same day:** operator added back before the confirmation close; ETH
+leg ~23k kr (~2.3% of the account, ~94% of the 2.5% target), i.e. back at
+the rule's 100%. No deviation outstanding.
 
 ## AVGO/LLY split inside the 40% growth leg: 20/20 STANDS; AVGO above 20 is penalised (2026-10-18)
 
