@@ -6184,6 +6184,12 @@ already there, masking the deviation exactly when the rule catches up.
 **Unresolved:** either restore to 100%, or cut the sleeve target below 5% so
 the rule runs against a smaller base. The untracked middle is the open item.
 
+**RESOLVED 2026-10-21 (operator):** stay at 67% as a bounded deviation.
+ETH $2,456 was -0.2% under its MA50 ($2,460), inside the 2% band. Pre-committed
+exits: a daily close above MA50 x 1.02 (~$2,509, moves with the MA) -> restore
+to 100% (~135 units, ~7,850 kr, to the 2.5% target); a close below MA50 x 0.98
+(~$2,411) -> the rule itself goes to 67% and the deviation ends.
+
 ## AVGO/LLY split inside the 40% growth leg: 20/20 STANDS; AVGO above 20 is penalised (2026-10-18)
 
 **Question:** should the concentrated-growth leg be split other than 20/20?
