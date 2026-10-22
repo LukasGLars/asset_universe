@@ -1,3 +1,9 @@
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
 ==============================================================
 REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
@@ -59,14 +65,14 @@ MACRO REGIME
   Nominal 10Y             5.12%   HIGH
   Real Yield             +2.77%   HIGH  ^
   Breakeven               2.37%   HIGH
-  HY OAS                333 bps   WIDE
+  HY OAS                327 bps   WIDE
   IG Credit               1.44%   TIGHT
   Curve 10Y-3M          +88 bps   MID
   Curve 10Y-2Y          +32 bps   LOW
   SE 10Y                  3.19%   MID
   USD                     121.4   STRONG
 
-  HY 20d delta  : +65 bps  (widening)
+  HY 20d delta  : +54 bps  (widening)
   Confidence    : UNCERTAIN
   Data through  : 2026-10-21
 
@@ -292,19 +298,46 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
+See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+  df.set_index('quarter', inplace=True)
 AVGO peer valuation snapshot -- 2026-10-22
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $913.67    $75.51   $206.85      2.74x        +174%     4.42x      0.03
-AMD         $552.72     $5.76    $15.76      2.74x        +174%    35.06x      0.20
-NVDA        $221.97     $7.01    $15.91      2.27x        +127%    13.95x      0.11
-MRVL        $244.76     $3.30     $7.33      2.22x        +122%    33.40x      0.27
-AVGO*       $337.80     $9.76    $19.40      1.99x         +99%    17.42x      0.18
-ASML      $1,676.69    $33.89    $55.93      1.65x         +65%    29.98x      0.46
-ANET        $184.33     $3.46     $5.22      1.51x         +51%    35.30x      0.69
-TSM         $431.89    $15.54    $23.39      1.50x         +50%    18.47x      0.37
-QCOM        $177.96    $11.36    $10.19      0.90x         -10%    17.46x       n/a
+MU          $873.94    $75.51   $206.85      2.74x        +174%     4.23x      0.02
+AMD         $511.72     $5.76    $15.76      2.74x        +174%    32.46x      0.19
+NVDA        $213.46     $7.01    $15.91      2.27x        +127%    13.41x      0.11
+MRVL        $224.43     $3.30     $7.33      2.22x        +122%    30.62x      0.25
+AVGO*       $322.73     $9.76    $19.40      1.99x         +99%    16.64x      0.17
+ASML      $1,592.12    $33.89    $55.93      1.65x         +65%    28.47x      0.44
+ANET        $171.71     $3.46     $5.22      1.51x         +51%    32.88x      0.65
+TSM         $414.35    $15.54    $23.39      1.50x         +50%    17.72x      0.35
+QCOM        $174.88    $11.36    $10.19      0.90x         -10%    17.16x       n/a
 
 * = AVGO
 
@@ -316,13 +349,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         35.06x       --     3
-ANET        35.30x       --     3
-ASML        29.98x       --     3
-AVGO        17.42x       --     3
-MRVL        33.40x       --     3
-MU           4.42x       --     3
-NVDA        13.95x       --     3
-QCOM        17.46x       --     3
-TSM         18.47x       --     3
-  accruing -- 3/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         32.46x       --     4
+ANET        32.88x       --     4
+ASML        28.47x       --     4
+AVGO        16.64x       --     4
+MRVL        30.62x       --     4
+MU           4.23x       --     4
+NVDA        13.41x       --     4
+QCOM        17.16x       --     4
+TSM         17.72x       --     4
+  accruing -- 4/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
