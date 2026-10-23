@@ -6325,3 +6325,16 @@ the boom, not rates), then regional/trust banks PNC, NTRS, FITB, C, TFC
 **Conclusion: the regime label (all spells since 2023-08) has too little
 independent history to pick assets. Do not use it for asset choice.**
 Script and workflow deleted; recoverable from a6d8fe6.
+
+## Crypto leg size is DERIVED, no longer hand-kept (2026-10-23)
+
+The 2026-10-23 ETH 67% alert quoted "of 27 225 kr": `[crypto_sleeve]
+capital_sek`, set in September and never updated through the cut to 67% and
+the 10-21 refill. The real full leg was ~22-24k. A 67%-of-27k sale would
+have sold ~4k instead of ~7.4k.
+
+Fix: `run_crypto_trend.sleeve_capital()` = ETP row's target_weight x base
+(value of every position carrying a target -- the fi_tracker/decide.py
+denominator), every run. `[crypto_sleeve]` deleted from portfolio.toml; a
+test asserts it stays gone. `SLEEVE_ROWS` now lives in run_crypto_trend
+only. The alert trigger (bare target %) is unchanged; only the kr text moves.

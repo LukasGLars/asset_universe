@@ -12,7 +12,8 @@ Composes rules that already exist -- adds none:
               same denominator fi_tracker uses (positions carrying a target),
               traded only outside vol_target.REBAL_BAND. CUT overrides: sell
               all.
-  - crypto  : the trend rule's exposure x crypto_sleeve capital_sek.
+  - crypto  : the trend rule's exposure x the leg's full size
+              (run_crypto_trend.sleeve_capital: target_weight x base).
   - new kr  : next_contribution_target, same gates as fi_tracker.
 
 Every figure is read from its source; nothing is restated (CLAUDE.md rule 1).
@@ -30,9 +31,9 @@ from next_contribution import next_contribution_target
 from sightline import CUT, REQUALIFIED, derive_state
 from vol_target import REBAL_BAND, rebalance_instructions
 
-# Trend-rule ticker -> the ETP row that holds it. Checked against
-# portfolio.toml by the tests, so a rename fails loudly.
-SLEEVE_ROWS = {"BTC-USD": "Virtune Bitcoin", "ETH-USD": "Virtune Staked ETH"}
+# Trend-rule ticker -> the ETP row that holds it. One definition, in
+# run_crypto_trend; checked against portfolio.toml by the tests.
+from run_crypto_trend import SLEEVE_ROWS
 
 # Same exclusions as fi_tracker's NEXT CONTRIBUTION block.
 NO_CONTRIB = {"Silver", *SLEEVE_ROWS.values()}
@@ -173,7 +174,7 @@ def main() -> None:
                  for _, r in snap.iterrows()]
 
     result = decide(positions, load_config(), run_crypto_trend.signals(data_dir),
-                    run_crypto_trend._sleeve_capital())
+                    run_crypto_trend._sleeve_capital(data_dir))
     stale = None if fresh else f"latest bar {latest}, expected since {since}"
     print("\n".join(format_lines(result, stale)))
 

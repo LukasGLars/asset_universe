@@ -118,7 +118,7 @@ def test_summary_kr_amount_is_the_TARGET_not_the_holding(tmp_path, capsys, monke
 
     _write_store(tmp_path, "BTC-USD", [100.0] * 210 + [300.0] * 40)
     _write_store(tmp_path, "ETH-USD", [100.0] * 210 + [300.0] * 40)
-    monkeypatch.setattr(rct, "_sleeve_capital", lambda: {"BTC-USD": 27225, "ETH-USD": 27225})
+    monkeypatch.setattr(rct, "_sleeve_capital", lambda *a, **k: {"BTC-USD": 27225, "ETH-USD": 27225})
 
     rct.crypto_trend_daily_summary(tmp_path)
     out = capsys.readouterr().out
@@ -147,3 +147,30 @@ def test_summary_says_so_when_the_store_is_empty(tmp_path, capsys):
     import run_crypto_trend as rct
     rct.crypto_trend_daily_summary(tmp_path)
     assert "no crypto data in store" in capsys.readouterr().out
+
+
+def test_sleeve_capital_is_target_weight_times_base():
+    import run_crypto_trend as rct
+    pos = [
+        {"name": "Broadcom", "value_sek": 600.0, "target": 0.6},
+        {"name": "Virtune Bitcoin", "value_sek": 30.0, "target": 0.025},
+        {"name": "Virtune Staked ETH", "value_sek": 10.0, "target": 0.025},
+        {"name": "Spiltan", "value_sek": 500.0, "target": 0.0},  # outside the base
+        {"name": "Cash", "value_sek": 360.0, "target": 0.35},
+    ]
+    cap = rct.sleeve_capital(pos)
+    assert cap == {"BTC-USD": 0.025 * 1000.0, "ETH-USD": 0.025 * 1000.0}
+
+
+def test_sleeve_capital_skips_missing_or_untargeted_rows():
+    import run_crypto_trend as rct
+    pos = [{"name": "Broadcom", "value_sek": 100.0, "target": 1.0},
+           {"name": "Virtune Bitcoin", "value_sek": 5.0, "target": 0.0}]
+    assert rct.sleeve_capital(pos) == {}
+
+
+def test_no_hand_kept_capital_left_in_config():
+    import tomllib
+    import run_crypto_trend as rct
+    with open(rct.PORTFOLIO_TOML, "rb") as f:
+        assert "crypto_sleeve" not in tomllib.load(f)

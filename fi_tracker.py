@@ -808,8 +808,9 @@ try:
     _current_weights = {n: _valued(n) / _target_denom for n in _targets_cfg}
 
     # Contributions do not fund these. Silver has its own GSR trigger; the
-    # crypto legs are sized by the trend sleeve's own capital_sek and the
-    # MA ensemble, so pushing new money in would fight that mechanism. Both
+    # crypto legs are sized by the MA ensemble on a full-leg size derived
+    # from target_weight (run_crypto_trend.sleeve_capital), so pushing new
+    # money in would fight that mechanism. Both
     # still appear in the detail with their real gap -- excluded, not hidden.
     _no_contrib = {"Silver", "Virtune Bitcoin", "Virtune Staked ETH"}
     _next_allowed = {n: n not in _no_contrib for n in _targets_cfg}

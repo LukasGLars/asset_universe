@@ -34,12 +34,41 @@ from asset_universe.store import reader
 ROOT = Path(__file__).parent
 PORTFOLIO_TOML = ROOT / "config" / "portfolio.toml"
 
+# Trend-rule ticker -> the ETP row in portfolio.toml that holds it.
+SLEEVE_ROWS = {"BTC-USD": "Virtune Bitcoin", "ETH-USD": "Virtune Staked ETH"}
 
-def _sleeve_capital() -> dict[str, float]:
-    if not PORTFOLIO_TOML.exists():
+
+def sleeve_capital(positions: list[dict]) -> dict[str, float]:
+    """What a 100% leg is worth in kr: the ETP row's target_weight x the base
+    (value of every position carrying a target -- the denominator fi_tracker
+    and decide.py use). Derived every run, so it moves with the account.
+
+    Replaced a hand-kept [crypto_sleeve] capital_sek (2026-10-23): it was set
+    at 27,225 kr in September and never updated through a cut to 67% and a
+    refill, so the 67% alert sized the trade off a figure nobody held.
+
+    positions: [{name, value_sek, target}]."""
+    base = sum(p["value_sek"] or 0.0 for p in positions if p["target"] > 0)
+    by_name = {p["name"]: p for p in positions}
+    return {t: by_name[n]["target"] * base for t, n in SLEEVE_ROWS.items()
+            if n in by_name and by_name[n]["target"] > 0 and base > 0}
+
+
+def _sleeve_capital(data_dir: Path | None = None) -> dict[str, float]:
+    """Live wrapper. {} on any failure, so the summary still prints the bare
+    target percentage (the alert's trigger) and only drops the kr figure."""
+    try:
+        from asset_universe import portfolio
+        snap = portfolio.snapshot(data_dir or config.raw_data_dir())
+        targets = {p["name"]: float(p.get("target_weight") or 0.0)
+                   for p in portfolio._load_portfolio_config()["positions"]}
+        positions = [{"name": r["name"],
+                      "value_sek": None if r["value_sek"] != r["value_sek"] else r["value_sek"],
+                      "target": targets.get(r["name"], 0.0)}
+                     for _, r in snap.iterrows()]
+        return sleeve_capital(positions)
+    except Exception:
         return {}
-    with open(PORTFOLIO_TOML, "rb") as f:
-        return tomllib.load(f).get("crypto_sleeve", {})
 
 
 def signals(data_dir: Path | None = None) -> dict[str, dict]:
@@ -67,7 +96,7 @@ def crypto_trend_daily_summary(data_dir: Path | None = None) -> None:
         print(f"    Status         : [no crypto data in store -- run python -m asset_universe.update]")
         return
 
-    capital = _sleeve_capital()
+    capital = _sleeve_capital(data_dir)
     for ticker, s in sig.items():
         name = crypto_trend.ASSETS[ticker]
         held = capital.get(ticker)
