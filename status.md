@@ -9,52 +9,52 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     234     781 kr   182,863 kr  16.7%  20.0%   -3.3%
+  Gold                     234     775 kr   181,407 kr  16.7%  20.0%   -3.3%
   Silver                     -     496 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  12,922 kr   245,514 kr  22.5%  20.0%   +2.5%
+  Eli Lilly                 19  12,922 kr   245,514 kr  22.6%  20.0%   +2.6%
   Walmart                    -   1,198 kr         0 kr   0.0%   0.0%   +0.0%
   Cameco                     -     781 kr         0 kr   0.0%   0.0%   +0.0%
   Vertiv                     -   1,934 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  65   3,196 kr   207,772 kr  19.0%  20.0%   -1.0%
+  Broadcom                  65   3,196 kr   207,772 kr  19.1%  20.0%   -0.9%
   Howmet Aerospace           -   1,911 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond     738.53     153 kr   112,818 kr  10.3%   0.0%  +10.3%
+  Spiltan Räntefond     738.53     153 kr   112,796 kr  10.4%   0.0%  +10.4%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
-  Reactor Core Cash          -     manual    48,997 kr   4.5%  10.0%   -5.5%
-  Virtune Bitcoin          193     134 kr    25,881 kr   2.4%   2.5%   -0.1%
-  Virtune Staked ETH       391      57 kr    22,103 kr   2.0%   2.5%   -0.5%
-  LF Global Index       397.84     619 kr   246,070 kr  22.5%  25.0%   -2.5%
+  Reactor Core Cash          -     manual    56,282 kr   5.2%  10.0%   -4.8%
+  Virtune Bitcoin          193     134 kr    25,835 kr   2.4%   2.5%   -0.1%
+  Virtune Staked ETH       262      57 kr    14,821 kr   1.4%   2.5%   -1.1%
+  LF Global Index       397.84     613 kr   243,870 kr  22.4%  25.0%   -2.6%
 ------------------------------------------------------------------------------
-  TPV                                        1,092,038 kr
-    Reactor Core            685,146 kr  (62.7%)   target 60.0%  drift +2.7%
-    Global Index            246,070 kr  (22.5%)   target 25.0%  drift -2.5%
-    Home Base               112,818 kr  (10.3%)   target 10.0%  drift +0.3%
-    Crypto Sleeve            47,985 kr  ( 4.4%)   target  5.0%  drift -0.6%
+  TPV                                        1,088,317 kr
+    Reactor Core            690,975 kr  (63.5%)   target 60.0%  drift +3.5%
+    Global Index            243,870 kr  (22.4%)   target 25.0%  drift -2.6%
+    Home Base               112,796 kr  (10.4%)   target 10.0%  drift +0.4%
+    Crypto Sleeve            40,656 kr  ( 3.7%)   target  5.0%  drift -1.3%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,092,038 kr
+  Now                     :     1,088,317 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,409,489 kr
+  Trigger now             :    16,410,378 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.0
 
-  AWAR (trailing)         :  +14.1%
-  Required CAGR           :  +25.3%
-  Status                  :  BEHIND  (-11.3% margin)
+  AWAR (trailing)         :  +13.7%
+  Required CAGR           :  +25.4%
+  Status                  :  BEHIND  (-11.7% margin)
 
-  Projected @ AWAR        :     7,379,140 kr
-  vs target               :   -13,419,314 kr  (deficit)
+  Projected @ AWAR        :     7,125,934 kr
+  vs target               :   -13,672,520 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,032,037 kr       ~2056
-  Conservative   +15%       8,059,667 kr       ~2046
-  Base           +20%      12,811,932 kr       ~2042
-  Current AWAR   +14%       7,379,140 kr       ~2048
-  Bull           +30%      31,370,825 kr       ~2037
+  Bear           +10%       5,018,885 kr       ~2056
+  Conservative   +15%       8,036,569 kr       ~2046
+  Base           +20%      12,772,363 kr       ~2042
+  Current AWAR   +14%       7,125,934 kr       ~2048
+  Bull           +30%      31,262,164 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -86,11 +86,11 @@ PORTFOLIO SIGNALS
   ----------------------------------------------------------------------
   Gold           16.7%    LOW   LOW     +0.8%     +0.8%   67%   101  
   Silver          0.0%    LOW   LOW     +0.9%     +0.9%   65%    68  
-  Eli Lilly      22.5%   HIGH  HIGH     -0.2%     -0.2%   47%   159  
+  Eli Lilly      22.6%   HIGH  HIGH     -0.2%     -0.2%   47%   159  
   Walmart         0.0%   HIGH  HIGH     +0.8%     +0.8%   61%   172  
   Cameco          0.0%    LOW   LOW     +1.8%     +1.8%   66%   118  
   Vertiv          0.0%    LOW   LOW     -1.1%     -1.1%   46%   118  
-  Broadcom       19.0%    LOW   LOW     +1.0%     +1.0%   62%   124  
+  Broadcom       19.1%    LOW   LOW     +1.0%     +1.0%   62%   124  
 
 ==============================================================
 TACTICAL RULES
@@ -123,10 +123,10 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $3.32 vs $3.24  (+2.5% surprise)
     TTM EPS (non-GAAP actual)  : $9.76
-    Forward EPS (+1yr est.)    : $19.40
+    Forward EPS (+1yr est.)    : $19.43
     Fwd/Trail ratio (normalized): 1.99x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $29.59B  (TTM YoY: +48.7%)
-    Next-qtr revenue consensus : $34.89B (implied YoY +93.7%)
+    Next-qtr revenue consensus : $34.90B (implied YoY +93.8%)
     Next earnings  : 2026-12-09
     Reminder       : not_due
     Latest quarter : 2026-07-31
@@ -167,19 +167,19 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : PWR (Quanta Services, Inc.)  $552.44  (sector Industrials, -14.0% 5d, 2 peers crashing, drift -0.0%)
+    Basket-crash   : PWR (Quanta Services, Inc.)  $552.44  (sector Industrials, -14.0% 5d, 2 peers crashing, drift +0.3%)
     Plan           : buy near $552.44, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open PWR <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
   Crypto Trend Sleeve
     Bitcoin (BTC-USD)  $81,224  (as of 2026-10-22)
-      Target       : 100%  = 27 225 kr of 27 225 kr
+      Target       : 100%  = 24 388 kr of 24 388 kr
       MA50         : LONG (MA $79,674, flat below $78,081)
       MA100        : LONG (MA $71,488, flat below $70,058)
       MA200        : LONG (MA $72,864, flat below $71,407)
       Last change  : 2026-08-21 -> 100%
     Ethereum (ETH-USD)  $2,380  (as of 2026-10-22)
-      Target       : 67%  = 18 150 kr of 27 225 kr
+      Target       : 67%  = 16 258 kr of 24 388 kr
       MA50         : FLAT (MA $2,482, long above $2,532)
       MA100        : LONG (MA $2,132, flat below $2,090)
       MA200        : LONG (MA $2,179, flat below $2,136)
@@ -190,25 +190,25 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> Reactor Core Cash
-    Current wt (of Reactor Core) : 5.0%
+    Current wt (of Reactor Core) : 5.8%
     Target wt (config)           : 10.0%
-    Gap                          : +5.0%
+    Gap                          : +4.2%
     Gate                         : OPEN
     Note: not funded by contributions -- Virtune Bitcoin, Virtune Staked ETH
-    Denominator: 979,201 kr (7 positions carrying a target)
+    Denominator: 975,502 kr (7 positions carrying a target)
 
   Rebalance Check  [existing capital, band: 10pp absolute gap to target]
-    Broadcom status: HOLD  (21.2% actual vs 20.0% target, gap -1.2%)
-    Eli Lilly status: HOLD  (25.1% actual vs 20.0% target, gap -5.1%)
-    Gold status: HOLD  (18.7% actual vs 20.0% target, gap +1.3%)
-    LF Global Index status: HOLD  (25.1% actual vs 25.0% target, gap -0.1%)
-    Reactor Core Cash status: HOLD  (5.0% actual vs 10.0% target, gap +5.0%)
+    Broadcom status: HOLD  (21.3% actual vs 20.0% target, gap -1.3%)
+    Eli Lilly status: HOLD  (25.2% actual vs 20.0% target, gap -5.2%)
+    Gold status: HOLD  (18.6% actual vs 20.0% target, gap +1.4%)
+    LF Global Index status: HOLD  (25.0% actual vs 25.0% target, gap +0.0%)
+    Reactor Core Cash status: HOLD  (5.8% actual vs 10.0% target, gap +4.2%)
     Virtune Bitcoin status: HOLD  (2.6% actual vs 2.5% target, gap -0.1%)
-    Virtune Staked ETH status: HOLD  (2.3% actual vs 2.5% target, gap +0.2%)
+    Virtune Staked ETH status: HOLD  (1.5% actual vs 2.5% target, gap +1.0%)
 
   Reactor Core Cash
-    Balance        : 48,997 kr  (5.0% vs 10% target)
-    Shortfall      : 48,923 kr below target
+    Balance        : 56,282 kr  (5.8% vs 10% target)
+    Shortfall      : 41,268 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
 
 ==============================================================
@@ -327,15 +327,15 @@ See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace 
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   df.set_index('quarter', inplace=True)
-AVGO peer valuation snapshot -- 2026-10-22
+AVGO peer valuation snapshot -- 2026-10-23
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $856.49    $75.51   $206.85      2.74x        +174%     4.14x      0.02
+MU          $856.49    $75.51   $206.89      2.74x        +174%     4.14x      0.02
 AMD         $507.93     $5.76    $15.76      2.74x        +174%    32.22x      0.19
 NVDA        $212.21     $7.01    $15.91      2.27x        +127%    13.33x      0.10
 MRVL        $223.47     $3.30     $7.33      2.22x        +122%    30.49x      0.25
-AVGO*       $323.24     $9.76    $19.40      1.99x         +99%    16.66x      0.17
+AVGO*       $323.24     $9.76    $19.43      1.99x         +99%    16.63x      0.17
 ASML      $1,560.54    $33.89    $55.93      1.65x         +65%    27.90x      0.43
 ANET        $171.07     $3.46     $5.22      1.51x         +51%    32.76x      0.64
 TSM         $412.35    $15.54    $23.39      1.50x         +50%    17.63x      0.35
@@ -354,7 +354,7 @@ Ticker     Fwd P/E   pctile   obs
 AMD         32.22x       --     4
 ANET        32.76x       --     4
 ASML        27.90x       --     4
-AVGO        16.66x       --     4
+AVGO        16.63x       --     4
 MRVL        30.49x       --     4
 MU           4.14x       --     4
 NVDA        13.33x       --     4
