@@ -167,7 +167,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : HWM (Howmet Aerospace Inc.)  $185.91  (sector Industrials, -15.9% 5d, 2 peers crashing, drift +0.1%)
+    Basket-crash   : HWM (Howmet Aerospace Inc.)  $185.91  (sector Industrials, -15.9% 5d, 2 peers crashing, drift +0.3%)
     Plan           : buy near $185.91, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
@@ -351,13 +351,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         32.79x       --     5
-ANET        33.01x       --     5
-ASML        28.10x       --     5
-AVGO        16.55x       --     5
-MRVL        31.18x       --     5
-MU           4.24x       --     5
-NVDA        13.26x       --     5
-QCOM        17.26x       --     5
-TSM         17.90x       --     5
-  accruing -- 5/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         32.79x       --     6
+ANET        33.01x       --     6
+ASML        28.10x       --     6
+AVGO        16.55x       --     6
+MRVL        31.18x       --     6
+MU           4.24x       --     6
+NVDA        13.26x       --     6
+QCOM        17.26x       --     6
+TSM         17.90x       --     6
+  accruing -- 6/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
