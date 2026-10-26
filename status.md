@@ -9,7 +9,7 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     234     776 kr   181,604 kr  16.8%  20.0%   -3.2%
+  Gold                     234     770 kr   180,160 kr  16.7%  20.0%   -3.3%
   Silver                     -     488 kr         0 kr   0.0%   0.0%   +0.0%
   Eli Lilly                 19  12,637 kr   240,102 kr  22.2%  20.0%   +2.2%
   Walmart                    -   1,190 kr         0 kr   0.0%   0.0%   +0.0%
@@ -17,44 +17,44 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
   Vertiv                     -   1,928 kr         0 kr   0.0%   0.0%   +0.0%
   Broadcom                  65   3,192 kr   207,488 kr  19.2%  20.0%   -0.8%
   Howmet Aerospace           -   1,845 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond     738.53     153 kr   112,796 kr  10.4%   0.0%  +10.4%
+  Spiltan Räntefond     738.53     153 kr   112,788 kr  10.4%   0.0%  +10.4%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
   Reactor Core Cash          -     manual    56,282 kr   5.2%  10.0%   -4.8%
-  Virtune Bitcoin          193     134 kr    25,835 kr   2.4%   2.5%   -0.1%
-  Virtune Staked ETH       262      57 kr    14,821 kr   1.4%   2.5%   -1.1%
-  LF Global Index       397.84     613 kr   243,870 kr  22.5%  25.0%   -2.5%
+  Virtune Bitcoin          193     132 kr    25,401 kr   2.4%   2.5%   -0.1%
+  Virtune Staked ETH       262      55 kr    14,352 kr   1.3%   2.5%   -1.2%
+  LF Global Index       397.84     613 kr   243,870 kr  22.6%  25.0%   -2.4%
 ------------------------------------------------------------------------------
-  TPV                                        1,082,818 kr
-    Reactor Core            685,476 kr  (63.3%)   target 60.0%  drift +3.3%
-    Global Index            243,870 kr  (22.5%)   target 25.0%  drift -2.5%
-    Home Base               112,796 kr  (10.4%)   target 10.0%  drift +0.4%
-    Crypto Sleeve            40,656 kr  ( 3.8%)   target  5.0%  drift -1.2%
+  TPV                                        1,080,463 kr
+    Reactor Core            684,032 kr  (63.3%)   target 60.0%  drift +3.3%
+    Global Index            243,870 kr  (22.6%)   target 25.0%  drift -2.4%
+    Home Base               112,788 kr  (10.4%)   target 10.0%  drift +0.4%
+    Crypto Sleeve            39,753 kr  ( 3.7%)   target  5.0%  drift -1.3%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
 ==============================================================
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,082,818 kr
+  Now                     :     1,080,463 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,410,378 kr
+  Trigger now             :    16,413,048 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  12.0
 
-  AWAR (trailing)         :  +13.3%
-  Required CAGR           :  +25.4%
-  Status                  :  BEHIND  (-12.2% margin)
+  AWAR (trailing)         :  +13.0%
+  Required CAGR           :  +25.5%
+  Status                  :  BEHIND  (-12.5% margin)
 
-  Projected @ AWAR        :     6,801,776 kr
-  vs target               :   -13,996,679 kr  (deficit)
+  Projected @ AWAR        :     6,603,900 kr
+  vs target               :   -14,194,554 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,001,682 kr       ~2056
-  Conservative   +15%       8,007,286 kr       ~2046
-  Base           +20%      12,723,634 kr       ~2042
-  Current AWAR   +13%       6,801,776 kr       ~2049
-  Bull           +30%      31,135,175 kr       ~2037
+  Bear           +10%       4,989,813 kr       ~2056
+  Conservative   +15%       7,984,978 kr       ~2046
+  Base           +20%      12,683,161 kr       ~2042
+  Current AWAR   +13%       6,603,900 kr       ~2049
+  Bull           +30%      31,013,288 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -84,7 +84,7 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           16.8%    LOW   LOW     +0.8%     +0.8%   68%   100  
+  Gold           16.7%    LOW   LOW     +0.8%     +0.8%   68%   100  
   Silver          0.0%    LOW   LOW     +0.9%     +0.9%   65%    68  
   Eli Lilly      22.2%   HIGH   MID     +0.4%     +0.4%   62%    45  
   Walmart         0.0%   HIGH  HIGH     +0.8%     +0.8%   61%   172  
@@ -167,19 +167,19 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : HWM (Howmet Aerospace Inc.)  $185.91  (sector Industrials, -15.9% 5d, 2 peers crashing, drift -0.0%)
+    Basket-crash   : HWM (Howmet Aerospace Inc.)  $185.91  (sector Industrials, -15.9% 5d, 2 peers crashing, drift +0.1%)
     Plan           : buy near $185.91, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open HWM <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
   Crypto Trend Sleeve
     Bitcoin (BTC-USD)  $80,844  (as of 2026-10-23)
-      Target       : 100%  = 24 250 kr of 24 250 kr
+      Target       : 100%  = 24 191 kr of 24 191 kr
       MA50         : LONG (MA $80,032, flat below $78,431)
       MA100        : LONG (MA $71,687, flat below $70,253)
       MA200        : LONG (MA $72,791, flat below $71,335)
       Last change  : 2026-08-21 -> 100%
     Ethereum (ETH-USD)  $2,374  (as of 2026-10-23)
-      Target       : 67%  = 16 167 kr of 24 250 kr
+      Target       : 67%  = 16 128 kr of 24 191 kr
       MA50         : FLAT (MA $2,492, long above $2,542)
       MA100        : LONG (MA $2,140, flat below $2,097)
       MA200        : LONG (MA $2,175, flat below $2,131)
@@ -195,20 +195,20 @@ NEXT CONTRIBUTION
     Gap                          : +4.2%
     Gate                         : OPEN
     Note: not funded by contributions -- Virtune Bitcoin, Virtune Staked ETH
-    Denominator: 970,003 kr (7 positions carrying a target)
+    Denominator: 967,655 kr (7 positions carrying a target)
 
   Rebalance Check  [existing capital, band: 10pp absolute gap to target]
     Broadcom status: HOLD  (21.4% actual vs 20.0% target, gap -1.4%)
     Eli Lilly status: HOLD  (24.8% actual vs 20.0% target, gap -4.8%)
-    Gold status: HOLD  (18.7% actual vs 20.0% target, gap +1.3%)
-    LF Global Index status: HOLD  (25.1% actual vs 25.0% target, gap -0.1%)
+    Gold status: HOLD  (18.6% actual vs 20.0% target, gap +1.4%)
+    LF Global Index status: HOLD  (25.2% actual vs 25.0% target, gap -0.2%)
     Reactor Core Cash status: HOLD  (5.8% actual vs 10.0% target, gap +4.2%)
-    Virtune Bitcoin status: HOLD  (2.7% actual vs 2.5% target, gap -0.2%)
+    Virtune Bitcoin status: HOLD  (2.6% actual vs 2.5% target, gap -0.1%)
     Virtune Staked ETH status: HOLD  (1.5% actual vs 2.5% target, gap +1.0%)
 
   Reactor Core Cash
     Balance        : 56,282 kr  (5.8% vs 10% target)
-    Shortfall      : 40,718 kr below target
+    Shortfall      : 40,484 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
 
 ==============================================================
@@ -327,7 +327,7 @@ See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace 
 /opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/yfinance/scrapers/analysis.py:135: Pandas4Warning: The inplace keyword in DataFrame.set_index is deprecated and will be removed in a future version (PDEP-8).
 See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
   df.set_index('quarter', inplace=True)
-AVGO peer valuation snapshot -- 2026-10-23
+AVGO peer valuation snapshot -- 2026-10-26
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
