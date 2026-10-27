@@ -6338,3 +6338,21 @@ Fix: `run_crypto_trend.sleeve_capital()` = ETP row's target_weight x base
 denominator), every run. `[crypto_sleeve]` deleted from portfolio.toml; a
 test asserts it stays gone. `SLEEVE_ROWS` now lives in run_crypto_trend
 only. The alert trigger (bare target %) is unchanged; only the kr text moves.
+
+## Commodity trend (oil, 8-commodity basket): FAILS -- do not build (2026-10-27)
+
+Operator wanted an opportunistic oil/commodity leg after oil's +71% 2026.
+Pre-registered: 12-month time-series momentum (literature, not crypto's
+params), monthly, long-only; vs exposure-matched buy-and-hold; 4 eras;
+roll drag 0/3/6% (Yahoo continuous futures ignore the roll). Pass = beat
+control on Calmar in >=3/4 eras at 3% drag + full CAGR > 0. Run: Actions
+40475322434.
+
+At 3% drag: **oil 1/4 eras, full CAGR +0.9%, MaxDD -70%. Basket 0/4,
+CAGR +3.7%, MaxDD -55%.** 2020-now oil: rule +0.2%/yr vs control +10.2%
+-- even the 2026 rally didn't rescue it. Both FAIL; no oil/commodity leg.
+
+Process note: a random-walk smoke test caught a LOOKAHEAD in the first
+signal (month-end value broadcast back over the same month -> +18%/yr on
+pure noise). Run that check before every timing backtest.
+Script/workflow deleted; recoverable from bbfe0d1.
