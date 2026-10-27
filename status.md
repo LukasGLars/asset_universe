@@ -170,17 +170,17 @@ TACTICAL RULES
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
-    Bitcoin (BTC-USD)  $80,844  (as of 2026-10-23)
+    Bitcoin (BTC-USD)  $80,007  (as of 2026-10-26)
       Target       : 100%  = 24 342 kr of 24 342 kr
-      MA50         : LONG (MA $80,032, flat below $78,431)
-      MA100        : LONG (MA $71,687, flat below $70,253)
-      MA200        : LONG (MA $72,791, flat below $71,335)
+      MA50         : LONG (MA $80,342, flat below $78,735)
+      MA100        : LONG (MA $71,856, flat below $70,419)
+      MA200        : LONG (MA $72,728, flat below $71,274)
       Last change  : 2026-08-21 -> 100%
-    Ethereum (ETH-USD)  $2,374  (as of 2026-10-23)
+    Ethereum (ETH-USD)  $2,320  (as of 2026-10-26)
       Target       : 67%  = 16 228 kr of 24 342 kr
-      MA50         : FLAT (MA $2,492, long above $2,542)
-      MA100        : LONG (MA $2,140, flat below $2,097)
-      MA200        : LONG (MA $2,175, flat below $2,131)
+      MA50         : FLAT (MA $2,500, long above $2,550)
+      MA100        : LONG (MA $2,146, flat below $2,103)
+      MA200        : LONG (MA $2,170, flat below $2,127)
       Last change  : 2026-10-22 -> 67%
 
 ==============================================================
@@ -349,13 +349,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         33.72x       --     6
-ANET        33.94x       --     6
-ASML        28.44x       --     6
-AVGO        16.94x       --     6
-MRVL        31.90x       --     6
-MU           4.37x       --     6
-NVDA        13.57x       --     6
-QCOM        17.63x       --     6
-TSM         18.15x       --     6
-  accruing -- 6/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         33.72x       --     7
+ANET        33.94x       --     7
+ASML        28.44x       --     7
+AVGO        16.94x       --     7
+MRVL        31.90x       --     7
+MU           4.37x       --     7
+NVDA        13.57x       --     7
+QCOM        17.63x       --     7
+TSM         18.15x       --     7
+  accruing -- 7/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
