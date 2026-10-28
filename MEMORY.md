@@ -6368,3 +6368,24 @@ alerter, so no phantom sell alert. The smoke contract requires crypto fields
 only for active legs. Unreadable config -> keep alerting (never silent by
 accident). **Open: the sheet still carries 2.5% targets on both ETPs; the
 alerts go quiet only once those are set to 0 (and the 5% reassigned).**
+
+## Oil signal study: four macro signals, all directionally right, none passes (2026-10-27)
+
+Pre-registered, month-end, oil (CL=F) 6m forward return, 2003-2026. Pass =
+edge >= 5pp + every sub-period positive + circular-shift placebo p < 0.0125
+(Bonferroni for 4). Run: Actions 40477460339.
+
+| signal | ON median | OFF | edge | p | sub-periods 03-09 / 10-16 / 17-now |
+|---|---|---|---|---|---|
+| oil <= 60% of 1y high | +15.0% | +4.4% | +10.5pp | 0.086 | +12 / **-17** / +56 |
+| dollar down 6m | +10.1% | +0.4% | +9.7pp | 0.023 | **-3** / +9 / +19 |
+| real yield down 6m | +8.7% | +0.5% | +8.2pp | 0.051 | +3 / +7 / +20 |
+| copper up 6m | +7.6% | -1.4% | +9.1pp | 0.000 | **-13** / +6 / +10 |
+
+**All four FAIL.** Every edge has the expected sign (mild corroboration);
+each fails a sub-period or the multiple-testing bar. Real-yield-down is the
+most consistent (all sub-periods positive, misses only on p=0.051). The
+2025-09..11 rally started with dollar AND real yields falling. Today both
+point the other way. Backwardation (the literature's best predictor) is
+untestable here: no term-structure data. Script/workflow deleted;
+recoverable from 2a1cd02.
