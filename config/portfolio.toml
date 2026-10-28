@@ -184,7 +184,7 @@ shares    = 0
 currency  = "SEK"
 category  = "avanza"
 bucket    = "crypto_sleeve"
-target_weight = 0.025
+target_weight = 0.0
 
 [[positions]]
 name      = "Virtune Staked ETH"
@@ -193,7 +193,7 @@ shares    = 0
 currency  = "SEK"
 category  = "avanza"
 bucket    = "crypto_sleeve"
-target_weight = 0.025
+target_weight = 0.0
 
 # ── Global index fund ──────────────────────────────────────
 # Swedish fondbolag fund: no ticker and no public price feed (not on Yahoo),

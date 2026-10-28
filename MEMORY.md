@@ -6366,8 +6366,9 @@ target, never on holdings**, so a leg the rule itself sells to 0% still
 alerts the re-entry. Going active -> inactive reads as "unknown" to the
 alerter, so no phantom sell alert. The smoke contract requires crypto fields
 only for active legs. Unreadable config -> keep alerting (never silent by
-accident). **Open: the sheet still carries 2.5% targets on both ETPs; the
-alerts go quiet only once those are set to 0 (and the 5% reassigned).**
+accident). **Done same day:** both ETP target_weight set to 0.0 in
+portfolio.toml (the sheet sync never touches targets -- they live only in
+config). Crypto is silent. Re-entering = set a target > 0 again.
 
 ## Oil signal study: four macro signals, all directionally right, none passes (2026-10-27)
 

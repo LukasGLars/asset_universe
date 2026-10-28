@@ -115,6 +115,8 @@ def test_summary_kr_amount_is_the_TARGET_not_the_holding(tmp_path, capsys, monke
     held * target_exposure. Getting this wrong would tell the operator to
     hold the full position on a de-risk signal."""
     import run_crypto_trend as rct
+    # Sleeve active regardless of the live config's targets.
+    monkeypatch.setattr(rct, "active_legs", lambda *a, **k: set(rct.SLEEVE_ROWS))
 
     _write_store(tmp_path, "BTC-USD", [100.0] * 210 + [300.0] * 40)
     _write_store(tmp_path, "ETH-USD", [100.0] * 210 + [300.0] * 40)
@@ -129,10 +131,12 @@ def test_summary_kr_amount_is_the_TARGET_not_the_holding(tmp_path, capsys, monke
         assert expected in out, f"{ticker}: expected {expected!r} in\n{out}"
 
 
-def test_summary_survives_an_asset_missing_from_the_store(tmp_path, capsys):
+def test_summary_survives_an_asset_missing_from_the_store(tmp_path, capsys, monkeypatch):
     """A missing file must be skipped, never reported as 0% -- a silent FLAT
     would read as a sell signal in the daily diff."""
     import run_crypto_trend as rct
+    # Sleeve active regardless of the live config's targets.
+    monkeypatch.setattr(rct, "active_legs", lambda *a, **k: set(rct.SLEEVE_ROWS))
 
     _write_store(tmp_path, "BTC-USD", [100.0] * 210 + [300.0] * 40)
     rct.crypto_trend_daily_summary(tmp_path)
@@ -143,8 +147,10 @@ def test_summary_survives_an_asset_missing_from_the_store(tmp_path, capsys):
     assert "Target       : 0%" not in out
 
 
-def test_summary_says_so_when_the_store_is_empty(tmp_path, capsys):
+def test_summary_says_so_when_the_store_is_empty(tmp_path, capsys, monkeypatch):
     import run_crypto_trend as rct
+    # Sleeve active regardless of the live config's targets.
+    monkeypatch.setattr(rct, "active_legs", lambda *a, **k: set(rct.SLEEVE_ROWS))
     rct.crypto_trend_daily_summary(tmp_path)
     assert "no crypto data in store" in capsys.readouterr().out
 
