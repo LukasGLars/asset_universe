@@ -54,6 +54,21 @@ def sleeve_capital(positions: list[dict]) -> dict[str, float]:
             if n in by_name and by_name[n]["target"] > 0 and base > 0}
 
 
+def active_legs(path: Path = PORTFOLIO_TOML) -> set[str]:
+    """Trend tickers whose ETP row carries a target_weight > 0. A leg with no
+    target is out of the portfolio by decision (2026-10-28: operator exited
+    crypto), so it prints no Target line and the alerter, finding none, stays
+    silent. Keyed on the TARGET, never on holdings: a leg the rule itself has
+    sold to 0% must keep alerting so the re-entry is not missed."""
+    try:
+        with open(path, "rb") as f:
+            rows = {p["name"]: float(p.get("target_weight") or 0.0)
+                    for p in tomllib.load(f).get("positions", [])}
+    except Exception:
+        return set(SLEEVE_ROWS)  # unreadable config: keep alerting, never go quiet by accident
+    return {t for t, n in SLEEVE_ROWS.items() if rows.get(n, 0.0) > 0}
+
+
 def _sleeve_capital(data_dir: Path | None = None) -> dict[str, float]:
     """Live wrapper. {} on any failure, so the summary still prints the bare
     target percentage (the alert's trigger) and only drops the kr figure."""
@@ -91,7 +106,11 @@ def crypto_trend_daily_summary(data_dir: Path | None = None) -> None:
     """Printed into status.md by fi_tracker.py. The Target line is what
     check_signal_changes.py fingerprints -- keep its shape stable."""
     print(f"\n  Crypto Trend Sleeve")
-    sig = signals(data_dir)
+    active = active_legs()
+    if not active:
+        print("    Status         : inactive -- no crypto leg carries a target (no alerts)")
+        return
+    sig = {t: s for t, s in signals(data_dir).items() if t in active}
     if not sig:
         print(f"    Status         : [no crypto data in store -- run python -m asset_universe.update]")
         return

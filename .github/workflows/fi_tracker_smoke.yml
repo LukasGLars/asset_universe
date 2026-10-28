@@ -70,9 +70,12 @@ jobs:
               "avgo_guard", "avgo_trigger", "avgo_action", "lly_stress",
               "silver_signal", "sleeve_status", "hy_oas",
               "sightline_avgo_state", "sightline_lly_state",
-              "crypto_btc_exposure", "crypto_eth_exposure",
               "avgo_latest_quarter", "lly_latest_quarter",
           ]
+          # Crypto legs are required only while they carry a target; an exited
+          # leg prints no Target line by design (run_crypto_trend.active_legs).
+          from run_crypto_trend import active_legs
+          must_parse += [f"crypto_{t.split('-')[0].lower()}_exposure" for t in sorted(active_legs())]
           dead = [k for k in must_parse if fp[k] == "unknown"]
           assert not dead, f"fields degraded to 'unknown': {dead}"
           print(f"all {len(must_parse)} alert fields parsed")

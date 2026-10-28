@@ -174,3 +174,38 @@ def test_no_hand_kept_capital_left_in_config():
     import run_crypto_trend as rct
     with open(rct.PORTFOLIO_TOML, "rb") as f:
         assert "crypto_sleeve" not in tomllib.load(f)
+
+
+def _toml(tmp_path, btc, eth):
+    p = tmp_path / "portfolio.toml"
+    p.write_text(
+        '[[positions]]\nname = "Virtune Bitcoin"\ntarget_weight = %s\n'
+        '[[positions]]\nname = "Virtune Staked ETH"\ntarget_weight = %s\n' % (btc, eth))
+    return p
+
+
+def test_active_legs_follow_target_not_holdings(tmp_path):
+    import run_crypto_trend as rct
+    assert rct.active_legs(_toml(tmp_path, 0.025, 0.0)) == {"BTC-USD"}
+    assert rct.active_legs(_toml(tmp_path, 0.0, 0.0)) == set()
+
+
+def test_unreadable_config_keeps_alerting(tmp_path):
+    import run_crypto_trend as rct
+    assert rct.active_legs(tmp_path / "missing.toml") == set(rct.SLEEVE_ROWS)
+
+
+def test_inactive_sleeve_prints_no_target_line_and_never_alerts(tmp_path, capsys, monkeypatch):
+    import run_crypto_trend as rct
+    from check_signal_changes import build_actionable_message, extract_fingerprint
+    _write_store(tmp_path, "BTC-USD", [100.0] * 210 + [300.0] * 40)
+    _write_store(tmp_path, "ETH-USD", [100.0] * 210 + [300.0] * 40)
+    monkeypatch.setattr(rct, "_sleeve_capital", lambda *a, **k: {})
+    rct.crypto_trend_daily_summary(tmp_path)
+    before = capsys.readouterr().out
+    monkeypatch.setattr(rct, "active_legs", lambda *a, **k: set())
+    rct.crypto_trend_daily_summary(tmp_path)
+    after = capsys.readouterr().out
+    assert "Target" not in after and "inactive" in after
+    # Going from an active 100% to inactive must not read as a sell signal.
+    assert build_actionable_message(extract_fingerprint(before), extract_fingerprint(after)) is None
