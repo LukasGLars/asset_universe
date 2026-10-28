@@ -6356,3 +6356,15 @@ Process note: a random-walk smoke test caught a LOOKAHEAD in the first
 signal (month-end value broadcast back over the same month -> +18%/yr on
 pure noise). Run that check before every timing backtest.
 Script/workflow deleted; recoverable from bbfe0d1.
+
+## Crypto exited; crypto alerts now follow the target (2026-10-28)
+
+Operator sold both ETPs (sheet synced: 0 shares, Reactor Core cash 96,090 kr).
+`run_crypto_trend.active_legs()`: a leg prints its Target line -- and so can
+alert -- only while its ETP row carries target_weight > 0. **Keyed on the
+target, never on holdings**, so a leg the rule itself sells to 0% still
+alerts the re-entry. Going active -> inactive reads as "unknown" to the
+alerter, so no phantom sell alert. The smoke contract requires crypto fields
+only for active legs. Unreadable config -> keep alerting (never silent by
+accident). **Open: the sheet still carries 2.5% targets on both ETPs; the
+alerts go quiet only once those are set to 0 (and the 5% reassigned).**
