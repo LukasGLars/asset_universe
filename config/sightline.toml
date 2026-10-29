@@ -71,8 +71,8 @@ eroding      = "YoY < 0 in any quarter, OR an FDA boxed warning / market withdra
 constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
 cadence      = "earnings release, ~5 weeks after calendar quarter end"
 action       = "CUT: sell the full position"
-auto_last_accession = "0000059478-26-000077"
-auto_last_status = "already_recorded 2026Q2 (8-K 2026-08-05)"
+auto_last_accession = "0000059478-26-000104"
+auto_last_status = "recorded 2026Q3 (8-K 2026-10-29)"
 
 [[LLY.readings]]
 quarter = "2025Q1"
@@ -97,6 +97,10 @@ value   = 12.8
 [[LLY.readings]]
 quarter = "2026Q2"
 value   = 14.8
+
+[[LLY.readings]]
+quarter = "2026Q3"
+value   = 16
 
 # Holdings Sightline does NOT govern. Stated explicitly so an absent entry
 # reads as a decision, not a gap.

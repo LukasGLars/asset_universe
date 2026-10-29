@@ -134,15 +134,15 @@ TACTICAL RULES
     Guidance trend : flat  (+1yr estimate vs. 90 days ago)
 
   LLY Earnings Checkpoint
-    Latest qtr EPS (actual vs est.): $8.38 vs $6.58  (+27.3% surprise)
-    TTM EPS (non-GAAP actual)  : $31.49
-    Forward EPS (+1yr est.)    : $47.39
-    Fwd/Trail ratio (normalized): 1.50x  (baseline established 2026-07-06)
+    Latest qtr EPS (actual vs est.): $7.48 vs $6.35  (+17.9% surprise)
+    TTM EPS (non-GAAP actual)  : $31.95
+    Forward EPS (+1yr est.)    : $47.34
+    Fwd/Trail ratio (normalized): 1.48x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $22.97B  (TTM YoY: +49.6%)
-    Next-qtr revenue consensus : $22.62B (implied YoY +28.5%)
+    Next-qtr revenue consensus : $23.57B (implied YoY +22.2%)
     Next earnings  : 2026-10-29
     Reminder       : DUE
-    Latest quarter : 2026-06-30
+    Latest quarter : 2026-09-30
     Beat streak    : 4
     Guidance trend : revising up  (+1yr estimate vs. 90 days ago)
 
@@ -156,11 +156,11 @@ TACTICAL RULES
       Auto-read  : already_recorded FY26Q3 (8-K 2026-09-02)
     LLY (Eli Lilly)
       Observable : Mounjaro + Zepbound combined worldwide revenue
-      Latest     : 2026Q2: 14.8 (+72% YoY)
+      Latest     : 2026Q3: 16 (+58% YoY)
       State      : HOLD
       Eroding    : YoY < 0 in any quarter, OR an FDA boxed warning / market withdrawal for tirzepatide (permanent, no constructive path)
       Action     : CUT: sell the full position
-      Auto-read  : already_recorded 2026Q2 (8-K 2026-08-05)
+      Auto-read  : recorded 2026Q3 (8-K 2026-10-29)
     gold: EXEMPT -- Strategic anchor, held for a portfolio-level reason. No disclosed observable exists. Exit only on a mission change, which is outside Sightline's scope by construction.
     crypto_sleeve: EXEMPT -- Mechanical sleeve (BTC + staked ETH ETPs): hold-or-cut is delegated to its own MA50/100/200 ensemble rule and the 3-losing-cycles kill switch. No disclosed observable exists.
 
@@ -336,13 +336,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         36.50x       --     8
-ANET        35.75x       --     8
-ASML        29.73x       --     8
-AVGO        18.07x       --     8
-MRVL        34.34x       --     8
-MU           4.75x       --     8
-NVDA        13.53x       --     8
-QCOM        17.96x       --     8
-TSM         18.79x       --     8
-  accruing -- 8/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         36.50x       --     9
+ANET        35.75x       --     9
+ASML        29.73x       --     9
+AVGO        18.07x       --     9
+MRVL        34.34x       --     9
+MU           4.75x       --     9
+NVDA        13.53x       --     9
+QCOM        17.96x       --     9
+TSM         18.79x       --     9
+  accruing -- 9/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
