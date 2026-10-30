@@ -136,10 +136,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $7.48 vs $6.35  (+17.9% surprise)
     TTM EPS (non-GAAP actual)  : $31.95
-    Forward EPS (+1yr est.)    : $47.46
-    Fwd/Trail ratio (normalized): 1.49x  (baseline established 2026-07-06)
+    Forward EPS (+1yr est.)    : $49.09
+    Fwd/Trail ratio (normalized): 1.54x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $24.40B  (TTM YoY: +45.5%)
-    Next-qtr revenue consensus : $23.57B (implied YoY +22.2%)
+    Next-qtr revenue consensus : $24.50B (implied YoY +27.0%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-09-30
@@ -316,8 +316,8 @@ AVGO peer valuation snapshot -- 2026-10-30
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
+AMD         $566.42     $5.76    $15.91      2.76x        +176%    35.61x      0.20
 MU          $934.27    $75.51   $207.80      2.75x        +175%     4.50x      0.03
-AMD         $566.42     $5.76    $15.85      2.75x        +175%    35.74x      0.20
 NVDA        $213.66     $7.01    $15.91      2.27x        +127%    13.43x      0.11
 MRVL        $218.34     $3.30     $7.33      2.22x        +122%    29.79x      0.24
 AVGO*       $345.00     $9.76    $19.47      1.99x         +99%    17.72x      0.18
@@ -336,13 +336,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         35.74x       --     9
-ANET        35.28x       --     9
-ASML        29.96x       --     9
-AVGO        17.72x       --     9
-MRVL        29.79x       --     9
-MU           4.50x       --     9
-NVDA        13.43x       --     9
-QCOM        18.20x       --     9
-TSM         18.47x       --     9
-  accruing -- 9/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         35.61x       --    10
+ANET        35.28x       --    10
+ASML        29.96x       --    10
+AVGO        17.72x       --    10
+MRVL        29.79x       --    10
+MU           4.50x       --    10
+NVDA        13.43x       --    10
+QCOM        18.20x       --    10
+TSM         18.47x       --    10
+  accruing -- 10/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
