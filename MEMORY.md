@@ -6390,3 +6390,25 @@ most consistent (all sub-periods positive, misses only on p=0.051). The
 point the other way. Backwardation (the literature's best predictor) is
 untestable here: no term-structure data. Script/workflow deleted;
 recoverable from 2a1cd02.
+
+## Rebalance band sweep on the live targets: +-10pp stays, and width barely matters (2026-11-01)
+
+Live targets AVGO 20 / LLY 20 / Gold 20 / Index 25 (SPY proxy) / Cash 10
+(2% yield), normalised from 95% to 100% (crypto exited; **the five config
+targets sum to 0.95 -- open item**). SEK, 2009-08..now, full rebalance on any
+breach, 10 bps. Pre-registered: replace +-10pp only on >= 0.10 worst-window
+Calmar AND >= 1pp worst-window MDD. Run: Actions 41291329687.
+
+| band | CAGR | MaxDD | rebal/yr | worst MDD | worst Calmar |
+|---|---|---|---|---|---|
+| abs 5pp | +23.4% | -23.1% | 1.7 | -23.1% | 1.01 |
+| abs 7.5pp | +23.3% | -22.6% | 0.8 | -22.6% | 0.99 |
+| **abs 10pp (live)** | +23.4% | -22.6% | **0.4** | **-22.2%** | **1.06** |
+| rel 25% of target | +23.3% | -22.7% | 1.6 | -22.7% | 1.00 |
+| rel 50% of target | +23.9% | -24.8% | 0.5 | -24.8% | 0.95 |
+
+**+-10pp is best on both worst-window measures and trades least.** Every band
+lands within ~0.1 Calmar / ~2pp drawdown of the others: band width is not a
+lever here. The "twice as loose relative to target" worry (2026-10-09) is
+answered: it costs nothing measurable. Cash-plan cap (buy dips up to 28%,
+under the 30% line) stands. Script/workflow deleted; recoverable from 6f3fa2a.
