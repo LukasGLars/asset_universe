@@ -56,9 +56,9 @@ monthly_contribution_sek = 6000
 # restructure). Per-asset targets are authoritative; this table is a grouping
 # of them, not the other way round.
 reactor_core  = 0.60   # AVGO 20 + LLY 20 + Gold 20
-global_index  = 0.25   # Länsförsäkringar Global Index
+global_index  = 0.30   # Länsförsäkringar Global Index (25 -> 30 on 2026-11-01, took crypto's 5%)
 home_base     = 0.10   # cash
-crypto_sleeve = 0.05   # Virtune BTC 2.5 + staked ETH 2.5
+crypto_sleeve = 0.00   # exited 2026-10-28 (Virtune BTC/ETH targets 0)
 war_chest     = 0.00
 
 [[positions]]
@@ -206,4 +206,4 @@ shares    = 397.844
 currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
-target_weight = 0.25
+target_weight = 0.30

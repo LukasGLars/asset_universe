@@ -6395,7 +6395,7 @@ recoverable from 2a1cd02.
 
 Live targets AVGO 20 / LLY 20 / Gold 20 / Index 25 (SPY proxy) / Cash 10
 (2% yield), normalised from 95% to 100% (crypto exited; **the five config
-targets sum to 0.95 -- open item**). SEK, 2009-08..now, full rebalance on any
+targets summed to 0.95 -- RESOLVED same day: index 25 -> 30%**). SEK, 2009-08..now, full rebalance on any
 breach, 10 bps. Pre-registered: replace +-10pp only on >= 0.10 worst-window
 Calmar AND >= 1pp worst-window MDD. Run: Actions 41291329687.
 
@@ -6412,3 +6412,10 @@ lands within ~0.1 Calmar / ~2pp drawdown of the others: band width is not a
 lever here. The "twice as loose relative to target" worry (2026-10-09) is
 answered: it costs nothing measurable. Cash-plan cap (buy dips up to 28%,
 under the 30% line) stands. Script/workflow deleted; recoverable from 6f3fa2a.
+
+## Targets 2026-11-01: AVGO 20 / LLY 20 / Gold 20 / Index 30 / Cash 10 = 100%
+
+Crypto's 5% went to the LF Global Index (25 -> 30%) on the operator's call,
+after targets were left summing to 95% by the crypto exit. Chosen over cash
+15% (idle-cash drag) and gold 25% (rate sensitivity). Buckets updated to
+match (global_index 0.30, crypto_sleeve 0.00).
