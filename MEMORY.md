@@ -6419,3 +6419,26 @@ Crypto's 5% went to the LF Global Index (25 -> 30%) on the operator's call,
 after targets were left summing to 95% by the crypto exit. Chosen over cash
 15% (idle-cash drag) and gold 25% (rate sensitivity). Buckets updated to
 match (global_index 0.30, crypto_sleeve 0.00).
+
+## Gold weight sweep on the live portfolio: 20% stays (2026-11-01)
+
+Gold 0/10/15/20/25% with the index absorbing the rest (index = 50 - gold),
+AVGO 20 / LLY 20 / Cash 10 fixed, live +-10pp band, SEK, 2009-08..now,
+SPY proxy, cash 2%. Pre-registered bar: move only on >= 0.10 worst-window
+Calmar AND >= 1pp worst-window MDD. Run: Actions 41307855777.
+
+| gold/index | CAGR | MaxDD | worst MDD | worst Calmar |
+|---|---|---|---|---|
+| 0/50 | +24.2% | -26.0% | **-28.5%** | 0.87 |
+| 10/40 | +23.8% | -24.2% | -26.6% | 0.92 |
+| 15/35 | +23.6% | -23.6% | -25.7% | 0.91 |
+| **20/30 (live)** | +23.2% | -23.0% | -24.8% | 0.91 |
+| 25/25 | +23.1% | -21.8% | -24.1% | 1.04 |
+
+**Gold 20% stays.** 25% beats it by 0.13 Calmar but only 0.7pp worst MDD --
+fails the pre-registered 1pp half. The shape is monotonic and clean: each
++5pp of gold cuts worst drawdown ~0.7-1pp and costs ~0.1-0.4pp CAGR. **0%
+gold breaches the -25% tolerance (-28.5%)** -- gold earns its place as
+ballast even through 2026's rate headwind. 20% is the lowest weight that
+keeps the worst window inside -25%. Script/workflow deleted; recoverable
+from 213b8a0.
