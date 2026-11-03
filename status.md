@@ -338,13 +338,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         29.16x       --    12
-ANET        31.43x       --    12
-ASML        27.15x       --    12
-AVGO        16.55x       --    12
-MRVL        23.30x       --    12
-MU           4.01x       --    12
-NVDA        12.70x       --    12
-QCOM        15.94x       --    12
-TSM         17.05x       --    12
-  accruing -- 12/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         29.16x       --    13
+ANET        31.43x       --    13
+ASML        27.15x       --    13
+AVGO        16.55x       --    13
+MRVL        23.30x       --    13
+MU           4.01x       --    13
+NVDA        12.70x       --    13
+QCOM        15.94x       --    13
+TSM         17.05x       --    13
+  accruing -- 13/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
