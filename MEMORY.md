@@ -6443,7 +6443,7 @@ ballast even through 2026's rate headwind. 20% is the lowest weight that
 keeps the worst window inside -25%. Script/workflow deleted; recoverable
 from 213b8a0.
 
-## AVGO forward Sightline trigger (guided YoY < 0 -> CUT): VALIDATED, not yet built (2026-11-04)
+## AVGO forward Sightline trigger (guided YoY < 0 -> CUT): VALIDATED and LIVE (2026-11-04)
 
 Idea: fire the same Sightline rule a quarter earlier using management's own
 guide -- CUT if next quarter's guided AI revenue < the same quarter a year
@@ -6462,3 +6462,12 @@ release is titled "Fourth Quarter **and** Fiscal Year 2025" and mentions
 "First Quarter Fiscal Year 2026" later, which mislabeled the guide; and
 never derive it from the parsed actual (that release has none). Script/
 workflow deleted; recoverable from 6b50759.
+
+**Built same day (feature/sightline-avgo-forward-guide):** `sightline_reader.
+parse_avgo_guide` + `[[AVGO.guides]]` in sightline.toml (seeded with the 7
+validated guides) + `sightline.guided_yoy`/`derive_state(readings, guides)`.
+A guide counts only until its quarter's actual lands. The CUT detail reads
+"<quarter> GUIDED: <value> (<yoy> YoY) -- forward rule", so the existing
+Telegram CUT alert carries it unchanged. **Also fixed in passing: the AVGO
+title regex missed "Fourth Quarter AND Fiscal Year" -- the 2026-12-09 FY26Q4
+release would otherwise have come back parse_failed.**

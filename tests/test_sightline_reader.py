@@ -172,3 +172,39 @@ def test_auto_read_network_failure_leaves_state_untouched(tmp_path):
     assert r["status"] == sr.FETCH_FAILED
     assert "auto_last_accession" not in load_config(path)["AVGO"]
     assert sr.format_auto_line(r).startswith("fetch_failed")
+
+
+# -- forward guide (2026-11-04) -----------------------------------------------
+
+def test_parse_avgo_guide_all_seen_phrasings():
+    assert sr.parse_avgo_guide(
+        "Broadcom Inc. Announces Third Quarter Fiscal Year 2026 Financial Results. "
+        "Q3 AI semiconductor revenue of $16.7 billion grew 221%. In Q4 the momentum continues, "
+        "and we expect AI semiconductor revenue to accelerate to $21.7 billion, up 236%.") == ("FY26Q4", 21.7)
+    assert sr.parse_avgo_guide(
+        "Broadcom Inc. Announces Second Quarter Fiscal Year 2026 Financial Results. "
+        "The momentum continues and in Q3 we expect semiconductor revenue from AI to grow over "
+        "200 percent year-over-year to $16.0 billion.") == ("FY26Q3", 16.0)
+    assert sr.parse_avgo_guide(
+        "Broadcom Inc. Announces First Quarter Fiscal Year 2025 Financial Results. "
+        "We expect continued strength in AI semiconductor revenue of $4.4 billion in Q2, as") == ("FY25Q2", 4.4)
+
+
+def test_parse_avgo_guide_q4_release_rolls_to_next_fiscal_year():
+    assert sr.parse_avgo_guide(AVGO_Q4_FY25) == ("FY26Q1", 8.2)
+
+
+def test_parse_avgo_guide_never_takes_the_actual():
+    assert sr.parse_avgo_guide(AVGO_Q3_FY26) != ("FY26Q4", 16.7)
+
+
+def test_q4_title_with_and_is_recognised_for_the_actual():
+    txt = ("Broadcom Inc. Announces Fourth Quarter and Fiscal Year 2026 Financial Results. "
+           "Q4 AI semiconductor revenue of $22.3 billion grew 243% year-over-year.")
+    assert sr.parse_avgo(txt) == ("FY26Q4", 22.3)
+
+
+def test_legal_boilerplate_is_not_a_guide():
+    txt = ("Broadcom Inc. Announces Third Quarter Fiscal Year 2024 Financial Results. "
+           "statements identified by words such as will, expect, believe, anticipate and AI.")
+    assert sr.parse_avgo_guide(txt) is None

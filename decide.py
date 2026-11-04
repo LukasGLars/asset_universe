@@ -43,7 +43,7 @@ def _governing_rule(pos: dict, sightline_cfg: dict) -> tuple[str, str, str]:
     """(verdict, rule text, sightline state or '') for one position."""
     entry = sightline_cfg.get(pos["ticker"]) if pos["ticker"] != "exemptions" else None
     if entry:
-        state, detail = derive_state(entry.get("readings", []))
+        state, detail = derive_state(entry.get("readings", []), entry.get("guides"))
         if state == CUT:
             return "CUT", f"Sightline CUT -- {detail}", state
         if state == REQUALIFIED:

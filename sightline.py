@@ -71,7 +71,25 @@ def yoy_series(readings: list[dict]) -> list[tuple[str, float, float | None]]:
     return out
 
 
-def derive_state(readings: list[dict]) -> tuple[str, str]:
+def guided_yoy(readings: list[dict], guides: list[dict] | None) -> tuple[str, float, float] | None:
+    """(quarter, guided value, guided YoY) for the latest guide whose quarter
+    has no actual yet and whose same quarter a year earlier is recorded.
+    None when there is nothing forward-looking to judge. Once the actual for
+    a guided quarter lands, the guide is ignored -- the actual rules."""
+    if not guides:
+        return None
+    actual = {r["quarter"].upper(): float(r["value"]) for r in readings}
+    pending = [g for g in guides if g["quarter"].upper() not in actual]
+    if not pending:
+        return None
+    g = max(pending, key=lambda g: _sort_key(g["quarter"]))
+    prior = actual.get(prior_year_label(g["quarter"].upper()))
+    if not prior:
+        return None
+    return g["quarter"].upper(), float(g["value"]), float(g["value"]) / prior - 1.0
+
+
+def derive_state(readings: list[dict], guides: list[dict] | None = None) -> tuple[str, str]:
     """Walks the readings in order and returns (state, detail).
 
     HOLD until a quarter prints YoY < 0 (eroding -> CUT). From CUT, two
@@ -92,6 +110,13 @@ def derive_state(readings: list[dict]) -> tuple[str, str]:
             streak += 1
             if streak >= CONSTRUCTIVE_QUARTERS:
                 state = REQUALIFIED
+    # Forward rule (2026-11-04, validated in MEMORY.md): management guiding
+    # the NEXT quarter below the same quarter a year earlier is the same
+    # thesis break, a quarter early. A slower-but-positive guide is not.
+    fwd = guided_yoy(readings, guides)
+    if fwd and fwd[2] < 0 and state != CUT:
+        q, v, y = fwd
+        return CUT, f"{q} GUIDED: {v:g} ({y:+.0%} YoY) -- forward rule"
     if latest is None:
         return state, "no YoY pair recorded yet"
     label, value, yoy = latest
@@ -111,7 +136,22 @@ def record_reading(ticker: str, quarter: str, value: float,
     readings.append({"quarter": quarter.upper(), "value": float(value)})
     cfg[ticker]["readings"] = sorted(readings, key=lambda r: _sort_key(r["quarter"]))
     _write(cfg, path)
-    return derive_state(cfg[ticker]["readings"])
+    return derive_state(cfg[ticker]["readings"], cfg[ticker].get("guides"))
+
+
+def record_guide(ticker: str, quarter: str, value: float,
+                 path: Path = CONFIG_PATH) -> tuple[str, str]:
+    """Appends (or overwrites, same quarter) one management guide for a
+    future quarter. Same file, same rewrite as record_reading."""
+    parse_quarter(quarter)
+    cfg = load_config(path)
+    if ticker not in cfg or ticker == "exemptions":
+        raise KeyError(f"{ticker} has no Sightline entry in {path}")
+    guides = [g for g in cfg[ticker].get("guides", []) if g["quarter"].upper() != quarter.upper()]
+    guides.append({"quarter": quarter.upper(), "value": float(value)})
+    cfg[ticker]["guides"] = sorted(guides, key=lambda g: _sort_key(g["quarter"]))
+    _write(cfg, path)
+    return derive_state(cfg[ticker].get("readings", []), cfg[ticker]["guides"])
 
 
 def save_auto_state(ticker: str, accession: str, status: str,
@@ -151,6 +191,11 @@ def _write(cfg: dict, path: Path) -> None:
             lines.append(f'quarter = "{r["quarter"]}"')
             lines.append(f"value   = {float(r['value']):g}")
             lines.append("")
+        for g in entry.get("guides", []):
+            lines.append(f"[[{ticker}.guides]]")
+            lines.append(f'quarter = "{g["quarter"]}"')
+            lines.append(f"value   = {float(g['value']):g}")
+            lines.append("")
     if "exemptions" in cfg:
         lines.append("# Holdings Sightline does NOT govern. Stated explicitly so an absent entry")
         lines.append("# reads as a decision, not a gap.")
@@ -173,7 +218,7 @@ def format_dashboard_lines(cfg: dict | None = None,
     for ticker, entry in cfg.items():
         if ticker == "exemptions":
             continue
-        state, detail = derive_state(entry.get("readings", []))
+        state, detail = derive_state(entry.get("readings", []), entry.get("guides"))
         out.append(f"    {ticker} ({entry.get('name', ticker)})")
         out.append(f"      Observable : {entry['observable']}")
         out.append(f"      Latest     : {detail}")

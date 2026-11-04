@@ -28,7 +28,7 @@
 name         = "Broadcom"
 observable   = "AI semiconductor revenue, as stated by management each quarter"
 unit         = "USD bn"
-eroding      = "YoY < 0 in any quarter"
+eroding      = "YoY < 0 in any quarter, OR next quarter GUIDED below the same quarter a year earlier (forward rule, 2026-11-04)"
 constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
 cadence      = "earnings release, ~5 weeks after fiscal quarter end"
 action       = "CUT: sell the full position"
@@ -62,6 +62,34 @@ value   = 10.8
 [[AVGO.readings]]
 quarter = "FY26Q3"
 value   = 16.7
+
+[[AVGO.guides]]
+quarter = "FY25Q2"
+value   = 4.4
+
+[[AVGO.guides]]
+quarter = "FY25Q3"
+value   = 5.1
+
+[[AVGO.guides]]
+quarter = "FY25Q4"
+value   = 6.2
+
+[[AVGO.guides]]
+quarter = "FY26Q1"
+value   = 8.2
+
+[[AVGO.guides]]
+quarter = "FY26Q2"
+value   = 10.7
+
+[[AVGO.guides]]
+quarter = "FY26Q3"
+value   = 16
+
+[[AVGO.guides]]
+quarter = "FY26Q4"
+value   = 21.7
 
 [LLY]
 name         = "Eli Lilly"
