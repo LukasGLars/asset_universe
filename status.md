@@ -161,7 +161,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : LITE (Lumentum Holdings Inc.)  $680.16  (sector Technology, -21.5% 5d, 5 peers crashing, drift +0.0%)
+    Basket-crash   : LITE (Lumentum Holdings Inc.)  $680.16  (sector Technology, -21.5% 5d, 5 peers crashing, drift -1.0%)
     Plan           : buy near $680.16, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open LITE <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
@@ -228,8 +228,8 @@ Computing capped 252d distributions for 51 candidates ...
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
   CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
-  PHAG.L    no data
   TPR       N=1238  mu= +19.0%  sigma= 31.0%  hist=26yr  [MODERATE]
+  PHAG.L    no data
   NVDA      N=1238  mu= +24.2%  sigma= 32.4%  hist=27yr  [MODERATE]
   CEG       hist=5yr  (below min 10yr, skipped)
   FOXA      hist=8yr  (below min 10yr, skipped)
@@ -285,33 +285,33 @@ AVGO peer valuation snapshot -- 2026-11-04
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-AMD         $483.90     $5.76    $16.07      2.79x        +179%    30.11x      0.17
 MU          $855.10    $75.51   $207.76      2.75x        +175%     4.12x      0.02
+AMD         $483.90     $6.65    $16.27      2.45x        +145%    29.74x      0.21
 NVDA        $206.69     $7.01    $15.91      2.27x        +127%    12.99x      0.10
 MRVL        $171.97     $3.30     $7.34      2.23x        +123%    23.42x      0.19
 AVGO*       $332.13     $9.76    $19.47      1.99x         +99%    17.06x      0.17
-ASML      $1,552.14    $33.89    $56.22      1.66x         +66%    27.61x      0.42
-TSM         $404.80    $15.54    $23.39      1.50x         +50%    17.31x      0.34
-ANET        $169.91     $3.91     $5.22      1.34x         +34%    32.54x      0.97
+ASML      $1,552.14    $33.89    $56.43      1.67x         +67%    27.50x      0.41
+TSM         $404.80    $15.54    $23.43      1.51x         +51%    17.27x      0.34
+ANET        $169.91     $3.91     $5.40      1.38x         +38%    31.47x      0.83
 QCOM        $164.43    $11.36    $10.16      0.89x         -11%    16.18x       n/a
 
 * = AVGO
 
 AVGO rank -- growth ratio (highest first): 5 of 9
 AVGO rank -- forward P/E (cheapest first): 4 of 9
-AVGO rank -- PEG(1y) (cheapest first)    : 4 of 9
+AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         30.11x       --    13
-ANET        32.54x       --    13
-ASML        27.61x       --    13
-AVGO        17.06x       --    13
-MRVL        23.42x       --    13
-MU           4.12x       --    13
-NVDA        12.99x       --    13
-QCOM        16.18x       --    13
-TSM         17.31x       --    13
-  accruing -- 13/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         29.74x       --    14
+ANET        31.47x       --    14
+ASML        27.50x       --    14
+AVGO        17.06x       --    14
+MRVL        23.42x       --    14
+MU           4.12x       --    14
+NVDA        12.99x       --    14
+QCOM        16.18x       --    14
+TSM         17.27x       --    14
+  accruing -- 14/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
