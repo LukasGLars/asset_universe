@@ -27,17 +27,20 @@ GUIDE = re.compile(
 def parse_avgo_guide(text: str):
     """(guided quarter label, value, matched snippet) or None. The guided
     quarter is the one after the release's own quarter."""
-    act = sr.parse_avgo(text)
-    if not act:
+    # Quarter from the release TITLE, not from the parsed actual: the
+    # FY25Q4 release has no parseable actual, and its guide was missed.
+    m = re.search(r"\b(First|Second|Third|Fourth) Quarter (?:of )?Fiscal (?:Year )?(\d{4})\b", text, re.I)
+    if not m:
         return None
-    label, actual = act
-    fy, q = int(label[2:4]), int(label[-1])
+    q, fy = sr._ORDINAL[m.group(1).lower()], int(m.group(2)) % 100
+    act = sr.parse_avgo(text)
+    actual = act[1] if act else None
     nq, nfy = (q % 4) + 1, fy + (1 if q == 4 else 0)
     for m in GUIDE.finditer(text):
         v = float(m.group(2))
         if m.group(1) and int(m.group(1)) != nq:
             continue
-        if abs(v - actual) < 1e-9:
+        if actual is not None and abs(v - actual) < 1e-9:
             continue
         return f"FY{nfy:02d}Q{nq}", v, text[max(0, m.start() - 40): m.end() + 10]
     return None
