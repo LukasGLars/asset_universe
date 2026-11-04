@@ -6442,3 +6442,23 @@ gold breaches the -25% tolerance (-28.5%)** -- gold earns its place as
 ballast even through 2026's rate headwind. 20% is the lowest weight that
 keeps the worst window inside -25%. Script/workflow deleted; recoverable
 from 213b8a0.
+
+## AVGO forward Sightline trigger (guided YoY < 0 -> CUT): VALIDATED, not yet built (2026-11-04)
+
+Idea: fire the same Sightline rule a quarter earlier using management's own
+guide -- CUT if next quarter's guided AI revenue < the same quarter a year
+earlier. Guide cuts/slowdowns alone stay excluded (false positives).
+Validated over every AVGO earnings 8-K since 2024 (Actions 41908336216):
+
+1. Parser: 7/7 dollar guides extracted correctly (FY25Q2..FY26Q4). 2024
+   releases carry no dollar AI guide (only legal boilerplate matched).
+2. Reliability: actual >= guide 6/6 (+0.0 / +2.0 / +4.8 / +2.4 / +0.9 /
+   +4.4%) -- a guided decline would very likely be real.
+3. Historical fires: 0 (guided YoY +100% .. +234%).
+
+Parser lessons, carried into the build: take the guided quarter from the
+guide SENTENCE ("in Q1", "In Q4 ..."), not from the title -- the FY25 Q4
+release is titled "Fourth Quarter **and** Fiscal Year 2025" and mentions
+"First Quarter Fiscal Year 2026" later, which mislabeled the guide; and
+never derive it from the parsed actual (that release has none). Script/
+workflow deleted; recoverable from 6b50759.
