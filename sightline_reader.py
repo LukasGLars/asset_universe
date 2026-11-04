@@ -30,7 +30,7 @@ import urllib.request
 from pathlib import Path
 
 from sec_edgar import USER_AGENT
-from sightline import CONFIG_PATH, load_config, record_reading, save_auto_state
+from sightline import CONFIG_PATH, load_config, record_guide, record_reading, save_auto_state
 
 CIKS = {"AVGO": "0001730168", "LLY": "0000059478"}
 
@@ -93,7 +93,7 @@ def parse_avgo(text: str) -> tuple[str, float] | None:
     every actual has been phrased and how no guide ever has. Phrasing of
     the noun has varied across releases -- all three seen forms accepted.
     """
-    m = re.search(r"\b(First|Second|Third|Fourth) Quarter (?:of )?Fiscal (?:Year )?(\d{4})\b", text, re.I)
+    m = _AVGO_TITLE.search(text)
     if not m:
         return None
     q, fy = _ORDINAL[m.group(1).lower()], int(m.group(2))
@@ -103,6 +103,45 @@ def parse_avgo(text: str) -> tuple[str, float] | None:
     if not v:
         return None
     return f"FY{fy % 100:02d}Q{q}", float(v.group(1))
+
+
+# "Fourth Quarter AND Fiscal Year 2025" is how every Q4 release is titled;
+# without the "and" the Q4 release found no title and the FY26Q4 actual
+# (due 2026-12-09) would have come back parse_failed.
+_AVGO_TITLE = re.compile(r"\b(First|Second|Third|Fourth) Quarter (?:and |of )?Fiscal (?:Year )?(\d{4})\b", re.I)
+
+_AVGO_GUIDE = re.compile(
+    r"(?:expect|guid|forecast|outlook)[^.]{0,160}?"
+    r"(?:AI semiconductor revenue|semiconductor revenue from AI|AI revenue)"
+    r"[^$.]{0,80}\$\s*([\d.]+)\s*billion", re.I)
+
+
+def parse_avgo_guide(text: str) -> tuple[str, float] | None:
+    """('FY26Q4', 21.7) -- next quarter's guided AI revenue, or None.
+
+    Validated 2026-11-04 on every release since 2024 (7/7 correct; 2024
+    releases carry no dollar guide). The guided quarter is the one AFTER the
+    release's own (title), and the guide sentence must name it ("in Q1",
+    "In Q4 ...") when it names a quarter at all -- the FY25 Q4 release also
+    mentions "First Quarter Fiscal Year 2026" further down, which mislabeled
+    the guide when the label came from anywhere but the sentence."""
+    m = _AVGO_TITLE.search(text)
+    if not m:
+        return None
+    q, fy = _ORDINAL[m.group(1).lower()], int(m.group(2)) % 100
+    nq, nfy = (q % 4) + 1, fy + (1 if q == 4 else 0)
+    act = parse_avgo(text)
+    for g in _AVGO_GUIDE.finditer(text):
+        v = float(g.group(1))
+        if act and abs(v - act[1]) < 1e-9:
+            continue
+        start = max(text.rfind(".", 0, g.start()) + 1, g.start() - 120)
+        end = text.find(".", g.end())
+        named = re.findall(r"\bQ([1-4])\b", text[start: end if end > 0 else g.end() + 60])
+        if named and nq not in {int(x) for x in named}:
+            continue
+        return f"FY{nfy:02d}Q{nq}", v
+    return None
 
 
 def parse_lly(text: str) -> tuple[str, float] | None:
@@ -123,6 +162,7 @@ def parse_lly(text: str) -> tuple[str, float] | None:
 
 
 PARSERS = {"AVGO": parse_avgo, "LLY": parse_lly}
+GUIDE_PARSERS = {"AVGO": parse_avgo_guide}  # LLY gives no quarterly product guide
 
 
 # ── orchestration ─────────────────────────────────────────────────────────────
@@ -151,6 +191,12 @@ def auto_read(ticker: str, path: Path = CONFIG_PATH) -> dict:
         text = fetch_filing_text(CIKS[ticker], accession)
     except Exception as e:
         return {"status": FETCH_FAILED, "detail": str(e)[:80]}
+
+    # The guide is recorded first and independently: a release whose actual
+    # does not parse can still carry next quarter's guide (FY25 Q4 did).
+    guide = GUIDE_PARSERS[ticker](text) if ticker in GUIDE_PARSERS else None
+    if guide is not None:
+        record_guide(ticker, guide[0], guide[1], path)
 
     parsed = PARSERS[ticker](text)
     if parsed is None:

@@ -203,3 +203,39 @@ def test_record_works_on_a_file_with_no_header_comment(tmp_path):
     record_reading("AVGO", "FY26Q4", 21.7, path)
     cfg = load_config(path)  # raises on a duplicated table
     assert len(cfg["AVGO"]["readings"]) == 3
+
+
+# -- forward rule (guided YoY < 0 -> CUT), 2026-11-04 --------------------------
+
+def _guides(*pairs):
+    return [{"quarter": q, "value": v} for q, v in pairs]
+
+
+def test_forward_rule_cuts_on_guided_decline():
+    r = _readings(("FY25Q4", 6.5), ("FY26Q3", 16.7), ("FY25Q3", 5.2))
+    state, detail = derive_state(r, _guides(("FY26Q4", 6.0)))
+    assert state == CUT
+    assert "GUIDED" in detail and "FY26Q4" in detail
+
+
+def test_forward_rule_ignores_slower_but_positive_guide():
+    r = _readings(("FY25Q4", 6.5), ("FY26Q3", 16.7), ("FY25Q3", 5.2))
+    assert derive_state(r, _guides(("FY26Q4", 7.0)))[0] == HOLD
+
+
+def test_guide_ignored_once_the_actual_lands():
+    r = _readings(("FY25Q4", 6.5), ("FY26Q4", 21.9))
+    assert derive_state(r, _guides(("FY26Q4", 6.0)))[0] == HOLD
+
+
+def test_guide_without_year_ago_actual_is_ignored():
+    assert derive_state(_readings(("FY26Q3", 16.7)), _guides(("FY26Q4", 1.0)))[0] == HOLD
+
+
+def test_guides_round_trip_through_the_file(tmp_path):
+    from sightline import load_config, record_guide
+    p = tmp_path / "s.toml"
+    p.write_text(SAMPLE if "SAMPLE" in globals() else
+                 '[AVGO]\nname = "B"\nobservable = "o"\neroding = "e"\naction = "a"\n')
+    record_guide("AVGO", "FY26Q4", 21.7, p)
+    assert load_config(p)["AVGO"]["guides"] == [{"quarter": "FY26Q4", "value": 21.7}]
