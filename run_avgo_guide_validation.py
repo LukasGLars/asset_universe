@@ -29,7 +29,7 @@ def parse_avgo_guide(text: str):
     quarter is the one after the release's own quarter."""
     # Quarter from the release TITLE, not from the parsed actual: the
     # FY25Q4 release has no parseable actual, and its guide was missed.
-    m = re.search(r"\b(First|Second|Third|Fourth) Quarter (?:of )?Fiscal (?:Year )?(\d{4})\b", text, re.I)
+    m = re.search(r"\b(First|Second|Third|Fourth) Quarter (?:and |of )?Fiscal (?:Year )?(\d{4})\b", text, re.I)
     if not m:
         return None
     q, fy = sr._ORDINAL[m.group(1).lower()], int(m.group(2)) % 100
@@ -38,7 +38,11 @@ def parse_avgo_guide(text: str):
     nq, nfy = (q % 4) + 1, fy + (1 if q == 4 else 0)
     for m in GUIDE.finditer(text):
         v = float(m.group(2))
-        if m.group(1) and int(m.group(1)) != nq:
+        # The guided quarter as the SENTENCE names it ("in Q1", "In Q4 ...").
+        sent_start = text.rfind(".", 0, m.start()) + 1
+        sent_end = text.find(".", m.end())
+        named = re.findall(r"\bQ([1-4])\b", text[max(sent_start, m.start() - 120): sent_end if sent_end > 0 else m.end() + 60])
+        if named and int(named[-1]) != nq and int(named[0]) != nq:
             continue
         if actual is not None and abs(v - actual) < 1e-9:
             continue
@@ -63,6 +67,9 @@ def main():
         act = sr.parse_avgo(text)
         g = parse_avgo_guide(text)
         has_outlook = bool(re.search(r"expect[^.]{0,200}AI", text, re.I))
+        if has_outlook and not g:
+            mm = re.search(r"[^.]{0,120}expect[^.]{0,200}AI[^.]{0,200}\.", text, re.I)
+            print(f"   UNPARSED outlook sentence: <<{mm.group(0).strip() if mm else '?'}>>")
         rows.append((date, act, g, has_outlook))
         print(f"\n{date}  actual {act}  outlook-sentence-present={has_outlook}")
         if g:
