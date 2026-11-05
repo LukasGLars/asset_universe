@@ -254,6 +254,9 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
                 "Crash plan: act once; the band is the backstop after cash runs out."
             )
             subject_parts.append(f"Crash trigger {_name}")
+        elif _p and _p["status"] == "WAITING" and _row["status"] == "SECOND_HALF":
+            blocks.append(f"CRASH PLAN -- {_name}: second half due {_row['detail']}")
+            subject_parts.append(f"Crash plan second half {_name}")
 
     # HY credit OAS crossing its push level.
     #

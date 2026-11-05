@@ -1,5 +1,5 @@
-# Crash-plan tranches used since the cash reserve was last full.
-# Written by `python crash_plan.py bought <holding>` / `reset`.
+# Crash-plan state: tranches opened since the cash reserve was last
+# full, and second halves still to buy. Written by crash_plan.py.
 
 [used]
 "Broadcom" = 0

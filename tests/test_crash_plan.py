@@ -1,15 +1,17 @@
+import datetime as dt
+
 import crash_plan as cp
 from check_signal_changes import build_actionable_message, extract_fingerprint
 
-BASE, TARGET = 1_000_000, 100_000  # cash target 10% -> tranche 33,333
+BASE, TARGET = 1_000_000, 100_000  # tranche 33,333 -> half 16,667
 
 
-def _row(name, roc, value, close=100.0):
-    return {"name": name, "roc": roc, "close": close, "value": value}
+def _row(name, roc, value, close=100.0, since=None):
+    return {"name": name, "roc": roc, "close": close, "value": value, "since": since}
 
 
-def _plan(rows, cash=96_000, used=None):
-    return {r["name"]: r for r in cp.plan(rows, cash, BASE, TARGET, used)}
+def _plan(rows, cash=96_000, used=None, pending=None):
+    return {r["name"]: r for r in cp.plan(rows, cash, BASE, TARGET, used, pending)}
 
 
 def test_roc_needs_six_closes():
@@ -17,66 +19,72 @@ def test_roc_needs_six_closes():
     assert cp.roc([100] * 5) is None
 
 
-def test_one_trigger_buys_one_equal_tranche():
+def test_trigger_buys_half_a_tranche():
     out = _plan([_row("Broadcom", -0.11, 200_000), _row("Eli Lilly", -0.02, 200_000)])
-    assert round(out["Broadcom"]["buy_kr"]) == 33_333
+    assert round(out["Broadcom"]["buy_kr"]) == 16_667
     assert out["Broadcom"]["next_price"] == 90.0
+    assert "first half of tranche 1" in out["Broadcom"]["why"]
     assert out["Eli Lilly"]["state"] == cp.ARMED
 
 
-def test_tranche_size_does_not_shrink_as_cash_is_spent():
-    first = _plan([_row("Broadcom", -0.11, 200_000)], cash=96_000)["Broadcom"]["buy_kr"]
-    second = _plan([_row("Broadcom", -0.11, 200_000)], cash=62_000,
-                   used={"Broadcom": 1})["Broadcom"]["buy_kr"]
-    assert round(first) == round(second) == 33_333
+def test_open_tranche_waits_then_second_half_after_21_sessions():
+    pend = {"Broadcom": {"date": "2026-11-05", "close": 100.0, "half_kr": 16_667}}
+    wait = _plan([_row("Broadcom", -0.02, 200_000, close=97, since=10)], used={"Broadcom": 1}, pending=pend)
+    assert wait["Broadcom"]["state"] == cp.WAITING and wait["Broadcom"]["buy_kr"] == 0
+    due = _plan([_row("Broadcom", 0.03, 200_000, close=105, since=21)], used={"Broadcom": 1}, pending=pend)
+    assert due["Broadcom"]["state"] == cp.SECOND_HALF and round(due["Broadcom"]["buy_kr"]) == 16_667
+
+
+def test_second_half_early_on_a_further_ten_percent_drop():
+    pend = {"Broadcom": {"date": "2026-11-05", "close": 100.0, "half_kr": 16_667}}
+    out = _plan([_row("Broadcom", -0.05, 180_000, close=89.9, since=4)], used={"Broadcom": 1}, pending=pend)
+    assert out["Broadcom"]["state"] == cp.SECOND_HALF
+
+
+def test_open_second_half_is_reserved_from_new_triggers():
+    pend = {"Broadcom": {"date": "2026-11-05", "close": 100.0, "half_kr": 16_667}}
+    out = _plan([_row("Broadcom", -0.02, 200_000, since=3), _row("Eli Lilly", -0.11, 200_000)],
+                cash=20_000, used={"Broadcom": 1}, pending=pend)
+    assert round(out["Eli Lilly"]["buy_kr"]) == 3_333  # 20,000 minus the reserved 16,667
 
 
 def test_max_two_tranches_per_holding():
-    out = _plan([_row("Broadcom", -0.12, 200_000)], cash=30_000, used={"Broadcom": 2})
-    assert out["Broadcom"]["buy_kr"] == 0
-    assert "2 tranches already used" in out["Broadcom"]["why"]
-
-
-def test_third_tranche_is_whatever_cash_is_left():
-    out = _plan([_row("Eli Lilly", -0.12, 200_000)], cash=29_000,
-                used={"Broadcom": 2, "Eli Lilly": 0})
-    assert out["Eli Lilly"]["buy_kr"] == 29_000
-
-
-def test_several_triggers_split_when_cash_is_short():
-    out = _plan([_row("Broadcom", -0.12, 150_000), _row("Eli Lilly", -0.10, 150_000)], cash=40_000)
-    assert out["Broadcom"]["buy_kr"] == out["Eli Lilly"]["buy_kr"] == 20_000
+    out = _plan([_row("Broadcom", -0.12, 200_000)], used={"Broadcom": 2})
+    assert out["Broadcom"]["buy_kr"] == 0 and "2 tranches already used" in out["Broadcom"]["why"]
 
 
 def test_cap_limits_the_buy():
-    out = _plan([_row("Eli Lilly", -0.15, 270_000)])
-    assert round(out["Eli Lilly"]["buy_kr"]) == 10_000  # room to 28% of 1M
+    out = _plan([_row("Eli Lilly", -0.15, 275_000)])
+    assert round(out["Eli Lilly"]["buy_kr"]) == 5_000  # room to 28% of 1M
 
 
-def test_spent_reserve_says_so():
-    out = _plan([_row("Broadcom", -0.12, 150_000)], cash=0)
-    assert out["Broadcom"]["buy_kr"] == 0 and "spent" in out["Broadcom"]["why"]
-
-
-def test_counter_round_trip(tmp_path, monkeypatch):
+def test_state_round_trip_and_cli(tmp_path, monkeypatch):
     p = tmp_path / "s.toml"
     monkeypatch.setattr(cp, "STATE_PATH", p)
-    cp.save_used({"Broadcom": 1}, p)
-    assert cp.load_used(p) == {"Broadcom": 1, "Eli Lilly": 0, "LF Global Index": 0}
-    assert cp.load_used(tmp_path / "missing.toml")["Broadcom"] == 0
+    cp.main(["bought", "Broadcom"], today=dt.date(2026, 11, 6), close=312.5, half_kr=16_667)
+    st = cp.load_state(p)
+    assert st["used"]["Broadcom"] == 1
+    assert st["pending"]["Broadcom"] == {"date": "2026-11-06", "close": 312.5, "half_kr": 16_667}
+    cp.main(["bought-second", "Broadcom"])
+    assert cp.load_state(p)["pending"] == {} and cp.load_state(p)["used"]["Broadcom"] == 1
+    cp.main(["reset"])
+    assert cp.load_state(p)["used"]["Broadcom"] == 0
 
 
-def _panel(rows, cash=96_000, used=None):
-    return "\n".join(cp.format_lines(cp.plan(rows, cash, BASE, TARGET, used), cash, TARGET))
+def _panel(rows, cash=96_000, used=None, pending=None):
+    return "\n".join(cp.format_lines(cp.plan(rows, cash, BASE, TARGET, used, pending), cash, TARGET))
 
 
-def test_alert_fires_once_and_quotes_the_tranche():
-    calm = _panel([_row("Broadcom", -0.03, 200_000), _row("Eli Lilly", -0.01, 200_000)])
-    crash = _panel([_row("Broadcom", -0.03, 200_000), _row("Eli Lilly", -0.11, 200_000)])
+def test_alerts_for_trigger_and_for_second_half():
+    calm = _panel([_row("Eli Lilly", -0.01, 200_000)])
+    crash = _panel([_row("Eli Lilly", -0.11, 200_000)])
     subject, body = build_actionable_message(extract_fingerprint(calm), extract_fingerprint(crash))
-    assert "Crash trigger Eli Lilly" in subject
-    assert "BUY 33,333 kr (tranche 1 of max 2" in body and "$90.00" in body
-    assert build_actionable_message(extract_fingerprint(crash), extract_fingerprint(crash)) is None
+    assert "Crash trigger Eli Lilly" in subject and "BUY 16,667 kr" in body and "--close 100" in body
+    pend = {"Eli Lilly": {"date": "2026-11-05", "close": 100.0, "half_kr": 16_667}}
+    waiting = _panel([_row("Eli Lilly", 0.01, 210_000, since=20)], used={"Eli Lilly": 1}, pending=pend)
+    due = _panel([_row("Eli Lilly", 0.01, 210_000, since=21)], used={"Eli Lilly": 1}, pending=pend)
+    subject, body = build_actionable_message(extract_fingerprint(waiting), extract_fingerprint(due))
+    assert "second half Eli Lilly" in subject and "BUY 16,667 kr" in body
 
 
 def test_crash_rows_do_not_leak_into_rebalance_rows():
@@ -85,7 +93,8 @@ def test_crash_rows_do_not_leak_into_rebalance_rows():
 
 
 def test_live_state_file_is_valid():
-    assert set(cp.load_used()) == set(cp.HOLDINGS)
+    st = cp.load_state()
+    assert set(st["used"]) == set(cp.HOLDINGS) and st["pending"] == {}
 
 
 def test_index_is_exempt_in_sightline():

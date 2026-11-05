@@ -68,7 +68,7 @@ jobs:
           crash = fp["crash_rows"]
           assert set(crash) == {"Broadcom", "Eli Lilly", "LF Global Index"}, f"crash rows: {crash}"
           for name, row in crash.items():
-              assert row["status"] in ("ARMED", "FIRED", "NO_DATA"), f"{name}: {row['status']!r}"
+              assert row["status"] in ("ARMED", "FIRED", "WAITING", "SECOND_HALF", "NO_DATA"), f"{name}: {row['status']!r}"
           print(f"crash rows parsed: { {k: v['status'] for k, v in crash.items()} }")
 
           must_parse = [
