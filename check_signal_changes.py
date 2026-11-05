@@ -85,6 +85,21 @@ def _rebal_rows(text: str) -> dict[str, dict[str, str]]:
     return rows
 
 
+def _crash_rows(text: str) -> dict[str, dict[str, str]]:
+    """Rows of the Crash Plan block, keyed by holding (same shape as
+    _rebal_rows, scoped to its own block so neither parser sees the other's
+    rows)."""
+    m = re.search(r"Crash Plan[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL)
+    if not m:
+        return {}
+    rows: dict[str, dict[str, str]] = {}
+    for line in m.group(1).splitlines():
+        mm = re.match(r"\s+(.+?) status:\s*(\S+)\s*(.*)$", line)
+        if mm:
+            rows[mm.group(1).strip()] = {"status": mm.group(2).strip(), "detail": mm.group(3).strip()}
+    return rows
+
+
 def extract_fingerprint(text: str) -> dict:
     return {
         "avgo_guard": _find(r"AVGO Trend Diagnostic.*?Signal\s*:\s*(\S+)", text),
@@ -170,6 +185,7 @@ def extract_fingerprint(text: str) -> dict:
         # silently degraded to "unknown", which the unknown-guard then
         # suppressed. A broken parser looked exactly like a quiet market.
         "rebal_rows": _rebal_rows(text),
+        "crash_rows": _crash_rows(text),
     }
 
 
@@ -216,11 +232,28 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             and curr["avgo_trigger"] == "CRASH"
             and "unknown" not in (prev["avgo_trigger"], curr["avgo_trigger"])):
         avgo_changed = True
+        _avgo_crash = curr.get("crash_rows", {}).get("Broadcom")
         blocks.append(
             f"AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
             f"ACTION: {curr['avgo_action']}"
+            + (f"\nCRASH PLAN: {_avgo_crash['detail']}" if _avgo_crash else "")
         )
         subject_parts.append("AVGO gap-down trigger")
+
+    # Crash plan (2026-11-04): one alert per holding on ARMED -> FIRED, quoting
+    # the row fi_tracker computed (amount, cap, stage-2 price) verbatim.
+    # Broadcom rides the AVGO gap-down alert above when that fired, so it is
+    # never sent twice. A holding with no baseline row (first run) is skipped.
+    for _name, _row in curr.get("crash_rows", {}).items():
+        if _name == "Broadcom" and avgo_changed:
+            continue
+        _p = prev.get("crash_rows", {}).get(_name)
+        if _p and _p["status"] == "ARMED" and _row["status"] == "FIRED":
+            blocks.append(
+                f"CRASH TRIGGER -- {_name}: {_row['detail']}\n"
+                "Crash plan: act once; the band is the backstop after cash runs out."
+            )
+            subject_parts.append(f"Crash trigger {_name}")
 
     # HY credit OAS crossing its push level.
     #

@@ -65,6 +65,11 @@ jobs:
           for name, row in rows.items():
               assert row["status"] in ("HOLD", "SELL", "BUY"), f"{name}: {row['status']!r}"
           print(f"rebalance rows parsed: {sorted(rows)}")
+          crash = fp["crash_rows"]
+          assert set(crash) == {"Broadcom", "Eli Lilly", "LF Global Index"}, f"crash rows: {crash}"
+          for name, row in crash.items():
+              assert row["status"] in ("ARMED", "FIRED", "NO_DATA"), f"{name}: {row['status']!r}"
+          print(f"crash rows parsed: { {k: v['status'] for k, v in crash.items()} }")
 
           must_parse = [
               "avgo_guard", "avgo_trigger", "avgo_action", "lly_stress",
@@ -100,6 +105,7 @@ jobs:
       - name: Show the reworked blocks
         run: |
           sed -n '/NEXT CONTRIBUTION/,/^=\{10,\}$/p' smoke.md
+          sed -n '/Crash Plan/,/^$/p' smoke.md
       - name: Step summary
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY

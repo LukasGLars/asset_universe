@@ -6471,3 +6471,31 @@ A guide counts only until its quarter's actual lands. The CUT detail reads
 Telegram CUT alert carries it unchanged. **Also fixed in passing: the AVGO
 title regex missed "Fourth Quarter AND Fiscal Year" -- the 2026-12-09 FY26Q4
 release would otherwise have come back parse_failed.**
+
+## Crash plan for the cash reserve -- operator's rule, LIVE (agreed 2026-11-01, built 2026-11-04)
+
+| If | Then |
+|---|---|
+| Broadcom, Lilly or LF Global Index closes >= 10% below its close 5 sessions earlier | buy that holding with 60% of cash |
+| Several fire on the same run | split the 60% equally |
+| A fired holding falls a further 15% from its trigger close | the remaining 40% (split if several) |
+
+Caps: a stock never above 28% of the account, the index never above 38%
+(2 pp under each +-10pp band line). Cash a cap blocks stays cash. A later
+trigger in a different holding gets 60% of what is left. Never buy without a
+trigger; never sell on price -- only Sightline sells. Refill cash to 10% from
+new money; the band is the backstop once cash is gone. Not all-in by the
+operator's choice: the tested all-in beat 60/40 (+45.5% vs +28.1% at 252d,
+worst third, AVGO -- see "Cash-tranche laddering"); 60/40 is the price of
+not guessing the bottom. The index trigger is UNTESTED.
+
+Built: `crash_plan.py` (pure) + "Crash Plan" block in fi_tracker + one
+Telegram alert per holding on ARMED -> FIRED quoting the kr amount and the
+stage-2 price. Broadcom's amount rides the existing AVGO gap-down alert (its
+stale "50k into AVGO" action text replaced), so it never sends twice. Index
+uses the fund's own NAV from the avanza store (one close per sync; NO_DATA
+until 6 weekday closes exist).
+
+Same change: LF Global Index exempt in Sightline (`global_index`), so
+decide.py no longer prints OWN?; decide.py gaps now signed weight minus
+target ("+" = overweight).

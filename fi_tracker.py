@@ -481,9 +481,8 @@ try:
     _avgo_action = "No action -- guard retired as a rotation rule (see PR #88); reading is diagnostic only"
     if _trigger == "CRASH":
         _avgo_action = (
-            "No rotation. But the 5d/-10% gap-down trigger has fired: if the "
-            "gap-down tranche (50k into AVGO) hasn't been deployed yet, this "
-            "is that signal -- see MEMORY.md 'Gap-down tranche validated'."
+            "No rotation. The 5d/-10% trigger has fired -- see the Crash Plan "
+            "block below for the amount (MEMORY.md 'Crash plan')."
         )
 
     print(f"\n  AVGO Trend Diagnostic  [guard RETIRED as a rotation rule -- PR #88]")
@@ -940,5 +939,33 @@ try:
 
 except Exception as _e:
     print(f"\n  AVGO Rebalance Check : [unavailable — {_e}]")
+
+# ── Crash plan (2026-11-04) ──────────────────────────────────────────────────
+# The cash reserve's deployment rule, computed: which holding fired its
+# 5d/-10% trigger and how many kr to buy. Replaces the old AVGO-only
+# gap-down reminder, whose "50k into AVGO" text had gone stale. Sized off
+# the same denominator and cash figure as the blocks above.
+try:
+    import crash_plan
+    from asset_universe.store import reader as _reader
+
+    def _closes(cat, tkr):
+        _s = _reader.load(_reader.ticker_path(DATA_DIR, cat, tkr))["close"].dropna()
+        _s = _s[~_s.index.duplicated(keep="last")]
+        return [float(x) for x in _s[_s.index.dayofweek < 5].tolist()]
+
+    _crash_rows = []
+    for _name, (_cat, _tkr, _cap) in crash_plan.HOLDINGS.items():
+        try:
+            _c = _closes(_cat, _tkr)
+        except Exception:
+            _c = []
+        _crash_rows.append({"name": _name, "roc": crash_plan.roc(_c),
+                            "close": _c[-1] if _c else None, "value": _valued(_name)})
+    print()
+    print("\n".join(crash_plan.format_lines(
+        crash_plan.plan(_crash_rows, _rc_cash, _target_denom), _rc_cash)))
+except Exception as _e:
+    print(f"\n  Crash Plan : [unavailable — {_e}]")
 
 print(f"\n{'='*62}")
