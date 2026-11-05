@@ -6515,3 +6515,22 @@ Tranches used live in `config/crash_plan.toml`; record after each buy with
 target. Cost vs the tested alternatives: smaller first buy than 60/40
 (+28.1%) -- closest tested shape is 40/30/30 (+19.4%, AVGO worst third
 252d) -- accepted for a size the operator will actually follow.
+
+## AVGO dip-buy vs TODAY's mix (rerun of the 2026-08-14 study, 2026-11-05)
+
+Same event definition (5d <= -10%, declustered >= 21 sessions, buy at the
+NEXT close), compared against today's mix (AVGO 20 / LLY 20 / Gold 20 /
+Index 30 SPY-proxy / Cash 10 @2%), SEK, 30 triggers 2010-09..2026-08.
+Run: Actions 42094005984. Random-walk smoke check showed no edge (~50%).
+
+| horizon | AVGO median | mix median | AVGO beat mix | AVGO worst |
+|---|---|---|---|---|
+| 21d | +5.8% | +2.4% | 63% | -21.7% |
+| 63d | +14.3% | +6.1% | 76% | -19.1% |
+| 126d | +25.7% | +10.8% | 82% | +0.4% |
+| 252d | +54.1% | +21.8% | **85%** | -2.0% |
+
+Stronger than the old-mix comparison (77% at 252d) because today's mix holds
+less AVGO. First month is the risk: worst -21.7%. Caveat unchanged: one
+long AVGO bull run, n=26-30. Supports the crash plan's first tranche.
+Script/workflow deleted; recoverable from 7d92cc2.
