@@ -6499,3 +6499,19 @@ until 6 weekday closes exist).
 Same change: LF Global Index exempt in Sightline (`global_index`), so
 decide.py no longer prints OWN?; decide.py gaps now signed weight minus
 target ("+" = overweight).
+
+**REVISED 2026-11-05 (operator): three equal tranches, max two per holding.**
+Supersedes the 60/40 stages above. The reserve = 3 tranches, each one third
+of the cash TARGET (10% of the account, ~33k kr), so every buy is the same
+size. Trigger unchanged (5d <= -10%); first come, first served across
+Broadcom / Lilly / index; **max 2 tranches per holding** (one name never
+takes the whole reserve); next tranche level = a further -10% from the
+trigger close, stated in the alert; caps 28% / 38% unchanged; several firing
+on one run split what is left. Covers roughly 1-1.5 years of triggers
+(AVGO ~2/yr, LLY <1/yr, index rare); with no new money going in, the
+reserve is gone after three buys and the band is the only buyer.
+Tranches used live in `config/crash_plan.toml`; record after each buy with
+`python crash_plan.py bought "<holding>"`, and `reset` once cash is back at
+target. Cost vs the tested alternatives: smaller first buy than 60/40
+(+28.1%) -- closest tested shape is 40/30/30 (+19.4%, AVGO worst third
+252d) -- accepted for a size the operator will actually follow.
