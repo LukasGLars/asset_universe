@@ -6534,3 +6534,16 @@ Stronger than the old-mix comparison (77% at 252d) because today's mix holds
 less AVGO. First month is the risk: worst -21.7%. Caveat unchanged: one
 long AVGO bull run, n=26-30. Supports the crash plan's first tranche.
 Script/workflow deleted; recoverable from 7d92cc2.
+
+**REVISED again 2026-11-05 (operator): each tranche bought in two halves.**
+Half a tranche (~16.7k) at the trigger; the other half 21 sessions later, or
+at a further -10% from the trigger close if that comes first. Rationale: the
+first month after a trigger carries the risk (worst -21.7%, dip-vs-mix
+rerun above); waiting on half costs ~1k kr in expectation. An open second
+half is RESERVED from cash, so a new trigger elsewhere cannot spend it.
+State in config/crash_plan.toml (`[used]`, `[pending."<holding>"]`); record
+with `crash_plan.py bought "<h>" --close X --half KR` (both printed in the
+alert) and `bought-second "<h>"`. Alerts: ARMED->FIRED (first half) and
+WAITING->SECOND_HALF (second half). Bug caught in build: state paths were
+bound as default args at import, so a test wrote the LIVE state file --
+now resolved at call time.

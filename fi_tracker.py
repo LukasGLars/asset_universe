@@ -952,21 +952,28 @@ try:
     def _closes(cat, tkr):
         _s = _reader.load(_reader.ticker_path(DATA_DIR, cat, tkr))["close"].dropna()
         _s = _s[~_s.index.duplicated(keep="last")]
-        return [float(x) for x in _s[_s.index.dayofweek < 5].tolist()]
+        return _s[_s.index.dayofweek < 5]
 
+    _crash_state = crash_plan.load_state()
     _crash_rows = []
     for _name, (_cat, _tkr, _cap) in crash_plan.HOLDINGS.items():
         try:
-            _c = _closes(_cat, _tkr)
+            _s = _closes(_cat, _tkr)
         except Exception:
-            _c = []
+            _s = pd.Series(dtype=float)
+        _c = [float(x) for x in _s.tolist()]
+        _p = _crash_state["pending"].get(_name)
+        # Sessions since an open tranche's first half: what the 21-session
+        # second-half rule counts.
+        _since = int((_s.index > pd.Timestamp(_p["date"])).sum()) if _p else None
         _crash_rows.append({"name": _name, "roc": crash_plan.roc(_c),
-                            "close": _c[-1] if _c else None, "value": _valued(_name)})
+                            "close": _c[-1] if _c else None, "value": _valued(_name),
+                            "since": _since})
     print()
     _cash_target_kr = _cash_target * _target_denom
     print("\n".join(crash_plan.format_lines(
         crash_plan.plan(_crash_rows, _rc_cash, _target_denom, _cash_target_kr,
-                        crash_plan.load_used()),
+                        _crash_state["used"], _crash_state["pending"]),
         _rc_cash, _cash_target_kr)))
 except Exception as _e:
     print(f"\n  Crash Plan : [unavailable — {_e}]")
