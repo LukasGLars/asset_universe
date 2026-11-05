@@ -6547,3 +6547,15 @@ alert) and `bought-second "<h>"`. Alerts: ARMED->FIRED (first half) and
 WAITING->SECOND_HALF (second half). Bug caught in build: state paths were
 bound as default args at import, so a test wrote the LIVE state file --
 now resolved at call time.
+
+## LLY FDA clause is MANUAL, and means a NEW boxed warning (2026-11-05)
+
+LLY's Sightline eroding text includes "a boxed warning / market withdrawal
+for tirzepatide". Tirzepatide has carried a boxed warning (thyroid C-cell
+tumours) since approval in 2022, so read literally the clause was already
+met -- reworded to "a NEW FDA boxed warning (beyond the thyroid C-cell
+warning on the label since 2022)". **Nothing in code checks this clause**;
+the operator watches for it. Automation (openFDA label diff + approval
+status) was scoped and parked: rare, instantly front-page news, and the
+price would move before a daily check -- not worth the false-alarm risk of
+text matching now.
