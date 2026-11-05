@@ -192,7 +192,7 @@ def test_live_config_parses_and_both_holdings_hold():
             assert cfg[tkr][field]
         state, _ = derive_state(cfg[tkr]["readings"])
         assert state == HOLD
-    assert set(cfg["exemptions"]) == {"gold", "crypto_sleeve"}
+    assert set(cfg["exemptions"]) == {"gold", "crypto_sleeve", "global_index"}
 
 
 def test_record_works_on_a_file_with_no_header_comment(tmp_path):

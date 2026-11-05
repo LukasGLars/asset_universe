@@ -138,3 +138,6 @@ reason = "Strategic anchor, held for a portfolio-level reason. No disclosed obse
 
 [exemptions.crypto_sleeve]
 reason = "Mechanical sleeve (BTC + staked ETH ETPs): hold-or-cut is delegated to its own MA50/100/200 ensemble rule and the 3-losing-cycles kill switch. No disclosed observable exists."
+
+[exemptions.global_index]
+reason = "Broad market index fund: no single thesis to break. Held for diversification; governed by its target and the rebalance band only."

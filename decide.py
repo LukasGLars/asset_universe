@@ -111,7 +111,9 @@ def decide(
                 sh = f" (~{r['shares']} sh)" if r["shares"] else ""
                 action = f"{r['action']} {abs(trade):,.0f} kr{sh}"
             else:
-                action = f"HOLD ({r['gap']*100:+.1f}pp, band {band*100:.0f}pp)"
+                # Signed as weight minus target: "+" = overweight (2026-11-04;
+                # it printed target minus weight, so "+" read as underweight).
+                action = f"HOLD ({-r['gap']*100:+.1f}pp vs target, band {band*100:.0f}pp)"
 
         rows.append({"name": name, "verdict": verdict, "rule": rule,
                      "value": value, "weight": r["current"], "target": r["target"],
