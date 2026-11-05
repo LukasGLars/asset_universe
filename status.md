@@ -157,13 +157,12 @@ TACTICAL RULES
       Auto-read  : recorded 2026Q3 (8-K 2026-10-29)
     gold: EXEMPT -- Strategic anchor, held for a portfolio-level reason. No disclosed observable exists. Exit only on a mission change, which is outside Sightline's scope by construction.
     crypto_sleeve: EXEMPT -- Mechanical sleeve (BTC + staked ETH ETPs): hold-or-cut is delegated to its own MA50/100/200 ensemble rule and the 3-losing-cycles kill switch. No disclosed observable exists.
+    global_index: EXEMPT -- Broad market index fund: no single thesis to break. Held for diversification; governed by its target and the rebalance band only.
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : LITE (Lumentum Holdings Inc.)  $626.75  (sector Technology, -31.4% 5d, 6 peers crashing, drift +0.0%)
-    Plan           : buy near $626.75, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
-    Open           : run_entry_screen.py --open LITE <fill_price> <shares> <capital_sek> --entry-type basket_crash
+    Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
     Status         : inactive -- no crypto leg carries a target (no alerts)
@@ -191,6 +190,11 @@ NEXT CONTRIBUTION
     Balance        : 96,090 kr  (9.8% vs 10% target)
     Shortfall      : 2,291 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
+
+  Crash Plan  [cash 96,090 kr; 3 tranches of 32,794 kr, max 2 per holding; trigger 5d <= -10%; caps 28% stock / 38% index]
+    Broadcom status: ARMED  (5d -7.5%, trigger -10%)
+    Eli Lilly status: ARMED  (5d +10.1%, trigger -10%)
+    LF Global Index status: ARMED  (5d -3.0%, trigger -10%)
 
 ==============================================================
   Regime check (2026-11-04): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
@@ -228,8 +232,8 @@ Computing capped 252d distributions for 51 candidates ...
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
   CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
-  PHAG.L    no data
   TPR       N=1238  mu= +19.0%  sigma= 31.0%  hist=26yr  [MODERATE]
+  PHAG.L    no data
   NVDA      N=1238  mu= +24.2%  sigma= 32.4%  hist=27yr  [MODERATE]
   FTNT      N= 620  mu=  -9.7%  sigma= 10.6%  hist=17yr  [SINGLE]
   FOXA      hist=8yr  (below min 10yr, skipped)
@@ -285,33 +289,33 @@ AVGO peer valuation snapshot -- 2026-11-05
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $795.23    $75.51   $207.76      2.75x        +175%     3.83x      0.02
-AMD         $488.78     $6.65    $16.27      2.45x        +145%    30.04x      0.21
-NVDA        $200.13     $7.01    $15.91      2.27x        +127%    12.58x      0.10
-MRVL        $159.80     $3.30     $7.34      2.23x        +123%    21.76x      0.18
-AVGO*       $325.48     $9.76    $19.47      1.99x         +99%    16.72x      0.17
-ASML      $1,496.30    $33.89    $56.43      1.67x         +67%    26.51x      0.40
-TSM         $395.75    $15.54    $23.43      1.51x         +51%    16.89x      0.33
-ANET        $178.48     $3.91     $5.40      1.38x         +38%    33.05x      0.87
-QCOM        $173.19    $11.36    $10.16      0.89x         -11%    17.05x       n/a
+MU          $739.29    $75.51   $207.76      2.75x        +175%     3.56x      0.02
+AMD         $437.66     $6.65    $16.27      2.45x        +145%    26.90x      0.19
+NVDA        $192.16     $7.01    $15.91      2.27x        +127%    12.07x      0.10
+MRVL        $147.66     $3.30     $7.34      2.23x        +123%    20.11x      0.16
+AVGO*       $309.94     $9.76    $19.47      1.99x         +99%    15.92x      0.16
+ASML      $1,430.93    $33.89    $56.43      1.67x         +67%    25.36x      0.38
+TSM         $376.45    $15.54    $23.43      1.51x         +51%    16.06x      0.32
+ANET        $171.15     $3.91     $5.40      1.38x         +38%    31.70x      0.83
+QCOM        $154.06    $10.53    $12.85      1.22x         +22%    11.99x      0.54
 
 * = AVGO
 
 AVGO rank -- growth ratio (highest first): 5 of 9
-AVGO rank -- forward P/E (cheapest first): 3 of 9
+AVGO rank -- forward P/E (cheapest first): 4 of 9
 AVGO rank -- PEG(1y) (cheapest first)    : 3 of 9
 
 Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional 5-year estimate PEG ratios (including yfinance's own pegRatio field, deliberately not fetched here) normally use. MEMORY.md's 2026-07-06 entry recorded AVGO's PEG as 0.41 alongside a 19.4x forward P/E -- those two never reconciled on the same basis (19.4 / 139% implied growth = 0.14, not 0.41). PEG(1y) above is internally consistent but not comparable to that historical figure or to any 5-year PEG from elsewhere.
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         30.04x       --    14
-ANET        33.05x       --    14
-ASML        26.51x       --    14
-AVGO        16.72x       --    14
-MRVL        21.76x       --    14
-MU           3.83x       --    14
-NVDA        12.58x       --    14
-QCOM        17.05x       --    14
-TSM         16.89x       --    14
-  accruing -- 14/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         26.90x       --    15
+ANET        31.70x       --    15
+ASML        25.36x       --    15
+AVGO        15.92x       --    15
+MRVL        20.11x       --    15
+MU           3.56x       --    15
+NVDA        12.07x       --    15
+QCOM        11.99x       --    15
+TSM         16.06x       --    15
+  accruing -- 15/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
