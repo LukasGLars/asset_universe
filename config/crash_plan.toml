@@ -1,0 +1,7 @@
+# Crash-plan tranches used since the cash reserve was last full.
+# Written by `python crash_plan.py bought <holding>` / `reset`.
+
+[used]
+"Broadcom" = 0
+"Eli Lilly" = 0
+"LF Global Index" = 0
