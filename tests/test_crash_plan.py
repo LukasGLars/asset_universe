@@ -147,7 +147,13 @@ def test_avgo_crash_day_sends_the_previewed_broadcom_alert():
 
 def test_live_state_file_is_valid():
     st = cp.load_state()
-    assert set(st["used"]) == set(cp.HOLDINGS) and st["pending"] == {}
+    assert set(st["used"]) == set(cp.HOLDINGS)
+    assert all(0 <= n <= cp.MAX_PER_HOLDING for n in st["used"].values())
+    assert sum(st["used"].values()) <= cp.TRANCHES
+    for name, p in st["pending"].items():
+        # An open second half belongs to a tranche that was opened.
+        assert st["used"][name] >= 1
+        assert set(p) == {"date", "close", "half_kr"} and float(p["half_kr"]) > 0
 
 
 def test_index_is_exempt_in_sightline():

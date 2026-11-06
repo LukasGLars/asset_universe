@@ -2,6 +2,11 @@
 # full, and second halves still to buy. Written by crash_plan.py.
 
 [used]
-"Broadcom" = 0
+"Broadcom" = 1
 "Eli Lilly" = 0
 "LF Global Index" = 0
+
+[pending."Broadcom"]
+date    = "2026-11-06"
+close   = 291.53
+half_kr = 15140
