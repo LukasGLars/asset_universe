@@ -1,0 +1,68 @@
+name: resend-alert
+
+# Manual-only. Re-sends the real alert for a past sync: runs the production
+# notify_signal_changes.py on two COMMITTED status.md snapshots (the sync
+# commit and the one before it), so the message is built from the numbers
+# that were actually live that day -- no fake data, no price refresh.
+#
+# Added 2026-11-06: the first live Broadcom crash trigger went out without
+# its amount and in the old AVGO GAP-DOWN format (#133, #134). This sends the
+# corrected message for that day. Reads only; commits nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      curr_ref:
+        description: 'Sync commit whose status.md is "today" (e.g. fc8d1c7)'
+        required: true
+        type: string
+      prev_ref:
+        description: 'Commit whose status.md is "yesterday" (blank = curr_ref~1)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  resend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Extract the two committed snapshots
+        env:
+          CURR: ${{ github.event.inputs.curr_ref }}
+          PREV: ${{ github.event.inputs.prev_ref }}
+        run: |
+          git show "${CURR}:status.md" > resend_curr.md
+          git show "${PREV:-${CURR}~1}:status.md" > resend_prev.md
+
+      - name: Show what will be sent
+        run: |
+          python -c "
+          from check_signal_changes import extract_fingerprint, build_actionable_message
+          r = build_actionable_message(
+              extract_fingerprint(open('resend_prev.md', encoding='utf-8').read()),
+              extract_fingerprint(open('resend_curr.md', encoding='utf-8').read()))
+          print('No actionable change.' if r is None else f'SUBJECT: {r[0]}\nBODY:\n{r[1]}')
+          "
+
+      - name: Send (production code, real secrets)
+        run: python notify_signal_changes.py resend_prev.md resend_curr.md
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
