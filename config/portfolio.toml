@@ -118,7 +118,7 @@ target_weight = 0.0
 [[positions]]
 name     = "Broadcom"
 ticker   = "AVGO"
-shares   = 65
+shares   = 70
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
@@ -168,7 +168,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 96090
+value_sek = 80950
 
 # ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
 # Manual value_sek, updated from the Google Sheet like Spiltan/War Chest --
