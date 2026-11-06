@@ -89,7 +89,11 @@ def _crash_rows(text: str) -> dict[str, dict[str, str]]:
     """Rows of the Crash Plan block, keyed by holding (same shape as
     _rebal_rows, scoped to its own block so neither parser sees the other's
     rows)."""
-    m = re.search(r"Crash Plan[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL)
+    # Anchored to the block's own header line: the AVGO Action text says
+    # "see the Crash Plan block below", and an unanchored match landed there,
+    # read the blank line after it and returned {} -- dropping the amount from
+    # the 2026-11-06 AVGO gap-down alert.
+    m = re.search(r"^[ \t]*Crash Plan[ \t]+\[[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL | re.MULTILINE)
     if not m:
         return {}
     rows: dict[str, dict[str, str]] = {}
@@ -236,7 +240,9 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
         blocks.append(
             f"AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
             f"ACTION: {curr['avgo_action']}"
-            + (f"\nCRASH PLAN: {_avgo_crash['detail']}" if _avgo_crash else "")
+            + (f"\nCRASH PLAN: {_avgo_crash['detail']}" if _avgo_crash
+               else "\nCRASH PLAN: Broadcom row NOT FOUND in status.md -- read the amount "
+                    "from fi_tracker's Crash Plan block before buying.")
         )
         subject_parts.append("AVGO gap-down trigger")
 

@@ -92,6 +92,16 @@ def test_crash_rows_do_not_leak_into_rebalance_rows():
     assert fp["rebal_rows"] == {} and "Broadcom" in fp["crash_rows"]
 
 
+def test_crash_rows_survive_avgo_action_mentioning_the_block():
+    # Regression (2026-11-06): the AVGO Action line names "the Crash Plan
+    # block", which the parser used to match instead of the block header.
+    pre = ("    Action         : No rotation. The 5d/-10% trigger has fired -- see the Crash Plan "
+           "block below for the amount (MEMORY.md 'Crash plan').\n\n")
+    fp = extract_fingerprint(pre + _panel([_row("Broadcom", -0.15, 184_000)]))
+    assert fp["crash_rows"]["Broadcom"]["status"] == "FIRED"
+    assert "BUY" in fp["crash_rows"]["Broadcom"]["detail"]
+
+
 def test_live_state_file_is_valid():
     st = cp.load_state()
     assert set(st["used"]) == set(cp.HOLDINGS) and st["pending"] == {}
