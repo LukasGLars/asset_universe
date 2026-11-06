@@ -97,12 +97,16 @@ def _crash_block(bro_roc=-0.03, idx_roc=-0.01, lly_since=5, lly_close=1290.0):
 BASE = BASE + _crash_block()
 
 SCENARIOS = [
-    ("AVGO guard flip", BASE.replace(
+    # The live Broadcom crash day (2026-11-06): the AVGO trigger flips AND the
+    # Crash Plan row fires on the same run, with the real Action text that
+    # names "the Crash Plan block". The old scenario flipped only one of the
+    # two, so the message that actually went out had never been previewed.
+    ("AVGO crash day (live shape)", BASE.replace(
         "Signal         : BASE  (trigger: none)  -- informational, no rotation", "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation"
     ).replace(
         "Action         : Hold base (Gold 25%, AVGO 55%, LLY 20%)",
-        "Action         : No rotation. But the 5d/-10% gap-down trigger has fired: this is the tranche-deployment signal (guard retired, PR #88).",
-    )),
+        "Action         : No rotation. The 5d/-10% trigger has fired -- see the Crash Plan block below for the amount (MEMORY.md 'Crash plan').",
+    ).replace(_crash_block(), _crash_block(bro_roc=-0.11))),
     ("Silver GSR trigger", BASE.replace(
         "Signal         : INACTIVE\n    Action         : No action -- hold base",
         "Signal         : T1 ACTIVE\n    Action         : ADD +12% silver (fund from AVGO: AVGO -> 43%, Silver -> 12%)",

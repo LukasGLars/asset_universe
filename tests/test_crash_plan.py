@@ -102,6 +102,18 @@ def test_crash_rows_survive_avgo_action_mentioning_the_block():
     assert "BUY" in fp["crash_rows"]["Broadcom"]["detail"]
 
 
+def test_avgo_crash_day_sends_the_previewed_broadcom_alert():
+    # Live shape of 2026-11-06: AVGO trigger flips and the Broadcom row fires
+    # on the same run. The message must be the CRASH TRIGGER format, once.
+    from preview_all_triggers import BASE, SCENARIOS
+    curr = dict(SCENARIOS)["AVGO crash day (live shape)"]
+    subject, body = build_actionable_message(extract_fingerprint(BASE), extract_fingerprint(curr))
+    assert subject.endswith("Crash trigger Broadcom")
+    assert body.count("CRASH TRIGGER -- Broadcom: (5d -11.0%) -- BUY 16,667 kr") == 1
+    assert "AVGO GAP-DOWN" not in body
+    assert "Crash plan: act once; the band is the backstop after cash runs out." in body
+
+
 def test_live_state_file_is_valid():
     st = cp.load_state()
     assert set(st["used"]) == set(cp.HOLDINGS) and st["pending"] == {}
