@@ -5,9 +5,15 @@ The operator's crash plan for the cash reserve (revised 2026-11-05, MEMORY.md
 the rule:
 
   - Trigger  : a holding's close is >= 10% below its close 5 sessions earlier.
-  - Tranches : the reserve is THREE equal tranches, each one third of the cash
-               TARGET (so the size stays the same as cash is spent). First
-               come, first served across Broadcom, Lilly and the index.
+  - Tranches : the reserve is THREE tranches, sized off the cash actually
+               AVAILABLE (operator, 2026-11-06; was the cash target): each
+               tranche = available cash / tranches not yet used, where
+               available = the Reactor Core Cash balance on the sheet minus
+               any second half already reserved. The operator updates the
+               sheet after every buy, so each alert is sized off real cash.
+               With no new money that is a third of the cash at the first
+               trigger, every time. First come, first served across
+               Broadcom, Lilly and the index.
   - Split    : each tranche is bought in two halves -- half at the trigger,
                the other half 21 sessions later, or at a further -10% from
                the trigger close if that comes first. The first month after a
@@ -103,19 +109,32 @@ def save_used(used: dict[str, int], path: Path | None = None) -> None:
 
 # ── plan (pure) ──────────────────────────────────────────────────────────────
 
-def plan(rows: list[dict], cash: float, base: float, cash_target_kr: float,
+def sizing(cash: float, used: dict[str, int] | None = None, pending: dict | None = None) -> dict:
+    """Available cash (balance minus reserved second halves), tranches left,
+    and the tranche that available cash supports right now."""
+    used = used or {}
+    pending = pending or {}
+    reserved = sum(float(p["half_kr"]) for p in pending.values())
+    available = max(0.0, cash - reserved)
+    left = max(0, TRANCHES - sum(used.values()))
+    return {"reserved": reserved, "available": available, "left": left,
+            "tranche": available / left if left else 0.0}
+
+
+def plan(rows: list[dict], cash: float, base: float,
          used: dict[str, int] | None = None, pending: dict | None = None) -> list[dict]:
     """rows: [{name, roc, close, value, since}] where `since` is the number of
     sessions after an open tranche's first-half date (None when none is open).
     Returns the rows with state, buy_kr, why and next_price."""
     used = used or {n: 0 for n in HOLDINGS}
     pending = pending or {}
-    half = cash_target_kr / TRANCHES / 2
-    reserved = sum(float(p["half_kr"]) for p in pending.values())
-    free = max(0.0, cash - reserved)
+    sz = sizing(cash, used, pending)
     fired = [r for r in rows if r["name"] not in pending and r["roc"] is not None and r["roc"] <= TRIGGER]
     eligible = [r for r in fired if used.get(r["name"], 0) < MAX_PER_HOLDING]
-    share = min(half, free / len(eligible)) if eligible else 0.0
+    # Several firing on one run split what is left: each opens a tranche of
+    # available / max(tranches left, holdings firing), so the second halves
+    # stay covered even when more fire than there are tranches left.
+    share = (sz["available"] / max(sz["left"], len(eligible)) / 2) if (eligible and sz["left"]) else 0.0
     out = []
     for r in rows:
         name, cap = r["name"], HOLDINGS[r["name"]][2]
@@ -157,9 +176,12 @@ def _px(name: str, v: float) -> str:
     return f"${v:,.2f}" if HOLDINGS[name][0] == "equities" else f"{v:,.2f} kr"
 
 
-def format_lines(planned: list[dict], cash: float, cash_target_kr: float) -> list[str]:
-    t = cash_target_kr / TRANCHES
-    out = [f"  Crash Plan  [cash {cash:,.0f} kr; {TRANCHES} tranches of {t:,.0f} kr bought in halves, "
+def format_lines(planned: list[dict], cash: float, used: dict[str, int] | None = None,
+                 pending: dict | None = None) -> list[str]:
+    sz = sizing(cash, used, pending)
+    res = f" minus {sz['reserved']:,.0f} reserved" if sz["reserved"] else ""
+    out = [f"  Crash Plan  [cash {cash:,.0f} kr{res} = {sz['available']:,.0f} available; "
+           f"{sz['left']} of {TRANCHES} tranches left -> {sz['tranche']:,.0f} kr each, bought in halves; "
            f"max {MAX_PER_HOLDING} per holding; trigger {WINDOW}d <= {TRIGGER:.0%}; caps 28% stock / 38% index]"]
     for r in planned:
         n, s = r["name"], r["state"]

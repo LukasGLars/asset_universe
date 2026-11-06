@@ -80,7 +80,7 @@ BASE = """
 # covers both alert kinds (ARMED -> FIRED and WAITING -> SECOND_HALF).
 import crash_plan as _cp
 
-_CP_BASE, _CP_TARGET, _CP_CASH = 1_000_000, 100_000, 96_000
+_CP_BASE, _CP_CASH = 1_000_000, 96_000
 _CP_PENDING = {"Eli Lilly": {"date": "2026-11-05", "close": 1300.0, "half_kr": 16_667}}
 
 
@@ -90,8 +90,8 @@ def _crash_block(bro_roc=-0.03, idx_roc=-0.01, lly_since=5, lly_close=1290.0):
         {"name": "Eli Lilly", "roc": 0.01, "close": lly_close, "value": 230_000, "since": lly_since},
         {"name": "LF Global Index", "roc": idx_roc, "close": 560.0, "value": 280_000, "since": None},
     ]
-    planned = _cp.plan(rows, _CP_CASH, _CP_BASE, _CP_TARGET, {"Eli Lilly": 1}, _CP_PENDING)
-    return "\n" + "\n".join(_cp.format_lines(planned, _CP_CASH, _CP_TARGET)) + "\n"
+    planned = _cp.plan(rows, _CP_CASH, _CP_BASE, {"Eli Lilly": 1}, _CP_PENDING)
+    return "\n" + "\n".join(_cp.format_lines(planned, _CP_CASH, {"Eli Lilly": 1}, _CP_PENDING)) + "\n"
 
 
 BASE = BASE + _crash_block()

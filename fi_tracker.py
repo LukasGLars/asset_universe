@@ -970,11 +970,12 @@ try:
                             "close": _c[-1] if _c else None, "value": _valued(_name),
                             "since": _since})
     print()
-    _cash_target_kr = _cash_target * _target_denom
+    # Sized off the cash actually on the sheet (Reactor Core Cash), which the
+    # operator updates after every buy -- not the cash target.
     print("\n".join(crash_plan.format_lines(
-        crash_plan.plan(_crash_rows, _rc_cash, _target_denom, _cash_target_kr,
+        crash_plan.plan(_crash_rows, _rc_cash, _target_denom,
                         _crash_state["used"], _crash_state["pending"]),
-        _rc_cash, _cash_target_kr)))
+        _rc_cash, _crash_state["used"], _crash_state["pending"])))
 except Exception as _e:
     print(f"\n  Crash Plan : [unavailable — {_e}]")
 
