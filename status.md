@@ -162,9 +162,9 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : LITE (Lumentum Holdings Inc.)  $509.70  (sector Technology, -44.6% 5d, 8 peers crashing, drift -0.0%)
-    Plan           : buy near $509.70, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
-    Open           : run_entry_screen.py --open LITE <fill_price> <shares> <capital_sek> --entry-type basket_crash
+    Basket-crash   : VRT (Vertiv Holdings Co)  $176.73  (sector Industrials, -28.1% 5d, 3 peers crashing, drift +7.5%)
+    Plan           : buy near $176.73, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
+    Open           : run_entry_screen.py --open VRT <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
   Crypto Trend Sleeve
     Status         : inactive -- no crypto leg carries a target (no alerts)
@@ -311,13 +311,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         24.81x       --    15
-ANET        29.39x       --    15
-ASML        24.04x       --    15
-AVGO        14.98x       --    15
-MRVL        18.19x       --    15
-MU           3.16x       --    15
-NVDA        11.41x       --    15
-QCOM        12.20x       --    15
-TSM         15.10x       --    15
-  accruing -- 15/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         24.81x       --    16
+ANET        29.39x       --    16
+ASML        24.04x       --    16
+AVGO        14.98x       --    16
+MRVL        18.19x       --    16
+MU           3.16x       --    16
+NVDA        11.41x       --    16
+QCOM        12.20x       --    16
+TSM         15.10x       --    16
+  accruing -- 16/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
