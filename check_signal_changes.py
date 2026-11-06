@@ -380,7 +380,14 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # scoped Plan/Open fields, not the extension's. Explicitly labeled
     # "secondary" / "backtest-only" so it isn't mistaken for equal-confidence
     # with the extension pathway when both fire together.
-    if (prev["sleeve_status"] == "CLOSED" and curr["sleeve_status"] == "CLOSED"
+    #
+    # Muted when the same message carries a crash-plan alert (operator,
+    # 2026-11-06): a crash day is exactly when basket-crash candidates appear,
+    # and the backtest-only sleeve line only distracts from the crash-plan buy.
+    _crash_plan_alerted = any(p.startswith(("Crash trigger ", "Crash plan second half ", "AVGO gap-down trigger"))
+                              for p in subject_parts)
+    if (not _crash_plan_alerted
+            and prev["sleeve_status"] == "CLOSED" and curr["sleeve_status"] == "CLOSED"
             and prev["sleeve_basket_candidate"] in ("none", "unknown")
             and curr["sleeve_basket_candidate"] not in ("none", "unknown")):
         lines = [f"OPPORTUNISTIC SLEEVE BASKET-CRASH CANDIDATE: {curr['sleeve_basket_candidate']} "
