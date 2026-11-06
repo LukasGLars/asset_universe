@@ -231,35 +231,51 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # forward-return study, which has no execution assumption to get wrong.
     # A plain MA breach, an MA-breach clearing, or a joint-stress flip are all
     # silent now.
-    avgo_changed = False
+    # Broadcom's crash-plan alert is the SAME message as Lilly's and the
+    # index's ("CRASH TRIGGER -- Broadcom: ... BUY X kr ..."), the format the
+    # operator approved in preview_all_triggers (2026-11-05). The AVGO trigger
+    # flip and the Broadcom row's ARMED -> FIRED are the same 5d/-10% event,
+    # so on the live day both change together; until 2026-11-06 the AVGO flip
+    # took over and sent an "AVGO GAP-DOWN TRIGGER" block instead, a format
+    # the preview never exercised. Now the AVGO flip only counts as a second
+    # route to the Broadcom crash block (covering a missing or non-ARMED
+    # baseline row), and falls back to a plain warning only when no Broadcom
+    # row can be read at all.
+    def _crash_block(name: str, detail: str) -> None:
+        blocks.append(
+            f"CRASH TRIGGER -- {name}: {detail}\n"
+            "Crash plan: act once; the band is the backstop after cash runs out."
+        )
+        subject_parts.append(f"Crash trigger {name}")
+
+    _crash_now = curr.get("crash_rows", {})
+    _crash_prev = prev.get("crash_rows", {})
+    broadcom_sent = False
     if (prev["avgo_trigger"] != curr["avgo_trigger"]
             and curr["avgo_trigger"] == "CRASH"
             and "unknown" not in (prev["avgo_trigger"], curr["avgo_trigger"])):
-        avgo_changed = True
-        _avgo_crash = curr.get("crash_rows", {}).get("Broadcom")
-        blocks.append(
-            f"AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
-            f"ACTION: {curr['avgo_action']}"
-            + (f"\nCRASH PLAN: {_avgo_crash['detail']}" if _avgo_crash
-               else "\nCRASH PLAN: Broadcom row NOT FOUND in status.md -- read the amount "
-                    "from fi_tracker's Crash Plan block before buying.")
-        )
-        subject_parts.append("AVGO gap-down trigger")
+        _row = _crash_now.get("Broadcom")
+        if _row is None:
+            blocks.append(
+                "AVGO GAP-DOWN TRIGGER: 5d ROC breached -10%\n"
+                f"ACTION: {curr['avgo_action']}\n"
+                "CRASH PLAN: Broadcom row NOT FOUND in status.md -- read the amount "
+                "from fi_tracker's Crash Plan block before buying."
+            )
+            subject_parts.append("AVGO gap-down trigger")
+            broadcom_sent = True
+        elif _row["status"] == "FIRED" and (_crash_prev.get("Broadcom") or {}).get("status") != "FIRED":
+            _crash_block("Broadcom", _row["detail"])
+            broadcom_sent = True
 
     # Crash plan (2026-11-04): one alert per holding on ARMED -> FIRED, quoting
-    # the row fi_tracker computed (amount, cap, stage-2 price) verbatim.
-    # Broadcom rides the AVGO gap-down alert above when that fired, so it is
-    # never sent twice. A holding with no baseline row (first run) is skipped.
-    for _name, _row in curr.get("crash_rows", {}).items():
-        if _name == "Broadcom" and avgo_changed:
-            continue
-        _p = prev.get("crash_rows", {}).get(_name)
+    # the row fi_tracker computed (amount, cap, second-half price) verbatim.
+    # A holding with no baseline row (first run) is skipped.
+    for _name, _row in _crash_now.items():
+        _p = _crash_prev.get(_name)
         if _p and _p["status"] == "ARMED" and _row["status"] == "FIRED":
-            blocks.append(
-                f"CRASH TRIGGER -- {_name}: {_row['detail']}\n"
-                "Crash plan: act once; the band is the backstop after cash runs out."
-            )
-            subject_parts.append(f"Crash trigger {_name}")
+            if not (_name == "Broadcom" and broadcom_sent):
+                _crash_block(_name, _row["detail"])
         elif _p and _p["status"] == "WAITING" and _row["status"] == "SECOND_HALF":
             blocks.append(f"CRASH PLAN -- {_name}: second half due {_row['detail']}")
             subject_parts.append(f"Crash plan second half {_name}")
