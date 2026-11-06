@@ -153,3 +153,25 @@ def test_live_state_file_is_valid():
 def test_index_is_exempt_in_sightline():
     from sightline import load_config
     assert "global_index" in load_config()["exemptions"]
+
+
+def test_basket_crash_alert_is_muted_when_the_crash_plan_alerts():
+    # Operator, 2026-11-06: no basket-crash sleeve line in a crash-plan alert.
+    from preview_all_triggers import BASE, SCENARIOS
+    curr = dict(SCENARIOS)["AVGO crash day (live shape)"]
+    basket = ("    Basket-crash   : LITE (Lumentum Holdings Inc.)  $509.70  (sector Technology)\n"
+              "    Plan           : buy near $509.70, flat 21d exit\n"
+              "    Open           : run_entry_screen.py --open LITE <fill_price> <shares> <capital_sek> --entry-type basket_crash\n")
+    anchor = "  Opportunistic Sleeve\n    Status         : CLOSED (0/1 position)\n"
+    assert anchor in BASE
+    prev_fp = extract_fingerprint(BASE)
+    prev_fp["sleeve_basket_candidate"] = "none"
+    curr_fp = extract_fingerprint(curr.replace(anchor, anchor + basket))
+    assert curr_fp["sleeve_basket_candidate"] == "LITE"
+    subject, body = build_actionable_message(prev_fp, curr_fp)
+    assert "Crash trigger Broadcom" in subject and "basket-crash" not in subject.lower()
+    assert "BASKET-CRASH" not in body
+    # Without a crash-plan alert the basket line still goes out as before.
+    calm_fp = extract_fingerprint(BASE.replace(anchor, anchor + basket))
+    subject, body = build_actionable_message(prev_fp, calm_fp)
+    assert "Sleeve basket-crash candidate -> LITE" in subject
