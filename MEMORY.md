@@ -6536,7 +6536,7 @@ long AVGO bull run, n=26-30. Supports the crash plan's first tranche.
 Script/workflow deleted; recoverable from 7d92cc2.
 
 **REVISED again 2026-11-05 (operator): each tranche bought in two halves.**
-Half a tranche (~16.7k) at the trigger; the other half 21 sessions later, or
+Half a tranche at the trigger (~16.7k on a round 1M account; **live 2026-11-06: 15,940 kr** = 10% x 956,411 target base / 3 / 2 -- sized off the cash TARGET, never the balance, pinned by tests/test_crash_plan.py); the other half 21 sessions later, or
 at a further -10% from the trigger close if that comes first. Rationale: the
 first month after a trigger carries the risk (worst -21.7%, dip-vs-mix
 rerun above); waiting on half costs ~1k kr in expectation. An open second

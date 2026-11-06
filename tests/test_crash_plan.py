@@ -27,6 +27,37 @@ def test_trigger_buys_half_a_tranche():
     assert out["Eli Lilly"]["state"] == cp.ARMED
 
 
+def test_half_is_sized_off_the_cash_target_not_the_balance():
+    # Operator rule (MEMORY.md "Crash plan", REVISED 2026-11-05): a tranche is
+    # one third of the cash TARGET, bought in two halves, so every buy is the
+    # same size however much cash is left. The balance only limits the buy
+    # when there is not enough of it.
+    for cash in (50_000, 96_000, 150_000):
+        out = _plan([_row("Broadcom", -0.11, 200_000)], cash=cash)
+        assert round(out["Broadcom"]["buy_kr"]) == 16_667, cash
+    short = _plan([_row("Broadcom", -0.11, 200_000)], cash=10_000)
+    assert round(short["Broadcom"]["buy_kr"]) == 10_000
+
+
+def test_live_2026_11_06_alert_quotes_half_of_a_third_of_the_target():
+    # The real numbers on the first live trigger: target base 956,411 kr,
+    # cash target 10% = 95,641 -> tranche 31,880 -> first half 15,940 kr,
+    # NOT a third of the 96,090 kr balance (16,015 kr).
+    base, cash = 956_411, 96_090
+    target = 0.10 * base
+    rows = [
+        {"name": "Broadcom", "roc": -0.155, "close": 291.53, "value": 184_396, "since": None},
+        {"name": "Eli Lilly", "roc": -0.007, "close": 1364.73, "value": 252_323, "since": None},
+        {"name": "LF Global Index", "roc": -0.017, "close": 608.0, "value": 241_702, "since": None},
+    ]
+    calm = [{**r, "roc": -0.01} for r in rows]
+    panel = lambda rs: "\n".join(cp.format_lines(cp.plan(rs, cash, base, target), cash, target))
+    subject, body = build_actionable_message(extract_fingerprint(panel(calm)), extract_fingerprint(panel(rows)))
+    assert "Crash trigger Broadcom" in subject
+    assert "BUY 15,940 kr (first half of tranche 1" in body
+    assert "--half 15940" in body
+
+
 def test_open_tranche_waits_then_second_half_after_21_sessions():
     pend = {"Broadcom": {"date": "2026-11-05", "close": 100.0, "half_kr": 16_667}}
     wait = _plan([_row("Broadcom", -0.02, 200_000, close=97, since=10)], used={"Broadcom": 1}, pending=pend)
