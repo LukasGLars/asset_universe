@@ -6619,3 +6619,23 @@ Readings at 2026-10: trend positive, unemployment not rising (4.1-4.2%
 vs 12m avg 4.28%), no inversion in 18m -> all three rules fully invested.
 Note: UNRATE 2025-10 is missing (shutdown); rolling means need
 min_periods. Scripts scratch-only.
+
+**Follow-up 2: sector-performance layer -- nothing robust (2026-11-10).**
+Ken French 12 industries + market TR, daily 1926-2026-09, cash = T-bill.
+Rules: S1 utilities lead (Gayed & Bilello 2014: Utils 4-wk return > market
+-> out next week); S2 defensives (NoDur/Hlth/Utils) beat cyclicals
+(Durbl/BusEq/Shops/Manuf) over 6m; S3 fewer than 6/12 industries above
+their 10m average; each also AND-ed with the 10m trend.
+- S2 defensive rotation: worst of all (CAGR -3.6 pp, Calmar no better).
+- S3 breadth and trend+sector combos: about the same as trend alone
+  (Calmar ~0.20 vs B&H 0.11 over 1928-2026), no improvement from the layer.
+- S1 utilities lead looked best after publication (2015-26 Calmar 0.96 vs
+  0.40, MaxDD -13% vs -34%) **but fails the sub-period and execution test**:
+  with a 1-day lag and 0.1% per switch it trails buy-and-hold Calmar in
+  1928-60, 1961-92 and 1993-2014 (0.04/0.16/0.16 vs 0.09/0.22/0.18) and is
+  knife-edge on lookback (2015-26: 13 wks 0.32, 4 wks 0.65, 8 wks 1.05).
+  One regime carries it; ~12 switches/yr, out ~48% of the time. (The paper
+  rotated into Treasuries, not cash -- the bond bull added return there.)
+Verdict: no sector layer adopted. Readings 2026-09: trend positive,
+cyclicals leading defensives (+11.0% vs +1.5% over 6m) but only 4/12
+industries above their 10m average -- a narrow, AI-led market.
