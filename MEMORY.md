@@ -6639,3 +6639,21 @@ their 10m average; each also AND-ed with the 10m trend.
 Verdict: no sector layer adopted. Readings 2026-09: trend positive,
 cyclicals leading defensives (+11.0% vs +1.5% over 6m) but only 4/12
 industries above their 10m average -- a narrow, AI-led market.
+
+**Follow-up 3: what >=20% falls share (US market TR, 16 falls 1926-2026).**
+- All 16 came after a rising year (+6..+49% in the 12m before the top) and
+  11/16 started in BELOW-median volatility -- calm tops. Neither
+  discriminates: most ordinary months look the same.
+- Volatility warns only after the fall has begun: a 21d vol spike to 1.5x
+  the long-run median (11%) first appeared at a median ~-9% (slow bears:
+  -17..-24%).
+- Volatility clusters, returns do not: corr(vol, next month vol) 0.69,
+  corr(vol, next month return) 0.01. Highest-vol quintile: same average
+  next-month return (+1.1%) but P(next month < -10%) 8.3% vs 0% in the
+  lowest. Risk is forecastable; direction is not.
+- Severity splits on recession: 10/16 overlapped an NBER recession
+  (typically -37..-84%, 17-34m falling, years to recover); the 6 without
+  one were -20..-33% and recovered in 1-17m (1987: 17m). The useful
+  reverse-engineered question is "is this a recession fall?", not "when".
+Possible future study (not run): pace the crash plan's later tranches by
+a recession read (e.g. real-time Sahm) -- non-recession dips recover fast.
