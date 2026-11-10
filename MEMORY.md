@@ -6657,3 +6657,22 @@ industries above their 10m average -- a narrow, AI-led market.
   reverse-engineered question is "is this a recession fall?", not "when".
 Possible future study (not run): pace the crash plan's later tranches by
 a recession read (e.g. real-time Sahm) -- non-recession dips recover fast.
+
+**Follow-up 4: trend / trading-range regimes, 2000-2026 only (2026-11-10).**
+Bull = close > SMA200 and SMA200 rising 21d; Bear = below and falling;
+Range = ADX(14) < 20, Trending = ADX > 25. One-day lag, 0.1%/switch.
+- SPY: regimes describe RISK well -- Bear: P(63d maxDD <= -10%) 40% vs
+  Bull 9%, next-21d vol 26% vs 13%, avg next-21d return 0.0% vs +0.9%.
+  Acting on it ("out in Bear"): 2000-12 Calmar 0.16 vs 0.03 (two slow
+  bears); 2013-26 0.30 vs 0.44, MaxDD unchanged (-34%, 2020 too fast).
+  Same split as every other timing test.
+- ADX range/trend adds little; Bull/Trending is the calmest SPY state
+  (P(21d < -5%) 3.6%), Bear/Range the weakest (avg -0.6%).
+- AVGO 2010-26: Bear (7% of days) was followed by +9.2% avg next 21d --
+  dips mean-reverted; out-in-Bear cost ~10pp CAGR. LLY: regimes carry no
+  information; out-in-Bear lost. GLD: no information; out-in-Bear lost in
+  both halves. Survivorship caveat: AVGO and LLY are hindsight winners.
+- Consistent with the retired AVGO 200d guard (PR #88) and the crash plan
+  (buy single-name weakness, do not sell it).
+Readings 2026-11-10: SPY Bull/Range (calm); AVGO Bear/Trending; LLY
+Bull/Trending (ADX 38); GLD Bear (close 369 vs SMA200 410), ADX 19.
