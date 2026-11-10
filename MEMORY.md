@@ -6559,3 +6559,38 @@ the operator watches for it. Automation (openFDA label diff + approval
 status) was scoped and parked: rare, instantly front-page news, and the
 price would move before a daily check -- not worth the false-alarm risk of
 text matching now.
+
+## Drawdown precursors: no macro signal reliably warns of a >=20% S&P fall (2026-11-10)
+
+Operator asked whether anything historically preceded major drawdowns.
+S&P 500 daily 1950-2026 (Yahoo ^GSPC), 11 falls >= 20% close to close
+(1956, 61, 66, 68, 73, 80, 87, 2000, 07, 2020, 22). Eleven conventional
+signals, thresholds fixed up front, monthly, macro lagged one month for
+publication: curve 10y-3m < 0, Baa-10y +0.5pp/6m, real-time Sahm >= 0.5,
+claims +20% off 52w low, Fed funds +2pp/12m, NFCI > 0, CPI >= 5% y/y,
+WTI +50% y/y, permits -20% y/y, IP < 0 y/y, S&P < 10m average.
+Label: a >= 15% fall within the next 12 months (base rate 20% of months).
+
+| Signal | Lift 1955-89 | Lift 1990-2025 | Tops warned (12m) |
+|---|---|---|---|
+| Curve inverted | 2.6x | 1.2x | 3/11 |
+| Credit widening | 0.4x | 1.3x | 1/11 |
+| Fed hiking | 2.1x | 0.0x | 3/11 |
+| Oil shock | 1.4x | 2.2x | 4/11 |
+| Permits -20% | 1.5x | 2.1x | 2/10 |
+| NFCI > 0 | 1.3x (on 68% of months) | 2.3x | 4/7 |
+| Price trend | 1.4x | 1.9x | 6/11 |
+
+**Verdict: nothing usable as a trigger.** Best lift ~2x on a 20% base,
+i.e. still wrong 55-75% of the time when on; no signal warned more than
+6 of 11 tops; forward 12m returns while "on" were mostly still positive.
+Sub-periods disagree sharply (Fed hiking 2.1x -> 0.0x, curve 2.6x ->
+1.2x, credit 0.4x -> 1.3x) -- the repo's one-regime warning again.
+Exogenous falls (1962, 1966, 1987, 2020) had no consistent precursor.
+Real-economy stress (curve, permits, oil, NFCI) carried the most
+information post-1990, and 2007 was well flagged; that is a hindsight
+pattern over 4 episodes, not a rule. Supports the existing design:
+size for the drawdown (gold ballast, -25% tolerance, crash plan) rather
+than time it. Readings at 2026-10: only the oil shock is on (WTI $102,
++68% y/y). FRED series are revised except real-time Sahm. Script was
+scratch-only (not committed).
