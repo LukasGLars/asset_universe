@@ -6594,3 +6594,28 @@ size for the drawdown (gold ballast, -25% tolerance, crash plan) rather
 than time it. Readings at 2026-10: only the oil shock is on (WTI $102,
 +68% y/y). FRED series are revised except real-time Sahm. Script was
 scratch-only (not committed).
+
+**Follow-up same day: adding a technical (trend) layer -- helps in backtest, fails after publication.**
+Published rules, not tuned; signal at month end, acted on next month, cash
+at T-bill: A trend (S&P < 10m SMA, Faber 2007); B Growth-Trend (trend AND
+UNRATE > 12m SMA, Philosophical Economics 2016); C trend AND 10y-3m
+inverted within 18m.
+
+| Rule | 1988-2026 TR CAGR / MaxDD / Calmar | 2016-07..2026-10 TR CAGR / MaxDD / Calmar |
+|---|---|---|
+| Buy & hold | +11.4% / -50.9% / 0.22 | **+15.1% / -23.9% / 0.63** |
+| A Trend | +10.1% / -21.5% / 0.47 | +9.4% / -21.5% / 0.44 |
+| B Growth-Trend | +12.2% / -23.9% / 0.51 | +11.8% / -23.9% / 0.49 |
+| C Trend+Curve | +12.7% / -25.1% / 0.51 | +11.6% / -23.9% / 0.49 |
+
+1955-2026 (price only): B&H -52.6% MaxDD, rules -24..-30%, Calmar ~0.15
+-> ~0.31. **The whole edge is the slow recession bears (1973-74, 2000-02,
+2007-09).** Fast falls (1987, 2020) and the 2022 rate bear were not
+avoided by any rule; after publication (2016+) every rule lost 3-6 pp/yr
+of CAGR to buy-and-hold with no drawdown saved. Verdict: real but
+regime-bound -- a slow-recession hedge, not a crash hedge -- and it works
+against the crash plan (sell weakness vs buy weakness). Not adopted.
+Readings at 2026-10: trend positive, unemployment not rising (4.1-4.2%
+vs 12m avg 4.28%), no inversion in 18m -> all three rules fully invested.
+Note: UNRATE 2025-10 is missing (shutdown); rolling means need
+min_periods. Scripts scratch-only.
