@@ -6715,3 +6715,16 @@ candidates only managed futures rose in most gold drawdowns (+6, +18, +8%;
 Calmar 0.89 vs 0.96); gold 15 + 7-10y UST 5 or + USD cash 5 = identical to
 gold 20 (0.96). Silver is not a hedge for gold (corr 0.73, fell harder in
 every gold drawdown). No change.
+
+**Follow-up: hold gold through elevated real yields? (2026-11-12)**
+DFII10 vs gold (GC=F, USD and SEK), month-end, 2003-07..2025-11, next-12m.
+Median next-12m gold (SEK): RY<0 -7.1%, 0-1% +9.3%, 1-2% +23.9%, >2%
++15.4% (88% of months up). By 6m RY direction: falling +9.1%, rising
++14.0%. corr(RY level, next-12m gold) positive in every era (+0.62 /
++0.38 / +0.77). **The textbook gold-vs-real-yield link is contemporaneous
+(gold falls WHILE yields rise), not predictive: high levels were followed
+by better gold returns** -- consistent with real yields mean-reverting
+from peaks. Bound: >2% happened in only two episodes (2003-09, 2023-25),
+~22 independent years overall, overlapping windows; not a buy signal
+either. 2026's high-RY months have no 12m outcome yet. Conclusion: no
+case for cutting gold on elevated RY. Now 2.66%, +0.73pp over 6m.
