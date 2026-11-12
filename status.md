@@ -59,14 +59,14 @@ MACRO REGIME
   Nominal 10Y             4.88%   HIGH
   Real Yield             +2.66%   HIGH  ^
   Breakeven               2.20%   MID
-  HY OAS                334 bps   WIDE
+  HY OAS                330 bps   WIDE
   IG Credit               1.51%   TIGHT
   Curve 10Y-3M          +68 bps   MID
   Curve 10Y-2Y          +25 bps   LOW
   SE 10Y                   nan%   --
   USD                     121.9   STRONG
 
-  HY 20d delta  : +23 bps  (widening)
+  HY 20d delta  : +14 bps  (widening)
   Confidence    : HIGH
   Data through  : 2026-11-11
 
@@ -130,10 +130,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $7.48 vs $6.35  (+17.9% surprise)
     TTM EPS (non-GAAP actual)  : $31.95
-    Forward EPS (+1yr est.)    : $50.54
+    Forward EPS (+1yr est.)    : $50.64
     Fwd/Trail ratio (normalized): 1.58x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $24.40B  (TTM YoY: +45.5%)
-    Next-qtr revenue consensus : $24.76B (implied YoY +28.4%)
+    Next-qtr revenue consensus : $24.69B (implied YoY +28.0%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-09-30
@@ -161,10 +161,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $291.78  (ext +1.1%, 21d med +1.9%, ave +2.4%, win 65.1%, div THIN, drift +0.0%)
-    Plan           : buy near $291.78, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
-    VIX review     : 17.49  (48% percentile, flat) -- for review, not a gate
+    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
@@ -294,7 +291,7 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 -----------------------------------------------------------------------------------
 MU          $811.30    $75.51   $207.76      2.75x        +175%     3.90x      0.02
 AMD         $552.90     $6.65    $17.69      2.66x        +166%    31.26x      0.19
-NVDA        $173.73     $7.01    $15.91      2.27x        +127%    10.92x      0.09
+NVDA        $173.73     $7.01    $15.93      2.27x        +127%    10.91x      0.09
 MRVL        $168.80     $3.30     $7.35      2.23x        +123%    22.97x      0.19
 AVGO*       $345.22     $9.76    $19.47      1.99x         +99%    17.74x      0.18
 ASML      $1,534.42    $33.89    $56.43      1.67x         +67%    27.19x      0.41
@@ -318,7 +315,7 @@ ASML        27.19x       --    21
 AVGO        17.74x       --    21
 MRVL        22.97x       --    21
 MU           3.90x       --    21
-NVDA        10.92x       --    21
+NVDA        10.91x       --    21
 QCOM        14.46x       --    21
 TSM         17.68x       --    21
   accruing -- 21/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
