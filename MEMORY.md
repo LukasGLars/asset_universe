@@ -6676,3 +6676,31 @@ Range = ADX(14) < 20, Trending = ADX > 25. One-day lag, 0.1%/switch.
   (buy single-name weakness, do not sell it).
 Readings 2026-11-10: SPY Bull/Range (calm); AVGO Bear/Trending; LLY
 Bull/Trending (ADX 38); GLD Bear (close 369 vs SMA200 410), ADX 19.
+
+## Ballast diversification: gold 10 + X 10 vs gold 20 -- nothing passes the bar (2026-11-12)
+
+Operator asked whether to diversify the 20% hedge. Live mix AVGO 20 / LLY
+20 / Index 30 (SPY) / Cash 10 / ballast 20, SEK, daily, +-10pp band,
+2010-01..2026-11 (AQMIX start). Same bar as the gold sweep: move only on
+>= 0.10 Calmar AND >= 1pp MaxDD.
+
+| Ballast | CAGR | MaxDD | Calmar | Stress windows positive (of 7) | Corr w/ equities |
+|---|---|---|---|---|---|
+| Gold 20 (live) | +22.0% | -22.9% | 0.96 | 5 | 0.16 |
+| + 7-10y Treasuries | +22.1% | -23.6% | 0.93 | 6 | 0.18 |
+| + Long Treasuries | +22.1% | -23.6% | 0.94 | 5 (2022 -14%) | 0.08 |
+| + Managed futures (AQMIX) | +22.0% | -25.5% | 0.86 | 5 (2022 +78%) | 0.23 |
+| + USD cash | +21.6% | -23.1% | 0.94 | 5 | 0.29 |
+| + CHF cash | +22.0% | -23.5% | 0.93 | 3 | 0.07 |
+| + Utilities / Staples | +22.5 / +22.4% | -23.5 / -23.2% | 0.96 / 0.97 | 5 / 2 (2020 -31% / -18%) | 0.50 / 0.59 |
+| + Silver | +22.3% | -23.7% | 0.94 | 2 | 0.19 |
+| No ballast (index 50) | +23.3% | -26.1% | 0.89 | -- | -- |
+
+Windows (SEK): 2011 Aug, 2015-16, 2018 Q4, 2020 Covid, 2022, 2025 Apr
+tariff shock, 2026 Jun-Nov AI. **No alternative passes the bar; gold 20
+stays.** Useful facts: 7-10y Treasuries in SEK were the most consistent
+(only 2025 Apr negative) -- partly because the USD rises in crises for a
+SEK holder; the 2025 tariff shock broke that (every USD ballast and gold
+fell, "sell America"). Defensive equities are not ballast (crashed with
+the market in 2020). Home Base (Spiltan, Swedish bonds, ~10.6% of TPV)
+already supplies a bond leg outside Reactor Core. Script scratch-only.
