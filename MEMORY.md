@@ -6704,3 +6704,14 @@ SEK holder; the 2025 tariff shock broke that (every USD ballast and gold
 fell, "sell America"). Defensive equities are not ballast (crashed with
 the market in 2020). Home Base (Spiltan, Swedish bonds, ~10.6% of TPV)
 already supplies a bond leg outside Reactor Core. Script scratch-only.
+
+**Follow-up: "hedge within the hedge" -- the hedge for gold is the equities.**
+Gold drawdowns in SEK since 2010 (2011-13 -36%, 2020-21 -20%, 2022 -13%,
+2026 Mar-Jul -20%): the equity part (AVGO/LLY/Index) was +63%, +22%, +5%,
++21% over the same spans -- gold falls in risk-on, rising-real-yield
+markets, which is when the equities carry the portfolio. Of the ballast
+candidates only managed futures rose in most gold drawdowns (+6, +18, +8%;
+-2% in 2020-21), but gold 15 + MF 5 deepens MaxDD (-25.1% vs -22.9%,
+Calmar 0.89 vs 0.96); gold 15 + 7-10y UST 5 or + USD cash 5 = identical to
+gold 20 (0.96). Silver is not a hedge for gold (corr 0.73, fell harder in
+every gold drawdown). No change.
