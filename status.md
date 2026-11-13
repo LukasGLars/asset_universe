@@ -161,10 +161,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $296.30  (ext +2.6%, 21d med +1.9%, ave +2.4%, win 65.0%, div THIN, drift +0.0%)
-    Plan           : buy near $296.30, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
-    VIX review     : 18.70  (56% percentile, falling) -- for review, not a gate
+    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
     Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
@@ -229,8 +226,8 @@ Computing capped 252d distributions for 51 candidates ...
   CIEN      N=1238  mu= +21.2%  sigma= 27.4%  hist=27yr  [MODERATE]
   BKNG      N=1238  mu= +34.1%  sigma= 48.6%  hist=27yr  [MODERATE]
   GM        N= 620  mu=  +7.5%  sigma= 13.0%  hist=16yr  [SINGLE]
-  WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
   EXV1.DE   no data
+  WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
   CMI       N=1238  mu= +26.6%  sigma= 30.0%  hist=27yr  [MODERATE]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
@@ -292,15 +289,15 @@ AVGO peer valuation snapshot -- 2026-11-13
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $798.44    $75.51   $207.76      2.75x        +175%     3.84x      0.02
-AMD         $585.30     $6.65    $17.69      2.66x        +166%    33.09x      0.20
-NVDA        $166.19     $7.01    $15.85      2.26x        +126%    10.49x      0.08
-MRVL        $164.45     $3.30     $7.35      2.23x        +123%    22.37x      0.18
-AVGO*       $364.36     $9.76    $19.47      1.99x         +99%    18.72x      0.19
-ASML      $1,497.12    $33.89    $56.43      1.67x         +67%    26.53x      0.40
-ANET        $206.63     $3.91     $6.04      1.54x         +54%    34.23x      0.63
-TSM         $405.49    $15.54    $23.39      1.50x         +50%    17.34x      0.34
-QCOM        $177.14    $10.53    $12.21      1.16x         +16%    14.51x      0.91
+MU          $791.15    $75.51   $207.76      2.75x        +175%     3.81x      0.02
+AMD         $561.08     $6.65    $17.69      2.66x        +166%    31.72x      0.19
+NVDA        $164.60     $7.01    $15.85      2.26x        +126%    10.39x      0.08
+MRVL        $161.49     $3.30     $7.35      2.23x        +123%    21.97x      0.18
+AVGO*       $354.86     $9.76    $19.47      1.99x         +99%    18.23x      0.18
+ASML      $1,501.74    $33.89    $56.43      1.67x         +67%    26.61x      0.40
+ANET        $208.81     $3.91     $6.04      1.54x         +54%    34.59x      0.64
+TSM         $404.32    $15.54    $23.39      1.50x         +50%    17.29x      0.34
+QCOM        $176.67    $10.53    $12.21      1.16x         +16%    14.47x      0.91
 
 * = AVGO
 
@@ -312,13 +309,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         33.09x       --    22
-ANET        34.23x       --    22
-ASML        26.53x       --    22
-AVGO        18.72x       --    22
-MRVL        22.37x       --    22
-MU           3.84x       --    22
-NVDA        10.49x       --    22
-QCOM        14.51x       --    22
-TSM         17.34x       --    22
+AMD         31.72x       --    22
+ANET        34.59x       --    22
+ASML        26.61x       --    22
+AVGO        18.23x       --    22
+MRVL        21.97x       --    22
+MU           3.81x       --    22
+NVDA        10.39x       --    22
+QCOM        14.47x       --    22
+TSM         17.29x       --    22
   accruing -- 22/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
