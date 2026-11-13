@@ -6766,3 +6766,12 @@ Needs fully automated falsifiers (no manual readings).
 Recommendation: Sightline entry = the AI-decorrelation CUT rule + otherwise
 governed by target and band (like gold/index). data.sec.gov added to the
 session environment's allowed hosts for this check.
+- **Market-wide cushion -- NOT a clean falsifier.** 12 S&P corrections >= 10%
+  since 1996: BRK fell as much or more in 4 (1998, 1999, 2015-16, 2018-01),
+  twice two-in-a-row (1998-99, 2015-16 -> 2018-01) -> a "two in a row" rule
+  would have sold before 2000-02 (BRK +26% vs S&P -48%). BRK's real edge is
+  in tech-led falls: 2000-02 +26%, 2022 -12% vs -24%, 2025 +2% vs -19% --
+  the same thesis the AI rule tests.
+- **Cash pile -- NOT automatable.** T-bills (most of it) are not in the SEC
+  companyfacts feed (dimensional/company tags); only cash equivalents
+  (~4% of assets) are.
