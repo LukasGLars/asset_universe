@@ -6728,3 +6728,17 @@ from peaks. Bound: >2% happened in only two episodes (2003-09, 2023-25),
 ~22 independent years overall, overlapping windows; not a buy signal
 either. 2026's high-RY months have no 12m outcome yet. Conclusion: no
 case for cutting gold on elevated RY. Now 2.66%, +0.73pp over 6m.
+
+## Search for a 10% slot (Index 20 + X 10): nothing passes (2026-11-13)
+
+Live mix with ACWI as index proxy (closer to LF Global Index than SPY),
+SEK, +-10pp band, 2010-01..2026-11; live Calmar 0.94, MaxDD -22.4%. 31
+candidates (factor/sector/country ETFs incl. EWD Sweden and EWL Switzerland,
+VNQ, IGF, DBC, AQMIX, MERFX, BRK-B, Investor AB). Pre-registered pass:
+full-period >= +0.10 Calmar AND >= 1pp shallower MaxDD, better in both
+halves (split 2018-06), second half >= +0.05. **Zero pass.**
+Closest: BRK-B and INVE-B +0.09 Calmar / +1.5pp MDD but worse in the first
+half; AQMIX (managed futures) the only consistent one: +0.07 / +2.0pp,
++0.07 in both halves, at -0.6pp CAGR; EWL +0.05 both halves; MERFX +0.04.
+With 31 tries the best of the lot is expected to look decent by chance.
+No change. Script scratch-only.
