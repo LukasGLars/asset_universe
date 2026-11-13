@@ -229,8 +229,8 @@ Computing capped 252d distributions for 51 candidates ...
   CIEN      N=1238  mu= +21.2%  sigma= 27.4%  hist=27yr  [MODERATE]
   BKNG      N=1238  mu= +34.1%  sigma= 48.6%  hist=27yr  [MODERATE]
   GM        N= 620  mu=  +7.5%  sigma= 13.0%  hist=16yr  [SINGLE]
-  EXV1.DE   no data
   WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
+  EXV1.DE   no data
   CMI       N=1238  mu= +26.6%  sigma= 30.0%  hist=27yr  [MODERATE]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
@@ -294,7 +294,7 @@ Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(
 -----------------------------------------------------------------------------------
 MU          $798.44    $75.51   $207.76      2.75x        +175%     3.84x      0.02
 AMD         $585.30     $6.65    $17.69      2.66x        +166%    33.09x      0.20
-NVDA        $166.19     $7.01    $15.93      2.27x        +127%    10.43x      0.08
+NVDA        $166.19     $7.01    $15.85      2.26x        +126%    10.49x      0.08
 MRVL        $164.45     $3.30     $7.35      2.23x        +123%    22.37x      0.18
 AVGO*       $364.36     $9.76    $19.47      1.99x         +99%    18.72x      0.19
 ASML      $1,497.12    $33.89    $56.43      1.67x         +67%    26.53x      0.40
@@ -312,13 +312,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         33.09x       --    21
-ANET        34.23x       --    21
-ASML        26.53x       --    21
-AVGO        18.72x       --    21
-MRVL        22.37x       --    21
-MU           3.84x       --    21
-NVDA        10.43x       --    21
-QCOM        14.51x       --    21
-TSM         17.34x       --    21
-  accruing -- 21/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         33.09x       --    22
+ANET        34.23x       --    22
+ASML        26.53x       --    22
+AVGO        18.72x       --    22
+MRVL        22.37x       --    22
+MU           3.84x       --    22
+NVDA        10.49x       --    22
+QCOM        14.51x       --    22
+TSM         17.34x       --    22
+  accruing -- 22/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
