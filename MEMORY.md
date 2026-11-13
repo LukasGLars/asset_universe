@@ -6742,3 +6742,27 @@ half; AQMIX (managed futures) the only consistent one: +0.07 / +2.0pp,
 +0.07 in both halves, at -0.6pp CAGR; EWL +0.05 both halves; MERFX +0.04.
 With 31 tries the best of the lot is expected to look decent by chance.
 No change. Script scratch-only.
+
+## BRK falsifiers: only the AI-decorrelation one is usable (2026-11-13)
+
+Operator is considering LF 20 / BRK 10 (not yet decided or in config) for two
+stated reasons: BRK holds up in AI sell-offs, and it is a steady compounder.
+Needs fully automated falsifiers (no manual readings).
+- **AI decorrelation -- USABLE.** CUT if in two consecutive AVGO crash
+  triggers (5d <= -10%) BRK's 5d return is worse than half of AVGO's. 32
+  AVGO triggers 2010-2026: BRK > half of AVGO's drop only 3 times (2015-08,
+  2020-02, 2022-01, all market-wide), never consecutive -> zero false
+  alarms; since 2024 BRK rose in 11 of 13. Rejected alternative: rolling
+  52w corr > 0.6 occurred in 11% of weeks (2016, 2020-23).
+- **Compounder via earnings -- NO INFORMATION.** Proxy operating earnings =
+  NetIncomeLoss - 0.79 x GainLossOnInvestments (SEC XBRL, CIK 1067983),
+  matches reported 2019/2021-24 within ~1bn (2020 off by the PCC write-down).
+  TTM below 1y/2y/3y-ago for 2 quarters fired 4/3/1 times; BRK's next 12m
+  after signals: +31, -17, +22, +71, +16% -- mostly beat ACWI. 1y version
+  fired 2026-03, right before BRK's +28% run.
+- **Compounder via relative return -- HARMFUL.** 3y BRK/ACWI lag < -15%: 6
+  signals, BRK beat ACWI in the next 12m after all 4 with outcomes (mean
+  reversion). 5y < -15%: once (2013-10), BRK +22% vs +9%.
+Recommendation: Sightline entry = the AI-decorrelation CUT rule + otherwise
+governed by target and band (like gold/index). data.sec.gov added to the
+session environment's allowed hosts for this check.
