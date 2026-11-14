@@ -6787,3 +6787,22 @@ new position gradually takes time the operator does not have. **The 45k
 goes back into LF; targets stay AVGO 20 / LLY 20 / Gold 20 / LF 30 /
 Cash 10.** Parked config branch `feat/brk-in-index-slot` abandoned (local
 copy deleted). Revisit only on a meaningful pullback, with fresh numbers.
+
+## Travelers (TRV) deep dive -- best AI hedge in the screen, but peak-cycle earnings (2026-11-14)
+
+Screened as the best-value AI hedge (30 candidates). Findings:
+- **Hedge quality is real:** 3y weekly corr with AVGO 0.02; SEK +45% in the
+  Jun-Nov 2026 AI sell-off, +30% in 2022, -8% in the 2025 tariff shock.
+  Index 20 + TRV 10 on the live mix (ACWI proxy): Calmar 0.94 -> 1.03, MaxDD
+  -22.4 -> -20.8%, CAGR +0.3pp, and better in BOTH halves (+0.01 / +0.03) --
+  more consistent than BRK, still just under the 0.10 bar.
+- **"13x forward" is on falling earnings:** consensus EPS 2026 $36.80
+  (+33%), 2027 $31.11 (-15%). Trailing P/E 10.6x, P/B 2.85x, core ROE 22-24%,
+  underlying combined ratio < 86% for nine quarters -- peak-cycle numbers.
+  Mean analyst target $377 vs price $403.
+- **Cycle turning:** US commercial renewal rate change +0.9% (4.3% a year
+  earlier), US commercial property premiums -4%, personal auto renewal
+  premium change -0.6%. Canada sold to Definity (closed early 2026); share
+  count 227.6M -> 210.6M on buybacks. Net investment income rising (+7%).
+- **Entry:** +53% over 1y in SEK, -1.5% from the high.
+Not adopted; information only.
