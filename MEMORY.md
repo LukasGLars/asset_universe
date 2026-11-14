@@ -6821,3 +6821,9 @@ AI-based triggers, TRV next-period medians, 2009-2026:
   second half -4.5pp). TRV's median move during the trigger's own 5 days is
   -0.4% -- the hedge pays over the following rotation, not the crash week.
 Now: AVGO-minus-TRV 6m spread -49pp -- the opposite of A's buy zone.
+**CORRECTION (same day): trigger A is much weaker per episode.** The +22.6% /
++10.6pp figures were day-weighted and overweight long hot stretches
+(2023-24). Declustered (first crossing after >= 63 sessions off): 12
+episodes 2010-2023; TRV 12m up 11/12, median +15% (any day +14.5%), beat
+ACWI 8/12 (~+5pp median), beat AVGO only 2/12. Not a return edge; at most a
+calm entry moment for the hedge. Do not build on the day-weighted number.
