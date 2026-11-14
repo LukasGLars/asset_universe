@@ -56,7 +56,7 @@ monthly_contribution_sek = 6000
 # restructure). Per-asset targets are authoritative; this table is a grouping
 # of them, not the other way round.
 reactor_core  = 0.60   # AVGO 20 + LLY 20 + Gold 20
-global_index  = 0.30   # Länsförsäkringar Global Index (25 -> 30 on 2026-11-01, took crypto's 5%)
+global_index  = 0.30   # LF Global Index 20 + Berkshire 10 (2026-11-13; was LF 30 from 2026-11-01)
 home_base     = 0.10   # cash
 crypto_sleeve = 0.00   # exited 2026-10-28 (Virtune BTC/ETH targets 0)
 war_chest     = 0.00
@@ -206,4 +206,20 @@ shares    = 397.844
 currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
-target_weight = 0.30
+target_weight = 0.20   # 30 -> 20 on 2026-11-13: 10pp to Berkshire
+
+# ── Berkshire Hathaway (2026-11-13, operator decision) ───────────────────────
+# Takes 10pp of the index slot (same global_index bucket, so bucket targets
+# are unchanged). Bought for two reasons: it holds up in AI-led sell-offs
+# (rose in 11 of 13 AVGO crash triggers since 2024) and it is a steady
+# compounder. Did NOT pass the pre-registered bar (+0.09-0.10 Calmar,
+# +1.5pp MaxDD, worse in 2010-18) -- a judgement call, see MEMORY.md.
+# Not in the crash plan: buying its dips showed no edge.
+[[positions]]
+name      = "Berkshire"
+ticker    = "BRK-B"
+shares    = 0
+currency  = "USD"
+category  = "equities"
+bucket    = "global_index"
+target_weight = 0.10

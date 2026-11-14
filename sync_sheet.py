@@ -50,6 +50,9 @@ ASSET_MAP: dict[str, str] = {
     "Länsförsäkringar Global Index": "LF Global Index",
     "Lansforsakringar Global":       "LF Global Index",
     "LF Global":                     "LF Global Index",
+    # Added 2026-11-13 with the LF 20 / BRK 10 split.
+    "Berkshire": "Berkshire",
+    "BRK":       "Berkshire",
 }
 
 
