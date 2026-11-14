@@ -6775,3 +6775,15 @@ session environment's allowed hosts for this check.
 - **Cash pile -- NOT automatable.** T-bills (most of it) are not in the SEC
   companyfacts feed (dimensional/company tags); only cash equivalents
   (~4% of assets) are.
+
+## BRK: considered and DROPPED (2026-11-14, operator)
+
+LF 20 / BRK 10 was explored 2026-11-13..14 (backtest +0.09-0.10 Calmar,
++1.5pp MaxDD, worse 2010-18; one usable falsifier, the AI-decorrelation
+rule). Operator sold 45k of LF, then decided against BRK: entry at an
+all-time high after +19% in 3 months (historically ~+10% next 12m with a
+~-9% dip), forward P/E ~26x for ~1% expected 2027 growth, and building a
+new position gradually takes time the operator does not have. **The 45k
+goes back into LF; targets stay AVGO 20 / LLY 20 / Gold 20 / LF 30 /
+Cash 10.** Parked config branch `feat/brk-in-index-slot` abandoned (local
+copy deleted). Revisit only on a meaningful pullback, with fresh numbers.
