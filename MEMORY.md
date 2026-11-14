@@ -6806,3 +6806,18 @@ Screened as the best-value AI hedge (30 candidates). Findings:
   count 227.6M -> 210.6M on buybacks. Net investment income rising (+7%).
 - **Entry:** +53% over 1y in SEK, -1.5% from the high.
 Not adopted; information only.
+
+**Follow-up: an AI-based entry trigger for TRV (2026-11-14).**
+Insurer-cycle gauges (P/adj-book, loss ratio, ROE; SEC data 2014-2026,
+~10 independent years) cannot calibrate an entry: only P/B has a consistent
+(weak) sign, and today sits outside the whole range on all three (P/adj-book
+2.20, loss ratio 0.567 lowest ever, ROE 23% highest ever). Instead, two
+AI-based triggers, TRV next-period medians, 2009-2026:
+- **A, "AI hot": AVGO's 6m return beats TRV's by >= 29pp (top 20% of days)**:
+  12m +22.6% (vs ACWI +10.6pp) against any day +14.5% (+3.2pp); positive vs
+  ACWI in BOTH halves (+12.6 / +10.1pp at 12m). Overlapping days, maybe
+  8-10 independent episodes.
+- **B, the day after an AVGO crash trigger**: no edge (12m vs ACWI +0.6pp;
+  second half -4.5pp). TRV's median move during the trigger's own 5 days is
+  -0.4% -- the hedge pays over the following rotation, not the crash week.
+Now: AVGO-minus-TRV 6m spread -49pp -- the opposite of A's buy zone.
