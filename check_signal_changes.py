@@ -104,6 +104,47 @@ def _crash_rows(text: str) -> dict[str, dict[str, str]]:
     return rows
 
 
+def _block_rows(text: str, header: str) -> dict[str, dict[str, str]]:
+    """'<name> status: STATE  detail' rows of the block whose own header line
+    starts with `header` followed by ' [' -- anchored like _crash_rows so a
+    mention of the block name elsewhere cannot capture it."""
+    m = re.search(rf"^[ \t]*{re.escape(header)}[ \t]+\[[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL | re.MULTILINE)
+    if not m:
+        return {}
+    rows: dict[str, dict[str, str]] = {}
+    for line in m.group(1).splitlines():
+        mm = re.match(r"\s+(.+?) status:\s*(\S+)\s*(.*)$", line)
+        if mm:
+            rows[mm.group(1).strip()] = {"status": mm.group(2).strip(), "detail": mm.group(3).strip()}
+    return rows
+
+
+def _recession_legs() -> set[str]:
+    """Source and sink of the recession shift, read from config -- not
+    restated here, so a config change cannot leave this suppressing the
+    wrong rows."""
+    try:
+        import tomllib
+        from pathlib import Path
+        with open(Path(__file__).parent / "config" / "portfolio.toml", "rb") as f:
+            cfg = tomllib.load(f).get("recession_mode", {})
+        return {cfg["source"], cfg["sink"]}
+    except Exception:
+        return set()
+
+
+def _recession(text: str) -> dict[str, str]:
+    """Recession Mode block: status, its detail, and the computed Action line."""
+    m = re.search(r"^[ \t]*Recession Mode[ \t]+\[[^\n]*\n(.*?)(?:\n\s*\n|\Z)", text, re.DOTALL | re.MULTILINE)
+    if not m:
+        return {}
+    st = re.search(r"Recession mode status:\s*(\S+)\s*([^\n]*)", m.group(1))
+    act = re.search(r"Action:\s*([^\n]+)", m.group(1))
+    if not st:
+        return {}
+    return {"status": st.group(1), "detail": st.group(2).strip(), "action": act.group(1).strip() if act else ""}
+
+
 def extract_fingerprint(text: str) -> dict:
     return {
         "avgo_guard": _find(r"AVGO Trend Diagnostic.*?Signal\s*:\s*(\S+)", text),
@@ -190,6 +231,8 @@ def extract_fingerprint(text: str) -> dict:
         # suppressed. A broken parser looked exactly like a quiet market.
         "rebal_rows": _rebal_rows(text),
         "crash_rows": _crash_rows(text),
+        "recession": _recession(text),
+        "watch_rows": _block_rows(text, "Market Watch"),
     }
 
 
@@ -533,10 +576,43 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # config is covered without touching this file. A position present in
     # curr but absent from prev (a renamed row, or the first run after a
     # config change) has no baseline and is skipped rather than alerted on.
+    # Recession mode (2026-11-15): alert on OFF <-> ON only (NO_DATA and a
+    # missing baseline are silent). The trade is the block's own computed
+    # Action line, quoted verbatim.
+    _rp, _rc = (prev.get("recession") or {}).get("status"), (curr.get("recession") or {}).get("status")
+    _rm_flipped = {_rp, _rc} == {"ON", "OFF"}
+    if _rm_flipped:
+        _r = curr["recession"]
+        blocks.append(
+            f"RECESSION MODE {_rc} {_r['detail']}\n"
+            f"ACTION: {_r['action']}\n"
+            + ("Rule: hold until the trend OR unemployment clears; the crash plan keeps its normal budget."
+               if _rc == "ON" else "The buffer goes back into the index now -- this is where the rule earns its keep.")
+        )
+        subject_parts.append(f"Recession mode {_rc}")
+
+    # Market Watch (2026-11-15): awareness only. Alert when a gauge turns ON
+    # and when it clears; persisting states and NO_DATA are silent.
+    _pw, _cw = prev.get("watch_rows") or {}, curr.get("watch_rows") or {}
+    for _name in _cw:
+        _p, _c = _pw.get(_name, {}).get("status"), _cw[_name]["status"]
+        if _p == "OFF" and _c == "ON":
+            blocks.append(f"MARKET WATCH -- {_name} ON: {_cw[_name]['detail']}\n"
+                          "No action: awareness only. The crash plan, the band and recession mode do the acting.")
+            subject_parts.append(f"Watch: {_name}")
+        elif _p == "ON" and _c == "OFF":
+            blocks.append(f"MARKET WATCH -- {_name} cleared: {_cw[_name]['detail']}")
+            subject_parts.append(f"Watch cleared: {_name}")
+
     _prev_rebal, _curr_rebal = prev.get("rebal_rows") or {}, curr.get("rebal_rows") or {}
     for _name in sorted(_curr_rebal):
         _p = _prev_rebal.get(_name, {}).get("status")
         _c = _curr_rebal[_name].get("status")
+        # The recession-mode alert above already carries this trade; the band
+        # breach it causes on the source/sink rows is the same move, not a
+        # second one.
+        if _rm_flipped and _name in _recession_legs():
+            continue
         if _p == "HOLD" and _c in ("SELL", "BUY"):
             blocks.append(
                 f"REBALANCE CHECK: {_name} drifted out of band ({_c}).\n"

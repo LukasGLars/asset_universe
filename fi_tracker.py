@@ -792,6 +792,23 @@ try:
         if float(p.get("target_weight") or 0.0) > 0.0
     }
 
+    # ── Recession mode (operator decision 2026-11-15) ────────────────────
+    # Growth-Trend at the last completed month end; while ON the configured
+    # shift moves from LF Global Index to cash (recession_mode.py). Every
+    # block below (routing, band, cash) reads the shifted targets; the crash
+    # plan keeps the BASE cash target so the buffer is not its to spend.
+    import recession_mode as _rm
+    from asset_universe.store import reader as _rreader
+    _rm_cfg = _pf_cfg.get("recession_mode", {})
+    _base_targets = dict(_targets_cfg)
+    try:
+        _rm_spx = _rreader.load(_rreader.ticker_path(DATA_DIR, "equities", "SPY"))["close"]
+        _rm_un = _rreader.load(_rreader.ticker_path(DATA_DIR, "macro", "UNRATE"))["value"]
+        _rm_state = _rm.recession_state(_rm_spx, _rm_un, pd.Timestamp.today())
+    except Exception as _rm_e:
+        _rm_state = {"state": _rm.NO_DATA, "error": str(_rm_e)}
+    _targets_cfg = _rm.apply_targets(_targets_cfg, _rm_cfg, _rm_state["state"])
+
     def _valued(name):
         row = snap[snap["name"] == name]
         if row.empty:
@@ -845,6 +862,11 @@ try:
            f"{', '.join(sorted(n for n in _no_contrib if n in _targets_cfg))}")
     print(f"    Denominator: {_target_denom:,.0f} kr "
            f"({len(_targets_cfg)} positions carrying a target)")
+    if _rm_cfg.get("enabled", False):
+        print()
+        print("\n".join(_rm.format_recession_lines(
+            _rm_state, _rm_cfg, _valued(_rm_cfg["source"]), _valued(_rm_cfg["sink"]),
+            _target_denom, _base_targets)))
 
 except Exception as _e:
     print(f"\n  Next Contribution : [unavailable — {_e}]")
@@ -934,8 +956,12 @@ try:
         # thing that must not be suggested -- the 5d-ROC trigger is what
         # spends it (MEMORY.md, cash-tranche laddering 2026-10-02).
         print(f"    Shortfall      : {_cash_target * _target_denom - _rc_cash:,.0f} kr below target")
-        print(f"    Action         : none -- hold. This is the dip sleeve; "
-              f"the AVGO/LLY 5d-ROC trigger spends it, not a contribution.")
+        if _rm_state.get("state") == _rm.ON:
+            print(f"    Action         : fill from {_rm_cfg['source']} -- recession mode is ON "
+                  f"(see the Recession Mode block).")
+        else:
+            print(f"    Action         : none -- hold. This is the dip sleeve; "
+                  f"the AVGO/LLY 5d-ROC trigger spends it, not a contribution.")
 
 except Exception as _e:
     print(f"\n  AVGO Rebalance Check : [unavailable — {_e}]")
@@ -970,12 +996,39 @@ try:
                             "close": _c[-1] if _c else None, "value": _valued(_name),
                             "since": _since})
     print()
-    _cash_target_kr = _cash_target * _target_denom
+    # BASE target, not the recession-shifted one: the recession buffer is
+    # not the crash plan's to spend (MEMORY.md 2026-11-15).
+    _cash_target_kr = _base_targets.get(_cash_name, _cash_target) * _target_denom
     print("\n".join(crash_plan.format_lines(
         crash_plan.plan(_crash_rows, _rc_cash, _target_denom, _cash_target_kr,
                         _crash_state["used"], _crash_state["pending"]),
         _rc_cash, _cash_target_kr)))
 except Exception as _e:
     print(f"\n  Crash Plan : [unavailable — {_e}]")
+
+# ── Market Watch (2026-11-15) ────────────────────────────────────────────────
+# Early-warning gauges, awareness only (recession_mode.py). Each series is
+# loaded on its own so one missing file shows as NO_DATA on its row only.
+try:
+    import recession_mode as _rm
+    from asset_universe.store import reader as _wreader
+
+    def _series(cat, tkr, col):
+        try:
+            return _wreader.load(_wreader.ticker_path(DATA_DIR, cat, tkr))[col]
+        except Exception:
+            return None
+
+    print()
+    print("\n".join(_rm.format_watch_lines(_rm.watch_rows(
+        spx=_series("equities", "SPY", "close"),
+        sahm=_series("macro", "SAHMREALTIME", "value"),
+        claims=_series("macro", "ICSA", "value"),
+        curve=_series("macro", "T10Y3M", "value"),
+        vix=_series("volatility", "^VIX", "close"),
+        vix3m=_series("volatility", "^VIX3M", "close"),
+        oil=_series("commodities", "CL=F", "close")))))
+except Exception as _e:
+    print(f"\n  Market Watch : [unavailable — {_e}]")
 
 print(f"\n{'='*62}")
