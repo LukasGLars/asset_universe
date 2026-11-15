@@ -28,7 +28,9 @@ keep them stable.
 """
 from __future__ import annotations
 
-import pandas as pd
+# pandas is imported inside the functions that need it: the formatting
+# functions are also used by preview_all_triggers, which the Telegram
+# preview workflow runs WITHOUT pandas installed (2026-11-15).
 
 ON, OFF, NO_DATA = "ON", "OFF", "NO_DATA"
 
@@ -39,19 +41,21 @@ UNRATE_MIN_PERIODS = 10        # UNRATE 2025-10 is missing (shutdown)
 
 # ── recession mode ───────────────────────────────────────────────────────────
 
-def completed_month_ends(daily_close: pd.Series, today: pd.Timestamp) -> pd.Series:
+def completed_month_ends(daily_close, today):
     """Month-end closes of months that ENDED before `today`'s month began.
     The current month is never used: its 'month end' would be today's close."""
+    import pandas as pd
     m = daily_close.dropna().resample("ME").last()
     return m[m.index < pd.Timestamp(today).to_period("M").to_timestamp()]
 
 
-def recession_state(spx_daily: pd.Series, unrate: pd.Series, today: pd.Timestamp) -> dict:
+def recession_state(spx_daily, unrate, today) -> dict:
     """Growth-Trend state at the last completed month end.
 
     unrate: monthly observations as FRED stamps them (first of the month).
     The value used at month end M is the print FOR month M-1 -- the same
     one-month publication lag as the backtest (MEMORY.md 2026-11-15)."""
+    import pandas as pd
     spx_m = completed_month_ends(spx_daily, today)
     if len(spx_m) < TREND_MONTHS or unrate is None or unrate.dropna().empty:
         return {"state": NO_DATA}
@@ -114,15 +118,15 @@ def format_recession_lines(rs: dict, cfg: dict, source_value: float, sink_value:
 
 # ── market watch ─────────────────────────────────────────────────────────────
 
-def _last_n_all(series: pd.Series, n: int) -> bool:
+def _last_n_all(series, n: int) -> bool:
     s = series.dropna()
     return len(s) >= n and bool(s.iloc[-n:].all())
 
 
-def watch_rows(spx: pd.Series | None, sahm: pd.Series | None, claims: pd.Series | None,
-               curve: pd.Series | None, vix: pd.Series | None, vix3m: pd.Series | None,
-               oil: pd.Series | None) -> list[dict]:
-    """[{name, state, detail}] -- each gauge degrades to NO_DATA on its own."""
+def watch_rows(spx, sahm, claims, curve, vix, vix3m, oil) -> list[dict]:
+    """[{name, state, detail}] -- each gauge degrades to NO_DATA on its own.
+    Inputs are pandas Series (or None)."""
+    import pandas as pd
     rows = []
 
     def add(name, fn, *needed):

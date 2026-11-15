@@ -156,3 +156,28 @@ def test_every_gauge_handles_a_missing_series():
     rows = rm.watch_rows(None, None, None, None, None, None, None)
     assert [r["state"] for r in rows] == ["NO_DATA"] * 5
     assert not any("unavailable" in r["detail"] for r in rows)
+
+
+def test_preview_imports_without_pandas():
+    # The Telegram preview workflow installs no packages: preview_all_triggers
+    # (and the recession_mode formatting it uses) must import without pandas.
+    import subprocess, sys, textwrap
+    code = textwrap.dedent("""
+        import sys
+        class _Block:
+            def find_spec(self, name, path=None, target=None):
+                if name == "pandas" or name.startswith("pandas."):
+                    raise ModuleNotFoundError("blocked: pandas")
+        sys.meta_path.insert(0, _Block())
+        import preview_all_triggers
+        from check_signal_changes import extract_fingerprint, build_actionable_message
+        sc = dict(preview_all_triggers.SCENARIOS)
+        r = build_actionable_message(extract_fingerprint(preview_all_triggers.BASE),
+                                     extract_fingerprint(sc["Recession mode ON"]))
+        assert r and "Recession mode ON" in r[0], r
+        print("ok")
+    """)
+    from pathlib import Path
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                         cwd=Path(__file__).parent.parent)
+    assert out.returncode == 0 and "ok" in out.stdout, out.stderr
