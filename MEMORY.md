@@ -6827,3 +6827,22 @@ Now: AVGO-minus-TRV 6m spread -49pp -- the opposite of A's buy zone.
 episodes 2010-2023; TRV 12m up 11/12, median +15% (any day +14.5%), beat
 ACWI 8/12 (~+5pp median), beat AVGO only 2/12. Not a return edge; at most a
 calm entry moment for the hedge. Do not build on the day-weighted number.
+
+## Recession de-risk rule (Growth-Trend -> more cash): cheap insurance, misses the Calmar bar (2026-11-15)
+
+Signal: S&P month-end < 10m SMA AND UNRATE (lagged 1m) > its 12m avg; acted
+next month. Rule: cash 10% -> 20% (or 30%) while on, taken from the index;
+0.1% per switch; +-10pp band otherwise. Crash-plan pause NOT modelled.
+- Live mix, SEK, 2010-2026: signal on 3% of days. 20% cash: Calmar 0.95 ->
+  0.99, MaxDD -22.3 -> -21.4%, CAGR -0.1pp. Nothing to protect against in
+  this window (no recession bear).
+- Stylised 70 S&P TR / 20 gold / 10 T-bill cash, USD, 2000-2026 (on 16%):
+  20% cash: Calmar 0.23 -> 0.26, MaxDD -38.2 -> -33.3%, CAGR +0.1pp.
+  30% cash: Calmar 0.32 (+0.09), MaxDD **-28.3% (+9.9pp)**, CAGR +0.2pp; first
+  half +0.08, second half -0.02 (no recession bear after 2009).
+- Fired: 2000-03 and 2007-09 (the real ones), plus short false alarms
+  2019-01, 2020-04, 2023-10, 2025-03/04, 2026-03 -- all cheap.
+Verdict: does what it claims in recession bears at ~zero CAGR cost; passes
+the MaxDD half of the bar, misses Calmar by 0.01 at 30% cash, and only one
+of two halves contains the episodes it is for. Not adopted yet; operator
+decision. Currently OFF (trend positive, unemployment falling).
