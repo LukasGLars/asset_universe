@@ -11,3 +11,4 @@ BAA10Y,Moody Baa-10Y Treasury Spread (IG),credit
 PCEPILFE,Core PCE Inflation,macro
 UNRATE,Unemployment Rate,macro
 ICSA,Initial Jobless Claims,macro
+SAHMREALTIME,Real-time Sahm Rule Recession Indicator,macro

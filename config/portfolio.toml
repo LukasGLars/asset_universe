@@ -61,6 +61,18 @@ home_base     = 0.10   # cash
 crypto_sleeve = 0.00   # exited 2026-10-28 (Virtune BTC/ETH targets 0)
 war_chest     = 0.00
 
+# ── Recession mode (operator decision 2026-11-15) ─────────────────────────────
+# Growth-Trend: at month end, S&P below its 10-month average AND unemployment
+# above its 12-month average -> shift `shift` of target weight from `source`
+# to `sink` until either clears (recession_mode.py). Tested 2000-2026: MaxDD
+# -38.2% -> -28.3% at ~zero CAGR cost; missed the Calmar bar by 0.01, so this
+# is an operator call (MEMORY.md). The crash plan keeps the BASE cash target.
+[recession_mode]
+enabled = true
+source  = "LF Global Index"
+sink    = "Reactor Core Cash"
+shift   = 0.20
+
 [[positions]]
 name     = "Gold"
 ticker   = "1634504"

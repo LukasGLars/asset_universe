@@ -6846,3 +6846,27 @@ Verdict: does what it claims in recession bears at ~zero CAGR cost; passes
 the MaxDD half of the bar, misses Calmar by 0.01 at 30% cash, and only one
 of two halves contains the episodes it is for. Not adopted yet; operator
 decision. Currently OFF (trend positive, unemployment falling).
+
+## Recession mode + Market Watch BUILT (2026-11-15, operator decision)
+
+Operator chose the recession de-risk rule at **30% cash** (above): when the
+Growth-Trend signal is ON at a completed month end, targets shift 20pp from
+LF Global Index (30 -> 10%) to Reactor Core Cash (10 -> 30%) until either leg
+clears. Operator call, not a passed test (missed the Calmar bar by 0.01).
+- `recession_mode.py` (pure) + `[recession_mode]` in config/portfolio.toml
+  (enabled/source/sink/shift). fi_tracker applies the shifted targets to
+  routing, band and the cash block; **the crash plan is sized off the BASE
+  cash target**, so the recession buffer is not its to spend.
+- Telegram: one alert on OFF->ON (sell ~X kr LF, computed from live values)
+  and one on ON->OFF (buy back). The band alert for LF/cash is suppressed on
+  the flip run (same trade). Park the extra cash in a short SEK fund.
+- Market Watch (awareness only, no trade): Trend break (S&P < 200d 3 closes),
+  Labour cracking (real-time Sahm >= 0.5 or claims +20% off 52w low), Curve
+  inverted (10y-3m 5d avg < 0), Volatility stress (VIX > VIX3M 3 closes), Oil
+  shock (WTI 1m avg +50% y/y). Alerts on ON and on clearing. HY OAS > 400 bp
+  keeps its existing alert. New data: SAHMREALTIME (FRED), ^VIX3M.
+- Verified: the production function reproduces the backtest's 49 ON months
+  2000-2026 exactly. State on 2026-10-31: OFF (S&P 756 vs 10m avg 726;
+  unemployment 4.2% vs 12m avg 4.29%).
+- Untested combination, accepted: the crash plan running inside a
+  recession bear (AVGO history starts 2009).
