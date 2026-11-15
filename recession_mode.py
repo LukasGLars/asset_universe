@@ -125,7 +125,10 @@ def watch_rows(spx: pd.Series | None, sahm: pd.Series | None, claims: pd.Series 
     """[{name, state, detail}] -- each gauge degrades to NO_DATA on its own."""
     rows = []
 
-    def add(name, fn):
+    def add(name, fn, *needed):
+        if any(x is None or x.dropna().empty for x in needed):
+            rows.append({"name": name, "state": NO_DATA, "detail": "no data in the store yet"})
+            return
         try:
             state, detail = fn()
         except Exception as e:                         # one bad series never hides the rest
@@ -176,11 +179,11 @@ def watch_rows(spx: pd.Series | None, sahm: pd.Series | None, claims: pd.Series 
         g = now / yr - 1
         return ON if g >= 0.50 else OFF, f"WTI 1m avg ${now:,.0f}, {g:+.0%} y/y (ON >= +50%); ~2x the base odds of a 15% fall"
 
-    add("Trend break", trend)
-    add("Labour cracking", labour)
-    add("Curve inverted", curve_inv)
-    add("Volatility stress", vix_stress)
-    add("Oil shock", oil_shock)
+    add("Trend break", trend, spx)
+    add("Labour cracking", labour)                 # either input is enough; checked inside
+    add("Curve inverted", curve_inv, curve)
+    add("Volatility stress", vix_stress, vix, vix3m)
+    add("Oil shock", oil_shock, oil)
     return rows
 
 

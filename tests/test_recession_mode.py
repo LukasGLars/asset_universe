@@ -140,6 +140,7 @@ def test_watch_rows_from_series():
     assert rows["Labour cracking"]["state"] == "ON"               # claims +30% off the low
     assert rows["Curve inverted"]["state"] == "OFF"
     assert rows["Volatility stress"]["state"] == "NO_DATA"        # VIX3M missing degrades on its own row
+    assert "unavailable" not in rows["Volatility stress"]["detail"]  # the smoke test greps for it
     assert rows["Oil shock"]["state"] == "ON"
 
 
@@ -149,3 +150,9 @@ def test_preview_scenarios_deliver():
     for name, expect in (("Recession mode ON", "Recession mode ON"), ("Market watch trend break", "Watch: Trend break")):
         subject, _ = build_actionable_message(extract_fingerprint(BASE), extract_fingerprint(sc[name]))
         assert expect in subject
+
+
+def test_every_gauge_handles_a_missing_series():
+    rows = rm.watch_rows(None, None, None, None, None, None, None)
+    assert [r["state"] for r in rows] == ["NO_DATA"] * 5
+    assert not any("unavailable" in r["detail"] for r in rows)
