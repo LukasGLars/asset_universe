@@ -59,14 +59,14 @@ MACRO REGIME
   Nominal 10Y             5.15%   HIGH
   Real Yield             +2.91%   HIGH  ^
   Breakeven               2.20%   MID
-  HY OAS                323 bps   MID
+  HY OAS                334 bps   WIDE
   IG Credit               1.47%   TIGHT
   Curve 10Y-3M          +78 bps   MID
   Curve 10Y-2Y          +29 bps   LOW
   SE 10Y                  3.17%   MID
   USD                     122.7   STRONG
 
-  HY 20d delta  : +0 bps  (flat)
+  HY 20d delta  : +3 bps  (flat)
   Confidence    : HIGH
   Data through  : 2026-11-16
 
@@ -161,7 +161,7 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $292.12  (ext +1.1%, 21d med +1.9%, ave +2.4%, win 64.9%, div THIN, drift +0.4%)
+    Best candidate : TRGP (Targa Resources Corp.)  $292.12  (ext +1.1%, 21d med +1.9%, ave +2.4%, win 64.9%, div THIN, drift -0.2%)
     Plan           : buy near $292.12, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
     Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
     VIX review     : 22.91  (74% percentile, spiking) -- for review, not a gate
@@ -303,15 +303,15 @@ AVGO peer valuation snapshot -- 2026-11-17
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $700.27    $75.51   $207.76      2.75x        +175%     3.37x      0.02
-AMD         $502.44     $6.65    $17.64      2.65x        +165%    28.49x      0.17
-NVDA        $153.99     $7.01    $15.84      2.26x        +126%     9.72x      0.08
-MRVL        $146.38     $3.30     $7.37      2.23x        +123%    19.86x      0.16
-AVGO*       $337.89     $9.76    $19.41      1.99x         +99%    17.40x      0.18
-ASML      $1,387.71    $33.89    $56.43      1.67x         +67%    24.59x      0.37
-ANET        $187.96     $3.91     $6.04      1.54x         +54%    31.13x      0.57
-TSM         $363.65    $15.54    $23.39      1.50x         +50%    15.55x      0.31
-QCOM        $166.79    $10.53    $12.21      1.16x         +16%    13.66x      0.86
+MU          $687.69    $75.51   $207.76      2.75x        +175%     3.31x      0.02
+AMD         $493.23     $6.65    $17.64      2.65x        +165%    27.96x      0.17
+NVDA        $153.79     $7.01    $15.84      2.26x        +126%     9.71x      0.08
+MRVL        $144.90     $3.30     $7.37      2.23x        +123%    19.66x      0.16
+AVGO*       $336.39     $9.76    $19.41      1.99x         +99%    17.33x      0.18
+ASML      $1,368.23    $33.89    $56.43      1.67x         +67%    24.24x      0.36
+ANET        $185.94     $3.91     $6.04      1.54x         +54%    30.80x      0.57
+TSM         $358.56    $15.54    $23.39      1.50x         +50%    15.33x      0.30
+QCOM        $165.44    $10.53    $12.21      1.16x         +16%    13.55x      0.85
 
 * = AVGO
 
@@ -323,13 +323,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         28.49x       --    25
-ANET        31.13x       --    25
-ASML        24.59x       --    25
-AVGO        17.40x       --    25
-MRVL        19.86x       --    25
-MU           3.37x       --    25
-NVDA         9.72x       --    25
-QCOM        13.66x       --    25
-TSM         15.55x       --    25
+AMD         27.96x       --    25
+ANET        30.80x       --    25
+ASML        24.24x       --    25
+AVGO        17.33x       --    25
+MRVL        19.66x       --    25
+MU           3.31x       --    25
+NVDA         9.71x       --    25
+QCOM        13.55x       --    25
+TSM         15.33x       --    25
   accruing -- 25/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
