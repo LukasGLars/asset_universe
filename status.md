@@ -59,14 +59,14 @@ MACRO REGIME
   Nominal 10Y             5.12%   HIGH
   Real Yield             +2.92%   HIGH  ^
   Breakeven               2.21%   MID
-  HY OAS                334 bps   WIDE
+  HY OAS                343 bps   WIDE
   IG Credit               1.50%   TIGHT
   Curve 10Y-3M          +77 bps   MID
   Curve 10Y-2Y          +30 bps   LOW
   SE 10Y                  3.17%   MID
   USD                     122.7   STRONG
 
-  HY 20d delta  : +3 bps  (flat)
+  HY 20d delta  : +14 bps  (widening)
   Confidence    : HIGH
   Data through  : 2026-11-17
 
@@ -252,8 +252,8 @@ Computing capped 252d distributions for 51 candidates ...
   NVDA      N=1238  mu= +24.2%  sigma= 32.4%  hist=27yr  [MODERATE]
   CEG       hist=5yr  (below min 10yr, skipped)
   RL        N=1238  mu= +15.7%  sigma= 26.4%  hist=27yr  [MODERATE]
-  FOXA      hist=8yr  (below min 10yr, skipped)
   ABB.ST    no data
+  FOXA      hist=8yr  (below min 10yr, skipped)
   SSAB-B.ST  no data
   FIX       N=1238  mu= +20.4%  sigma= 27.4%  hist=27yr  [MODERATE]
   GRMN      N=1238  mu= +31.5%  sigma= 31.9%  hist=26yr  [MODERATE]
@@ -303,15 +303,15 @@ AVGO peer valuation snapshot -- 2026-11-18
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $704.09    $75.51   $207.76      2.75x        +175%     3.39x      0.02
-AMD         $510.87     $6.65    $17.64      2.65x        +165%    28.96x      0.18
-MRVL        $146.96     $3.30     $7.37      2.23x        +123%    19.94x      0.16
-AVGO*       $347.63     $9.76    $19.41      1.99x         +99%    17.91x      0.18
-NVDA        $153.99     $8.39    $15.86      1.89x         +89%     9.71x      0.11
-ASML      $1,385.81    $33.89    $56.43      1.67x         +67%    24.56x      0.37
-ANET        $187.58     $3.91     $6.04      1.54x         +54%    31.07x      0.57
-TSM         $361.91    $15.54    $23.39      1.50x         +50%    15.48x      0.31
-QCOM        $164.40    $10.53    $12.21      1.16x         +16%    13.47x      0.85
+MU          $701.62    $75.51   $207.76      2.75x        +175%     3.38x      0.02
+AMD         $506.98     $6.65    $17.64      2.65x        +165%    28.74x      0.17
+MRVL        $144.38     $3.30     $7.37      2.23x        +123%    19.59x      0.16
+AVGO*       $352.62     $9.76    $19.41      1.99x         +99%    18.16x      0.18
+NVDA        $152.58     $8.39    $15.86      1.89x         +89%     9.62x      0.11
+ASML      $1,382.52    $33.89    $56.43      1.67x         +67%    24.50x      0.37
+ANET        $186.63     $3.91     $6.04      1.54x         +54%    30.91x      0.57
+TSM         $361.66    $15.54    $23.39      1.50x         +50%    15.47x      0.31
+QCOM        $162.76    $10.53    $12.21      1.16x         +16%    13.33x      0.84
 
 * = AVGO
 
@@ -323,13 +323,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         28.96x       --    26
-ANET        31.07x       --    26
-ASML        24.56x       --    26
-AVGO        17.91x       --    26
-MRVL        19.94x       --    26
-MU           3.39x       --    26
-NVDA         9.71x       --    26
-QCOM        13.47x       --    26
-TSM         15.48x       --    26
+AMD         28.74x       --    26
+ANET        30.91x       --    26
+ASML        24.50x       --    26
+AVGO        18.16x       --    26
+MRVL        19.59x       --    26
+MU           3.38x       --    26
+NVDA         9.62x       --    26
+QCOM        13.33x       --    26
+TSM         15.47x       --    26
   accruing -- 26/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
