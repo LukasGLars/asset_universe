@@ -117,7 +117,7 @@ TACTICAL RULES
   AVGO Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $3.32 vs $3.24  (+2.5% surprise)
     TTM EPS (non-GAAP actual)  : $9.76
-    Forward EPS (+1yr est.)    : $19.41
+    Forward EPS (+1yr est.)    : $19.39
     Fwd/Trail ratio (normalized): 1.99x  (mid-pack vs. real AI/semi peers; corrected 2026-07-06 from a GAAP/non-GAAP mismatched 3.22x)
     Revenue (latest qtr, actual): $29.59B  (TTM YoY: +48.7%)
     Next-qtr revenue consensus : $34.91B (implied YoY +93.8%)
@@ -161,14 +161,10 @@ TACTICAL RULES
 
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
-    Best candidate : TRGP (Targa Resources Corp.)  $290.17  (ext +0.5%, 21d med +1.9%, ave +2.3%, win 64.7%, div THIN, drift -0.0%)
-    Plan           : buy near $290.17, hold ~21d, stop = MA50-5% then trails 3% once +5% gain
-    Open           : run_entry_screen.py --open TRGP <fill_price> <shares> <capital_sek>
-    VIX review     : 24.56  (80% percentile, spiking) -- for review, not a gate
-    Basket-crash   : SNDK (Sandisk Corporation)  $776.22  (sector Technology, -20.6% 5d, 2 peers crashing, drift +0.0%)
+    Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
+    Basket-crash   : SNDK (Sandisk Corporation)  $776.22  (sector Technology, -20.6% 5d, 2 peers crashing, drift +7.3%)
     Plan           : buy near $776.22, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open SNDK <fill_price> <shares> <capital_sek> --entry-type basket_crash
-    NOTE           : extension pathway also has a candidate today (TRGP) -- that one is preferred (live-validated); this is shown for awareness.
 
   Crypto Trend Sleeve
     Status         : inactive -- no crypto leg carries a target (no alerts)
@@ -208,7 +204,7 @@ NEXT CONTRIBUTION
 
   Market Watch  [early warnings -- awareness only, no trade; crash plan, band and recession mode act]
     Trend break status: OFF  (S&P 730 vs 200d avg 731 (-0.2%); ON = 3 closes in a row below; risk of a 10% drawdown ~4x normal in that state)
-    Labour cracking status: OFF  (real-time Sahm 0.00 (>= 0.50); claims 4wk avg 194k, +0% vs 52w low (>= +20%); the path to deep, recession-type falls)
+    Labour cracking status: OFF  (real-time Sahm 0.00 (>= 0.50); claims 4wk avg 196k, +1% vs 52w low (>= +20%); the path to deep, recession-type falls)
     Curve inverted status: OFF  (10y-3m 5d avg +0.78pp (ON < 0); classic late-cycle warning)
     Volatility stress status: OFF  (VIX 24.6 vs VIX3M 24.3 (ON = above for 3 closes); panic-level stress)
     Oil shock status: ON  (WTI 1m avg $93, +55% y/y (ON >= +50%); ~2x the base odds of a 15% fall)
@@ -250,8 +246,8 @@ Computing capped 252d distributions for 51 candidates ...
   FTNT      N= 620  mu=  -9.7%  sigma= 10.6%  hist=17yr  [SINGLE]
   GS        N=1238  mu= +12.2%  sigma= 24.0%  hist=27yr  [MODERATE]
   CFG       N= 620  mu= +15.3%  sigma= 13.3%  hist=12yr  [SINGLE]
-  PHAG.L    no data
   TPR       N=1238  mu= +19.0%  sigma= 31.0%  hist=26yr  [MODERATE]
+  PHAG.L    no data
   NVDA      N=1238  mu= +24.2%  sigma= 32.4%  hist=27yr  [MODERATE]
   CEG       hist=5yr  (below min 10yr, skipped)
   RL        N=1238  mu= +15.7%  sigma= 26.4%  hist=27yr  [MODERATE]
@@ -306,15 +302,15 @@ AVGO peer valuation snapshot -- 2026-11-19
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $705.27    $75.51   $207.76      2.75x        +175%     3.39x      0.02
-AMD         $530.14     $6.65    $17.64      2.65x        +165%    30.06x      0.18
-MRVL        $145.54     $3.30     $7.37      2.23x        +123%    19.74x      0.16
-AVGO*       $354.05     $9.76    $19.41      1.99x         +99%    18.24x      0.18
-NVDA        $150.96     $8.39    $16.54      1.97x         +97%     9.13x      0.09
-ASML      $1,395.27    $33.89    $56.43      1.67x         +67%    24.72x      0.37
-ANET        $193.94     $3.91     $6.04      1.54x         +54%    32.13x      0.59
-TSM         $362.62    $15.54    $23.39      1.50x         +50%    15.51x      0.31
-QCOM        $159.81    $10.53    $12.18      1.16x         +16%    13.12x      0.84
+MU          $757.00    $75.51   $207.76      2.75x        +175%     3.64x      0.02
+AMD         $544.70     $6.65    $17.64      2.65x        +165%    30.88x      0.19
+MRVL        $153.40     $3.30     $7.37      2.23x        +123%    20.81x      0.17
+AVGO*       $366.29     $9.76    $19.39      1.99x         +99%    18.89x      0.19
+NVDA        $156.04     $8.39    $16.61      1.98x         +98%     9.40x      0.10
+ASML      $1,438.85    $33.89    $56.43      1.67x         +67%    25.50x      0.38
+ANET        $197.19     $3.91     $6.04      1.54x         +54%    32.66x      0.60
+TSM         $372.99    $15.54    $23.39      1.50x         +50%    15.95x      0.32
+QCOM        $170.24    $10.53    $12.18      1.16x         +16%    13.98x      0.89
 
 * = AVGO
 
@@ -326,13 +322,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         30.06x       --    26
-ANET        32.13x       --    26
-ASML        24.72x       --    26
-AVGO        18.24x       --    26
-MRVL        19.74x       --    26
-MU           3.39x       --    26
-NVDA         9.13x       --    26
-QCOM        13.12x       --    26
-TSM         15.51x       --    26
-  accruing -- 26/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         30.88x       --    27
+ANET        32.66x       --    27
+ASML        25.50x       --    27
+AVGO        18.89x       --    27
+MRVL        20.81x       --    27
+MU           3.64x       --    27
+NVDA         9.40x       --    27
+QCOM        13.98x       --    27
+TSM         15.95x       --    27
+  accruing -- 27/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
