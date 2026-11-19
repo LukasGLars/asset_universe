@@ -59,7 +59,7 @@ MACRO REGIME
   Nominal 10Y             5.10%   HIGH
   Real Yield             +2.89%   HIGH  ^
   Breakeven               2.19%   MID
-  HY OAS                343 bps   WIDE
+  HY OAS                347 bps   WIDE
   IG Credit               1.53%   TIGHT
   Curve 10Y-3M          +73 bps   MID
   Curve 10Y-2Y          +27 bps   LOW
@@ -162,7 +162,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : SNDK (Sandisk Corporation)  $776.22  (sector Technology, -20.6% 5d, 2 peers crashing, drift +7.3%)
+    Basket-crash   : SNDK (Sandisk Corporation)  $776.22  (sector Technology, -20.6% 5d, 2 peers crashing, drift +2.3%)
     Plan           : buy near $776.22, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
     Open           : run_entry_screen.py --open SNDK <fill_price> <shares> <capital_sek> --entry-type basket_crash
 
@@ -302,15 +302,15 @@ AVGO peer valuation snapshot -- 2026-11-19
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $757.00    $75.51   $207.76      2.75x        +175%     3.64x      0.02
-AMD         $544.70     $6.65    $17.64      2.65x        +165%    30.88x      0.19
-MRVL        $153.40     $3.30     $7.37      2.23x        +123%    20.81x      0.17
-AVGO*       $366.29     $9.76    $19.39      1.99x         +99%    18.89x      0.19
-NVDA        $156.04     $8.39    $16.61      1.98x         +98%     9.40x      0.10
-ASML      $1,438.85    $33.89    $56.43      1.67x         +67%    25.50x      0.38
-ANET        $197.19     $3.91     $6.04      1.54x         +54%    32.66x      0.60
-TSM         $372.99    $15.54    $23.39      1.50x         +50%    15.95x      0.32
-QCOM        $170.24    $10.53    $12.18      1.16x         +16%    13.98x      0.89
+MU          $717.41    $75.51   $207.76      2.75x        +175%     3.45x      0.02
+AMD         $484.78     $6.65    $17.64      2.65x        +165%    27.48x      0.17
+MRVL        $146.46     $3.30     $7.37      2.23x        +123%    19.87x      0.16
+AVGO*       $356.82     $9.76    $19.39      1.99x         +99%    18.41x      0.19
+NVDA        $152.19     $8.39    $16.61      1.98x         +98%     9.17x      0.09
+ASML      $1,407.33    $33.89    $56.43      1.67x         +67%    24.94x      0.37
+ANET        $194.70     $3.91     $6.04      1.54x         +54%    32.25x      0.59
+TSM         $362.26    $15.54    $23.39      1.50x         +50%    15.49x      0.31
+QCOM        $164.68    $10.53    $12.18      1.16x         +16%    13.52x      0.86
 
 * = AVGO
 
@@ -322,13 +322,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         30.88x       --    27
-ANET        32.66x       --    27
-ASML        25.50x       --    27
-AVGO        18.89x       --    27
-MRVL        20.81x       --    27
-MU           3.64x       --    27
-NVDA         9.40x       --    27
-QCOM        13.98x       --    27
-TSM         15.95x       --    27
+AMD         27.48x       --    27
+ANET        32.25x       --    27
+ASML        24.94x       --    27
+AVGO        18.41x       --    27
+MRVL        19.87x       --    27
+MU           3.45x       --    27
+NVDA         9.17x       --    27
+QCOM        13.52x       --    27
+TSM         15.49x       --    27
   accruing -- 27/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
