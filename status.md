@@ -59,14 +59,14 @@ MACRO REGIME
   Nominal 10Y             5.07%   HIGH
   Real Yield             +2.88%   HIGH  ^
   Breakeven               2.16%   MID
-  HY OAS                347 bps   WIDE
+  HY OAS                352 bps   WIDE
   IG Credit               1.52%   TIGHT
   Curve 10Y-3M          +70 bps   MID
   Curve 10Y-2Y          +28 bps   LOW
   SE 10Y                  3.17%   MID
   USD                     122.7   STRONG
 
-  HY 20d delta  : +14 bps  (widening)
+  HY 20d delta  : +25 bps  (widening)
   Confidence    : HIGH
   Data through  : 2026-11-19
 
@@ -130,10 +130,10 @@ TACTICAL RULES
   LLY Earnings Checkpoint
     Latest qtr EPS (actual vs est.): $7.48 vs $6.35  (+17.9% surprise)
     TTM EPS (non-GAAP actual)  : $31.95
-    Forward EPS (+1yr est.)    : $50.80
+    Forward EPS (+1yr est.)    : $50.87
     Fwd/Trail ratio (normalized): 1.59x  (baseline established 2026-07-06)
     Revenue (latest qtr, actual): $24.40B  (TTM YoY: +45.5%)
-    Next-qtr revenue consensus : $24.70B (implied YoY +28.0%)
+    Next-qtr revenue consensus : $24.73B (implied YoY +28.2%)
     Next earnings  : 2026-10-29
     Reminder       : not_due
     Latest quarter : 2026-09-30
@@ -162,9 +162,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : SNDK (Sandisk Corporation)  $755.16  (sector Technology, -19.4% 5d, 4 peers crashing, drift +0.0%)
-    Plan           : buy near $755.16, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
-    Open           : run_entry_screen.py --open SNDK <fill_price> <shares> <capital_sek> --entry-type basket_crash
+    Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
     Status         : inactive -- no crypto leg carries a target (no alerts)
@@ -302,15 +300,15 @@ AVGO peer valuation snapshot -- 2026-11-20
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $690.44    $75.51   $207.76      2.75x        +175%     3.32x      0.02
-AMD         $489.19     $6.65    $17.64      2.65x        +165%    27.73x      0.17
-MRVL        $138.47     $3.30     $7.37      2.23x        +123%    18.79x      0.15
-AVGO*       $346.65     $9.76    $19.39      1.99x         +99%    17.88x      0.18
-NVDA        $145.98     $8.39    $16.61      1.98x         +98%     8.79x      0.09
-ASML      $1,356.20    $33.89    $56.43      1.67x         +67%    24.03x      0.36
-ANET        $189.59     $3.91     $6.04      1.54x         +54%    31.40x      0.58
-TSM         $352.09    $15.54    $23.39      1.50x         +50%    15.06x      0.30
-QCOM        $162.01    $10.53    $12.18      1.16x         +16%    13.30x      0.85
+MU          $639.12    $75.51   $207.76      2.75x        +175%     3.08x      0.02
+AMD         $462.36     $6.65    $17.64      2.65x        +165%    26.21x      0.16
+MRVL        $130.07     $3.30     $7.37      2.23x        +123%    17.65x      0.14
+AVGO*       $338.18     $9.76    $19.39      1.99x         +99%    17.44x      0.18
+NVDA        $139.82     $8.39    $16.61      1.98x         +98%     8.42x      0.09
+ASML      $1,309.68    $33.89    $56.43      1.67x         +67%    23.21x      0.35
+ANET        $177.22     $3.91     $6.04      1.54x         +54%    29.35x      0.54
+TSM         $336.82    $15.54    $23.39      1.50x         +50%    14.40x      0.29
+QCOM        $161.27    $10.53    $12.18      1.16x         +16%    13.24x      0.84
 
 * = AVGO
 
@@ -322,13 +320,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         27.73x       --    27
-ANET        31.40x       --    27
-ASML        24.03x       --    27
-AVGO        17.88x       --    27
-MRVL        18.79x       --    27
-MU           3.32x       --    27
-NVDA         8.79x       --    27
-QCOM        13.30x       --    27
-TSM         15.06x       --    27
-  accruing -- 27/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         26.21x       --    28
+ANET        29.35x       --    28
+ASML        23.21x       --    28
+AVGO        17.44x       --    28
+MRVL        17.65x       --    28
+MU           3.08x       --    28
+NVDA         8.42x       --    28
+QCOM        13.24x       --    28
+TSM         14.40x       --    28
+  accruing -- 28/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
