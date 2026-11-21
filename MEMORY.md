@@ -6870,3 +6870,15 @@ clears. Operator call, not a passed test (missed the Calmar bar by 0.01).
   unemployment 4.2% vs 12m avg 4.29%).
 - Untested combination, accepted: the crash plan running inside a
   recession bear (AVGO history starts 2009).
+
+## Avanza rows were fetch-dated -- fixed (2026-11-21, PR #138)
+
+LF index crash trigger read a NAV one behind (5d -1.9% vs true -3.6%):
+avanza.py stamped rows with date.today(); fund NAVs lag a day and early-UTC
+runs read the prior session, and Saturday rows were dropped by the crash
+plan's weekday filter. Now dated by quote.timeOfLast (Stockholm), each run
+re-serves a dated 1y history (fund chart anchored to current NAV; price-chart
+for listed ETPs) and update.py REPLACES the overlap (writer.write_replacing).
+Same PR: AVB/EQR/WBD pruned (no data since ~11-07); AVGO crash while the
+second half is pending now sends an FYI. www.avanza.se added to the session
+environment's allowed hosts.
