@@ -181,3 +181,21 @@ def test_basket_crash_alert_is_muted_when_the_crash_plan_alerts():
     calm_fp = extract_fingerprint(BASE.replace(anchor, anchor + basket))
     subject, body = build_actionable_message(prev_fp, calm_fp)
     assert "Sleeve basket-crash candidate -> LITE" in subject
+
+
+
+def test_avgo_crash_while_second_half_pending_sends_fyi_not_a_buy():
+    from preview_all_triggers import BASE as _B, _crash_block
+    flip = lambda t: t.replace("Signal         : BASE  (trigger: none)  -- informational, no rotation",
+                               "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation")
+    pend = {"Broadcom": {"date": "2026-11-06", "close": 291.53, "half_kr": 15_140}}
+    waiting = "\n" + "\n".join(cp.format_lines(cp.plan(
+        [{"name": "Broadcom", "roc": -0.12, "close": 304.4, "value": 230_000, "since": 10}],
+        96_000, 1_000_000, 100_000, {"Broadcom": 1}, pend), 96_000, 100_000)) + "\n"
+    BASE = _B.replace(_crash_block(), waiting)            # the base already has a crash block
+    prev = extract_fingerprint(BASE)
+    curr = extract_fingerprint(flip(BASE))
+    assert prev["avgo_trigger"] != "CRASH" and curr["avgo_trigger"] == "CRASH"
+    subject, body = build_actionable_message(prev, curr)
+    assert "AVGO crash trigger (second half pending)" in subject
+    assert "no new buy" in body and "BUY" not in body

@@ -6,6 +6,7 @@
 #   leaving the local store silently stale):
 #     EA    -- taken private, last bar 2026-08-10
 #     SATS  -- last bar 2026-07-17
+#     AVB, EQR, WBD -- no data since ~2026-11-07 (removed 2026-11-21)
 #   Their existing parquets are kept: the history cannot be refetched
 #   once a ticker is gone.
 #
@@ -63,7 +64,6 @@ APTV
 ARE
 ARES
 ATO
-AVB
 AVGO
 AVY
 AWK
@@ -184,7 +184,6 @@ EME
 EMR
 EOG
 EQIX
-EQR
 EQT
 ERIE
 ES
@@ -498,7 +497,6 @@ VTRS
 VZ
 WAB
 WAT
-WBD
 WDAY
 WDC
 WEC
