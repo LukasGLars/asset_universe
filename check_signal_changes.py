@@ -310,6 +310,16 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
         elif _row["status"] == "FIRED" and (_crash_prev.get("Broadcom") or {}).get("status") != "FIRED":
             _crash_block("Broadcom", _row["detail"])
             broadcom_sent = True
+        elif _row["status"] == "WAITING":
+            # FYI (operator request 2026-11-21): a new AVGO crash while the
+            # open tranche's second half is pending buys nothing -- say so,
+            # so a silent day is not mistaken for a missed trigger.
+            blocks.append(
+                "AVGO CRASH TRIGGER hit again (5d <= -10%) -- no new buy: Broadcom's "
+                f"second half is still pending {_row['detail']}"
+            )
+            subject_parts.append("AVGO crash trigger (second half pending)")
+            broadcom_sent = True
 
     # Crash plan (2026-11-04): one alert per holding on ARMED -> FIRED, quoting
     # the row fi_tracker computed (amount, cap, second-half price) verbatim.

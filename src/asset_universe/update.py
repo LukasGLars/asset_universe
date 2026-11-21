@@ -87,7 +87,10 @@ def run(dry: bool = False) -> None:
             path = reader.ticker_path(data_dir, category, ticker)
             fetch_start = _next_fetch_start(path, start)
 
-            if fetch_start > today:
+            # Avanza re-serves a dated history every run and the overlap is
+            # replaced (see download/avanza.py): never skip it as up-to-date,
+            # or a mis-dated "today" row would block its own repair.
+            if fetch_start > today and category != "avanza":
                 print(f"  {ticker:<16} up-to-date")
                 continue
 
@@ -100,6 +103,9 @@ def run(dry: bool = False) -> None:
                       else yf_dl.fetch(ticker, fetch_start, yf_fetch_end))
                 if df is None or df.empty:
                     print(f"  {ticker:<16} no data returned")
+                elif category == "avanza":
+                    n = writer.write_replacing(path, df)
+                    print(f"  {ticker:<16} {len(df)} dated rows refreshed ({n:+d} net)")
                 else:
                     n = writer.write_or_append(path, df)
                     total_new += n
