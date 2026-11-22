@@ -185,7 +185,7 @@ shares    = 0
 currency  = "SEK"
 category  = ""
 bucket    = "reactor_core"
-value_sek = 80950
+value_sek = 80881
 
 # ── Crypto trend sleeve ETPs (Virtune, Nasdaq Stockholm) ──────────────────────
 # Manual value_sek, updated from the Google Sheet like Spiltan/War Chest --
@@ -219,7 +219,7 @@ target_weight = 0.0
 [[positions]]
 name      = "LF Global Index"
 ticker    = "417655"
-shares    = 397.844
+shares    = 419.649
 currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
