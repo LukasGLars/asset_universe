@@ -15,7 +15,8 @@ the rule:
                2026-11-05), so only half is exposed to it.
   - Limit    : at most 2 tranches per holding, so one name can never take the
                whole reserve.
-  - Cap      : never above 28% of the account for a stock, 38% for the index.
+  - Cap      : never above 28% of the account for a stock (Broadcom 25%,
+               matching its trim cap since 2026-11-22), 38% for the index.
   - Several firing on one run split what is left equally.
 
 Tranches used and open second halves are the state prices cannot show; they
@@ -49,7 +50,7 @@ SECOND_DROP = 0.10
 
 # Holding -> (store category, ticker, cap as a fraction of the account).
 HOLDINGS = {
-    "Broadcom": ("equities", "AVGO", 0.28),
+    "Broadcom": ("equities", "AVGO", 0.25),   # = its max_weight trim cap (2026-11-22)
     "Eli Lilly": ("equities", "LLY", 0.28),
     "LF Global Index": ("avanza", "417655", 0.38),
 }
@@ -160,7 +161,7 @@ def _px(name: str, v: float) -> str:
 def format_lines(planned: list[dict], cash: float, cash_target_kr: float) -> list[str]:
     t = cash_target_kr / TRANCHES
     out = [f"  Crash Plan  [cash {cash:,.0f} kr; {TRANCHES} tranches of {t:,.0f} kr bought in halves, "
-           f"max {MAX_PER_HOLDING} per holding; trigger {WINDOW}d <= {TRIGGER:.0%}; caps 28% stock / 38% index]"]
+           f"max {MAX_PER_HOLDING} per holding; trigger {WINDOW}d <= {TRIGGER:.0%}; caps " + ", ".join(f"{n} {c:.0%}" for n, (_, _, c) in HOLDINGS.items()) + "]"]
     for r in planned:
         n, s = r["name"], r["state"]
         if s == NO_DATA:

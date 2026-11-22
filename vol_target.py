@@ -157,6 +157,7 @@ def rebalance_instructions(
     prices: dict[str, float],
     rc_total: float,
     band: float = REBAL_BAND,
+    caps: dict[str, float] | None = None,
 ) -> dict[str, dict]:
     """For each of GC_F/AVGO/LLY: whether ALREADY-HELD capital has drifted
     more than `band` from `target_weights` (distinct from next_contribution's
@@ -174,6 +175,11 @@ def rebalance_instructions(
     reported -- "must be accurate always" means never presenting a wrong
     share count, not never surfacing a real gap.
     """
+    # caps (2026-11-22): a per-position ceiling ([[positions]].max_weight).
+    # Above it the position is out of band even inside the +-band, and the
+    # trade is back to TARGET, same as a band breach. Strictly above, like
+    # the band. Broadcom 25%: concentration insurance (MEMORY.md).
+    caps = caps or {}
     result: dict[str, dict] = {}
     # Iterates the targets it was handed, not a hardcoded triple: the live
     # target is per-asset across the whole Reactor Core account since the
@@ -188,7 +194,8 @@ def rebalance_instructions(
         # 0.05000000000000004), which would wrongly trigger a trade at
         # exactly the edge. 1e-9 precision is far tighter than any real
         # portfolio weight needs, so this only ever corrects float noise.
-        out_of_band = round(abs(gap), 9) > band
+        cap = caps.get(tkr)
+        out_of_band = round(abs(gap), 9) > band or (cap is not None and round(cur - cap, 9) > 0)
         gap_kr = gap * rc_total
         price = prices.get(tkr) or 0.0
         shares = round(abs(gap_kr) / price) if (out_of_band and price > 0) else 0

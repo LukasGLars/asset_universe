@@ -6882,3 +6882,16 @@ for listed ETPs) and update.py REPLACES the overlap (writer.write_replacing).
 Same PR: AVB/EQR/WBD pruned (no data since ~11-07); AVGO crash while the
 second half is pending now sends an FYI. www.avanza.se added to the session
 environment's allowed hosts.
+
+## Broadcom concentration cap 25% (2026-11-22, operator decision)
+
+`[[positions]].max_weight` (Broadcom 0.25): above it the position is trimmed
+back to its 20% target even inside the +-10pp band (vol_target.
+rebalance_instructions caps=, used by fi_tracker and decide.py). Crash plan's
+Broadcom buy cap 0.28 -> 0.25 to match. Backtest SEK 2010-26 (ACWI proxy):
+cap 25 vs 30 (live): CAGR +20.2 vs +20.6%, MaxDD -21.9 vs -22.4%, Calmar 0.92
+both, ~1 trim/yr vs 0.6; AVGO weight 95th pct 23.7 vs 27.8%, so a -40%
+customer-loss gap costs ~-9.5% of the portfolio vs -11.1%. Does not pass the
+bar (Calmar flat) -- insurance against a tail the backtest never contained.
+Framing agreed: maximise return within the -25% guardrail; only cheap
+insurance.
