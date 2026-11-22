@@ -77,7 +77,8 @@ def decide(
     cur = {p["name"]: (p["value_sek"] or 0.0) / denom for p in targeted}
     tgt = {p["name"]: p["target"] for p in targeted}
     px = {p["name"]: p["price_sek"] or 0.0 for p in targeted}
-    rebal = rebalance_instructions(cur, tgt, px, denom, band)
+    caps = {p["name"]: p["max_weight"] for p in targeted if p.get("max_weight")}
+    rebal = rebalance_instructions(cur, tgt, px, denom, band, caps=caps)
 
     sleeve_sig = {SLEEVE_ROWS[t]: (t, s) for t, s in crypto_signals.items() if t in SLEEVE_ROWS}
 
@@ -164,15 +165,16 @@ def main() -> None:
     data_dir = config.raw_data_dir()
     fresh, latest, since = check_freshness(data_dir)
     snap = portfolio.snapshot(data_dir)
-    targets = {p["name"]: float(p.get("target_weight") or 0.0)
-               for p in portfolio._load_portfolio_config()["positions"]}
+    _cfg_pos = portfolio._load_portfolio_config()["positions"]
+    targets = {p["name"]: float(p.get("target_weight") or 0.0) for p in _cfg_pos}
+    max_w = {p["name"]: float(p["max_weight"]) for p in _cfg_pos if p.get("max_weight")}
 
     def _f(v):
         return None if v is None or v != v else float(v)  # NaN -> None
 
     positions = [{"name": r["name"], "ticker": r["ticker"], "bucket": r["bucket"],
                   "value_sek": _f(r["value_sek"]), "price_sek": _f(r["price_sek"]),
-                  "target": targets.get(r["name"], 0.0)}
+                  "target": targets.get(r["name"], 0.0), "max_weight": max_w.get(r["name"])}
                  for _, r in snap.iterrows()]
 
     result = decide(positions, load_config(), run_crypto_trend.signals(data_dir),

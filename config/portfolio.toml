@@ -135,6 +135,11 @@ currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
 target_weight = 0.2
+# Concentration cap (operator decision 2026-11-22): trim back to the 20%
+# target whenever Broadcom exceeds 25% of the account, inside the +-10pp band.
+# Insurance against a customer-loss gap: -40% at the cap ~ -9.5% of the
+# portfolio vs -11.1% at the old 30% line; ~0.4pp CAGR cost in 2010-26.
+max_weight = 0.25
 
 [[positions]]
 name     = "Howmet Aerospace"

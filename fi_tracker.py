@@ -905,8 +905,11 @@ try:
     # invested-Reactor-Core capital against invested-only weights; both have
     # moved to the account-wide target base, so the two must move together or
     # every gap_kr is scaled wrong.
+    # Per-position ceilings ([[positions]].max_weight) -- Broadcom 25% since
+    # 2026-11-22: trimmed back to target whenever it exceeds the cap.
+    _caps = {p["name"]: float(p["max_weight"]) for p in _pf_cfg["positions"] if p.get("max_weight")}
     _rebal = rebalance_instructions(_current_weights, _target_weights,
-                                     _rebal_prices, _target_denom)
+                                     _rebal_prices, _target_denom, caps=_caps)
 
     # Band printed in the units it actually USES. REBAL_BAND is an absolute
     # percentage-point gap (vol_target.py:88 -- "10% band -> AVGO can reach

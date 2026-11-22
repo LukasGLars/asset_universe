@@ -181,3 +181,23 @@ def test_missing_price_gives_zero_shares_but_still_reports_gap():
     assert avgo["out_of_band"] is True          # gap is still real and reported
     assert avgo["action"] == "SELL"
     assert avgo["shares"] == 0                  # but never a fabricated share count
+
+
+
+def test_cap_trims_inside_the_band():
+    # Broadcom 26% vs 20% target is inside the +-10pp band but above its 25% cap.
+    cur = {"Broadcom": 0.26, "Gold": 0.20}
+    tgt = {"Broadcom": 0.20, "Gold": 0.20}
+    r = rebalance_instructions(cur, tgt, {"Broadcom": 3000.0, "Gold": 750.0}, 1_000_000, caps={"Broadcom": 0.25})
+    assert r["Broadcom"]["action"] == "SELL" and round(r["Broadcom"]["gap_kr"]) == -60_000
+    assert r["Gold"]["action"] == "HOLD"
+    # exactly at the cap does not trigger; without caps nothing changes
+    assert rebalance_instructions({"Broadcom": 0.25}, {"Broadcom": 0.20}, {}, 1, caps={"Broadcom": 0.25})["Broadcom"]["action"] == "HOLD"
+    assert rebalance_instructions(cur, tgt, {}, 1)["Broadcom"]["action"] == "HOLD"
+
+
+def test_live_config_caps_broadcom_at_25_and_crash_plan_matches():
+    import tomllib, crash_plan
+    pos = {p["name"]: p for p in tomllib.load(open("config/portfolio.toml", "rb"))["positions"]}
+    assert pos["Broadcom"]["max_weight"] == 0.25
+    assert crash_plan.HOLDINGS["Broadcom"][2] == pos["Broadcom"]["max_weight"]
