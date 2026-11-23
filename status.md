@@ -300,15 +300,15 @@ AVGO peer valuation snapshot -- 2026-11-23
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
-MU          $709.11    $75.51   $208.83      2.77x        +177%     3.40x      0.02
-AMD         $459.30     $6.65    $17.64      2.65x        +165%    26.04x      0.16
-MRVL        $144.67     $3.30     $7.37      2.23x        +123%    19.63x      0.16
+MU          $706.58    $75.51   $208.83      2.77x        +177%     3.38x      0.02
+AMD         $458.03     $6.65    $17.64      2.65x        +165%    25.97x      0.16
+MRVL        $144.47     $3.30     $7.37      2.23x        +123%    19.60x      0.16
 AVGO*       $310.15     $9.76    $19.35      1.98x         +98%    16.02x      0.16
-NVDA        $166.59     $8.39    $16.61      1.98x         +98%    10.03x      0.10
-ASML      $1,383.30    $33.89    $56.43      1.67x         +67%    24.51x      0.37
-ANET        $180.13     $3.91     $6.04      1.54x         +54%    29.84x      0.55
-TSM         $367.85    $15.54    $23.39      1.50x         +50%    15.73x      0.31
-QCOM        $164.25    $10.53    $12.18      1.16x         +16%    13.48x      0.86
+NVDA        $164.06     $8.39    $16.61      1.98x         +98%     9.88x      0.10
+ASML      $1,382.53    $33.89    $56.43      1.67x         +67%    24.50x      0.37
+ANET        $180.78     $3.91     $6.04      1.54x         +54%    29.94x      0.55
+TSM         $367.19    $15.54    $23.39      1.50x         +50%    15.70x      0.31
+QCOM        $164.75    $10.53    $12.18      1.16x         +16%    13.52x      0.86
 
 * = AVGO
 
@@ -320,13 +320,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         26.04x       --    29
-ANET        29.84x       --    29
-ASML        24.51x       --    29
-AVGO        16.02x       --    29
-MRVL        19.63x       --    29
-MU           3.40x       --    29
-NVDA        10.03x       --    29
-QCOM        13.48x       --    29
-TSM         15.73x       --    29
-  accruing -- 29/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         25.97x       --    30
+ANET        29.94x       --    30
+ASML        24.50x       --    30
+AVGO        16.02x       --    30
+MRVL        19.60x       --    30
+MU           3.38x       --    30
+NVDA         9.88x       --    30
+QCOM        13.52x       --    30
+TSM         15.70x       --    30
+  accruing -- 30/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
