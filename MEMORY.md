@@ -6912,3 +6912,19 @@ AMD 2018-12 (+108%). Caveats: total revenue not AI segment; today's
 constituents (survivorship). Keep the existing AVGO Sightline rules; the 25%
 cap remains the tool for the deceleration gap. www.sec.gov added to the
 environment for the ticker->CIK list. Script scratch-only.
+
+## Sightline-candidate replacement tests (2026-11-24)
+
+Live mix (SEK, 2010-26, +-10pp band, AVGO 25% cap, ACWI proxy): Calmar 0.93,
+MaxDD -21.9%. Bar: >= +0.10 Calmar AND >= 1pp MaxDD AND better in both halves.
+Diversifiers as Index 20 + X 10: V +0.06/-0.2pp, MA +0.04/-0.7, ISRG
+-0.02/-1.3, COST +0.08/+0.4 (both halves better) -- none pass.
+AI alternatives: AMZN half/full -0.10/-0.10; MSFT half +0.03/+2.2pp, full
+-0.01/+3.2pp; NVDA half +0.06/-0.4; **NVDA full swap (NVDA 20 for AVGO 20)
+PASSES: +0.16 Calmar, +1.7pp MaxDD, halves +0.03/+0.17.** Robustness: thirds
+2010-15 1.63 -> 0.91 (worse), 2015-21 0.75 -> 1.21, 2021-26 1.23 -> 1.51;
+rolling 5y windows NVDA better 20/24; NVDA's own worst DD -59% vs AVGO -47%;
+weekly corr 0.51. Not acted on: 1 pass in 10 variants, both names are
+hindsight winners, worse in 2010-15, and the 2026-11 CEO exit / security
+probe is a risk no backtest contains. Revisit once Nvidia's leadership and
+the investigation settle.
