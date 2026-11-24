@@ -6928,3 +6928,9 @@ weekly corr 0.51. Not acted on: 1 pass in 10 variants, both names are
 hindsight winners, worse in 2010-15, and the 2026-11 CEO exit / security
 probe is a risk no backtest contains. Revisit once Nvidia's leadership and
 the investigation settle.
+Follow-up same day -- half of AVGO into a broad, AI-independent name (AVGO 10
++ X 10): V -0.08 Calmar / -0.4pp MDD / -1.4pp CAGR; MA +0.03/+2.0/-1.2;
+COST +0.03/+1.5/-0.9; ISRG -0.13/-1.6/-1.6; BRK-B -0.06/+0.9/-2.1;
+TRV -0.09/-0.1/-1.9. None pass; every one costs ~1-2pp CAGR for at most
+~2pp of drawdown. AVGO's return pays for its volatility inside this mix (with
+the hindsight caveat); the 25% cap is the cheaper way to limit AI risk.
