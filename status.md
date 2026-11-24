@@ -257,8 +257,8 @@ Computing capped 252d distributions for 51 candidates ...
   FOX       hist=8yr  (below min 10yr, skipped)
   APH       N=1238  mu= +17.2%  sigma= 24.2%  hist=27yr  [MODERATE]
   EME       N=1238  mu= +17.2%  sigma= 25.9%  hist=27yr  [MODERATE]
-  FCX       N=1238  mu= +16.6%  sigma= 22.9%  hist=27yr  [MODERATE]
   TEL2-B.ST  no data
+  FCX       N=1238  mu= +16.6%  sigma= 22.9%  hist=27yr  [MODERATE]
   MPWR      N=1230  mu= +20.2%  sigma= 32.3%  hist=22yr  [MODERATE]
   PM        N= 620  mu= +10.6%  sigma= 13.7%  hist=19yr  [SINGLE]
   DASH      hist=6yr  (below min 10yr, skipped)
@@ -320,13 +320,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         25.74x       --    30
-ANET        29.54x       --    30
-ASML        24.52x       --    30
-AVGO        16.22x       --    30
-MRVL        19.69x       --    30
-MU           3.42x       --    30
-NVDA         9.94x       --    30
-QCOM        13.58x       --    30
-TSM         15.55x       --    30
-  accruing -- 30/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         25.74x       --    31
+ANET        29.54x       --    31
+ASML        24.52x       --    31
+AVGO        16.22x       --    31
+MRVL        19.69x       --    31
+MU           3.42x       --    31
+NVDA         9.94x       --    31
+QCOM        13.58x       --    31
+TSM         15.55x       --    31
+  accruing -- 31/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
