@@ -6895,3 +6895,20 @@ customer-loss gap costs ~-9.5% of the portfolio vs -11.1%. Does not pass the
 bar (Calmar flat) -- insurance against a tail the backtest never contained.
 Framing agreed: maximise return within the -25% guardrail; only cheap
 insurance.
+
+## Tighter Sightline rule (two sequential revenue declines -> CUT): FAILS (2026-11-24)
+
+Analog test, pre-registered: 64 US semis/tech filers, SEC XBRL quarterly
+revenue 2007-2026; event = fast grower (y/y >= +20% two quarters earlier)
+posts rev[t] < rev[t-1] < rev[t-2]; dated at the 10-Q/10-K filing; one per
+company per 4 quarters; outcome = stock minus SPY. Pass = 12m median <= -5pp
+AND lags SPY >= 60% AND negative in both halves.
+- TWO declines (103 events): 12m vs SPY median **+5.2%**, lagged only 42%;
+  halves -5.3% (2009-17) / +13.5% (2018-26). FAIL.
+- ONE decline (195): +1.1%; all fast-grower quarters (1179): +4.4%.
+By the second down quarter the price has already fallen; selling there sold
+near bottoms: NVDA 2022-10 (+210% vs SPY next 12m), AVGO 2023-04 (+56%),
+AMD 2018-12 (+108%). Caveats: total revenue not AI segment; today's
+constituents (survivorship). Keep the existing AVGO Sightline rules; the 25%
+cap remains the tool for the deceleration gap. www.sec.gov added to the
+environment for the ticker->CIK list. Script scratch-only.
