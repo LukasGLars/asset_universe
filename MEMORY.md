@@ -6965,3 +6965,7 @@ AVGO or LLY adds ~+0.6-1.0pp CAGR on average; each +5pp gold ~1pp shallower
 MDD. Middle options: LLY 25 / LF 25: +20.6%, MDD -20.8%; LLY 25 / LF 20 /
 Visa 10: +21.2%, -22.0%. Not adopted; the optimum is a bet that AVGO and LLY
 stay exceptional, the opposite of the 2026-11-22/25 concentration decisions.
+**Adopted same day (operator): LLY tilt -- LLY 0.20 -> 0.25, LF 0.30 -> 0.25.**
+Buckets reactor_core 0.65 / global_index 0.25. Side effects accepted: the band
+now trims LLY only at 35%; recession mode still moves 20pp from LF (25 -> 5%);
+crash plan's LLY buy cap stays 28%.
