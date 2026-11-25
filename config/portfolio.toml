@@ -55,8 +55,8 @@ monthly_contribution_sek = 6000
 # Derived from the per-asset target_weight values below (2026-09-04
 # restructure). Per-asset targets are authoritative; this table is a grouping
 # of them, not the other way round.
-reactor_core  = 0.60   # AVGO 15 + LLY 20 + Gold 20 + Visa 5 (2026-11-25)
-global_index  = 0.30   # Länsförsäkringar Global Index (25 -> 30 on 2026-11-01, took crypto's 5%)
+reactor_core  = 0.65   # AVGO 15 + LLY 25 + Gold 20 + Visa 5 (LLY 20 -> 25 on 2026-11-25)
+global_index  = 0.25   # LF Global Index (30 -> 25 on 2026-11-25: 5pp to LLY)
 home_base     = 0.10   # cash
 crypto_sleeve = 0.00   # exited 2026-10-28 (Virtune BTC/ETH targets 0)
 war_chest     = 0.00
@@ -98,7 +98,8 @@ shares   = 19
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
-target_weight = 0.2
+target_weight = 0.25   # 20 -> 25 on 2026-11-25 (operator: LLY tilt; backtest +0.8pp CAGR,
+                       # MaxDD -20.8% vs -21.1%; increases reliance on LLY -- MEMORY.md)
 
 [[positions]]
 name     = "Walmart"
@@ -237,4 +238,4 @@ shares    = 419.649
 currency  = "SEK"
 category  = "avanza"
 bucket    = "global_index"
-target_weight = 0.30
+target_weight = 0.25   # 30 -> 25 on 2026-11-25: 5pp to LLY

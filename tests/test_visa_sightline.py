@@ -54,6 +54,7 @@ def test_live_config_has_visa_wired_end_to_end():
     pos = {p["name"]: p for p in tomllib.load(open("config/portfolio.toml", "rb"))["positions"]}
     assert pos["Visa"]["ticker"] == "V" and pos["Visa"]["target_weight"] == 0.05
     assert pos["Broadcom"]["target_weight"] == 0.15
+    assert pos["Eli Lilly"]["target_weight"] == 0.25 and pos["LF Global Index"]["target_weight"] == 0.25
     assert abs(sum(float(p.get("target_weight") or 0) for p in pos.values()) - 1.0) < 1e-9
     import sync_sheet
     assert sync_sheet._lookup("Visa") == "Visa"
