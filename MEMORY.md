@@ -6934,3 +6934,20 @@ COST +0.03/+1.5/-0.9; ISRG -0.13/-1.6/-1.6; BRK-B -0.06/+0.9/-2.1;
 TRV -0.09/-0.1/-1.9. None pass; every one costs ~1-2pp CAGR for at most
 ~2pp of drawdown. AVGO's return pays for its volatility inside this mix (with
 the hindsight caveat); the 25% cap is the cheaper way to limit AI risk.
+
+## Visa 5% from the AVGO slot + AVGO crash buys paused (2026-11-25, operator decision)
+
+Operator sold 4 AVGO (~11.9k kr) and bought 6 V (~25.8k kr; ~13.9k from
+cash) after the scenario frame (AI boom: -7pp, AI bust: +8pp over 3y for a
+10pp split) and the AVGO 10 + X 10 tests (none passed; V -0.08 Calmar). Visa
+chosen over MA: same business, cheaper (24-28x), faster volume growth.
+- Targets: AVGO 0.20 -> 0.15 (max_weight 0.25 kept), Visa 0.05. Sheet mapping
+  "Visa". Next contributions top Visa up to ~5% (~22k more).
+- Sightline V: payments volume growth (constant $), kind = "growth" (the
+  reading IS the YoY %); CUT if < 0. Auto-read: sightline_reader.parse_visa,
+  verified on the live 2026-10-27 8-K; seeded 2023Q3..2026Q3 (+7..+10%).
+- Crash plan: AVGO's pending second half CANCELLED (policy change, not
+  timing) and Broadcom PAUSED (crash_plan.toml [paused]; `crash_plan.py
+  pause|resume`), so the plan does not buy back what was trimmed. A paused
+  holding never fires and does not dilute the split for the others.
+  Resume when the AVGO allocation is revisited.

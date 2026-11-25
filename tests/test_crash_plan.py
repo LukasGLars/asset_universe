@@ -199,3 +199,29 @@ def test_avgo_crash_while_second_half_pending_sends_fyi_not_a_buy():
     subject, body = build_actionable_message(prev, curr)
     assert "AVGO crash trigger (second half pending)" in subject
     assert "no new buy" in body and "BUY" not in body
+
+
+def test_paused_holding_never_fires_and_others_still_do(tmp_path, monkeypatch):
+    rows = [_row("Broadcom", -0.18, 200_000), _row("Eli Lilly", -0.12, 200_000)]
+    out = {r["name"]: r for r in cp.plan(rows, 96_000, BASE, TARGET, paused=["Broadcom"])}
+    assert out["Broadcom"]["state"] == cp.PAUSED and out["Broadcom"]["buy_kr"] == 0
+    assert out["Eli Lilly"]["state"] == cp.FIRED and round(out["Eli Lilly"]["buy_kr"]) == 16_667  # not split with the paused one
+    p = tmp_path / "s.toml"
+    monkeypatch.setattr(cp, "STATE_PATH", p)
+    cp.main(["pause", "Broadcom"]); assert cp.load_state(p)["paused"] == ["Broadcom"]
+    cp.main(["resume", "Broadcom"]); assert cp.load_state(p)["paused"] == []
+
+
+def test_avgo_crash_while_paused_is_silent():
+    from preview_all_triggers import BASE as _B, _crash_block
+    flip = lambda t: t.replace("Signal         : BASE  (trigger: none)  -- informational, no rotation",
+                               "Signal         : DEFENSIVE  (trigger: CRASH)  -- informational, no rotation")
+    paused = "\n" + "\n".join(cp.format_lines(cp.plan(
+        [{"name": "Broadcom", "roc": -0.18, "close": 289.0, "value": 200_000, "since": None}],
+        96_000, 1_000_000, 100_000, paused=["Broadcom"]), 96_000, 100_000)) + "\n"
+    B = _B.replace(_crash_block(), paused)
+    assert build_actionable_message(extract_fingerprint(B), extract_fingerprint(flip(B))) is None
+
+
+def test_live_state_pauses_broadcom():
+    assert cp.load_state()["paused"] == ["Broadcom"] and cp.load_state()["pending"] == {}

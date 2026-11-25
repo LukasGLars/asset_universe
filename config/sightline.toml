@@ -130,6 +130,68 @@ value   = 14.8
 quarter = "2026Q3"
 value   = 16
 
+[V]
+name         = "Visa"
+observable   = "Payments volume growth, constant dollars, as stated in each quarterly release"
+unit         = "% YoY"
+kind         = "growth"
+eroding      = "YoY < 0 in any quarter (the release states the growth rate; a decline means card spending itself is shrinking)"
+constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
+cadence      = "earnings release, ~4 weeks after the calendar quarter (label = calendar quarter of the volume)"
+action       = "CUT: sell the full position"
+
+[[V.readings]]
+quarter = "2023Q3"
+value   = 9
+
+[[V.readings]]
+quarter = "2023Q4"
+value   = 8
+
+[[V.readings]]
+quarter = "2024Q1"
+value   = 8
+
+[[V.readings]]
+quarter = "2024Q2"
+value   = 7
+
+[[V.readings]]
+quarter = "2024Q3"
+value   = 8
+
+[[V.readings]]
+quarter = "2024Q4"
+value   = 9
+
+[[V.readings]]
+quarter = "2025Q1"
+value   = 8
+
+[[V.readings]]
+quarter = "2025Q2"
+value   = 8
+
+[[V.readings]]
+quarter = "2025Q3"
+value   = 9
+
+[[V.readings]]
+quarter = "2025Q4"
+value   = 8
+
+[[V.readings]]
+quarter = "2026Q1"
+value   = 9
+
+[[V.readings]]
+quarter = "2026Q2"
+value   = 10
+
+[[V.readings]]
+quarter = "2026Q3"
+value   = 9
+
 # Holdings Sightline does NOT govern. Stated explicitly so an absent entry
 # reads as a decision, not a gap.
 

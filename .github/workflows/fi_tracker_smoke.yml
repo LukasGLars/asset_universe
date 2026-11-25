@@ -68,13 +68,13 @@ jobs:
           crash = fp["crash_rows"]
           assert set(crash) == {"Broadcom", "Eli Lilly", "LF Global Index"}, f"crash rows: {crash}"
           for name, row in crash.items():
-              assert row["status"] in ("ARMED", "FIRED", "WAITING", "SECOND_HALF", "NO_DATA"), f"{name}: {row['status']!r}"
+              assert row["status"] in ("ARMED", "FIRED", "WAITING", "SECOND_HALF", "NO_DATA", "PAUSED"), f"{name}: {row['status']!r}"
           print(f"crash rows parsed: { {k: v['status'] for k, v in crash.items()} }")
 
           must_parse = [
               "avgo_guard", "avgo_trigger", "avgo_action", "lly_stress",
               "silver_signal", "sleeve_status", "hy_oas",
-              "sightline_avgo_state", "sightline_lly_state",
+              "sightline_avgo_state", "sightline_lly_state", "sightline_v_state",
               "avgo_latest_quarter", "lly_latest_quarter",
           ]
           # Crypto legs are required only while they carry a target; an exited

@@ -56,6 +56,10 @@ HOLDINGS = {
 }
 
 ARMED, FIRED, WAITING, SECOND_HALF, NO_DATA = "ARMED", "FIRED", "WAITING", "SECOND_HALF", "NO_DATA"
+# Operator pause (2026-11-25): a paused holding never fires or buys, and its
+# triggers do not count toward the split. AVGO was paused the day its target
+# was cut 20 -> 15% for Visa, so the plan would not buy back what was sold.
+PAUSED = "PAUSED"
 
 
 def roc(closes: list[float], window: int = WINDOW) -> float | None:
@@ -79,7 +83,8 @@ def load_state(path: Path | None = None) -> dict:
         raw = {}
     used = {n: int(raw.get("used", {}).get(n, 0)) for n in HOLDINGS}
     pending = {n: dict(p) for n, p in raw.get("pending", {}).items() if n in HOLDINGS}
-    return {"used": used, "pending": pending}
+    paused = [n for n in raw.get("paused", {}).get("holdings", []) if n in HOLDINGS]
+    return {"used": used, "pending": pending, "paused": paused}
 
 
 def load_used(path: Path | None = None) -> dict[str, int]:
@@ -92,6 +97,8 @@ def save_state(state: dict, path: Path | None = None) -> None:
              "# full, and second halves still to buy. Written by crash_plan.py.",
              "", "[used]"]
     lines += [f'"{n}" = {int(state["used"].get(n, 0))}' for n in HOLDINGS]
+    if state.get("paused"):
+        lines += ["", "[paused]", "holdings = [" + ", ".join(f'"{n}"' for n in state["paused"]) + "]"]
     for n, p in state.get("pending", {}).items():
         lines += ["", f'[pending."{n}"]', f'date    = "{p["date"]}"',
                   f'close   = {float(p["close"]):g}', f'half_kr = {float(p["half_kr"]):.0f}']
@@ -99,13 +106,15 @@ def save_state(state: dict, path: Path | None = None) -> None:
 
 
 def save_used(used: dict[str, int], path: Path | None = None) -> None:
-    save_state({"used": used, "pending": load_state(path)["pending"]}, path)
+    st = load_state(path)
+    save_state({"used": used, "pending": st["pending"], "paused": st["paused"]}, path)
 
 
 # ── plan (pure) ──────────────────────────────────────────────────────────────
 
 def plan(rows: list[dict], cash: float, base: float, cash_target_kr: float,
-         used: dict[str, int] | None = None, pending: dict | None = None) -> list[dict]:
+         used: dict[str, int] | None = None, pending: dict | None = None,
+         paused: list[str] | None = None) -> list[dict]:
     """rows: [{name, roc, close, value, since}] where `since` is the number of
     sessions after an open tranche's first-half date (None when none is open).
     Returns the rows with state, buy_kr, why and next_price."""
@@ -114,13 +123,18 @@ def plan(rows: list[dict], cash: float, base: float, cash_target_kr: float,
     half = cash_target_kr / TRANCHES / 2
     reserved = sum(float(p["half_kr"]) for p in pending.values())
     free = max(0.0, cash - reserved)
-    fired = [r for r in rows if r["name"] not in pending and r["roc"] is not None and r["roc"] <= TRIGGER]
+    paused = set(paused or [])
+    fired = [r for r in rows if r["name"] not in pending and r["name"] not in paused
+             and r["roc"] is not None and r["roc"] <= TRIGGER]
     eligible = [r for r in fired if used.get(r["name"], 0) < MAX_PER_HOLDING]
     share = min(half, free / len(eligible)) if eligible else 0.0
     out = []
     for r in rows:
         name, cap = r["name"], HOLDINGS[r["name"]][2]
         room = max(0.0, cap * base - r["value"])
+        if name in paused and name not in pending:
+            out.append({**r, "state": PAUSED, "buy_kr": 0.0, "why": "operator pause", "next_price": None})
+            continue
         if name in pending:
             p = pending[name]
             level = float(p["close"]) * (1 - SECOND_DROP)
@@ -166,6 +180,10 @@ def format_lines(planned: list[dict], cash: float, cash_target_kr: float) -> lis
         n, s = r["name"], r["state"]
         if s == NO_DATA:
             out.append(f"    {n} status: {NO_DATA}  (fewer than {WINDOW + 1} closes)")
+        elif s == PAUSED:
+            roc = "" if r["roc"] is None else f"{WINDOW}d {r['roc']:+.1%}; "
+            out.append(f"    {n} status: {PAUSED}  ({roc}no crash buys -- operator pause; "
+                       f"resume: python crash_plan.py resume \"{n}\")")
         elif s == ARMED:
             out.append(f"    {n} status: {ARMED}  ({WINDOW}d {r['roc']:+.1%}, trigger {TRIGGER:.0%})")
         elif s == WAITING:
@@ -203,16 +221,20 @@ def main(argv: list[str] | None = None, today: dt.date | None = None,
     elif argv[:1] == ["bought-second"] and len(argv) == 2 and argv[1] in HOLDINGS:
         state["pending"].pop(argv[1], None)
         save_state(state)
+    elif argv[:1] in (["pause"], ["resume"]) and len(argv) == 2 and argv[1] in HOLDINGS:
+        p = [n for n in state["paused"] if n != argv[1]] + ([argv[1]] if argv[0] == "pause" else [])
+        save_state({**state, "paused": p})
     elif argv == ["reset"]:
-        save_state({"used": {n: 0 for n in HOLDINGS}, "pending": {}})
+        save_state({"used": {n: 0 for n in HOLDINGS}, "pending": {}, "paused": state["paused"]})
         state = load_state()
     elif argv:
         raise SystemExit('usage: crash_plan.py [bought "<holding>" --close X --half KR | '
-                         'bought-second "<holding>" | reset]')
+                         'bought-second "<holding>" | pause "<holding>" | resume "<holding>" | reset]')
     state = load_state()
     print(f"tranches opened: {sum(state['used'].values())} of {TRANCHES}  "
           + ", ".join(f"{n} {k}" for n, k in state["used"].items())
-          + (f"  | open second halves: {', '.join(state['pending'])}" if state["pending"] else ""))
+          + (f"  | open second halves: {', '.join(state['pending'])}" if state["pending"] else "")
+          + (f"  | paused: {', '.join(state['paused'])}" if state["paused"] else ""))
 
 
 if __name__ == "__main__":

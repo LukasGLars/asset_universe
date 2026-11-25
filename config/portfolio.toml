@@ -55,7 +55,7 @@ monthly_contribution_sek = 6000
 # Derived from the per-asset target_weight values below (2026-09-04
 # restructure). Per-asset targets are authoritative; this table is a grouping
 # of them, not the other way round.
-reactor_core  = 0.60   # AVGO 20 + LLY 20 + Gold 20
+reactor_core  = 0.60   # AVGO 15 + LLY 20 + Gold 20 + Visa 5 (2026-11-25)
 global_index  = 0.30   # Länsförsäkringar Global Index (25 -> 30 on 2026-11-01, took crypto's 5%)
 home_base     = 0.10   # cash
 crypto_sleeve = 0.00   # exited 2026-10-28 (Virtune BTC/ETH targets 0)
@@ -134,12 +134,26 @@ shares   = 66
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
-target_weight = 0.2
+target_weight = 0.15   # 20 -> 15 on 2026-11-25: 5pp to Visa (AI-concentration hedge)
 # Concentration cap (operator decision 2026-11-22): trim back to the 20%
 # target whenever Broadcom exceeds 25% of the account, inside the +-10pp band.
 # Insurance against a customer-loss gap: -40% at the cap ~ -9.5% of the
 # portfolio vs -11.1% at the old 30% line; ~0.4pp CAGR cost in 2010-26.
 max_weight = 0.25
+
+# ── Visa (2026-11-25, operator decision) ─────────────────────────────────────
+# Takes 5pp of the AVGO slot: a broad, AI-independent compounder (payments
+# volume +7..+10% for 13 straight quarters, corr 0.17 with AVGO). Did NOT pass
+# the pre-registered bar (AVGO 10 + V 10: -0.08 Calmar); adopted as AI-
+# concentration insurance -- MEMORY.md. Sightline: payments volume growth.
+[[positions]]
+name     = "Visa"
+ticker   = "V"
+shares   = 0
+currency = "USD"
+category = "equities"
+bucket   = "reactor_core"
+target_weight = 0.05
 
 [[positions]]
 name     = "Howmet Aerospace"

@@ -35,6 +35,7 @@ ASSET_MAP: dict[str, str] = {
     "Cameco":    "Cameco",
     "Vertiv":    "Vertiv",
     "Broadcom":  "Broadcom",
+    "Visa":      "Visa",              # 2026-11-25
     "HWM":       "Howmet Aerospace",
     "Howmet":    "Howmet Aerospace",
     "Spiltan":   "Spiltan Räntefond",

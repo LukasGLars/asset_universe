@@ -730,9 +730,9 @@ except Exception as _e:
 # the rebalance / contribution blocks below -- Sightline never resizes.
 try:
     from sightline import format_dashboard_lines
-    from sightline_reader import auto_read, format_auto_line
+    from sightline_reader import PARSERS as _SL_PARSERS, auto_read, format_auto_line
     _auto_lines = {}
-    for _tkr in ("AVGO", "LLY"):
+    for _tkr in _SL_PARSERS:
         try:
             _auto_lines[_tkr] = format_auto_line(auto_read(_tkr))
         except Exception as _e:
@@ -1004,7 +1004,8 @@ try:
     _cash_target_kr = _base_targets.get(_cash_name, _cash_target) * _target_denom
     print("\n".join(crash_plan.format_lines(
         crash_plan.plan(_crash_rows, _rc_cash, _target_denom, _cash_target_kr,
-                        _crash_state["used"], _crash_state["pending"]),
+                        _crash_state["used"], _crash_state["pending"],
+                        paused=_crash_state.get("paused")),
         _rc_cash, _cash_target_kr)))
 except Exception as _e:
     print(f"\n  Crash Plan : [unavailable — {_e}]")

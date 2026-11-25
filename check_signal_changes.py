@@ -222,6 +222,13 @@ def extract_fingerprint(text: str) -> dict:
         # Whole line: sightline_reader makes it unique per filing and
         # constant between filings, so a plain != is the new-filing test.
         "sightline_avgo_autoread": _find(r"Sightline.*?AVGO \(.*?Auto-read\s*:\s*([^\n]+)", text),
+        # Visa (2026-11-25): anchored to the row start -- a bare "V (" would
+        # also match inside other words.
+        "sightline_v_state": _find(r"Sightline.*?\n\s+V \(.*?State\s*:\s*(\S+)", text),
+        "sightline_v_latest": _find(r"Sightline.*?\n\s+V \(.*?Latest\s*:\s*([^\n]+)", text),
+        "sightline_v_observable": _find(r"Sightline.*?\n\s+V \(.*?Observable\s*:\s*([^\n]+)", text),
+        "sightline_v_action": _find(r"Sightline.*?\n\s+V \(.*?Action\s*:\s*([^\n]+)", text),
+        "sightline_v_autoread": _find(r"Sightline.*?\n\s+V \(.*?Auto-read\s*:\s*([^\n]+)", text),
         "sightline_lly_autoread": _find(r"Sightline.*?LLY \(.*?Auto-read\s*:\s*([^\n]+)", text),
         # Parsed generically from whatever rows the block prints, keyed by
         # position name -- see _rebal_rows. Was three hardcoded Gold/AVGO/LLY
@@ -249,6 +256,7 @@ LABELS = {
     "hy_oas": "HY credit OAS",
     "sightline_avgo_state": "Sightline AVGO",
     "sightline_lly_state": "Sightline LLY",
+    "sightline_v_state": "Sightline V",
 }
 
 
@@ -530,7 +538,7 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # the verdict it produced -- the CUT block below adds the action if the
     # state flipped) or couldn't be (the one case that still needs a hand).
     # fetch_failed is transient and deliberately silent.
-    for _tkr in ("avgo", "lly"):
+    for _tkr in ("avgo", "lly", "v"):
         _prev, _curr = prev[f"sightline_{_tkr}_autoread"], curr[f"sightline_{_tkr}_autoread"]
         if _prev == _curr or "unknown" in (_prev, _curr) or _curr.startswith("fetch_failed"):
             continue
@@ -548,7 +556,8 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
             blocks.append(
                 f"SIGHTLINE {_label}: could not read {curr[f'sightline_{_tkr}_observable']} "
                 f"from the new 8-K.\n"
-                f"Record manually: python record_sightline.py {_label} <quarter> <USD bn>"
+                f"Record manually: python record_sightline.py {_label} <quarter> "
+                + ("<YoY %>" if _tkr == "v" else "<USD bn>")
             )
             subject_parts.append(f"Sightline {_label} needs manual reading")
 
@@ -557,7 +566,7 @@ def build_actionable_message(prev: dict, curr: dict) -> tuple[str, str] | None:
     # verbatim from config rather than paraphrasing. CUT -> REQUALIFIED
     # only re-opens the entry test -- said explicitly so it can't be read
     # as a buy.
-    for _tkr in ("avgo", "lly"):
+    for _tkr in ("avgo", "lly", "v"):
         _prev, _curr = prev[f"sightline_{_tkr}_state"], curr[f"sightline_{_tkr}_state"]
         if _prev != _curr and "unknown" not in (_prev, _curr):
             _label = _tkr.upper()

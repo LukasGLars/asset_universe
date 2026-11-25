@@ -32,7 +32,7 @@ from pathlib import Path
 from sec_edgar import USER_AGENT
 from sightline import CONFIG_PATH, load_config, record_guide, record_reading, save_auto_state
 
-CIKS = {"AVGO": "0001730168", "LLY": "0000059478"}
+CIKS = {"AVGO": "0001730168", "LLY": "0000059478", "V": "0001403161"}
 
 NO_NEW_FILING, RECORDED, ALREADY_RECORDED, PARSE_FAILED, FETCH_FAILED = (
     "no_new_filing", "recorded", "already_recorded", "parse_failed", "fetch_failed")
@@ -161,7 +161,35 @@ def parse_lly(text: str) -> tuple[str, float] | None:
     return f"{q.group(2)}Q{q.group(1)}", round(total, 1)
 
 
-PARSERS = {"AVGO": parse_avgo, "LLY": parse_lly}
+_VISA_PV = re.compile(
+    r"Payments volume for the three months ended (\w+ \d{1,2}, \d{4}),?\s*"
+    r"(?:on which[^,]*,\s*)?(increased|decreased|grew|declined)\s+(\d+(?:\.\d+)?)\s*%", re.I)
+_MONTH_Q = {"march": 1, "june": 2, "september": 3, "december": 4}
+
+
+def parse_visa(text: str) -> tuple[str, float] | None:
+    """Visa payments volume growth (constant dollars), as a signed percent,
+    labelled by the CALENDAR quarter the volume covers ('2026Q3' for the
+    three months ended September 30, 2026). Each release states two such
+    quarters (the one revenue is recognised on, and the latest); the latest
+    period wins. Verified against 13 quarters of 8-Ks, 2023Q3-2026Q3."""
+    best = None
+    for m in _VISA_PV.finditer(text):
+        month, rest = m.group(1).split(" ", 1)
+        q = _MONTH_Q.get(month.lower())
+        if q is None:
+            continue
+        year = int(rest[-4:])
+        sign = -1.0 if m.group(2).lower() in ("decreased", "declined") else 1.0
+        cand = (year, q, sign * float(m.group(3)))
+        if best is None or cand[:2] > best[:2]:
+            best = cand
+    if best is None:
+        return None
+    return f"{best[0]}Q{best[1]}", best[2]
+
+
+PARSERS = {"AVGO": parse_avgo, "LLY": parse_lly, "V": parse_visa}
 GUIDE_PARSERS = {"AVGO": parse_avgo_guide}  # LLY gives no quarterly product guide
 
 
