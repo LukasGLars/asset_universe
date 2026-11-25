@@ -3,25 +3,25 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     234     707 kr   165,378 kr  15.0%  20.0%   -5.0%
+  Gold                     234     701 kr   164,054 kr  14.9%  20.0%   -5.1%
   Silver                     -     382 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  14,460 kr   274,734 kr  24.9%  20.0%   +4.9%
+  Eli Lilly                 19  14,460 kr   274,734 kr  25.0%  20.0%   +5.0%
   Walmart                    -   1,359 kr         0 kr   0.0%   0.0%   +0.0%
   Cameco                     -     614 kr         0 kr   0.0%   0.0%   +0.0%
   Vertiv                     -   1,786 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  70   3,093 kr   216,503 kr  19.6%  20.0%   -0.4%
+  Broadcom                  70   3,093 kr   216,503 kr  19.7%  20.0%   -0.3%
   Howmet Aerospace           -   2,166 kr         0 kr   0.0%   0.0%   +0.0%
-  Spiltan Räntefond     738.53     153 kr   113,076 kr  10.2%   0.0%  +10.2%
+  Spiltan Räntefond     738.53     153 kr   113,076 kr  10.3%   0.0%  +10.3%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
-  Reactor Core Cash          -     manual    80,881 kr   7.3%  10.0%   -2.7%
-  Virtune Bitcoin            -     101 kr         0 kr   0.0%   0.0%   +0.0%
-  Virtune Staked ETH         -      41 kr         0 kr   0.0%   0.0%   +0.0%
-  LF Global Index       419.65     603 kr   253,044 kr  22.9%  30.0%   -7.1%
+  Reactor Core Cash          -     manual    80,881 kr   7.4%  10.0%   -2.6%
+  Virtune Bitcoin            -     100 kr         0 kr   0.0%   0.0%   +0.0%
+  Virtune Staked ETH         -      40 kr         0 kr   0.0%   0.0%   +0.0%
+  LF Global Index       419.65     598 kr   251,047 kr  22.8%  30.0%   -7.2%
 ------------------------------------------------------------------------------
-  TPV                                        1,103,635 kr
-    Reactor Core            737,496 kr  (66.8%)   target 60.0%  drift +6.8%
-    Global Index            253,044 kr  (22.9%)   target 30.0%  drift -7.1%
-    Home Base               113,076 kr  (10.2%)   target 10.0%  drift +0.2%
+  TPV                                        1,100,314 kr
+    Reactor Core            736,172 kr  (66.9%)   target 60.0%  drift +6.9%
+    Global Index            251,047 kr  (22.8%)   target 30.0%  drift -7.2%
+    Home Base               113,076 kr  (10.3%)   target 10.0%  drift +0.3%
     Crypto Sleeve                 0 kr  ( 0.0%)   target  0.0%  drift +0.0%
     War Chest                    19 kr  ( 0.0%)   target  0.0%  drift +0.0%
 
@@ -29,26 +29,26 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,103,635 kr
+  Now                     :     1,100,314 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
   Trigger now             :    16,439,765 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  11.9
 
-  AWAR (trailing)         :  +13.9%
+  AWAR (trailing)         :  +13.7%
   Required CAGR           :  +25.5%
-  Status                  :  BEHIND  (-11.6% margin)
+  Status                  :  BEHIND  (-11.9% margin)
 
-  Projected @ AWAR        :     7,241,310 kr
-  vs target               :   -13,557,144 kr  (deficit)
+  Projected @ AWAR        :     7,056,161 kr
+  vs target               :   -13,742,293 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,016,861 kr       ~2056
-  Conservative   +15%       8,009,775 kr       ~2046
-  Base           +20%      12,690,722 kr       ~2042
-  Current AWAR   +14%       7,241,310 kr       ~2048
-  Bull           +30%      30,868,802 kr       ~2037
+  Bear           +10%       5,006,559 kr       ~2056
+  Conservative   +15%       7,992,309 kr       ~2046
+  Base           +20%      12,661,768 kr       ~2042
+  Current AWAR   +14%       7,056,161 kr       ~2048
+  Bull           +30%      30,793,890 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -78,13 +78,13 @@ PORTFOLIO SIGNALS
 
   Position          Wt    21d   63d   63d med  252d med  W252     N  Note
   ----------------------------------------------------------------------
-  Gold           15.0%    LOW   LOW     +0.8%     +0.8%   72%   103  
+  Gold           14.9%    LOW   LOW     +0.8%     +0.8%   72%   103  
   Silver          0.0%    LOW   LOW     +0.9%     +0.9%   66%    67  
-  Eli Lilly      24.9%   HIGH  HIGH     -0.6%     -0.6%   43%   172  
+  Eli Lilly      25.0%   HIGH  HIGH     -0.6%     -0.6%   43%   172  
   Walmart         0.0%   HIGH  HIGH     +0.6%     +0.6%   58%   171  
   Cameco          0.0%    LOW   LOW     +1.9%     +1.9%   68%   121  
   Vertiv          0.0%    LOW   LOW     -0.1%     -0.1%   49%   126  
-  Broadcom       19.6%    LOW   LOW     +2.1%     +2.1%   68%   138  
+  Broadcom       19.7%    LOW   LOW     +2.1%     +2.1%   68%   138  
 
 ==============================================================
 TACTICAL RULES
@@ -162,9 +162,7 @@ TACTICAL RULES
   Opportunistic Sleeve
     Status         : CLOSED (0/1 position)
     Best candidate : none eligible today (either no ENTER survivors, or all failed the pre-entry tripwire or execution-drift gate)
-    Basket-crash   : SNDK (Sandisk Corporation)  $77.95  (sector Technology, -90.2% 5d, 2 peers crashing, drift +0.0%)
-    Plan           : buy near $77.95, flat 21d exit, NO stop until +8% gain then trails 8% (no floor before that -- riskier than the extension pathway)
-    Open           : run_entry_screen.py --open SNDK <fill_price> <shares> <capital_sek> --entry-type basket_crash
+    Basket-crash   : none eligible today
 
   Crypto Trend Sleeve
     Status         : inactive -- no crypto leg carries a target (no alerts)
@@ -174,33 +172,33 @@ NEXT CONTRIBUTION
 ==============================================================
 
   Next kr        -> LF Global Index
-    Current wt (of Reactor Core) : 25.5%
+    Current wt (of Reactor Core) : 25.4%
     Target wt (config)           : 30.0%
-    Gap                          : +4.5%
+    Gap                          : +4.6%
     Gate                         : OPEN
     Note: not funded by contributions -- 
-    Denominator: 990,540 kr (5 positions carrying a target)
+    Denominator: 987,219 kr (5 positions carrying a target)
 
   Recession Mode  [Growth-Trend: S&P < 10m avg AND unemployment > 12m avg, month-end; ON shifts 20% LF Global Index -> cash]
     Recession mode status: OFF  (2026-10: S&P 756 vs 10m avg 727 [above]; unemployment 4.2% vs 12m avg 4.29% [not rising])
-    Action: OFF -- targets normal (LF Global Index 30%, cash 10%); LF Global Index is ~44,118 kr below its target.
+    Action: OFF -- targets normal (LF Global Index 30%, cash 10%); LF Global Index is ~45,119 kr below its target.
 
   Rebalance Check  [existing capital, band: 10pp absolute gap to target]
     Broadcom status: HOLD  (21.9% actual vs 20.0% target, gap -1.9%)
-    Eli Lilly status: HOLD  (27.7% actual vs 20.0% target, gap -7.7%)
-    Gold status: HOLD  (16.7% actual vs 20.0% target, gap +3.3%)
-    LF Global Index status: HOLD  (25.5% actual vs 30.0% target, gap +4.5%)
+    Eli Lilly status: HOLD  (27.8% actual vs 20.0% target, gap -7.8%)
+    Gold status: HOLD  (16.6% actual vs 20.0% target, gap +3.4%)
+    LF Global Index status: HOLD  (25.4% actual vs 30.0% target, gap +4.6%)
     Reactor Core Cash status: HOLD  (8.2% actual vs 10.0% target, gap +1.8%)
 
   Reactor Core Cash
     Balance        : 80,881 kr  (8.2% vs 10% target)
-    Shortfall      : 18,173 kr below target
+    Shortfall      : 17,841 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
 
-  Crash Plan  [cash 80,881 kr; 3 tranches of 33,018 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
+  Crash Plan  [cash 80,881 kr; 3 tranches of 32,907 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
     Broadcom status: WAITING  (second half in 9 sessions or below the level $262.38)
     Eli Lilly status: ARMED  (5d -0.6%, trigger -10%)
-    LF Global Index status: ARMED  (5d -1.0%, trigger -10%)
+    LF Global Index status: ARMED  (5d -0.7%, trigger -10%)
 
   Market Watch  [early warnings -- awareness only, no trade; crash plan, band and recession mode act]
     Trend break status: ON  (S&P 719 vs 200d avg 732 (-1.8%); ON = 3 closes in a row below; risk of a 10% drawdown ~4x normal in that state)
@@ -239,8 +237,8 @@ Computing capped 252d distributions for 51 candidates ...
   CIEN      N=1238  mu= +21.2%  sigma= 27.4%  hist=27yr  [MODERATE]
   BKNG      N=1238  mu= +34.1%  sigma= 48.6%  hist=27yr  [MODERATE]
   WDC       N=1238  mu= +21.7%  sigma= 38.8%  hist=27yr  [MODERATE]
-  EXV1.DE   no data
   GM        N= 620  mu=  +7.5%  sigma= 13.0%  hist=16yr  [SINGLE]
+  EXV1.DE   no data
   CMI       N=1238  mu= +26.6%  sigma= 30.0%  hist=27yr  [MODERATE]
   COHR      max_up=71%  (M&A / corporate event detected, skipped)
   FTNT      N= 620  mu=  -9.7%  sigma= 10.6%  hist=17yr  [SINGLE]
@@ -322,13 +320,13 @@ Note: PEG(1y) is built on a 1-year forward growth estimate, not the conventional
 
 AVGO and peers vs their OWN stored history (low percentile = cheap for that name)
 Ticker     Fwd P/E   pctile   obs
-AMD         23.46x       --    31
-ANET        27.92x       --    31
-ASML        23.67x       --    31
-AVGO        15.57x       --    31
-MRVL        17.83x       --    31
-MU           3.07x       --    31
-NVDA         9.36x       --    31
-QCOM        13.54x       --    31
-TSM         14.93x       --    31
-  accruing -- 31/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
+AMD         23.46x       --    32
+ANET        27.92x       --    32
+ASML        23.67x       --    32
+AVGO        15.57x       --    32
+MRVL        17.83x       --    32
+MU           3.07x       --    32
+NVDA         9.36x       --    32
+QCOM        13.54x       --    32
+TSM         14.93x       --    32
+  accruing -- 32/60 observations needed before a percentile is shown. Started 2026-10-18; cannot be backfilled.
