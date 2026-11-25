@@ -150,7 +150,7 @@ max_weight = 0.25
 [[positions]]
 name     = "Visa"
 ticker   = "V"
-shares   = 0
+shares   = 6
 currency = "USD"
 category = "equities"
 bucket   = "reactor_core"
