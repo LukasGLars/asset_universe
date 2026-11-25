@@ -730,9 +730,9 @@ except Exception as _e:
 # the rebalance / contribution blocks below -- Sightline never resizes.
 try:
     from sightline import format_dashboard_lines
-    from sightline_reader import auto_read, format_auto_line
+    from sightline_reader import PARSERS as _SL_PARSERS, auto_read, format_auto_line
     _auto_lines = {}
-    for _tkr in ("AVGO", "LLY"):
+    for _tkr in _SL_PARSERS:
         try:
             _auto_lines[_tkr] = format_auto_line(auto_read(_tkr))
         except Exception as _e:

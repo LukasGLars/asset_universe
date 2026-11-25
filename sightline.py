@@ -59,14 +59,21 @@ def prior_year_label(label: str) -> str:
     return f"{prefix}{year - 1:0{width}d}Q{q}"
 
 
-def yoy_series(readings: list[dict]) -> list[tuple[str, float, float | None]]:
+def yoy_series(readings: list[dict], kind: str = "level") -> list[tuple[str, float, float | None]]:
     """Chronological (quarter, value, yoy) -- yoy is None where the
-    same quarter a year earlier hasn't been recorded."""
+    same quarter a year earlier hasn't been recorded.
+
+    kind="growth" (2026-11-25, Visa): the company discloses the YoY rate
+    itself (payments volume growth, constant dollars), so each reading IS
+    the YoY in percent and needs no prior-year pair."""
     by_q = {r["quarter"].upper(): float(r["value"]) for r in readings}
     out = []
     for label in sorted(by_q, key=_sort_key):
-        prior = by_q.get(prior_year_label(label))
-        yoy = (by_q[label] / prior - 1.0) if prior else None
+        if kind == "growth":
+            yoy = by_q[label] / 100.0
+        else:
+            prior = by_q.get(prior_year_label(label))
+            yoy = (by_q[label] / prior - 1.0) if prior else None
         out.append((label, by_q[label], yoy))
     return out
 
@@ -89,7 +96,8 @@ def guided_yoy(readings: list[dict], guides: list[dict] | None) -> tuple[str, fl
     return g["quarter"].upper(), float(g["value"]), float(g["value"]) / prior - 1.0
 
 
-def derive_state(readings: list[dict], guides: list[dict] | None = None) -> tuple[str, str]:
+def derive_state(readings: list[dict], guides: list[dict] | None = None,
+                 kind: str = "level") -> tuple[str, str]:
     """Walks the readings in order and returns (state, detail).
 
     HOLD until a quarter prints YoY < 0 (eroding -> CUT). From CUT, two
@@ -100,7 +108,7 @@ def derive_state(readings: list[dict], guides: list[dict] | None = None) -> tupl
     state = HOLD
     streak = 0
     latest = None
-    for label, value, yoy in yoy_series(readings):
+    for label, value, yoy in yoy_series(readings, kind):
         if yoy is None:
             continue
         latest = (label, value, yoy)
@@ -120,7 +128,14 @@ def derive_state(readings: list[dict], guides: list[dict] | None = None) -> tupl
     if latest is None:
         return state, "no YoY pair recorded yet"
     label, value, yoy = latest
+    if kind == "growth":
+        return state, f"{label}: {value:+g}% YoY"
     return state, f"{label}: {value:g} ({yoy:+.0%} YoY)"
+
+
+def entry_state(entry: dict) -> tuple[str, str]:
+    """derive_state for a config entry, honouring its `kind`."""
+    return derive_state(entry.get("readings", []), entry.get("guides"), entry.get("kind", "level"))
 
 
 def record_reading(ticker: str, quarter: str, value: float,
@@ -136,7 +151,7 @@ def record_reading(ticker: str, quarter: str, value: float,
     readings.append({"quarter": quarter.upper(), "value": float(value)})
     cfg[ticker]["readings"] = sorted(readings, key=lambda r: _sort_key(r["quarter"]))
     _write(cfg, path)
-    return derive_state(cfg[ticker]["readings"], cfg[ticker].get("guides"))
+    return entry_state(cfg[ticker])
 
 
 def record_guide(ticker: str, quarter: str, value: float,
@@ -151,7 +166,7 @@ def record_guide(ticker: str, quarter: str, value: float,
     guides.append({"quarter": quarter.upper(), "value": float(value)})
     cfg[ticker]["guides"] = sorted(guides, key=lambda g: _sort_key(g["quarter"]))
     _write(cfg, path)
-    return derive_state(cfg[ticker].get("readings", []), cfg[ticker]["guides"])
+    return entry_state(cfg[ticker])
 
 
 def save_auto_state(ticker: str, accession: str, status: str,
@@ -181,7 +196,7 @@ def _write(cfg: dict, path: Path) -> None:
         if ticker == "exemptions":
             continue
         lines.append(f"[{ticker}]")
-        for k in ("name", "observable", "unit", "eroding", "constructive", "cadence", "action",
+        for k in ("name", "observable", "unit", "kind", "eroding", "constructive", "cadence", "action",
                   "auto_last_accession", "auto_last_status"):
             if k in entry:
                 lines.append(f'{k:<12} = "{_escape(entry[k])}"')
@@ -218,7 +233,7 @@ def format_dashboard_lines(cfg: dict | None = None,
     for ticker, entry in cfg.items():
         if ticker == "exemptions":
             continue
-        state, detail = derive_state(entry.get("readings", []), entry.get("guides"))
+        state, detail = entry_state(entry)
         out.append(f"    {ticker} ({entry.get('name', ticker)})")
         out.append(f"      Observable : {entry['observable']}")
         out.append(f"      Latest     : {detail}")
