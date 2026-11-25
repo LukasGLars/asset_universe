@@ -6951,3 +6951,17 @@ chosen over MA: same business, cheaper (24-28x), faster volume growth.
   pause|resume`), so the plan does not buy back what was trimmed. A paused
   holding never fires and does not dilute the split for the others.
   Resume when the AVGO allocation is revisited.
+
+## Weight optimisation on the live five (2026-11-25) -- answer is "more of the two winners"
+
+Grid (5pp): AVGO 10-25, LLY 10-25, Gold 15-25, Visa 0-10, Cash 10, LF rest
+(>= 10); objective max CAGR with MaxDD >= -25%; SEK 2010-26, band +-10pp,
+AVGO cap 25%. 143 mixes. Current (15/20/20/30/5): CAGR +19.8%, MDD -21.1%.
+Best: AVGO 25 / LLY 25 / Gold 15 / LF 15 / Visa 10 -- +23.6%, MDD -23.1%.
+Walk-forward (fit one half, test the other) picks AVGO 25 / LLY 25 both ways
+and it beats 99% of mixes out of sample -- but that cannot remove stock-
+SELECTION hindsight (both names were chosen knowing they won). Each +5pp of
+AVGO or LLY adds ~+0.6-1.0pp CAGR on average; each +5pp gold ~1pp shallower
+MDD. Middle options: LLY 25 / LF 25: +20.6%, MDD -20.8%; LLY 25 / LF 20 /
+Visa 10: +21.2%, -22.0%. Not adopted; the optimum is a bet that AVGO and LLY
+stay exceptional, the opposite of the 2026-11-22/25 concentration decisions.
