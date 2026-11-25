@@ -5,3 +5,6 @@
 "Broadcom" = 1
 "Eli Lilly" = 0
 "LF Global Index" = 0
+
+[paused]
+holdings = ["Broadcom"]

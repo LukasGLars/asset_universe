@@ -1004,7 +1004,8 @@ try:
     _cash_target_kr = _base_targets.get(_cash_name, _cash_target) * _target_denom
     print("\n".join(crash_plan.format_lines(
         crash_plan.plan(_crash_rows, _rc_cash, _target_denom, _cash_target_kr,
-                        _crash_state["used"], _crash_state["pending"]),
+                        _crash_state["used"], _crash_state["pending"],
+                        paused=_crash_state.get("paused")),
         _rc_cash, _cash_target_kr)))
 except Exception as _e:
     print(f"\n  Crash Plan : [unavailable — {_e}]")
