@@ -3,7 +3,7 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     234     708 kr   165,582 kr  15.1%  20.0%   -4.9%
+  Gold                     234     709 kr   165,897 kr  15.1%  20.0%   -4.9%
   Silver                     -     361 kr         0 kr   0.0%   0.0%   +0.0%
   Eli Lilly                 19  14,262 kr   270,982 kr  24.7%  25.0%   -0.3%
   Walmart                    -   1,352 kr         0 kr   0.0%   0.0%   +0.0%
@@ -19,8 +19,8 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
   Virtune Staked ETH         -      41 kr         0 kr   0.0%   0.0%   +0.0%
   LF Global Index       419.65     598 kr   251,017 kr  22.9%  25.0%   -2.1%
 ------------------------------------------------------------------------------
-  TPV                                        1,096,997 kr
-    Reactor Core            732,877 kr  (66.8%)   target 65.0%  drift +1.8%
+  TPV                                        1,097,312 kr
+    Reactor Core            733,192 kr  (66.8%)   target 65.0%  drift +1.8%
     Global Index            251,017 kr  (22.9%)   target 25.0%  drift -2.1%
     Home Base               113,084 kr  (10.3%)   target 10.0%  drift +0.3%
     Crypto Sleeve                 0 kr  ( 0.0%)   target  0.0%  drift +0.0%
@@ -30,7 +30,7 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,096,997 kr
+  Now                     :     1,097,312 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
   Trigger now             :    16,440,657 kr
   Trigger @ horizon       :    20,798,454 kr
@@ -38,18 +38,18 @@ FI@50 PACE TRACKER
 
   AWAR (trailing)         :  +13.4%
   Required CAGR           :  +25.6%
-  Status                  :  BEHIND  (-12.2% margin)
+  Status                  :  BEHIND  (-12.1% margin)
 
-  Projected @ AWAR        :     6,854,712 kr
-  vs target               :   -13,943,742 kr  (deficit)
+  Projected @ AWAR        :     6,871,577 kr
+  vs target               :   -13,926,877 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,994,770 kr       ~2056
-  Conservative   +15%       7,971,619 kr       ~2046
-  Base           +20%      12,626,353 kr       ~2042
-  Current AWAR   +13%       6,854,712 kr       ~2049
-  Bull           +30%      30,696,831 kr       ~2037
+  Bear           +10%       4,995,748 kr       ~2056
+  Conservative   +15%       7,973,276 kr       ~2046
+  Base           +20%      12,629,101 kr       ~2042
+  Current AWAR   +13%       6,871,577 kr       ~2049
+  Bull           +30%      30,703,938 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -187,7 +187,7 @@ NEXT CONTRIBUTION
     Gap                          : +3.2%
     Gate                         : OPEN
     Note: not funded by contributions -- 
-    Denominator: 983,894 kr (6 positions carrying a target)
+    Denominator: 984,210 kr (6 positions carrying a target)
 
   Recession Mode  [Growth-Trend: S&P < 10m avg AND unemployment > 12m avg, month-end; ON shifts 20% LF Global Index -> cash]
     Recession mode status: OFF  (2026-10: S&P 756 vs 10m avg 727 [above]; unemployment 4.2% vs 12m avg 4.29% [not rising])
@@ -196,17 +196,17 @@ NEXT CONTRIBUTION
   Rebalance Check  [existing capital, band: 10pp absolute gap to target]
     Broadcom status: HOLD  (20.7% actual vs 15.0% target, gap -5.7%)
     Eli Lilly status: HOLD  (27.5% actual vs 25.0% target, gap -2.5%)
-    Gold status: HOLD  (16.8% actual vs 20.0% target, gap +3.2%)
+    Gold status: HOLD  (16.9% actual vs 20.0% target, gap +3.1%)
     LF Global Index status: HOLD  (25.5% actual vs 25.0% target, gap -0.5%)
     Reactor Core Cash status: HOLD  (6.8% actual vs 10.0% target, gap +3.2%)
     Visa status: HOLD  (2.7% actual vs 5.0% target, gap +2.3%)
 
   Reactor Core Cash
     Balance        : 66,810 kr  (6.8% vs 10% target)
-    Shortfall      : 31,579 kr below target
+    Shortfall      : 31,611 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
 
-  Crash Plan  [cash 66,810 kr; 3 tranches of 32,796 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
+  Crash Plan  [cash 66,810 kr; 3 tranches of 32,807 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
     Broadcom status: PAUSED  (5d -15.0%; no crash buys -- operator pause; resume: python crash_plan.py resume "Broadcom")
     Eli Lilly status: ARMED  (5d +0.7%, trigger -10%)
     LF Global Index status: ARMED  (5d -1.1%, trigger -10%)
