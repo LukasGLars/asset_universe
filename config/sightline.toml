@@ -139,6 +139,8 @@ eroding      = "YoY < 0 in any quarter (the release states the growth rate; a de
 constructive = "YoY > 0 for two consecutive quarters after a CUT -- re-opens the entry test only, never an automatic re-buy"
 cadence      = "earnings release, ~4 weeks after the calendar quarter (label = calendar quarter of the volume)"
 action       = "CUT: sell the full position"
+auto_last_accession = "0001403161-26-000126"
+auto_last_status = "already_recorded 2026Q3 (8-K 2026-10-27)"
 
 [[V.readings]]
 quarter = "2023Q3"
