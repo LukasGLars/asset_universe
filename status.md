@@ -3,15 +3,15 @@ REACTOR CORE -- PORTFOLIO SNAPSHOT
 ==============================================================================
 Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 ------------------------------------------------------------------------------
-  Gold                     234     709 kr   165,897 kr  15.1%  20.0%   -4.9%
-  Silver                     -     361 kr         0 kr   0.0%   0.0%   +0.0%
-  Eli Lilly                 19  14,262 kr   270,982 kr  24.7%  25.0%   -0.3%
-  Walmart                    -   1,352 kr         0 kr   0.0%   0.0%   +0.0%
-  Cameco                     -     631 kr         0 kr   0.0%   0.0%   +0.0%
-  Vertiv                     -   1,776 kr         0 kr   0.0%   0.0%   +0.0%
-  Broadcom                  66   3,082 kr   203,417 kr  18.5%  15.0%   +3.5%
-  Visa                       6   4,348 kr    26,085 kr   2.4%   5.0%   -2.6%
-  Howmet Aerospace           -   2,162 kr         0 kr   0.0%   0.0%   +0.0%
+  Gold                     234     709 kr   165,842 kr  15.1%  20.0%   -4.9%
+  Silver                     -     386 kr         0 kr   0.0%   0.0%   +0.0%
+  Eli Lilly                 19  14,248 kr   270,708 kr  24.7%  25.0%   -0.3%
+  Walmart                    -   1,350 kr         0 kr   0.0%   0.0%   +0.0%
+  Cameco                     -     630 kr         0 kr   0.0%   0.0%   +0.0%
+  Vertiv                     -   1,774 kr         0 kr   0.0%   0.0%   +0.0%
+  Broadcom                  66   3,079 kr   203,211 kr  18.5%  15.0%   +3.5%
+  Visa                       6   4,343 kr    26,059 kr   2.4%   5.0%   -2.6%
+  Howmet Aerospace           -   2,160 kr         0 kr   0.0%   0.0%   +0.0%
   Spiltan Räntefond     738.53     153 kr   113,084 kr  10.3%   0.0%  +10.3%
   War Chest                  -     manual        19 kr   0.0%   0.0%   +0.0%
   Reactor Core Cash          -     manual    66,810 kr   6.1%  10.0%   -3.9%
@@ -19,8 +19,8 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
   Virtune Staked ETH         -      41 kr         0 kr   0.0%   0.0%   +0.0%
   LF Global Index       419.65     598 kr   251,017 kr  22.9%  25.0%   -2.1%
 ------------------------------------------------------------------------------
-  TPV                                        1,097,312 kr
-    Reactor Core            733,192 kr  (66.8%)   target 65.0%  drift +1.8%
+  TPV                                        1,096,750 kr
+    Reactor Core            732,630 kr  (66.8%)   target 65.0%  drift +1.8%
     Global Index            251,017 kr  (22.9%)   target 25.0%  drift -2.1%
     Home Base               113,084 kr  (10.3%)   target 10.0%  drift +0.3%
     Crypto Sleeve                 0 kr  ( 0.0%)   target  0.0%  drift +0.0%
@@ -30,26 +30,26 @@ Position                Shares      Price    Value SEK     Wt    Tgt   Drift
 FI@50 PACE TRACKER
 ==============================================================
   Start  (2025-07-21)  :       925,983 kr
-  Now                     :     1,097,312 kr
+  Now                     :     1,096,750 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,440,657 kr
+  Trigger now             :    16,441,548 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  11.9
 
-  AWAR (trailing)         :  +13.4%
+  AWAR (trailing)         :  +13.3%
   Required CAGR           :  +25.6%
-  Status                  :  BEHIND  (-12.1% margin)
+  Status                  :  BEHIND  (-12.2% margin)
 
-  Projected @ AWAR        :     6,871,577 kr
-  vs target               :   -13,926,877 kr  (deficit)
+  Projected @ AWAR        :     6,820,639 kr
+  vs target               :   -13,977,815 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       4,995,748 kr       ~2056
-  Conservative   +15%       7,973,276 kr       ~2046
-  Base           +20%      12,629,101 kr       ~2042
-  Current AWAR   +13%       6,871,577 kr       ~2049
-  Bull           +30%      30,703,938 kr       ~2037
+  Bear           +10%       4,992,503 kr       ~2056
+  Conservative   +15%       7,967,072 kr       ~2046
+  Base           +20%      12,617,700 kr       ~2042
+  Current AWAR   +13%       6,820,639 kr       ~2049
+  Bull           +30%      30,669,023 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -69,7 +69,7 @@ MACRO REGIME
 
   HY 20d delta  : +42 bps  (widening)
   Confidence    : HIGH
-  Data through  : 2026-11-25
+  Data through  : 2026-11-26
 
 ==============================================================
 PORTFOLIO SIGNALS
@@ -81,20 +81,20 @@ PORTFOLIO SIGNALS
   ----------------------------------------------------------------------
   Gold           15.1%    LOW   LOW     +0.8%     +0.8%   72%   103  
   Silver          0.0%    LOW   LOW     +0.9%     +0.9%   66%    67  
-  Eli Lilly      24.7%   HIGH  HIGH     -0.6%     -0.6%   43%   172  
-  Walmart         0.0%   HIGH  HIGH     +0.6%     +0.6%   58%   171  
-  Cameco          0.0%    LOW   LOW     +1.9%     +1.9%   68%   121  
-  Vertiv          0.0%    LOW   LOW     -0.1%     -0.1%   49%   126  
-  Broadcom       18.5%    LOW   LOW     +2.1%     +2.1%   68%   138  
+  Eli Lilly      24.7%     --    --     +3.0%     +1.1%   58%   598  no mom data
+  Walmart         0.0%     --    --     +2.0%     +3.2%   72%   598  no mom data
+  Cameco          0.0%     --    --     -1.8%     +0.2%   50%   598  no mom data
+  Vertiv          0.0%     --    --     -1.8%     -0.0%   50%   598  no mom data
+  Broadcom       18.5%     --    --     +3.5%     +6.1%   67%   598  no mom data
 
 ==============================================================
 TACTICAL RULES
 ==============================================================
 
   Silver GSR Tactical
-    GSR now        : 85.84  (as of 2026-11-25)
+    GSR now        : 83.46  (as of 2026-11-26)
     60d GSR peak   : 87.24
-    Fall from peak : 1.6%  (no (need >=5% fall for signal))
+    Fall from peak : 4.3%  (no (need >=5% fall for signal))
     T1 threshold   : 83.36  |  T2: 86.45  |  Exit: 62.56
     Signal         : INACTIVE
     Action         : No action -- hold base
@@ -187,7 +187,7 @@ NEXT CONTRIBUTION
     Gap                          : +3.2%
     Gate                         : OPEN
     Note: not funded by contributions -- 
-    Denominator: 984,210 kr (6 positions carrying a target)
+    Denominator: 983,647 kr (6 positions carrying a target)
 
   Recession Mode  [Growth-Trend: S&P < 10m avg AND unemployment > 12m avg, month-end; ON shifts 20% LF Global Index -> cash]
     Recession mode status: OFF  (2026-10: S&P 756 vs 10m avg 727 [above]; unemployment 4.2% vs 12m avg 4.29% [not rising])
@@ -199,14 +199,14 @@ NEXT CONTRIBUTION
     Gold status: HOLD  (16.9% actual vs 20.0% target, gap +3.1%)
     LF Global Index status: HOLD  (25.5% actual vs 25.0% target, gap -0.5%)
     Reactor Core Cash status: HOLD  (6.8% actual vs 10.0% target, gap +3.2%)
-    Visa status: HOLD  (2.7% actual vs 5.0% target, gap +2.3%)
+    Visa status: HOLD  (2.6% actual vs 5.0% target, gap +2.4%)
 
   Reactor Core Cash
     Balance        : 66,810 kr  (6.8% vs 10% target)
-    Shortfall      : 31,611 kr below target
+    Shortfall      : 31,555 kr below target
     Action         : none -- hold. This is the dip sleeve; the AVGO/LLY 5d-ROC trigger spends it, not a contribution.
 
-  Crash Plan  [cash 66,810 kr; 3 tranches of 32,807 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
+  Crash Plan  [cash 66,810 kr; 3 tranches of 32,788 kr bought in halves, max 2 per holding; trigger 5d <= -10%; caps Broadcom 25%, Eli Lilly 28%, LF Global Index 38%]
     Broadcom status: PAUSED  (5d -15.0%; no crash buys -- operator pause; resume: python crash_plan.py resume "Broadcom")
     Eli Lilly status: ARMED  (5d +0.7%, trigger -10%)
     LF Global Index status: ARMED  (5d -1.1%, trigger -10%)
@@ -216,13 +216,13 @@ NEXT CONTRIBUTION
     Labour cracking status: OFF  (real-time Sahm 0.00 (>= 0.50); claims 4wk avg 195k, +1% vs 52w low (>= +20%); the path to deep, recession-type falls)
     Curve inverted status: OFF  (10y-3m 5d avg +0.58pp (ON < 0); classic late-cycle warning)
     Volatility stress status: ON  (VIX 28.3 vs VIX3M 26.3 (ON = above for 3 closes); panic-level stress)
-    Oil shock status: OFF  (WTI 1m avg $89, +49% y/y (ON >= +50%); ~2x the base odds of a 15% fall)
+    Oil shock status: OFF  (WTI 1m avg $88, +48% y/y (ON >= +50%); ~2x the base odds of a 15% fall)
 
 ==============================================================
-  Regime check (2026-11-25): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
+  Regime check (2026-11-26): RY=HIGH  BAA=TIGHT  -- no confirmed flip (window=3d)
 Building regime labels ...
   Conditions    : {'ry_regime': 'HIGH', 'baa10y_regime': 'TIGHT'}
-  Matched dates : 1436  (2004-05-07 - 2026-11-25)  MODERATE
+  Matched dates : 1437  (2004-05-07 - 2026-11-26)  MODERATE
 
 Computing capped 252d distributions for 51 candidates ...
   SNDK      hist=2yr  (below min 10yr, skipped)
@@ -286,7 +286,7 @@ Optimizing (50 restarts, 32 candidates) ...
 PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
 ========================================================================
   Universe       : top 50 screen candidates + GC_F
-  Matched dates  : 1436  MODERATE
+  Matched dates  : 1437  MODERATE
   Shrinkage      : lambda=100  prior=+18.2%
 
   Ticker     Weight   mu(raw)   mu(shr)    sigma      N   Hist       Div
@@ -307,7 +307,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-11-26
+AVGO peer valuation snapshot -- 2026-11-27
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
