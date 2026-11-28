@@ -32,7 +32,7 @@ FI@50 PACE TRACKER
   Start  (2025-07-21)  :       925,983 kr
   Now                     :     1,109,366 kr
   Threshold (2026 kr)     :    16,150,000 kr   (indexed 2.0%/yr)
-  Trigger now             :    16,441,548 kr
+  Trigger now             :    16,442,439 kr
   Trigger @ horizon       :    20,798,454 kr
   Years remaining         :  11.9
 
@@ -40,16 +40,16 @@ FI@50 PACE TRACKER
   Required CAGR           :  +25.5%
   Status                  :  BEHIND  (-11.2% margin)
 
-  Projected @ AWAR        :     7,522,121 kr
-  vs target               :   -13,276,333 kr  (deficit)
+  Projected @ AWAR        :     7,497,611 kr
+  vs target               :   -13,300,843 kr  (deficit)
 
   Scenario         CAGR       Projected     FI date   (incl. 6,000 kr/mo contributions)
   ------------------------------------------------------------------------
-  Bear           +10%       5,031,612 kr       ~2056
-  Conservative   +15%       8,033,361 kr       ~2046
-  Base           +20%      12,727,563 kr       ~2042
-  Current AWAR   +14%       7,522,121 kr       ~2047
-  Bull           +30%      30,953,137 kr       ~2037
+  Bear           +10%       5,030,101 kr       ~2056
+  Conservative   +15%       8,030,089 kr       ~2046
+  Base           +20%      12,721,013 kr       ~2042
+  Current AWAR   +14%       7,497,611 kr       ~2047
+  Bull           +30%      30,930,712 kr       ~2037
 
 ==============================================================
 MACRO REGIME
@@ -308,7 +308,7 @@ PORTFOLIO OPTIMIZER  --  Regime: RY=HIGH + BAA10Y=TIGHT
   NOTE: g(w) is an approximation. mu/sigma are regime-conditional,
   capped at regime end. Shrinkage applied for short-history assets.
 ========================================================================
-AVGO peer valuation snapshot -- 2026-11-27
+AVGO peer valuation snapshot -- 2026-11-28
 
 Ticker        Price   TTM EPS   Fwd EPS  Fwd/Trail  Impl.growth   Fwd P/E   PEG(1y)
 -----------------------------------------------------------------------------------
